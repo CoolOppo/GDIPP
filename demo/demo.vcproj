@@ -182,11 +182,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\demo.cpp"
+				RelativePath="..\dll\cache.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\dll\ft.cpp"
+				RelativePath=".\demo.cpp"
 				>
 			</File>
 			<File
@@ -214,7 +214,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\test.cpp"
+				RelativePath="..\dll\text.cpp"
 				>
 			</File>
 		</Filter>
@@ -224,11 +224,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\demo.h"
+				RelativePath="..\dll\cache.h"
 				>
 			</File>
 			<File
-				RelativePath="..\dll\ft.h"
+				RelativePath=".\demo.h"
 				>
 			</File>
 			<File
@@ -241,6 +241,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\dll\text.h"
 				>
 			</File>
 		</Filter>

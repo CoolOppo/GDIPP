@@ -3,37 +3,31 @@
 #include <map>
 using namespace std;
 
-class FT_Engine
+class gdimm_Text
 {
 private:
-	struct FontData
-	{
-		BYTE *lpvBuffer;
-		DWORD cbData;
-	};
-
-	typedef map<LOGFONT, FontData> FontDataCache;
-
 	FT_Library lib;
-	unsigned int px_width;
-	unsigned int px_height;
 	COLORREF fg_color;
 	COLORREF bg_color;
-	LOGFONT curr_font;
-	FontDataCache font_cache;
+	unsigned int px_width;
+	unsigned int px_height;
+	
+	FTC_Manager cache_man;
+	FTC_CMapCache cmap_cache;
+	FTC_ImageCache glyph_cache;
 
 	void GetTextInfo(HDC hdc);
-	void CacheFont(HDC hdc);
 	void DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos);
 	void DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos);
 	void DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos);
 	void DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos);
 
 public:
+	LOGFONT curr_font;
 	FT_Vector cursor;
-	bool opaque;
+	bool clipped;
 
-	FT_Engine();
-	~FT_Engine();
-	BOOL TextOut(HDC hdc, const TCHAR *text, unsigned int count);
+	gdimm_Text();
+	~gdimm_Text();
+	BOOL TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const TCHAR *text, unsigned int count);
 };

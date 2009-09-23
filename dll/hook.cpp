@@ -1,16 +1,32 @@
 #include "stdafx.h"
 #include <tlhelp32.h>
 #include "hook.h"
-#include "ft.h"
+#include "text.h"
 
 // declare the engine instance
-FT_Engine ft_eng;
+gdimm_Text text_engine;
+
+void DrawBackground(HDC hdc, CONST RECT * lprect)
+{
+	const LONG rect_width = lprect->right - lprect->left;
+	const LONG rect_height = lprect->bottom - lprect->top;
+
+	COLORREF bg_color = GetBkColor(hdc);
+	assert(bg_color != CLR_INVALID);
+	HBRUSH bg_brush = CreateSolidBrush(bg_color);
+	assert(bg_brush != NULL);
+	HBRUSH old_brush = (HBRUSH) SelectObject(hdc, bg_brush);
+	BOOL ret = PatBlt(hdc, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
+	assert(ret == TRUE);
+	DeleteObject(bg_brush);
+	SelectObject(hdc, old_brush);
+}
 
 // hooked ExtTextOutW
 BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT * lpDx)
 {
 	// indicator for "no further language-specific processing is required"
-	if (options & ETO_GLYPH_INDEX)
+	if (options & ETO_GLYPH_INDEX || c == 0)
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// draw non-TrueType fonts with original function
@@ -19,11 +35,14 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (!(metrics.tmPitchAndFamily & TMPF_TRUETYPE))
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	ft_eng.cursor.x = x;
-	ft_eng.cursor.y = y;
-	ft_eng.opaque = ((options & ETO_OPAQUE) != 0);
+	text_engine.cursor.x = x;
+	text_engine.cursor.y = y;
+	text_engine.clipped = ((options & ETO_CLIPPED) != 0);
+
+	if ((options & ETO_OPAQUE) != 0)
+		DrawBackground(hdc, lprect);
 	
-	return ft_eng.TextOut(hdc, lpString, c);
+	return text_engine.TextOut(hdc, lprect, lpDx, lpString, c);
 }
 
 // enumerate all the threads in the current process, except the excluded one

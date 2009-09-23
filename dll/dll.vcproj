@@ -182,11 +182,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\dll.cpp"
+				RelativePath=".\cache.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ft.cpp"
+				RelativePath=".\dll.cpp"
 				>
 			</File>
 			<File
@@ -213,6 +213,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\text.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -220,7 +224,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\ft.h"
+				RelativePath=".\cache.h"
 				>
 			</File>
 			<File
@@ -229,6 +233,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\text.h"
 				>
 			</File>
 		</Filter>

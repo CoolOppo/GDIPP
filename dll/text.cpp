@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "ft.h"
+#include "text.h"
+#include "cache.h"
 
 #include <cmath>
 using namespace std;
-
 
 void DebugOutput(TCHAR *str)
 {
@@ -18,7 +18,6 @@ void DebugOutput(DWORD num)
 	fwprintf(f, TEXT("%u\n"), num);
 	fclose(f);
 }
-
 
 struct COLORRGB
 {
@@ -37,7 +36,7 @@ bool operator<(const LOGFONT &font1, const LOGFONT &font2)
 	return (strncmp(font1_ptr, font2_ptr, sizeof(LOGFONT)) < 0);
 }
 
-FT_Engine::FT_Engine()
+gdimm_Text::gdimm_Text()
 {
 	FT_Error ft_error;
 	
@@ -47,17 +46,24 @@ FT_Engine::FT_Engine()
 	// enable FreeType LCD filter
 	ft_error = FT_Library_SetLcdFilter(lib, FT_LCD_FILTER_DEFAULT);
 	assert(ft_error == 0);
+
+	ft_error = FTC_Manager_New(lib, 0, 0, 0, Face_Requester, this, &cache_man);
+	assert(ft_error == 0);
+
+	ft_error = FTC_CMapCache_New(cache_man, &cmap_cache);
+	assert(ft_error == 0);
+
+	ft_error = FTC_ImageCache_New(cache_man, &glyph_cache);
+	assert(ft_error == 0);
 }
 
-FT_Engine::~FT_Engine()
+gdimm_Text::~gdimm_Text()
 {
+	FTC_Manager_Done(cache_man);
 	FT_Done_FreeType(lib);
-
-	for (FontDataCache::const_iterator iter = font_cache.begin(); iter != font_cache.end(); iter++)
-		delete[] iter->second.lpvBuffer;
 }
 
-void FT_Engine::GetTextInfo(HDC hdc)
+void gdimm_Text::GetTextInfo(HDC hdc)
 {
 	// get logical font structure
 	HGDIOBJ gdiObj = GetCurrentObject(hdc, OBJ_FONT);
@@ -75,22 +81,7 @@ void FT_Engine::GetTextInfo(HDC hdc)
 	assert(bg_color != CLR_INVALID);
 }
 
-void FT_Engine::CacheFont(HDC hdc)
-{
-	// if the current font has not been cached, cache it
-	if (font_cache.find(curr_font) == font_cache.end())
-	{
-		DWORD font_data_len = GetFontData(hdc, 0, 0, NULL, 0);
-		BYTE *font_data = new BYTE[font_data_len];
-		font_data_len = GetFontData(hdc, 0, 0, font_data, font_data_len);
-		assert(font_data_len != GDI_ERROR);
-
-		FontData fd = {font_data, font_data_len};
-		font_cache[curr_font] = fd;
-	}
-}
-
-void FT_Engine::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
+void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 {
 	const int absPitch = abs(bitmap.pitch);
 
@@ -105,19 +96,14 @@ void FT_Engine::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 			BOOL mono = bitmap.buffer[j * absPitch + i / 8] & (0x80 >> (i % 8));
 
 			if (mono == 0)
-			{
-				if (opaque)
-					SetPixel(hdc, pos.x + i, pos.y + j, bg_color);
-				else
-					continue;
-			}
+				continue;
 
 			SetPixel(hdc, pos.x + i, pos.y + j, fg_color);
 		}
 	}
 }
 
-void FT_Engine::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
+void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 {
 	const int absPitch = abs(bitmap.pitch);
 	const COLORRGB fgRGB = REFTORGB(fg_color);
@@ -135,12 +121,7 @@ void FT_Engine::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 			BYTE gray = bitmap.buffer[j * absPitch + i];
 
 			if (gray == 0)
-			{
-				if (opaque)
-					SetPixel(hdc, pos.x + i, pos.y + j, bg_color);
-				else
-					continue;
-			}
+				continue;
 
 			// pixel color
 			COLORREF c = RGB((gray * fgRGB.r + (255 - gray) * bgRGB.r) / 255, 
@@ -152,7 +133,7 @@ void FT_Engine::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	}
 }
 
-void FT_Engine::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
+void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 {
 	const int absPitch = abs(bitmap.pitch);
 	const COLORRGB fgRGB = REFTORGB(fg_color);
@@ -170,12 +151,7 @@ void FT_Engine::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 			BYTE b = bitmap.buffer[j * absPitch + i*3 + 2];
 
 			if (RGB(r, g, b) == 0)
-			{
-				if (opaque)
-					SetPixel(hdc, pos.x + i, pos.y + j, bg_color);
-				else
-					continue;
-			}
+				continue;
 
 			COLORREF c = RGB((r * fgRGB.r + (255 - r) * bgRGB.r) / 255, 
 				(g * fgRGB.g + (255 - g) * bgRGB.g) / 255, 
@@ -186,7 +162,7 @@ void FT_Engine::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	}
 }
 
-void FT_Engine::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
+void gdimm_Text::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 {
 	switch(bitmap.pixel_mode){
 	case FT_PIXEL_MODE_MONO:
@@ -201,57 +177,71 @@ void FT_Engine::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	}
 }
 
-BOOL FT_Engine::TextOut(HDC hdc, const TCHAR *text, unsigned int count)
+BOOL gdimm_Text::TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const TCHAR *text, unsigned int count)
 {
 	FT_Error ft_error;
 	FT_Face font_face;
 
 	GetTextInfo(hdc);
-	CacheFont(hdc);
 
-	FontData fd = font_cache[curr_font];
-	ft_error = FT_New_Memory_Face(lib, fd.lpvBuffer, fd.cbData, 0, &font_face);
+	Font_Info font_info(curr_font.lfWeight, curr_font.lfItalic, curr_font.lfFaceName);
+	uint32_t face_id = SuperFastHash((char*)&font_info, sizeof(font_info));
+
+	ft_error = FTC_Manager_LookupFace(cache_man, (FTC_FaceID)face_id, &font_face);
 	assert(ft_error == 0);
 
-	ft_error = FT_Set_Pixel_Sizes(font_face, px_width, px_height);
+	FT_Size font_size;
+	FTC_ScalerRec cache_scale = {(FTC_FaceID)face_id, px_width, px_height, 1, 0, 0};
+	ft_error = FTC_Manager_LookupSize(cache_man, &cache_scale, &font_size);
 	assert(ft_error == 0);
 
-	FT_UInt glyphIndex, prev = 0;
-	FT_Vector delta;
-	//const FT_Long has_kern = FALSE;
-	const FT_Long has_kern = FT_HAS_KERNING(font_face);
+	FT_UInt glyph_index, prev = 0;
+	//const FT_Long has_kern = FT_HAS_KERNING(font_face);
+	const FT_Long has_kern = FALSE;
 
 	for (unsigned int i = 0; i < count; i++)
 	{
-		glyphIndex = FT_Get_Char_Index(font_face, text[i]);
+		TCHAR a = text[i];
+		glyph_index = FTC_CMapCache_Lookup(cmap_cache, (FTC_FaceID)face_id, -1, text[i]);
+		if (glyph_index == 0)
+			continue;//assert(glyph_index != 0);
 
-		// if font has kern info, use it
-		if (has_kern)
+		FT_Glyph glyph;
+		FTC_Node node;
+		ft_error = FTC_ImageCache_LookupScaler(glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, &node);
+		assert(ft_error == 0);
+		
+		ft_error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, 0, 0);
+		assert(ft_error == 0);
+		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
+
+		if (!clipped ||
+			(cursor.x >= lprect->left && cursor.x <= lprect->right && cursor.y >= lprect->top && cursor.y <= lprect->bottom)
+			)
 		{
-			FT_Get_Kerning(font_face, prev, glyphIndex, FT_KERNING_DEFAULT, &delta);
-			cursor.x += delta.x >> 6; 
+			// if font has kern info, use it
+			if (has_kern)
+			{
+				FT_Vector delta;
+				FT_Get_Kerning(font_face, prev, glyph_index, FT_KERNING_DEFAULT, &delta);
+				prev = glyph_index;
+				cursor.x += delta.x >> 6;
+			}
+
+			FT_Vector glyph_cursor;
+			glyph_cursor.x = cursor.x + bmp_glyph->left;
+			glyph_cursor.y = cursor.y + bmp_glyph->bitmap.rows - bmp_glyph->top;
+			DrawBitmap(hdc, bmp_glyph->bitmap, glyph_cursor);
 		}
 
-		// load glyph
-		ft_error = FT_Load_Glyph(font_face, glyphIndex, FT_LOAD_DEFAULT);
-		assert(ft_error == 0);
-
-		// render glyph
-		//ft_error = FT_Render_Glyph(font_face->glyph, FT_RENDER_MODE_NORMAL);
-		ft_error = FT_Render_Glyph(font_face->glyph, FT_RENDER_MODE_LCD);
-		assert(ft_error == 0);
-
-		// adjust cursor according to the glyph info
-		FT_Vector glyphPen;
-		glyphPen.x = cursor.x + font_face->glyph->bitmap_left;
-		glyphPen.y = cursor.y + font_face->glyph->bitmap.rows - font_face->glyph->bitmap_top;
-		DrawBitmap(hdc, font_face->glyph->bitmap, glyphPen);
-
 		// advance cursor
-		cursor.x += font_face->glyph->advance.x >> 6;
-		prev = glyphIndex;
+		if (lpDx == NULL)
+			cursor.x += glyph->advance.x >> 16;
+		else
+			cursor.x += lpDx[i];
+
+		FT_Done_Glyph(glyph);
 	}
 
-	FT_Done_Face(font_face);
 	return TRUE;
 }
