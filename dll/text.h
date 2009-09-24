@@ -25,9 +25,9 @@ private:
 public:
 	LOGFONT curr_font;
 	FT_Vector cursor;
-	bool clipped;
+	const RECT *clip_rect;
 
 	gdimm_Text();
 	~gdimm_Text();
-	BOOL TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const TCHAR *text, unsigned int count);
+	BOOL TextOut(HDC hdc, CONST INT * lpDx, const TCHAR *text, unsigned int count);
 };

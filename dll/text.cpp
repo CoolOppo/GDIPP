@@ -29,13 +29,6 @@ struct COLORRGB
 
 #define REFTORGB(ref) (*((COLORRGB*) &ref))
 
-bool operator<(const LOGFONT &font1, const LOGFONT &font2)
-{
-	char *font1_ptr = (char*) &font1;
-	char *font2_ptr = (char*) &font2;
-	return (strncmp(font1_ptr, font2_ptr, sizeof(LOGFONT)) < 0);
-}
-
 gdimm_Text::gdimm_Text()
 {
 	FT_Error ft_error;
@@ -86,7 +79,7 @@ void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	const int absPitch = abs(bitmap.pitch);
 
 	if (bitmap.pitch > 0)
-		pos.y += 11 - bitmap.rows;
+		pos.y += px_height - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -111,7 +104,7 @@ void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 
 	// pitch > 0 means up flow, while Windows coordination is down flow
 	if (bitmap.pitch > 0)
-		pos.y += 11 - bitmap.rows;
+		pos.y += px_height - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -140,7 +133,7 @@ void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	const COLORRGB bgRGB = REFTORGB(bg_color);
 
 	if (bitmap.pitch > 0)
-		pos.y += 11 - bitmap.rows;
+		pos.y += px_height - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -177,7 +170,7 @@ void gdimm_Text::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	}
 }
 
-BOOL gdimm_Text::TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const TCHAR *text, unsigned int count)
+BOOL gdimm_Text::TextOut(HDC hdc, CONST INT * lpDx, const TCHAR *text, unsigned int count)
 {
 	FT_Error ft_error;
 	FT_Face font_face;
@@ -196,8 +189,8 @@ BOOL gdimm_Text::TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const T
 	assert(ft_error == 0);
 
 	FT_UInt glyph_index, prev = 0;
-	//const FT_Long has_kern = FT_HAS_KERNING(font_face);
-	const FT_Long has_kern = FALSE;
+	const FT_Long has_kern = FT_HAS_KERNING(font_face);
+	//const FT_Long has_kern = FALSE;
 
 	for (unsigned int i = 0; i < count; i++)
 	{
@@ -215,8 +208,8 @@ BOOL gdimm_Text::TextOut(HDC hdc, CONST RECT * lprect, CONST INT * lpDx, const T
 		assert(ft_error == 0);
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
 
-		if (!clipped ||
-			(cursor.x >= lprect->left && cursor.x <= lprect->right && cursor.y >= lprect->top && cursor.y <= lprect->bottom)
+		if (clip_rect == NULL ||
+			(cursor.x >= clip_rect->left && cursor.x <= clip_rect->right && cursor.y >= clip_rect->top && cursor.y <= clip_rect->bottom)
 			)
 		{
 			// if font has kern info, use it

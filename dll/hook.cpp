@@ -37,12 +37,16 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 
 	text_engine.cursor.x = x;
 	text_engine.cursor.y = y;
-	text_engine.clipped = ((options & ETO_CLIPPED) != 0);
+
+	if ((options & ETO_CLIPPED) == 0)
+		text_engine.clip_rect = NULL;
+	else
+		text_engine.clip_rect = lprect;
 
 	if ((options & ETO_OPAQUE) != 0)
 		DrawBackground(hdc, lprect);
 	
-	return text_engine.TextOut(hdc, lprect, lpDx, lpString, c);
+	return text_engine.TextOut(hdc, lpDx, lpString, c);
 }
 
 // enumerate all the threads in the current process, except the excluded one

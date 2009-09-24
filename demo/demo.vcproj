@@ -214,6 +214,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\test.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\dll\text.cpp"
 				>
 			</File>
