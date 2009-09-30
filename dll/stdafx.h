@@ -36,3 +36,5 @@
 #include FT_LCD_FILTER_H
 
 #include <easyhook.h>
+
+#include "pstdint.h"

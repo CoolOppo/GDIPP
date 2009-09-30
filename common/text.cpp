@@ -1,9 +1,7 @@
 #include "stdafx.h"
-#include "text.h"
-#include "cache.h"
-
 #include <cmath>
-using namespace std;
+#include "text.h"
+#include "ft.h"
 
 void DebugOutput(TCHAR *str)
 {
@@ -26,34 +24,16 @@ struct COLORRGB
 	BYTE b;
 	BYTE pad;
 };
-
 #define REFTORGB(ref) (*((COLORRGB*) &ref))
 
 gdimm_Text::gdimm_Text()
 {
-	FT_Error ft_error;
-	
-	ft_error = FT_Init_FreeType(&lib);
-	assert(ft_error == 0);
-
-	// enable FreeType LCD filter
-	ft_error = FT_Library_SetLcdFilter(lib, FT_LCD_FILTER_DEFAULT);
-	assert(ft_error == 0);
-
-	ft_error = FTC_Manager_New(lib, 0, 0, 0, Face_Requester, this, &cache_man);
-	assert(ft_error == 0);
-
-	ft_error = FTC_CMapCache_New(cache_man, &cmap_cache);
-	assert(ft_error == 0);
-
-	ft_error = FTC_ImageCache_New(cache_man, &glyph_cache);
-	assert(ft_error == 0);
+	InitializeFreeType();
 }
 
 gdimm_Text::~gdimm_Text()
 {
-	FTC_Manager_Done(cache_man);
-	FT_Done_FreeType(lib);
+	DestroyFreeType();
 }
 
 void gdimm_Text::GetTextInfo(HDC hdc)
@@ -61,17 +41,20 @@ void gdimm_Text::GetTextInfo(HDC hdc)
 	// get logical font structure
 	HGDIOBJ gdiObj = GetCurrentObject(hdc, OBJ_FONT);
 	assert(gdiObj != NULL);
-	DWORD dwRet = GetObject(gdiObj, sizeof(LOGFONT), &curr_font);
+	DWORD dwRet = GetObject(gdiObj, sizeof(LOGFONT), &curr_font.font_attr);
 	assert(dwRet != 0);
 
-	px_width = abs(curr_font.lfWidth);
-	px_height = abs(curr_font.lfHeight);
+	curr_font.font_attr.lfHeight = abs(curr_font.font_attr.lfHeight);
+	if (curr_font.font_attr.lfWidth == 0)
+		curr_font.font_attr.lfWidth = curr_font.font_attr.lfHeight;
 
 	// get foreground and background color
 	fg_color = GetTextColor(hdc);
 	assert(fg_color != CLR_INVALID);
 	bg_color = GetBkColor(hdc);
 	assert(bg_color != CLR_INVALID);
+
+	ft_font_trait = curr_font.GetTrait();
 }
 
 void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
@@ -79,7 +62,7 @@ void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	const int absPitch = abs(bitmap.pitch);
 
 	if (bitmap.pitch > 0)
-		pos.y += px_height - bitmap.rows;
+		pos.y += curr_font.font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -104,7 +87,7 @@ void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 
 	// pitch > 0 means up flow, while Windows coordination is down flow
 	if (bitmap.pitch > 0)
-		pos.y += px_height - bitmap.rows;
+		pos.y += curr_font.font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -133,7 +116,7 @@ void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 	const COLORRGB bgRGB = REFTORGB(bg_color);
 
 	if (bitmap.pitch > 0)
-		pos.y += px_height - bitmap.rows;
+		pos.y += curr_font.font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -172,20 +155,19 @@ void gdimm_Text::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos)
 
 BOOL gdimm_Text::TextOut(HDC hdc, CONST INT * lpDx, const TCHAR *text, unsigned int count)
 {
-	FT_Error ft_error;
-	FT_Face font_face;
-
 	GetTextInfo(hdc);
 
-	Font_Info font_info(curr_font.lfWeight, curr_font.lfItalic, curr_font.lfFaceName);
-	uint32_t face_id = SuperFastHash((char*)&font_info, sizeof(font_info));
+	FT_Error ft_error;
+	FontTrait font_trait = curr_font.GetTrait();
+	uint32_t face_id = curr_font.GetFaceID(&font_trait);
+	FT_Face font_face;
 
-	ft_error = FTC_Manager_LookupFace(cache_man, (FTC_FaceID)face_id, &font_face);
+	ft_error = FTC_Manager_LookupFace(ft_cache_man, (FTC_FaceID)face_id, &font_face);
 	assert(ft_error == 0);
 
 	FT_Size font_size;
-	FTC_ScalerRec cache_scale = {(FTC_FaceID)face_id, px_width, px_height, 1, 0, 0};
-	ft_error = FTC_Manager_LookupSize(cache_man, &cache_scale, &font_size);
+	FTC_ScalerRec cache_scale = {(FTC_FaceID)face_id, curr_font.font_attr.lfWidth, curr_font.font_attr.lfHeight, 1, 0, 0};
+	ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 	assert(ft_error == 0);
 
 	FT_UInt glyph_index, prev = 0;
@@ -195,15 +177,16 @@ BOOL gdimm_Text::TextOut(HDC hdc, CONST INT * lpDx, const TCHAR *text, unsigned 
 	for (unsigned int i = 0; i < count; i++)
 	{
 		TCHAR a = text[i];
-		glyph_index = FTC_CMapCache_Lookup(cmap_cache, (FTC_FaceID)face_id, -1, text[i]);
+		glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, (FTC_FaceID)face_id, -1, text[i]);
 		if (glyph_index == 0)
 			continue;//assert(glyph_index != 0);
 
+
 		FT_Glyph glyph;
 		FTC_Node node;
-		ft_error = FTC_ImageCache_LookupScaler(glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, &node);
+		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, &node);
 		assert(ft_error == 0);
-		
+
 		ft_error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, 0, 0);
 		assert(ft_error == 0);
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;

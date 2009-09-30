@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\freetype-2.3.9\include&quot;;&quot;$(SolutionDir)EasyHook\EasyHook 2.6 Source Code\Public&quot;;&quot;$(SolutionDir)dll&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\freetype-2.3.9\include&quot;;&quot;$(SolutionDir)EasyHook\EasyHook 2.6 Source Code\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib"
+				AdditionalDependencies="freetype.lib EasyHook32.lib Rpcrt4.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\freetype-2.3.9\objs&quot;;&quot;$(SolutionDir)EasyHook\EasyHook 2.6 Binaries&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT"
@@ -119,7 +119,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\freetype-2.3.9\include&quot;;&quot;$(SolutionDir)EasyHook\EasyHook 2.6 Source Code\Public&quot;;&quot;$(SolutionDir)dll&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\freetype-2.3.9\include&quot;;&quot;$(SolutionDir)EasyHook\EasyHook 2.6 Source Code\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
@@ -182,15 +182,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\dll\cache.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\demo.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\dll\hook.cpp"
+				RelativePath="..\common\font_info.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ft.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\hook.cpp"
 				>
 			</File>
 			<File
@@ -218,7 +222,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\dll\text.cpp"
+				RelativePath="..\common\text.cpp"
 				>
 			</File>
 		</Filter>
@@ -228,15 +232,23 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\dll\cache.h"
-				>
-			</File>
-			<File
 				RelativePath=".\demo.h"
 				>
 			</File>
 			<File
-				RelativePath="..\dll\hook.h"
+				RelativePath="..\common\font_info.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\ft.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\hook.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pstdint.h"
 				>
 			</File>
 			<File
@@ -248,7 +260,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\dll\text.h"
+				RelativePath="..\common\text.h"
 				>
 			</File>
 		</Filter>

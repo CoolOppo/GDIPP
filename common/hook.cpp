@@ -1,31 +1,40 @@
 #include "stdafx.h"
 #include <tlhelp32.h>
-#include "hook.h"
 #include "text.h"
+#include "gdimm_rpc.h"
 
 // declare the engine instance
 gdimm_Text text_engine;
 
 void DrawBackground(HDC hdc, CONST RECT * lprect)
 {
+	// get background rect geometry
 	const LONG rect_width = lprect->right - lprect->left;
 	const LONG rect_height = lprect->bottom - lprect->top;
 
+	// create brush with background color
 	COLORREF bg_color = GetBkColor(hdc);
 	assert(bg_color != CLR_INVALID);
 	HBRUSH bg_brush = CreateSolidBrush(bg_color);
 	assert(bg_brush != NULL);
+
+	// select new brush, and store old brush
 	HBRUSH old_brush = (HBRUSH) SelectObject(hdc, bg_brush);
+
+	// paint rect with brush
 	BOOL ret = PatBlt(hdc, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
 	assert(ret == TRUE);
 	DeleteObject(bg_brush);
+
+	// restore old brush
 	SelectObject(hdc, old_brush);
 }
 
 // hooked ExtTextOutW
 BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT * lpDx)
 {
-	// indicator for "no further language-specific processing is required"
+	// indicator for "no further language-specific processing is required" (from MSDN)
+	// no text is drawn
 	if (options & ETO_GLYPH_INDEX || c == 0)
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
@@ -35,9 +44,11 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (!(metrics.tmPitchAndFamily & TMPF_TRUETYPE))
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
+	// cursor position for the text
 	text_engine.cursor.x = x;
 	text_engine.cursor.y = y;
 
+	// assign clip rect
 	if ((options & ETO_CLIPPED) == 0)
 		text_engine.clip_rect = NULL;
 	else
@@ -86,7 +97,7 @@ BOOL EnumThreads(DWORD *threadIds, DWORD *count, DWORD exclude = 0)
 
 void Hook()
 {
-	// gdi32.dll must be loaded
+	// gdi32.dll must have been loaded
 	HMODULE hgdi32 = GetModuleHandle(TEXT("gdi32.dll"));
 	assert(hgdi32 != NULL);
 	// install hook with EasyHook
@@ -109,7 +120,7 @@ void Hook()
 // this procedure is used for EasyHook RhInjectLibrary()
 // injection is created in a separate thread
 // the injection thread does not need hooking
-void Hook_Inject()
+/*void Hook_Inject()
 {
 	HMODULE hgdi32 = GetModuleHandle(TEXT("gdi32.dll"));
 	assert(hgdi32 != NULL);
@@ -127,7 +138,7 @@ void Hook_Inject()
 	ehError = LhSetInclusiveACL(threads, threadCount, hHook_ExtTextOutW);
 	assert(ehError == 0);
 	delete[] threads;
-}
+}*/
 
 // EasyHook unhook procedure
 void Unhook()

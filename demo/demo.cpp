@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "demo.h"
 #include "hook.h"
-#include "text.h"
 
 #define MAX_LOADSTRING 100
 
