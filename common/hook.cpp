@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include <tlhelp32.h>
 #include "text.h"
-#include "gdimm_rpc.h"
 
 // declare the engine instance
 gdimm_Text text_engine;
