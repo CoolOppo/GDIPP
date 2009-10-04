@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void Test(HDC hdc)
+void TestDIB(HDC hdc)
 {
 	unsigned char bits[] = {0x80, 0x80, 0x80, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00};
 	unsigned char mask[] = {0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
@@ -22,4 +22,21 @@ void Test(HDC hdc)
 	BitBlt(hdc, 10, 10, 3, 4, hdc_mem, 0, 0, SRCAND);
 	SelectObject(hdc_mem, hbmp);
 	BitBlt(hdc, 10, 10, 3, 3, hdc_mem, 0, 0, SRCPAINT);*/
+}
+
+void Test(HDC hdc)
+{
+	int w = 8;
+	int h = 8;
+
+	unsigned char bits[] = {126, 0, 96, 0, 96, 0, 126, 0, 96, 0, 96, 0, 96, 0, 96, 0};
+
+	HDC hdc_mem = CreateCompatibleDC(hdc);
+	HBITMAP hbmp = CreateBitmap(w, h, 1, 1, bits);
+	SelectObject(hdc_mem, hbmp);
+
+	BOOL a = BitBlt(hdc, 10, 10, w, h, hdc_mem, 0, 0, SRCCOPY);
+
+	DeleteObject(hbmp);
+	DeleteDC(hdc_mem);
 }
