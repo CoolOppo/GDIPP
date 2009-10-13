@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include <ObjBase.h>
+#include <mlang.h>
 
 void TestDIB(HDC hdc)
 {
@@ -24,7 +26,7 @@ void TestDIB(HDC hdc)
 	BitBlt(hdc, 10, 10, 3, 3, hdc_mem, 0, 0, SRCPAINT);*/
 }
 
-void Test(HDC hdc)
+void TestDDB(HDC hdc)
 {
 	int w = 8;
 	int h = 8;
@@ -39,4 +41,53 @@ void Test(HDC hdc)
 
 	DeleteObject(hbmp);
 	DeleteDC(hdc_mem);
+}
+
+void TestFontLink(HDC hdc)
+{
+	TCHAR *text = TEXT("HelloÄãºÃ");
+	HFONT tahoma = CreateFont(-15, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("Tahoma"));
+	SelectObject(hdc, tahoma);
+
+	CoInitialize(NULL);
+
+	IMLangFontLink2 *fl;
+	CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMLangFontLink2, (LPVOID*)&fl);
+
+	DWORD font_cp;
+	HFONT curr_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
+	fl->GetFontCodePages(hdc, curr_font, &font_cp);
+
+	int str_start = 0;
+	int str_len = lstrlen(text);
+
+	while (str_len > 0)
+	{
+		DWORD str_cp;
+		long processed;
+		fl->GetStrCodePages(text + str_start, str_len, font_cp, &str_cp, &processed);
+
+		HFONT new_font;
+		fl->MapFont(hdc, str_cp, 0, &new_font);
+
+		LOGFONT lf;
+		GetObject(new_font, sizeof(LOGFONT), &lf);
+
+		HFONT old_font = (HFONT) SelectObject(hdc, new_font);
+		ExtTextOut(hdc, 10 + str_start * 11, 10, 0, NULL, text + str_start, processed, NULL);
+		SelectObject(hdc, old_font);
+		fl->ReleaseFont(new_font);
+
+		str_start += processed;
+		str_len -= processed;
+	}
+	
+	fl->Release();
+	CoUninitialize();
+	DeleteObject(tahoma);
+}
+
+void Test(HDC hdc)
+{
+	//TestFontLink(hdc);
 }

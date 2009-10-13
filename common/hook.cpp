@@ -34,7 +34,7 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 {
 	// indicator for "no further language-specific processing is required" (from MSDN)
 	// no text is drawn
-	if (options & ETO_GLYPH_INDEX || c == 0)
+	if (options & ETO_GLYPH_INDEX)
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// draw non-TrueType fonts with original function
@@ -55,8 +55,23 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 
 	if ((options & ETO_OPAQUE) != 0)
 		DrawBackground(hdc, lprect);
+
+	text_engine.distances = lpDx;
 	
-	return text_engine.TextOut(hdc, lpDx, lpString, c);
+	return text_engine.TextOut(hdc, lpString, c);
+}
+
+int
+WINAPI
+DrawTextExW_Hook(
+			__in HDC hdc,
+			__inout_ecount(cchText) LPWSTR lpchText,
+			__in int cchText,
+			__inout LPRECT lprc,
+			__in UINT format,
+			__in_opt LPDRAWTEXTPARAMS lpdtp)
+{
+	return DrawTextExW(hdc, lpchText, cchText, lprc, format, lpdtp);
 }
 
 // enumerate all the threads in the current process, except the excluded one
@@ -101,7 +116,11 @@ void Hook()
 	assert(hgdi32 != NULL);
 	// install hook with EasyHook
 	TRACED_HOOK_HANDLE hHook_ExtTextOutW = new HOOK_TRACE_INFO();
+	TRACED_HOOK_HANDLE hHook_TextOutW = new HOOK_TRACE_INFO();
 	NTSTATUS ehError = LhInstallHook(GetProcAddress(hgdi32, "ExtTextOutW"), ExtTextOutW_Hook, NULL, hHook_ExtTextOutW);
+	assert(ehError == 0);
+	hgdi32 = GetModuleHandle(TEXT("user32.dll"));
+	ehError = LhInstallHook(GetProcAddress(hgdi32, "DrawTextExW"), DrawTextExW_Hook, NULL, hHook_TextOutW);
 	assert(ehError == 0);
 
 	// enable hook in all threads
@@ -112,6 +131,7 @@ void Hook()
 	ret = EnumThreads(threads, &threadCount);
 	assert(ret == TRUE);
 	ehError = LhSetInclusiveACL(threads, threadCount, hHook_ExtTextOutW);
+	ehError = LhSetInclusiveACL(threads, threadCount, hHook_TextOutW);
 	assert(ehError == 0);
 	delete[] threads;
 }
