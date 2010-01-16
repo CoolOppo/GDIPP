@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include "demo.h"
-#include "hook.h"
 
 #define MAX_LOADSTRING 100
 
@@ -17,8 +16,6 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-
-void Test(HDC hdc);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -37,7 +34,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_DEMO, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	Hook();
+	HMODULE h_gdimm = LoadLibrary(TEXT("dll.dll"));
+	if (h_gdimm == NULL)
+		return GetLastError();
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow))
@@ -57,7 +56,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		}
 	}
 
-	Unhook();
+	FreeLibrary(h_gdimm);
 
 	return (int) msg.wParam;
 }
@@ -155,6 +154,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
+		case ID_HELP_ABOUT:
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX_italic), hWnd, About);
+			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
@@ -165,7 +167,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
-		Test(hdc);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
@@ -184,7 +185,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_INITDIALOG:
- 		return (INT_PTR)TRUE;
+		return (INT_PTR)TRUE;
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)

@@ -4,48 +4,44 @@
 
 #define mapping_name_prefix TEXT("Global\\gdimm_font_")
 
-bool operator<(const FontMapping &mapping1, const FontMapping &mapping2)
+gdimm_font::gdimm_font(HDC hdc)
 {
-	return (memcmp(&mapping1, &mapping2, sizeof(FontMapping)) < 0);
+	font_holder = hdc;
 }
 
-gdimm_Font::gdimm_Font()
-{
-	font_holder = CreateCompatibleDC(NULL);
-}
-
-gdimm_Font::~gdimm_Font()
+/*gdimm_font::~gdimm_font()
 {
 	DeleteDC(font_holder);
 
 	// release handle of the file mappings
 	// when all processes release handle, font data are released by Windows
-	for (FontTable::const_iterator iter = loaded_fonts.begin(); iter != loaded_fonts.end(); iter++)
+	for (font_table::const_iterator iter = loaded_fonts.begin(); iter != loaded_fonts.end(); iter++)
 	{
 		UnmapViewOfFile(iter->second.data_start);
 		CloseHandle(iter->second.file_mapping);
 	}
-}
+}*/
 
-void gdimm_Font::UpdateMappingName()
+void gdimm_font::get_mapping_name(HDC hdc)
 {
 	// the mapping name consists of two parts: prefix and font full name
 	// prefix is fixed for all mapping names, defined in mapping_name_prefix
 	// font full name is extracted from physical font file via GetOutlineTextMetrics()
 
 	int metric_size;
-	metric_size = GetOutlineTextMetrics(font_holder, 0, NULL);
+	metric_size = GetOutlineTextMetrics(hdc, 0, NULL);
 	BYTE *metric_buf = new BYTE[metric_size];
 	OUTLINETEXTMETRIC *metric = (OUTLINETEXTMETRIC*) metric_buf;
-	GetOutlineTextMetrics(font_holder, metric_size, metric);
+	GetOutlineTextMetrics(hdc, metric_size, metric);
 	curr_mapping_name = mapping_name_prefix;
 	curr_mapping_name += (TCHAR*)(metric_buf + (UINT)metric->otmpFullName);
 	delete[] metric_buf;
 }
 
-void gdimm_Font::GetFontInfo()
+void gdimm_font::get_font_info(HDC hdc)
 {
-	// pre-condition: the current font handle is in curr_font_handle
+	curr_font_handle = (HFONT)GetCurrentObject(hdc, OBJ_FONT);
+	assert(curr_font_handle != NULL);
 
 	// retrieve LOGFONT from HFONT
 	DWORD dwRet = GetObject(curr_font_handle, sizeof(LOGFONT), &curr_font_attr);
@@ -56,12 +52,10 @@ void gdimm_Font::GetFontInfo()
 	if (curr_font_attr.lfWidth == 0)
 		curr_font_attr.lfWidth = curr_font_attr.lfHeight;
 
-	SelectObject(font_holder, curr_font_handle);
-
-	UpdateMappingName();
+	get_mapping_name(hdc);
 
 	// if this process has loaded the font, use the mapped address directly
-	FontTable::const_iterator iter = loaded_fonts.find(curr_mapping_name);	
+	font_table::const_iterator iter = loaded_fonts.find(curr_mapping_name);	
 	if (iter != loaded_fonts.end())
 	{
 		curr_font_mapping = &iter->second;
@@ -74,26 +68,20 @@ void gdimm_Font::GetFontInfo()
 	DWORD font_table = mmioFOURCC('t', 't', 'c', 'f');
 	// specify 0 as table index to retrieve font data from ttf files
 	// specify ttcf to retrieve from ttc files
-	DWORD font_size = GetFontData(font_holder, font_table, 0, NULL, 0);
+	DWORD font_size = GetFontData(hdc, font_table, 0, NULL, 0);
 	if (font_size == GDI_ERROR)
 	{
 		font_table = 0;
-		font_size = GetFontData(font_holder, font_table, 0, NULL, 0);
+		font_size = GetFontData(hdc, font_table, 0, NULL, 0);
 		assert(font_size != GDI_ERROR);
 	}
 
 	// check if the font has been created by other processes
 	HANDLE hmapping = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, curr_mapping_name.c_str());
 	bool new_font = (hmapping == NULL);
-	BYTE *font_data;
 
 	if (new_font)
 	{
-		// if not created yet, load the font and create file mapping
-		font_data = new BYTE[font_size];
-		font_size = GetFontData(font_holder, font_table, 0, font_data, font_size);
-		assert(font_size != GDI_ERROR);
-
 		hmapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, font_size, curr_mapping_name.c_str());
 		assert(hmapping != NULL);
 	}
@@ -104,22 +92,30 @@ void gdimm_Font::GetFontInfo()
 
 	if (new_font)
 	{
-		// copy font data to the mapped address
-		memcpy(mapping_start, font_data, font_size);
-		delete[] font_data;
+		// load font data to the mapped address
+		font_size = GetFontData(hdc, font_table, 0, mapping_start, font_size);
+		assert(font_size != GDI_ERROR);
 	}
 
 	// store mapping information
-	FontMapping font_mapping = {mapping_start, font_size, hmapping};
-	pair<FontTable::const_iterator, bool> ret = loaded_fonts.insert(String2Mapping(curr_mapping_name, font_mapping));
+	font_mapping font_mapping = {mapping_start, font_size, hmapping};
+	pair<font_table::const_iterator, bool> ret = loaded_fonts.insert(string_to_mapping(curr_mapping_name, font_mapping));
 	curr_font_mapping = &ret.first->second;
 }
 
-void gdimm_Font::GetFontInfo(HDC hdc)
+void gdimm_font::load_font()
 {
-	// get font handle from hdc
-	curr_font_handle = (HFONT)GetCurrentObject(hdc, OBJ_FONT);
-	assert(curr_font_handle != NULL);
+	get_font_info(font_holder);
+}
 
-	return GetFontInfo();
+void gdimm_font::load_font(const TCHAR *font_name)
+{
+	lstrcpyn(curr_font_attr.lfFaceName, font_name, LF_FACESIZE);
+	HFONT linked_font = CreateFontIndirect(&curr_font_attr);
+	assert(CreateFontIndirect != NULL);
+	HDC hdc_mem = CreateCompatibleDC(font_holder);
+	SelectObject(hdc_mem, linked_font);
+	get_font_info(hdc_mem);
+	DeleteObject(linked_font);
+	DeleteObject(hdc_mem);
 }

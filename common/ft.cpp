@@ -2,20 +2,6 @@
 #include "ft.h"
 #include "font.h"
 
-void DebugOutput(const TCHAR *str)
-{
-	FILE *f = fopen("C:\\ft_debug.txt", "a+");
-	fwprintf(f, TEXT("%s\n"), str);
-	fclose(f);
-}
-
-void DebugOutput(DWORD num)
-{
-	FILE *f = fopen("C:\\ft_debug.txt", "a+");
-	fwprintf(f, TEXT("%u\n"), num);
-	fclose(f);
-}
-
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_CMapCache ft_cmap_cache;
@@ -51,8 +37,8 @@ void DestroyFreeType()
 
 FT_Error Face_Requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *aface)
 {
-	const FontMapping *font_mapping = (const FontMapping*)face_id;
-	FT_Error error = FT_New_Memory_Face(library, (const FT_Byte*)font_mapping->data_start, font_mapping->data_length, 0, aface);
+	const font_mapping *mapping = (const font_mapping*)face_id;
+	FT_Error error = FT_New_Memory_Face(library, (const FT_Byte*)mapping->data_start, mapping->data_length, 0, aface);
 	assert(error == 0);
 	return error;
 }

@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="demo"
-	ProjectGUID="{AE52AA92-3322-47F5-B9F3-ECB41B706540}"
+	ProjectGUID="{48C9B603-6B2B-4B07-9554-6E0FA5183F18}"
 	RootNamespace="demo"
 	Keyword="Win32Proj"
 	>
@@ -40,7 +40,6 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -48,7 +47,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -61,10 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\objs&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames="LIBCMT"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -119,13 +115,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -138,10 +132,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\objs&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames="LIBCMT"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -186,18 +177,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\font.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ft.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\hook.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -217,14 +196,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\test.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\text.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -236,27 +207,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\font.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\ft.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\hook.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Resource.h"
 				>
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\text.h"
 				>
 			</File>
 		</Filter>

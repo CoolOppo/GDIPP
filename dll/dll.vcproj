@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="dll"
-	ProjectGUID="{DF879F58-8656-4628-9669-7C976097BA29}"
+	ProjectGUID="{9AAA3D17-FE9B-4CE8-B79F-757C1ACAF31F}"
 	RootNamespace="dll"
 	Keyword="Win32Proj"
 	>
@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -48,7 +48,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib Rpcrt4.lib"
+				AdditionalDependencies="freetype.lib EasyHook32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\objs&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT"
@@ -119,13 +119,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)rpc&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook\Public&quot;;&quot;$(SolutionDir)common&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -138,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib Rpcrt4.lib"
+				AdditionalDependencies="freetype.lib EasyHook32.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\objs&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames="LIBCMT"
@@ -190,7 +189,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\fontlink.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\ft.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\global.cpp"
 				>
 			</File>
 			<File
@@ -232,15 +239,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\common\fontlink.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\ft.h"
 				>
 			</File>
 			<File
-				RelativePath="..\common\hook.h"
+				RelativePath="..\common\global.h"
 				>
 			</File>
 			<File
-				RelativePath="..\common\pstdint.h"
+				RelativePath="..\common\hook.h"
 				>
 			</File>
 			<File

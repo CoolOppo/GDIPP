@@ -1,10 +1,9 @@
 #include "stdafx.h"
-#include <cmath>
 #include "text.h"
+#include "global.h"
 #include "ft.h"
-#include "font.h"
-
-gdimm_Font font_manager;
+#include "fontlink.h"
+#include <cmath>
 
 struct COLORRGB
 {
@@ -27,39 +26,32 @@ inline int AlignUp(int num, int alignment)
 		return (num / alignment + 1) * alignment;
 }
 
-gdimm_Text::gdimm_Text()
+gdimm_text::gdimm_text(HDC hdc) : font(hdc)
 {
-	InitializeFreeType();
-
-	HRESULT hret = CoInitialize(NULL);
-	assert(SUCCEEDED(hret));
-	hret = CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMLangFontLink2, (LPVOID*)&mlang_fl);
-	assert(SUCCEEDED(hret));
+	text_hdc = hdc;
+	font.load_font();
+	original_fontname[0] = '\0';
 }
 
-gdimm_Text::~gdimm_Text()
+gdimm_text::~gdimm_text()
 {
-	mlang_fl->Release();
-	CoUninitialize();
-
-	DestroyFreeType();
 }
 
-void gdimm_Text::GetCurrentColors(HDC hdc)
+void gdimm_text::get_text_colors()
 {
 	// get foreground and background color
-	fg_color = GetTextColor(hdc);
+	fg_color = GetTextColor(text_hdc);
 	assert(fg_color != CLR_INVALID);
-	bg_color = GetBkColor(hdc);
+	bg_color = GetBkColor(text_hdc);
 	assert(bg_color != CLR_INVALID);
 }
 
-void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
+void gdimm_text::draw_bitmap_mono(FT_Bitmap bitmap, FT_Vector pos) const
 {
 	const int absPitch = abs(bitmap.pitch);
 
 	if (bitmap.pitch > 0)
-		pos.y += font_manager.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -71,12 +63,12 @@ void gdimm_Text::DrawBitmapMono(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
 			if (mono == 0)
 				continue;
 
-			SetPixel(hdc, pos.x + i, pos.y + j, fg_color);
+			SetPixel(text_hdc, pos.x + i, pos.y + j, fg_color);
 		}
 	}
 }
 
-void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
+void gdimm_text::draw_bitmap_256(FT_Bitmap bitmap, FT_Vector pos) const
 {
 	const int absPitch = abs(bitmap.pitch);
 	const COLORRGB fgRGB = REFTORGB(fg_color);
@@ -84,7 +76,7 @@ void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
 
 	// pitch > 0 means up flow, while Windows coordination is down flow
 	if (bitmap.pitch > 0)
-		pos.y += font_manager.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -101,19 +93,19 @@ void gdimm_Text::DrawBitmap256(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
 				(gray * fgRGB.g + (255 - gray) * bgRGB.g) / 255, 
 				(gray * fgRGB.b + (255 - gray) * bgRGB.b) / 255);
 
-			SetPixel(hdc, pos.x + i, pos.y + j, c);
+			SetPixel(text_hdc, pos.x + i, pos.y + j, c);
 		}
 	}
 }
 
-void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
+void gdimm_text::draw_bitmap_lcd(FT_Bitmap bitmap, FT_Vector pos) const
 {
 	const int absPitch = abs(bitmap.pitch);
 	const COLORRGB fgRGB = REFTORGB(fg_color);
 	const COLORRGB bgRGB = REFTORGB(bg_color);
 
 	if (bitmap.pitch > 0)
-		pos.y += font_manager.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
 
 	BITMAPINFO bmi;
 	memset(&bmi, 0, sizeof(bmi));
@@ -158,12 +150,12 @@ void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
 		}
 	}
 
-	HDC hdc_mem = CreateCompatibleDC(hdc);
-	HBITMAP hbmp = CreateDIBitmap(hdc, &bmi.bmiHeader, CBM_INIT, bmp_bits, &bmi, DIB_RGB_COLORS);
+	HDC hdc_mem = CreateCompatibleDC(text_hdc);
+	HBITMAP hbmp = CreateDIBitmap(text_hdc, &bmi.bmiHeader, CBM_INIT, bmp_bits, &bmi, DIB_RGB_COLORS);
 	SelectObject(hdc_mem, hbmp);
 
 	HBITMAP hmask = CreateBitmap(bmi.bmiHeader.biWidth, bitmap.rows, 1, 1, mask_bits);
-	BOOL b_ret = MaskBlt(hdc, pos.x, pos.y, bmi.bmiHeader.biWidth, bitmap.rows, hdc_mem, 0, 0, hmask, 0, 0, MAKEROP4(SRCCOPY, 0x00AA0029));
+	BOOL b_ret = MaskBlt(text_hdc, pos.x, pos.y, bmi.bmiHeader.biWidth, bitmap.rows, hdc_mem, 0, 0, hmask, 0, 0, MAKEROP4(SRCCOPY, 0x00AA0029));
 	assert(b_ret == TRUE);
 
 	DeleteObject(hmask);
@@ -173,33 +165,62 @@ void gdimm_Text::DrawBitmapLCD(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
 	delete[] bmp_bits;
 }
 
-void gdimm_Text::DrawBitmap(HDC hdc, FT_Bitmap bitmap, FT_Vector pos) const
+void gdimm_text::draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const
 {
 	switch(bitmap.pixel_mode)
 	{
 	case FT_PIXEL_MODE_MONO:
-		DrawBitmapMono(hdc, bitmap, pos);
+		draw_bitmap_mono(bitmap, pos);
 		break;
 	case FT_PIXEL_MODE_GRAY:
-		DrawBitmap256(hdc, bitmap, pos);
+		draw_bitmap_256(bitmap, pos);
 		break;
 	case FT_PIXEL_MODE_LCD:
-		DrawBitmapLCD(hdc, bitmap, pos);
+		draw_bitmap_lcd(bitmap, pos);
 		break;
 	}
 }
 
-BOOL gdimm_Text::StringOut(HDC hdc, const TCHAR *str, unsigned int count)
+void gdimm_text::draw_background(CONST RECT * lprect) const
 {
+	// get background rect geometry
+	const LONG rect_width = lprect->right - lprect->left;
+	const LONG rect_height = lprect->bottom - lprect->top;
+
+	// create brush with background color
+	COLORREF bg_color = GetBkColor(text_hdc);
+	assert(bg_color != CLR_INVALID);
+	HBRUSH bg_brush = CreateSolidBrush(bg_color);
+	assert(bg_brush != NULL);
+
+	// select new brush, and store old brush
+	HBRUSH old_brush = (HBRUSH) SelectObject(text_hdc, bg_brush);
+
+	// paint rect with brush
+	BOOL ret = PatBlt(text_hdc, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
+	assert(ret == TRUE);
+	DeleteObject(bg_brush);
+
+	// restore old brush
+	SelectObject(text_hdc, old_brush);
+}
+
+int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_index)
+{
+	if (fontlink_index > 0 && !fontlink(fontlink_index))
+		return 0;
+
+	get_text_colors();
+
 	FT_Error ft_error;
-	FTC_FaceID face_id = (FTC_FaceID) font_manager.curr_font_mapping;
+	FTC_FaceID face_id = (FTC_FaceID) font.curr_font_mapping;
 
 	FT_Face font_face;
 	ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &font_face);
 	assert(ft_error == 0);
 
 	FT_Size font_size;
-	FTC_ScalerRec cache_scale = {face_id, font_manager.curr_font_attr.lfWidth, font_manager.curr_font_attr.lfHeight, 1, 0, 0};
+	FTC_ScalerRec cache_scale = {face_id, font.curr_font_attr.lfWidth, font.curr_font_attr.lfHeight, 1, 0, 0};
 	ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 	assert(ft_error == 0);
 
@@ -209,12 +230,16 @@ BOOL gdimm_Text::StringOut(HDC hdc, const TCHAR *str, unsigned int count)
 
 	for (unsigned int i = 0; i < count; i++)
 	{
-		glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, str[i]);
-		assert(glyph_index != 0);
+		glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, text[i]);
+		if (glyph_index == 0)
+			return text_out(text + i, count - i, fontlink_index + 1);
 
 		FT_Glyph glyph;
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, NULL);
 		assert(ft_error == 0);
+
+		if (glyph->format < 0)
+			continue;
 
 		ft_error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, NULL, 0);
 		assert(ft_error == 0);
@@ -239,7 +264,7 @@ BOOL gdimm_Text::StringOut(HDC hdc, const TCHAR *str, unsigned int count)
 			glyph_cursor.y = cursor.y + curr_bmp.rows - bmp_glyph->top;
 
 			if (curr_bmp.width * curr_bmp.rows > 0)
-				DrawBitmap(hdc, curr_bmp, glyph_cursor);
+				draw_bitmap(curr_bmp, glyph_cursor);
 		}
 
 		// advance cursor
@@ -251,55 +276,19 @@ BOOL gdimm_Text::StringOut(HDC hdc, const TCHAR *str, unsigned int count)
 		FT_Done_Glyph(glyph);
 	}
 
-	return TRUE;
+	original_fontname[0] = NULL;
+	return font.curr_font_attr.lfHeight;
 }
 
-BOOL gdimm_Text::TextOut(HDC hdc, const TCHAR *text, unsigned int count)
+bool gdimm_text::fontlink(int link_index)
 {
-	// if the current font in hdc does not contain glyph for certain characters in the text
-	// use font link to fall back to another font
+	if (original_fontname[0] == '\0')
+		lstrcpyn(original_fontname, font.curr_font_attr.lfFaceName, LF_FACESIZE);
 
-	GetCurrentColors(hdc);
+	const TCHAR *linked_font_name = gdimm_fontlink::instance()->lookup(original_fontname, link_index);
+	if (linked_font_name == NULL)
+		return false;
 
-	// get hdc font code page
-	DWORD font_codepage;
-	font_manager.GetFontInfo(hdc);
-	HRESULT hret = mlang_fl->GetFontCodePages(hdc, font_manager.curr_font_handle, &font_codepage);
-	assert(SUCCEEDED(hret));
-
-	int str_start = 0;
-	while (count > 0)
-	{
-		// get text code page
-		DWORD str_codepage;
-		long processed;
-		hret = mlang_fl->GetStrCodePages(text + str_start, count, font_codepage, &str_codepage, &processed);
-		assert(SUCCEEDED(hret));
-
-		if (font_codepage != str_codepage)
-		{
-			// code page mismatch, fall back font
-
-			hret = mlang_fl->MapFont(hdc, str_codepage, 0, &font_manager.curr_font_handle);
-			assert(SUCCEEDED(hret));
-			font_manager.GetFontInfo();
-		}
-
-		BOOL ret = StringOut(hdc, text + str_start, processed);
-
-		if (font_codepage != str_codepage)
-		{
-			// release fall back font
-			hret = mlang_fl->ReleaseFont(font_manager.curr_font_handle);
-			assert(SUCCEEDED(hret));
-		}
-
-		if (!ret)
-			return FALSE;
-
-		str_start += processed;
-		count -= processed;
-	}
-
-	return TRUE;
+	font.load_font(linked_font_name);
+	return true;
 }

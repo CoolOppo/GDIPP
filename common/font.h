@@ -1,38 +1,23 @@
 #pragma once
 
-#include <map>
-#include <string>
-using namespace std;
+#include "global.h"
 
-// font mapping information
-struct FontMapping
-{
-	void *data_start;
-	DWORD data_length;
-	HANDLE file_mapping;
-};
-
-class gdimm_Font
+class gdimm_font
 {
 private:
-	// the font table maps the File Mapping name to the mapping information
-	typedef basic_string<TCHAR> t_string;
-	typedef pair<t_string, FontMapping> String2Mapping;
-	typedef map<t_string, FontMapping> FontTable;
-
-	FontTable loaded_fonts;
-	HDC font_holder;	// used to extract font information
+	HDC font_holder;
 	t_string curr_mapping_name;
 
-	void UpdateMappingName();
+	void get_mapping_name(HDC hdc);
+	void get_font_info(HDC hdc);
 
 public:
 	HFONT curr_font_handle;
 	LOGFONT curr_font_attr;
-	const FontMapping *curr_font_mapping;
+	const font_mapping *curr_font_mapping;
 
-	gdimm_Font();
-	~gdimm_Font();
-	void GetFontInfo();
-	void GetFontInfo(HDC hdc);
+	gdimm_font(HDC hdc);
+	//~gdimm_font();
+	void load_font();
+	void load_font(const TCHAR *font_name);
 };
