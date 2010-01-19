@@ -1,13 +1,6 @@
 #include "stdafx.h"
 #include "global.h"
 
-font_table loaded_fonts;
-
-bool operator<(const font_mapping &mapping1, const font_mapping &mapping2)
-{
-	return (memcmp(&mapping1, &mapping2, sizeof(font_mapping)) < 0);
-}
-
 BOOL is_font_true_type(HDC hdc)
 {
 	TEXTMETRIC metrics;

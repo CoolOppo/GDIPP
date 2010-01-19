@@ -1,18 +1,14 @@
 #pragma once
 
-#include "font.h"
-
-#include <ObjBase.h>
-#include <mlang.h>
-
 class gdimm_text
 {
-private:
 	HDC text_hdc;
-	gdimm_font font;
+	LOGFONT font_attr;
 	COLORREF fg_color;
 	COLORREF bg_color;
 
+	// for font linking
+	HFONT original_hfont;
 	TCHAR original_fontname[LF_FACESIZE];
 
 	void get_text_colors();
@@ -29,6 +25,6 @@ public:
 	gdimm_text(HDC hdc);
 	~gdimm_text();
 	void draw_background(CONST RECT * lprect) const;
-	int text_out(const TCHAR *text, unsigned int count, int fontlink_index = 0);
-	bool fontlink(int link_index);
+	int text_out(const TCHAR *text, unsigned int count, int fontlink_index = -1);
+	bool fontlink(int fontlink_index);
 };

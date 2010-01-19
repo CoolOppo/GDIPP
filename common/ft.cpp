@@ -14,9 +14,11 @@ void InitializeFreeType()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
+#ifdef NDEBUG
 	// enable FreeType LCD filter
 	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_DEFAULT);
 	assert(ft_error == 0);
+#endif
 
 	ft_error = FTC_Manager_New(ft_lib, 1, 0, 0, Face_Requester, NULL, &ft_cache_man);
 	assert(ft_error == 0);
@@ -37,8 +39,11 @@ void DestroyFreeType()
 
 FT_Error Face_Requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *aface)
 {
-	const font_mapping *mapping = (const font_mapping*)face_id;
-	FT_Error error = FT_New_Memory_Face(library, (const FT_Byte*)mapping->data_start, mapping->data_length, 0, aface);
-	assert(error == 0);
-	return error;
+	unsigned int font_index = (unsigned int)face_id;
+
+	FT_Open_Args args;
+	args.flags = FT_OPEN_STREAM;
+	args.stream = &(gdimm_font::instance().get_info(font_index).stream);
+	
+	return FT_Open_Face(library, &args, 0, aface);
 }

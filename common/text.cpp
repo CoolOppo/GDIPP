@@ -2,6 +2,7 @@
 #include "text.h"
 #include "global.h"
 #include "ft.h"
+#include "font.h"
 #include "fontlink.h"
 #include <cmath>
 
@@ -26,10 +27,9 @@ inline int AlignUp(int num, int alignment)
 		return (num / alignment + 1) * alignment;
 }
 
-gdimm_text::gdimm_text(HDC hdc) : font(hdc)
+gdimm_text::gdimm_text(HDC hdc)
 {
 	text_hdc = hdc;
-	font.load_font();
 	original_fontname[0] = '\0';
 }
 
@@ -51,7 +51,7 @@ void gdimm_text::draw_bitmap_mono(FT_Bitmap bitmap, FT_Vector pos) const
 	const int absPitch = abs(bitmap.pitch);
 
 	if (bitmap.pitch > 0)
-		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -76,7 +76,7 @@ void gdimm_text::draw_bitmap_256(FT_Bitmap bitmap, FT_Vector pos) const
 
 	// pitch > 0 means up flow, while Windows coordination is down flow
 	if (bitmap.pitch > 0)
-		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font_attr.lfHeight - bitmap.rows;
 
 	for (int j = 0; j < bitmap.rows; j++)
 	{
@@ -105,7 +105,7 @@ void gdimm_text::draw_bitmap_lcd(FT_Bitmap bitmap, FT_Vector pos) const
 	const COLORRGB bgRGB = REFTORGB(bg_color);
 
 	if (bitmap.pitch > 0)
-		pos.y += font.curr_font_attr.lfHeight - bitmap.rows;
+		pos.y += font_attr.lfHeight - bitmap.rows;
 
 	BITMAPINFO bmi;
 	memset(&bmi, 0, sizeof(bmi));
@@ -207,20 +207,22 @@ void gdimm_text::draw_background(CONST RECT * lprect) const
 
 int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_index)
 {
-	if (fontlink_index > 0 && !fontlink(fontlink_index))
+	if (fontlink_index >= 0 && !fontlink(fontlink_index))
 		return 0;
 
-	get_text_colors();
+	font_attr = gdimm_font::instance().get_font_attr(text_hdc);
+	t_string font_name = gdimm_font::instance().get_font_full_name(text_hdc);
+	unsigned int font_index = gdimm_font::instance().lookup_index(font_name, text_hdc);
 
 	FT_Error ft_error;
-	FTC_FaceID face_id = (FTC_FaceID) font.curr_font_mapping;
+	FTC_FaceID face_id = (FTC_FaceID) font_index;
 
 	FT_Face font_face;
 	ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &font_face);
 	assert(ft_error == 0);
 
 	FT_Size font_size;
-	FTC_ScalerRec cache_scale = {face_id, font.curr_font_attr.lfWidth, font.curr_font_attr.lfHeight, 1, 0, 0};
+	FTC_ScalerRec cache_scale = {face_id, font_attr.lfWidth, font_attr.lfHeight, 1, 0, 0};
 	ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 	assert(ft_error == 0);
 
@@ -228,8 +230,13 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 	const FT_Long has_kern = FT_HAS_KERNING(font_face);
 	//const FT_Long has_kern = FALSE;
 
+	get_text_colors();
+
 	for (unsigned int i = 0; i < count; i++)
 	{
+		if (text[i] == TEXT('&'))
+			continue;
+
 		glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, text[i]);
 		if (glyph_index == 0)
 			return text_out(text + i, count - i, fontlink_index + 1);
@@ -244,6 +251,7 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 		ft_error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, NULL, 0);
 		assert(ft_error == 0);
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
+
 
 		if (clip_rect == NULL ||
 			(cursor.x >= clip_rect->left && cursor.x <= clip_rect->right && cursor.y >= clip_rect->top && cursor.y <= clip_rect->bottom)
@@ -276,19 +284,34 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 		FT_Done_Glyph(glyph);
 	}
 
-	original_fontname[0] = NULL;
-	return font.curr_font_attr.lfHeight;
+	if (fontlink_index != -1)
+	{
+		SelectObject(text_hdc, original_hfont);
+	}
+
+	return font_attr.lfHeight;
 }
 
-bool gdimm_text::fontlink(int link_index)
+bool gdimm_text::fontlink(int fontlink_index)
 {
-	if (original_fontname[0] == '\0')
-		lstrcpyn(original_fontname, font.curr_font_attr.lfFaceName, LF_FACESIZE);
+	// first-time font linking
+	if (fontlink_index == 0)
+	{
+		original_hfont = (HFONT) GetCurrentObject(text_hdc, OBJ_FONT);
+		assert(original_hfont != NULL);
 
-	const TCHAR *linked_font_name = gdimm_fontlink::instance()->lookup(original_fontname, link_index);
+		lstrcpyn(original_fontname, font_attr.lfFaceName, LF_FACESIZE);
+	}
+
+	const TCHAR *linked_font_name = gdimm_fontlink::instance().lookup(original_fontname, fontlink_index);
 	if (linked_font_name == NULL)
 		return false;
 
-	font.load_font(linked_font_name);
+	lstrcpyn(font_attr.lfFaceName, linked_font_name, LF_FACESIZE);
+	HFONT linked_hfont = CreateFontIndirect(&font_attr);
+	assert(linked_hfont != NULL);
+
+	SelectObject(text_hdc, linked_hfont);
+
 	return true;
 }

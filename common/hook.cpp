@@ -16,6 +16,10 @@ BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 	if (!is_font_true_type(hdc))
 		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
 
+	// no text to render
+	if (lpString == NULL)
+		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
+
 	gdimm_text text(hdc);
 
 	// cursor position for the text
@@ -46,6 +50,9 @@ int WINAPI DrawTextExW_Hook(HDC hdc, LPWSTR lpchText, int cchText, LPRECT lprc, 
 	if (!is_font_true_type(hdc))
 		return DrawTextEx(hdc, lpchText, cchText, lprc, format, lpdtp);
 
+	if (format & DT_CALCRECT)
+		return DrawTextEx(hdc, lpchText, cchText, lprc, format, lpdtp);
+
 	if (cchText == -1)
 		cchText = lstrlen(lpchText);
 
@@ -69,7 +76,7 @@ int WINAPI DrawTextExW_Hook(HDC hdc, LPWSTR lpchText, int cchText, LPRECT lprc, 
 }
 
 // enumerate all the threads in the current process, except the excluded one
-BOOL gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) const
+BOOL _gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) const
 {
 	THREADENTRY32 te32;
 	te32.dwSize = sizeof(THREADENTRY32);
@@ -101,7 +108,7 @@ BOOL gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) co
 	return TRUE;
 }
 
-void gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_proc)
+void _gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	// pre-condition: the dll file <lib_name> must have been loaded in this process
 
@@ -119,9 +126,9 @@ void gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_proc
 	hook_handles.push_back(h_hook);
 }
 
-void gdimm_hook::hook()
+void _gdimm_hook::hook()
 {
-	int curr_thr_id = 0;//GetCurrentThreadId();
+	int curr_thr_id = 0; //GetCurrentThreadId();
 	// get all threads in this process
 	BOOL ret = enum_threads(NULL, &thread_count, curr_thr_id);
 	assert(ret == TRUE);
@@ -136,7 +143,7 @@ void gdimm_hook::hook()
 }
 
 // EasyHook unhook procedure
-void gdimm_hook::unhook() const
+void _gdimm_hook::unhook() const
 {
 	NTSTATUS eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);

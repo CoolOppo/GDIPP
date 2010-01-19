@@ -1,11 +1,11 @@
 #pragma once
 
+#include "global.h"
 #include <vector>
 using namespace std;
 
-class gdimm_hook
+class _gdimm_hook
 {
-private:
 	vector<TRACED_HOOK_HANDLE> hook_handles;
 	DWORD *threads;
 	DWORD thread_count;
@@ -17,3 +17,5 @@ public:
 	void hook();
 	void unhook() const;
 };
+
+typedef singleton<_gdimm_hook> gdimm_hook;
