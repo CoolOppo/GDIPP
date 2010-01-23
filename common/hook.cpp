@@ -7,72 +7,42 @@
 
 BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	// indicator for "no further language-specific processing is required" (from MSDN)
-	// no text is drawn
-	if (options & ETO_GLYPH_INDEX)
-		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
-
 	// draw non-TrueType fonts with original function
 	if (!is_font_true_type(hdc))
-		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
-	if (lpString == NULL)
-		return ExtTextOut(hdc, x, y, options, lprect, lpString, c, lpDx);
+	if (lpString == NULL || c == 0)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	gdimm_text text(hdc);
+
+	// assign clip rect
+	if (((options & ETO_CLIPPED) == 0))
+		text.clip_rect = NULL;
+	else
+	{
+		if (lprect && ((lprect->right - lprect->left == 0) || (lprect->bottom - lprect->top == 0)))
+			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+		text.clip_rect = lprect;
+	}
 
 	// cursor position for the text
 	text.cursor.x = x;
 	text.cursor.y = y;
 
-	// assign clip rect
-	if ((options & ETO_CLIPPED) == 0)
-		text.clip_rect = NULL;
-	else
-		text.clip_rect = lprect;
-
 	if ((options & ETO_OPAQUE) != 0)
 		text.draw_background(lprect);
 
 	text.distances = lpDx;
-
+	text.is_glyph_index = ((options & ETO_GLYPH_INDEX) != 0);
+	
 	int text_height = text.text_out(lpString, c);
 	if (text_height != 0)
 		return TRUE;
 	else
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-}
-
-int WINAPI DrawTextExW_Hook(HDC hdc, LPWSTR lpchText, int cchText, LPRECT lprc, UINT format, LPDRAWTEXTPARAMS lpdtp)
-{
-	// draw non-TrueType fonts with original function
-	if (!is_font_true_type(hdc))
-		return DrawTextEx(hdc, lpchText, cchText, lprc, format, lpdtp);
-
-	if (format & DT_CALCRECT)
-		return DrawTextEx(hdc, lpchText, cchText, lprc, format, lpdtp);
-
-	if (cchText == -1)
-		cchText = lstrlen(lpchText);
-
-	gdimm_text text(hdc);
-
-	text.cursor.x = lprc->left;
-	text.cursor.y = lprc->top;
-
-	if (format & DT_NOCLIP)
-		text.clip_rect = NULL;
-	else
-		text.clip_rect = lprc;
-
-	text.distances = NULL;
-
-	int text_height = text.text_out(lpchText, cchText);
-	if (text_height != 0)
-		return text_height;
-	else
-		return DrawTextEx(hdc, lpchText, cchText, lprc, format, lpdtp);
 }
 
 // enumerate all the threads in the current process, except the excluded one
@@ -114,12 +84,12 @@ void _gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_pro
 
 	HMODULE h_lib = GetModuleHandle(lib_name);
 	assert(h_lib != NULL);
+
 	// install hook with EasyHook
 	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
 	NTSTATUS eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
-	// enable hook in all threads
 	eh_error = LhSetInclusiveACL(threads, thread_count, h_hook);
 	assert(eh_error == 0);
 
@@ -128,8 +98,8 @@ void _gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_pro
 
 void _gdimm_hook::hook()
 {
-	int curr_thr_id = 0; //GetCurrentThreadId();
 	// get all threads in this process
+	int curr_thr_id = 0; //GetCurrentThreadId();
 	BOOL ret = enum_threads(NULL, &thread_count, curr_thr_id);
 	assert(ret == TRUE);
 	threads = new DWORD[thread_count];
@@ -137,7 +107,6 @@ void _gdimm_hook::hook()
 	assert(ret == TRUE);
 
 	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_Hook);
-	install_hook(TEXT("user32"), "DrawTextExW", DrawTextExW_Hook);
 
 	delete[] threads;
 }

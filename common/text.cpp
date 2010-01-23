@@ -234,12 +234,14 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 
 	for (unsigned int i = 0; i < count; i++)
 	{
-		if (text[i] == TEXT('&'))
-			continue;
-
-		glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, text[i]);
-		if (glyph_index == 0)
-			return text_out(text + i, count - i, fontlink_index + 1);
+		if (is_glyph_index)
+			glyph_index = text[i];
+		else
+		{
+			glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, text[i]);
+			if (glyph_index == 0)
+				return text_out(text + i, count - i, fontlink_index + 1);
+		}
 
 		FT_Glyph glyph;
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, NULL);
@@ -251,7 +253,6 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 		ft_error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_LCD, NULL, 0);
 		assert(ft_error == 0);
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
-
 
 		if (clip_rect == NULL ||
 			(cursor.x >= clip_rect->left && cursor.x <= clip_rect->right && cursor.y >= clip_rect->top && cursor.y <= clip_rect->bottom)
@@ -286,6 +287,7 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 
 	if (fontlink_index != -1)
 	{
+		// restore original font, which was replaced by fontlink
 		SelectObject(text_hdc, original_hfont);
 	}
 

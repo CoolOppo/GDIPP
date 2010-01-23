@@ -21,6 +21,7 @@ public:
 	FT_Vector cursor;
 	CONST RECT *clip_rect;
 	CONST INT *distances;
+	bool is_glyph_index;
 
 	gdimm_text(HDC hdc);
 	~gdimm_text();

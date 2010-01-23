@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "font.h"
+#include <mmsystem.h>
 
 #define mapping_name_prefix TEXT("Global\\gdimm_")
 
 // table name for GetFontData() to get whole ttc file data
-#define ttcf_header FT_MAKE_TAG('t', 't', 'c', 'f');
+#define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
 
 DWORD _gdimm_font::get_font_size(HDC hdc, DWORD *table_header)
 {
@@ -36,13 +37,13 @@ unsigned long _gdimm_font::stream_IoFunc(FT_Stream stream, unsigned long offset,
 
 	font_info info = gdimm_font::instance().loaded_fonts[stream->descriptor.value];
 
+	// use mapping
+	/*memcpy(buffer, (unsigned char*)info.mapping_start + offset, count);
+	return count;*/
+
 	DWORD read_size = GetFontData(info.hdc, info.table_header, offset, buffer, count);
 	assert(read_size != GDI_ERROR);
 	return read_size;
-
-	// mapping
-	/*memcpy(buffer, (unsigned char*)info.mapping_start + offset, count);
-	return count;*/
 }
 
 void _gdimm_font::stream_CloseFunc(FT_Stream stream)

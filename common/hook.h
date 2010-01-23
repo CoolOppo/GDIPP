@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.h"
+#include <easyhook.h>
 #include <vector>
 using namespace std;
 
