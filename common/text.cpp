@@ -29,7 +29,7 @@ inline int AlignUp(int num, int alignment)
 
 gdimm_text::gdimm_text(HDC hdc)
 {
-	text_hdc = hdc;
+	hdc_text = hdc;
 	original_fontname[0] = '\0';
 }
 
@@ -40,9 +40,9 @@ gdimm_text::~gdimm_text()
 void gdimm_text::get_text_colors()
 {
 	// get foreground and background color
-	fg_color = GetTextColor(text_hdc);
+	fg_color = GetTextColor(hdc_text);
 	assert(fg_color != CLR_INVALID);
-	bg_color = GetBkColor(text_hdc);
+	bg_color = GetBkColor(hdc_text);
 	assert(bg_color != CLR_INVALID);
 }
 
@@ -63,7 +63,7 @@ void gdimm_text::draw_bitmap_mono(FT_Bitmap bitmap, FT_Vector pos) const
 			if (mono == 0)
 				continue;
 
-			SetPixel(text_hdc, pos.x + i, pos.y + j, fg_color);
+			SetPixel(hdc_text, pos.x + i, pos.y + j, fg_color);
 		}
 	}
 }
@@ -93,76 +93,121 @@ void gdimm_text::draw_bitmap_256(FT_Bitmap bitmap, FT_Vector pos) const
 				(gray * fgRGB.g + (255 - gray) * bgRGB.g) / 255, 
 				(gray * fgRGB.b + (255 - gray) * bgRGB.b) / 255);
 
-			SetPixel(text_hdc, pos.x + i, pos.y + j, c);
+			SetPixel(hdc_text, pos.x + i, pos.y + j, c);
 		}
 	}
 }
 
 void gdimm_text::draw_bitmap_lcd(FT_Bitmap bitmap, FT_Vector pos) const
 {
+	const WORD src_byte_count = 3;	// 24-bit
+	const WORD dest_bit_count = 24;
+	const WORD dest_byte_count = dest_bit_count / 8;
+	const LONG px_width = bitmap.width / src_byte_count;
+	const LONG px_height = bitmap.rows;
 	const int absPitch = abs(bitmap.pitch);
+
 	const COLORRGB fgRGB = REFTORGB(fg_color);
 	const COLORRGB bgRGB = REFTORGB(bg_color);
 
 	if (bitmap.pitch > 0)
-		pos.y += font_attr.lfHeight - bitmap.rows;
+		pos.y += font_attr.lfHeight - px_height;
 
-	BITMAPINFO bmi;
-	memset(&bmi, 0, sizeof(bmi));
+	BITMAPINFO bmi = {0};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biBitCount = 24;
-	bmi.bmiHeader.biWidth = bitmap.width / (bmi.bmiHeader.biBitCount / 8);
-	bmi.bmiHeader.biHeight = -bitmap.rows;
+	bmi.bmiHeader.biBitCount = dest_bit_count;
+	bmi.bmiHeader.biWidth = px_width;
+	bmi.bmiHeader.biHeight = -px_height;
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biCompression = BI_RGB;
 
-	// assume bitmap.pitch is DWORD aligned
-	int bits_size = absPitch * bitmap.rows;
-	unsigned char *bmp_bits = new unsigned char[bits_size];
-	memset(bmp_bits, 0, bits_size);
+	HDC hdc_paint = CreateCompatibleDC(hdc_text);
+	assert(hdc_paint != NULL);
+	
+	BYTE *dest_bits;
+	HBITMAP dest_bitmap = CreateDIBSection(hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
+	assert(dest_bitmap != NULL);
 
-	// one bit for one pixel, new byte at each beginning of scanlines
-	int mask_bits_width = AlignUp(absPitch / 3 / 8, sizeof(WORD));
-	int mask_size = mask_bits_width * bitmap.rows;
-	unsigned char *mask_bits = new unsigned char[mask_size];
-	memset(mask_bits, 0, mask_size);
-
-	for (int j = 0; j < bitmap.rows; j++)
+	for (int j = 0; j < px_height; j++)
 	{
-		for (int i = 0; i < bitmap.width / 3; i++)
+		for (int i = 0; i < px_width; i++)
 		{
-			int bmp_ptr = j * absPitch + i*3;
+			int src_ptr = j * absPitch + i * src_byte_count;
+			int dest_ptr = src_ptr;
 
-			BYTE r = bitmap.buffer[bmp_ptr];
-			BYTE g = bitmap.buffer[bmp_ptr+1];
-			BYTE b = bitmap.buffer[bmp_ptr+2];
-
-			bmp_bits[bmp_ptr] = (b * fgRGB.b + (255 - b) * bgRGB.b) / 255;
-			bmp_bits[bmp_ptr+1] = (g * fgRGB.g + (255 - g) * bgRGB.g) / 255;
-			bmp_bits[bmp_ptr+2] = (r * fgRGB.r + (255 - r) * bgRGB.r) / 255;
-
-			if (r != 0 && g != 0 && b != 0)
-			{
-				int mask_ptr = j * mask_bits_width + i / 8;
-				int mask_pos = 7 - i % 8;
-				mask_bits[mask_ptr] |= (1 << mask_pos);
-			}
+			BYTE r = bitmap.buffer[src_ptr];
+			BYTE g = bitmap.buffer[src_ptr+1];
+			BYTE b = bitmap.buffer[src_ptr+2];
+			
+			dest_bits[dest_ptr] = (b * fgRGB.b + (255 - b) * bgRGB.b) / 255;
+			dest_bits[dest_ptr+1] = (g * fgRGB.g + (255 - g) * bgRGB.g) / 255;
+			dest_bits[dest_ptr+2] = (r * fgRGB.r + (255 - r) * bgRGB.r) / 255;
 		}
 	}
 
-	HDC hdc_mem = CreateCompatibleDC(text_hdc);
-	HBITMAP hbmp = CreateDIBitmap(text_hdc, &bmi.bmiHeader, CBM_INIT, bmp_bits, &bmi, DIB_RGB_COLORS);
-	SelectObject(hdc_mem, hbmp);
-
-	HBITMAP hmask = CreateBitmap(bmi.bmiHeader.biWidth, bitmap.rows, 1, 1, mask_bits);
-	BOOL b_ret = MaskBlt(text_hdc, pos.x, pos.y, bmi.bmiHeader.biWidth, bitmap.rows, hdc_mem, 0, 0, hmask, 0, 0, MAKEROP4(SRCCOPY, 0x00AA0029));
+	SelectObject(hdc_paint, dest_bitmap);
+	BOOL b_ret = TransparentBlt(hdc_text, pos.x, pos.y, px_width, px_height, hdc_paint, 0, 0, px_width, px_height, bg_color);
 	assert(b_ret == TRUE);
+	
+	DeleteObject(dest_bitmap);
+	DeleteDC(hdc_paint);
+}
 
-	DeleteObject(hmask);
-	DeleteObject(hbmp);
-	DeleteDC(hdc_mem);
-	delete[] mask_bits;
-	delete[] bmp_bits;
+void gdimm_text::draw_bitmap_dwm(FT_Bitmap bitmap, FT_Vector pos) const
+{
+	const WORD src_byte_count = 3;	// 24-bit
+	const WORD dest_bit_count = 32;
+	const WORD dest_byte_count = dest_bit_count / 8;
+	const LONG px_width = bitmap.width / src_byte_count;
+	const LONG padded_width = AlignUp(px_width * dest_byte_count, sizeof(DWORD));
+	const LONG px_height = bitmap.rows;
+	const int absPitch = abs(bitmap.pitch);
+
+	const COLORRGB fgRGB = REFTORGB(fg_color);
+	const COLORRGB bgRGB = REFTORGB(bg_color);
+
+	if (bitmap.pitch > 0)
+		pos.y += font_attr.lfHeight - px_height;
+
+	BITMAPINFO bmi = {0};
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biBitCount = dest_bit_count;
+	bmi.bmiHeader.biWidth = px_width;
+	bmi.bmiHeader.biHeight = -px_height;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biCompression = BI_RGB;
+
+	HDC hdc_paint = CreateCompatibleDC(hdc_text);
+	assert(hdc_paint != NULL);
+	
+	BYTE *dest_bits;
+	HBITMAP dest_bitmap = CreateDIBSection(hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
+	assert(dest_bitmap != NULL);
+
+	for (int j = 0; j < px_height; j++)
+	{
+		for (int i = 0; i < px_width; i++)
+		{
+			int src_ptr = j * absPitch + i * src_byte_count;
+			int dest_ptr = j * padded_width + i * dest_byte_count;
+
+			BYTE r = bitmap.buffer[src_ptr];
+			BYTE g = bitmap.buffer[src_ptr+1];
+			BYTE b = bitmap.buffer[src_ptr+2];
+			
+			dest_bits[dest_ptr] = (b * fgRGB.b + (255 - b) * bgRGB.b) / 255;
+			dest_bits[dest_ptr+1] = (g * fgRGB.g + (255 - g) * bgRGB.g) / 255;
+			dest_bits[dest_ptr+2] = (r * fgRGB.r + (255 - r) * bgRGB.r) / 255;
+			dest_bits[dest_ptr+3] = 0xff;
+		}
+	}
+
+	SelectObject(hdc_paint, dest_bitmap);
+	BOOL b_ret = TransparentBlt(hdc_text, pos.x, pos.y, px_width, px_height, hdc_paint, 0, 0, px_width, px_height, bg_color);
+	assert(b_ret == TRUE);
+	
+	DeleteObject(dest_bitmap);
+	DeleteDC(hdc_paint);
 }
 
 void gdimm_text::draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const
@@ -177,6 +222,7 @@ void gdimm_text::draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const
 		break;
 	case FT_PIXEL_MODE_LCD:
 		draw_bitmap_lcd(bitmap, pos);
+		//draw_bitmap_dwm(bitmap, pos);
 		break;
 	}
 }
@@ -188,21 +234,21 @@ void gdimm_text::draw_background(CONST RECT * lprect) const
 	const LONG rect_height = lprect->bottom - lprect->top;
 
 	// create brush with background color
-	COLORREF bg_color = GetBkColor(text_hdc);
+	COLORREF bg_color = GetBkColor(hdc_text);
 	assert(bg_color != CLR_INVALID);
 	HBRUSH bg_brush = CreateSolidBrush(bg_color);
 	assert(bg_brush != NULL);
 
 	// select new brush, and store old brush
-	HBRUSH old_brush = (HBRUSH) SelectObject(text_hdc, bg_brush);
+	HBRUSH old_brush = (HBRUSH) SelectObject(hdc_text, bg_brush);
 
 	// paint rect with brush
-	BOOL ret = PatBlt(text_hdc, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
+	BOOL ret = PatBlt(hdc_text, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
 	assert(ret == TRUE);
 	DeleteObject(bg_brush);
 
 	// restore old brush
-	SelectObject(text_hdc, old_brush);
+	SelectObject(hdc_text, old_brush);
 }
 
 int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_index)
@@ -210,9 +256,9 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 	if (fontlink_index >= 0 && !fontlink(fontlink_index))
 		return 0;
 
-	font_attr = gdimm_font::instance().get_font_attr(text_hdc);
-	t_string font_name = gdimm_font::instance().get_font_full_name(text_hdc);
-	unsigned int font_index = gdimm_font::instance().lookup_index(font_name, text_hdc);
+	font_attr = gdimm_font::instance().get_font_attr(hdc_text);
+	t_string font_name = gdimm_font::instance().get_font_full_name(hdc_text);
+	unsigned int font_index = gdimm_font::instance().lookup_index(font_name, hdc_text);
 
 	FT_Error ft_error;
 	FTC_FaceID face_id = (FTC_FaceID) font_index;
@@ -288,7 +334,7 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 	if (fontlink_index != -1)
 	{
 		// restore original font, which was replaced by fontlink
-		SelectObject(text_hdc, original_hfont);
+		SelectObject(hdc_text, original_hfont);
 	}
 
 	return font_attr.lfHeight;
@@ -299,7 +345,7 @@ bool gdimm_text::fontlink(int fontlink_index)
 	// first-time font linking
 	if (fontlink_index == 0)
 	{
-		original_hfont = (HFONT) GetCurrentObject(text_hdc, OBJ_FONT);
+		original_hfont = (HFONT) GetCurrentObject(hdc_text, OBJ_FONT);
 		assert(original_hfont != NULL);
 
 		lstrcpyn(original_fontname, font_attr.lfFaceName, LF_FACESIZE);
@@ -313,7 +359,7 @@ bool gdimm_text::fontlink(int fontlink_index)
 	HFONT linked_hfont = CreateFontIndirect(&font_attr);
 	assert(linked_hfont != NULL);
 
-	SelectObject(text_hdc, linked_hfont);
+	SelectObject(hdc_text, linked_hfont);
 
 	return true;
 }

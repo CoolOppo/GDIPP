@@ -119,13 +119,10 @@ unsigned int _gdimm_font::lookup_index(const t_string &font_full_name, HDC hdc)
 		unsigned int new_index = loaded_fonts.size();
 		font_indices[font_full_name] = new_index;
 
-		font_info new_font;
+		font_info new_font = {0};
 		new_font.hdc = hdc;
 
-		memset(&new_font.stream, 0, sizeof(new_font.stream));
-		new_font.stream.base = NULL;
 		new_font.stream.size = get_font_size(hdc, &new_font.table_header);
-		new_font.stream.pos = 0;
 		new_font.stream.descriptor.value = new_index;
 		new_font.stream.read = stream_IoFunc;
 		new_font.stream.close = stream_CloseFunc;

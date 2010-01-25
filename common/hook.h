@@ -12,11 +12,13 @@ class _gdimm_hook
 	DWORD thread_count;
 
 	BOOL enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude = 0) const;
-	void install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_proc);
+	bool install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 
 public:
 	void hook();
 	void unhook() const;
 };
+
+DWORD WINAPI create_hooks(LPVOID lpParameter);
 
 typedef singleton<_gdimm_hook> gdimm_hook;

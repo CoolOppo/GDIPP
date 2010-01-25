@@ -23,4 +23,5 @@ public:
 BOOL is_font_true_type(HDC hdc);
 
 void debug_output(const TCHAR *str);
+void debug_output(const TCHAR *str, unsigned int c);
 void debug_output(DWORD num);

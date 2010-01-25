@@ -4,6 +4,9 @@
 #include "stdafx.h"
 #include "hook.h"
 #include "ft.h"
+
+extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* InRemoteInfo) {}
+
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved

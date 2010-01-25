@@ -3,9 +3,10 @@
 #include "global.h"
 #include "text.h"
 #include "fontlink.h"
+#include <uxtheme.h>
 #include <tlhelp32.h>
 
-BOOL WINAPI ExtTextOutW_Hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	// draw non-TrueType fonts with original function
 	if (!is_font_true_type(hdc))
@@ -78,12 +79,13 @@ BOOL _gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) c
 	return TRUE;
 }
 
-void _gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_proc)
+bool _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	// pre-condition: the dll file <lib_name> must have been loaded in this process
-
+	
 	HMODULE h_lib = GetModuleHandle(lib_name);
-	assert(h_lib != NULL);
+	if (h_lib == NULL)
+		return false;
 
 	// install hook with EasyHook
 	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
@@ -94,26 +96,29 @@ void _gdimm_hook::install_hook(TCHAR *lib_name, LPCSTR proc_name, void *hook_pro
 	assert(eh_error == 0);
 
 	hook_handles.push_back(h_hook);
+
+	return true;
 }
 
 void _gdimm_hook::hook()
 {
 	// get all threads in this process
-	int curr_thr_id = 0; //GetCurrentThreadId();
-	BOOL ret = enum_threads(NULL, &thread_count, curr_thr_id);
+	int exclude_thr = 0; //GetCurrentThreadId();
+	BOOL ret = enum_threads(NULL, &thread_count, exclude_thr);
 	assert(ret == TRUE);
+
 	threads = new DWORD[thread_count];
-	ret = enum_threads(threads, &thread_count, curr_thr_id);
+	ret = enum_threads(threads, &thread_count, exclude_thr);
 	assert(ret == TRUE);
 
-	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_Hook);
-
-	delete[] threads;
+	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook);
 }
 
 // EasyHook unhook procedure
 void _gdimm_hook::unhook() const
 {
+	delete[] threads;
+
 	NTSTATUS eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);
 	eh_error = LhWaitForPendingRemovals();

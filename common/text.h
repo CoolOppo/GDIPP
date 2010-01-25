@@ -2,7 +2,7 @@
 
 class gdimm_text
 {
-	HDC text_hdc;
+	HDC hdc_text;
 	LOGFONT font_attr;
 	COLORREF fg_color;
 	COLORREF bg_color;
@@ -15,6 +15,7 @@ class gdimm_text
 	void draw_bitmap_mono(FT_Bitmap bitmap, FT_Vector pos) const;
 	void draw_bitmap_256(FT_Bitmap bitmap, FT_Vector pos) const;
 	void draw_bitmap_lcd(FT_Bitmap bitmap, FT_Vector pos) const;
+	void draw_bitmap_dwm(FT_Bitmap bitmap, FT_Vector pos) const;
 	void draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const;
 
 public:
