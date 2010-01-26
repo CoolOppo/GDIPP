@@ -143,6 +143,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 
+	LPCTSTR test_str = TEXT("Hello ≤‚ ‘“ª¥Œ World");
+
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -164,6 +166,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
+		ExtTextOut(hdc, 10, 10, 0, NULL, test_str, lstrlen(test_str), NULL);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "font.h"
+#include "font_man.h"
 #include <mmsystem.h>
 
 #define mapping_name_prefix TEXT("Global\\gdimm_")
@@ -7,7 +7,7 @@
 // table name for GetFontData() to get whole ttc file data
 #define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
 
-DWORD _gdimm_font::get_font_size(HDC hdc, DWORD *table_header)
+DWORD _gdimm_font_man::get_font_size(HDC hdc, DWORD *table_header)
 {
 	DWORD header = ttcf_header;
 
@@ -27,7 +27,7 @@ DWORD _gdimm_font::get_font_size(HDC hdc, DWORD *table_header)
 	return font_size;
 }
 
-unsigned long _gdimm_font::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
+unsigned long _gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
 {
 	// callback function, called when freetype requests font data
 
@@ -35,7 +35,7 @@ unsigned long _gdimm_font::stream_IoFunc(FT_Stream stream, unsigned long offset,
 	if (count == 0)
 		return 0;
 
-	font_info info = gdimm_font::instance().loaded_fonts[stream->descriptor.value];
+	font_info info = gdimm_font_man::instance().loaded_fonts[stream->descriptor.value];
 
 	// use mapping
 	/*memcpy(buffer, (unsigned char*)info.mapping_start + offset, count);
@@ -46,12 +46,12 @@ unsigned long _gdimm_font::stream_IoFunc(FT_Stream stream, unsigned long offset,
 	return read_size;
 }
 
-void _gdimm_font::stream_CloseFunc(FT_Stream stream)
+void _gdimm_font_man::stream_CloseFunc(FT_Stream stream)
 {
 
 }
 
-void _gdimm_font::use_mapping(const t_string &font_full_name)
+void _gdimm_font_man::use_mapping(const t_string &font_full_name)
 {
 	unsigned int font_index = font_indices[font_full_name];
 	font_info &info = loaded_fonts[font_index];
@@ -73,7 +73,7 @@ void _gdimm_font::use_mapping(const t_string &font_full_name)
 	}
 }
 
-LOGFONT _gdimm_font::get_font_attr(HDC hdc)
+LOGFONT _gdimm_font_man::get_font_attr(HDC hdc)
 {
 	HFONT curr_font_handle = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
 	assert(curr_font_handle != NULL);
@@ -91,7 +91,7 @@ LOGFONT _gdimm_font::get_font_attr(HDC hdc)
 	return font_attr;
 }
 
-t_string _gdimm_font::get_font_full_name(HDC hdc)
+t_string _gdimm_font_man::get_font_full_name(HDC hdc)
 {
 	// the mapping name consists of two parts: prefix and font full name
 	// prefix is fixed for all mapping names, defined in mapping_name_prefix
@@ -111,7 +111,7 @@ t_string _gdimm_font::get_font_full_name(HDC hdc)
 	return full_name;
 }
 
-unsigned int _gdimm_font::lookup_index(const t_string &font_full_name, HDC hdc)
+unsigned int _gdimm_font_man::lookup_index(const t_string &font_full_name, HDC hdc)
 {
 	map<t_string, unsigned int>::const_iterator iter = font_indices.find(font_full_name);
 	if (iter == font_indices.end())
@@ -140,7 +140,7 @@ unsigned int _gdimm_font::lookup_index(const t_string &font_full_name, HDC hdc)
 	}
 }
 
-font_info &_gdimm_font::get_info(unsigned int index)
+font_info &_gdimm_font_man::get_info(unsigned int index)
 {
 	return loaded_fonts[index];
 }

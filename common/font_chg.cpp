@@ -1,30 +1,31 @@
 #include "stdafx.h"
-#include "fontlink.h"
+#include "font_chg.h"
 #include <algorithm>
 
 #define MAX_KEY_NAME 255
 #define ERROR_MSG_LEN 1024
 
-_gdimm_fontlink::_gdimm_fontlink()
+_gdimm_font_chg::_gdimm_font_chg()
 {
-	get_fontlink_info();
+	get_font_link_info();
+	get_font_sub_info();
 }
 
-void _gdimm_fontlink::get_fontlink_info()
+void _gdimm_font_chg::get_font_link_info()
 {
 	// read font linking information from registry, and store in map
 
-	DWORD ret, enum_ret;
+	DWORD dw_ret, enum_ret;
 	DWORD curr_index;
 
 	const TCHAR *FontLink = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink");
 	const TCHAR *Fonts = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts");
 
 	HKEY key_fl, key_ft;
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, FontLink, 0, KEY_QUERY_VALUE, &key_fl);
-	assert(ret == ERROR_SUCCESS);
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, Fonts, 0, KEY_QUERY_VALUE, &key_ft);
-	assert(ret == ERROR_SUCCESS);
+	dw_ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, FontLink, 0, KEY_QUERY_VALUE, &key_fl);
+	assert(dw_ret == ERROR_SUCCESS);
+	dw_ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, Fonts, 0, KEY_QUERY_VALUE, &key_ft);
+	assert(dw_ret == ERROR_SUCCESS);
 
 	map<t_string, t_string> fonts_table;
 
@@ -108,13 +109,47 @@ void _gdimm_fontlink::get_fontlink_info()
 		curr_index++;
 	} while (enum_ret == ERROR_SUCCESS);
 
-	ret = RegCloseKey(key_ft);
-	assert(ret == ERROR_SUCCESS);
-	ret = RegCloseKey(key_fl);
-	assert(ret == ERROR_SUCCESS);
+	dw_ret = RegCloseKey(key_ft);
+	assert(dw_ret == ERROR_SUCCESS);
+	dw_ret = RegCloseKey(key_fl);
+	assert(dw_ret == ERROR_SUCCESS);
 }
 
-const TCHAR *_gdimm_fontlink::lookup(const TCHAR *font_name, size_t index) const
+void _gdimm_font_chg::get_font_sub_info()
+{
+	// read font substitutes information from registry, and store in map
+
+	DWORD dw_ret, enum_ret;
+	DWORD curr_index;
+
+	const TCHAR *FontSubstitutes = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes");
+
+	HKEY key_fs;
+	dw_ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, FontSubstitutes, 0, KEY_QUERY_VALUE, &key_fs);
+	assert(dw_ret == ERROR_SUCCESS);
+
+	curr_index = 0;
+	while (true)
+	{
+		TCHAR value_name[MAX_KEY_NAME];
+		TCHAR value_data[MAX_KEY_NAME];
+		DWORD name_len = MAX_KEY_NAME;
+		DWORD data_len = MAX_KEY_NAME;
+
+		enum_ret = RegEnumValue(key_fs, curr_index, value_name, &name_len, NULL, NULL, (BYTE*)value_data, &data_len);
+		if (enum_ret == ERROR_NO_MORE_ITEMS)
+			break;
+		assert(enum_ret == ERROR_SUCCESS);
+
+		fs_table[value_name] = value_data;
+		curr_index++;
+	} while (enum_ret == ERROR_SUCCESS);
+
+	dw_ret = RegCloseKey(key_fs);
+	assert(dw_ret == ERROR_SUCCESS);
+}
+
+const TCHAR *_gdimm_font_chg::fl_lookup(const TCHAR *font_name, size_t index) const
 {
 	fl_mapping::const_iterator iter = fl_table.find(font_name);
 
@@ -127,4 +162,14 @@ const TCHAR *_gdimm_fontlink::lookup(const TCHAR *font_name, size_t index) const
 		else
 			return NULL;
 	}
+}
+
+const TCHAR *_gdimm_font_chg::fs_lookup(const TCHAR *font_name) const
+{
+	fs_mapping::const_iterator iter = fs_table.find(font_name);
+
+	if (iter == fs_table.end())
+		return NULL;
+	else
+		return iter->second.c_str();
 }

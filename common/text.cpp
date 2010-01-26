@@ -2,8 +2,8 @@
 #include "text.h"
 #include "global.h"
 #include "ft.h"
-#include "font.h"
-#include "fontlink.h"
+#include "font_man.h"
+#include "font_chg.h"
 #include <cmath>
 
 struct COLORRGB
@@ -27,9 +27,15 @@ inline int AlignUp(int num, int alignment)
 		return (num / alignment + 1) * alignment;
 }
 
-gdimm_text::gdimm_text(HDC hdc)
+gdimm_text::gdimm_text(HDC hdc, int x, int y, CONST RECT *lprect, CONST INT *lpDx)
 {
 	hdc_text = hdc;
+	cursor.x = x;
+	cursor.y = y;
+	clip_rect = lprect;
+	distances = lpDx;
+
+	original_hfont = NULL;
 	original_fontname[0] = '\0';
 }
 
@@ -227,11 +233,11 @@ void gdimm_text::draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const
 	}
 }
 
-void gdimm_text::draw_background(CONST RECT * lprect) const
+void gdimm_text::draw_background() const
 {
 	// get background rect geometry
-	const LONG rect_width = lprect->right - lprect->left;
-	const LONG rect_height = lprect->bottom - lprect->top;
+	const LONG rect_width = clip_rect->right - clip_rect->left;
+	const LONG rect_height = clip_rect->bottom - clip_rect->top;
 
 	// create brush with background color
 	COLORREF bg_color = GetBkColor(hdc_text);
@@ -243,7 +249,7 @@ void gdimm_text::draw_background(CONST RECT * lprect) const
 	HBRUSH old_brush = (HBRUSH) SelectObject(hdc_text, bg_brush);
 
 	// paint rect with brush
-	BOOL ret = PatBlt(hdc_text, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
+	BOOL ret = PatBlt(hdc_text, clip_rect->left, clip_rect->top, rect_width, rect_height, PATCOPY);
 	assert(ret == TRUE);
 	DeleteObject(bg_brush);
 
@@ -251,14 +257,20 @@ void gdimm_text::draw_background(CONST RECT * lprect) const
 	SelectObject(hdc_text, old_brush);
 }
 
-int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_index)
+void gdimm_text::prepare()
 {
-	if (fontlink_index >= 0 && !fontlink(fontlink_index))
-		return 0;
+	font_attr = gdimm_font_man::instance().get_font_attr(hdc_text);
+	
+	// change font face name to the substituted one
+	const TCHAR *sub_font_name = gdimm_font_chg::instance().fs_lookup(font_attr.lfFaceName);
+	if (sub_font_name != NULL)
+		lstrcpyn(font_attr.lfFaceName, sub_font_name, LF_FACESIZE);
+}
 
-	font_attr = gdimm_font::instance().get_font_attr(hdc_text);
-	t_string font_name = gdimm_font::instance().get_font_full_name(hdc_text);
-	unsigned int font_index = gdimm_font::instance().lookup_index(font_name, hdc_text);
+void gdimm_text::text_out(const WCHAR *glyph_indices, unsigned int count)
+{
+	t_string font_name = gdimm_font_man::instance().get_font_full_name(hdc_text);
+	unsigned int font_index = gdimm_font_man::instance().lookup_index(font_name, hdc_text);
 
 	FT_Error ft_error;
 	FTC_FaceID face_id = (FTC_FaceID) font_index;
@@ -267,30 +279,22 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 	ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &font_face);
 	assert(ft_error == 0);
 
-	FT_Size font_size;
 	FTC_ScalerRec cache_scale = {face_id, font_attr.lfWidth, font_attr.lfHeight, 1, 0, 0};
+	FT_Size font_size;
 	ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 	assert(ft_error == 0);
 
-	FT_UInt glyph_index, prev = 0;
+	FT_UInt prev_glyph_index = 0;
 	const FT_Long has_kern = FT_HAS_KERNING(font_face);
 	//const FT_Long has_kern = FALSE;
 
 	get_text_colors();
 
+	// collect glyph bitmaps of all characters
 	for (unsigned int i = 0; i < count; i++)
 	{
-		if (is_glyph_index)
-			glyph_index = text[i];
-		else
-		{
-			glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, face_id, -1, text[i]);
-			if (glyph_index == 0)
-				return text_out(text + i, count - i, fontlink_index + 1);
-		}
-
 		FT_Glyph glyph;
-		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_index, &glyph, NULL);
+		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &cache_scale, FT_LOAD_DEFAULT, glyph_indices[i], &glyph, NULL);
 		assert(ft_error == 0);
 
 		if (glyph->format < 0)
@@ -308,8 +312,8 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 			if (has_kern)
 			{
 				FT_Vector kern;
-				FT_Get_Kerning(font_face, prev, glyph_index, FT_KERNING_DEFAULT, &kern);
-				prev = glyph_index;
+				FT_Get_Kerning(font_face, prev_glyph_index, glyph_indices[i], FT_KERNING_DEFAULT, &kern);
+				prev_glyph_index = glyph_indices[i];
 				cursor.x += kern.x >> 6;
 			}
 
@@ -331,19 +335,17 @@ int gdimm_text::text_out(const TCHAR *text, unsigned int count, int fontlink_ind
 		FT_Done_Glyph(glyph);
 	}
 
-	if (fontlink_index != -1)
+	if (original_hfont != NULL)
 	{
 		// restore original font, which was replaced by fontlink
 		SelectObject(hdc_text, original_hfont);
 	}
-
-	return font_attr.lfHeight;
 }
 
-bool gdimm_text::fontlink(int fontlink_index)
+bool gdimm_text::font_link(int font_link_index)
 {
 	// first-time font linking
-	if (fontlink_index == 0)
+	if (font_link_index == 0)
 	{
 		original_hfont = (HFONT) GetCurrentObject(hdc_text, OBJ_FONT);
 		assert(original_hfont != NULL);
@@ -351,7 +353,7 @@ bool gdimm_text::fontlink(int fontlink_index)
 		lstrcpyn(original_fontname, font_attr.lfFaceName, LF_FACESIZE);
 	}
 
-	const TCHAR *linked_font_name = gdimm_fontlink::instance().lookup(original_fontname, fontlink_index);
+	const TCHAR *linked_font_name = gdimm_font_chg::instance().fl_lookup(original_fontname, font_link_index);
 	if (linked_font_name == NULL)
 		return false;
 
@@ -360,6 +362,34 @@ bool gdimm_text::fontlink(int fontlink_index)
 	assert(linked_hfont != NULL);
 
 	SelectObject(hdc_text, linked_hfont);
+
+	return true;
+}
+
+bool gdimm_text::to_glyph_indices(const WCHAR *text, unsigned int count, WCHAR *glyph_indices)
+{
+	int fl_index = 0;
+
+	while (true)
+	{
+		DWORD dw_ret = GetGlyphIndices(hdc_text, text, count, (WORD*) glyph_indices, GGI_MARK_NONEXISTING_GLYPHS);
+		assert(dw_ret != GDI_ERROR);
+
+		bool need_fl = false;
+		for (unsigned int i = 0; i < count; i++)
+		{
+			if (glyph_indices[i] == 0xffff)
+			{
+				need_fl = true;
+				break;
+			}
+		}
+		
+		if (!need_fl)
+			break;
+		else if (!font_link(fl_index++))
+			return false;
+	}
 
 	return true;
 }

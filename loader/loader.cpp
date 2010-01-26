@@ -53,7 +53,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-	LPCTSTR target_proc = TEXT("dwm.exe");
+	LPCTSTR target_proc = TEXT("notepad.exe");
 	LPCTSTR target_path = TEXT("C:\\Windows\\notepad.exe");
 
 	DWORD dw_ret;

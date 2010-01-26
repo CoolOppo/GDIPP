@@ -13,7 +13,7 @@ struct font_info
 	LPVOID mapping_start;
 };
 
-class _gdimm_font
+class _gdimm_font_man
 {
 	// face name -> face id
 	map<t_string, unsigned int> font_indices;
@@ -32,4 +32,4 @@ public:
 	font_info &get_info(unsigned int id);
 };
 
-typedef singleton<_gdimm_font> gdimm_font;
+typedef singleton<_gdimm_font_man> gdimm_font_man;

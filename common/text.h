@@ -3,6 +3,10 @@
 class gdimm_text
 {
 	HDC hdc_text;
+	FT_Vector cursor;
+	CONST RECT *clip_rect;
+	CONST INT *distances;
+
 	LOGFONT font_attr;
 	COLORREF fg_color;
 	COLORREF bg_color;
@@ -19,14 +23,11 @@ class gdimm_text
 	void draw_bitmap(FT_Bitmap bitmap, FT_Vector pos) const;
 
 public:
-	FT_Vector cursor;
-	CONST RECT *clip_rect;
-	CONST INT *distances;
-	bool is_glyph_index;
-
-	gdimm_text(HDC hdc);
+	gdimm_text(HDC hdc, int x, int y, CONST RECT *lprect, CONST INT *lpDx);
 	~gdimm_text();
-	void draw_background(CONST RECT * lprect) const;
-	int text_out(const TCHAR *text, unsigned int count, int fontlink_index = -1);
-	bool fontlink(int fontlink_index);
+	void draw_background() const;
+	void prepare();
+	void text_out(const WCHAR *glyph_indices, unsigned int count);
+	bool font_link(int font_link_index);
+	bool to_glyph_indices(LPCWSTR text, unsigned int count, WCHAR *glyph_indices);
 };

@@ -1,10 +1,9 @@
 #include "stdafx.h"
 #include "ft.h"
-#include "font.h"
+#include "font_man.h"
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
-FTC_CMapCache ft_cmap_cache;
 FTC_ImageCache ft_glyph_cache;
 
 void InitializeFreeType()
@@ -21,9 +20,6 @@ void InitializeFreeType()
 #endif
 
 	ft_error = FTC_Manager_New(ft_lib, 1, 0, 0, Face_Requester, NULL, &ft_cache_man);
-	assert(ft_error == 0);
-
-	ft_error = FTC_CMapCache_New(ft_cache_man, &ft_cmap_cache);
 	assert(ft_error == 0);
 
 	ft_error = FTC_ImageCache_New(ft_cache_man, &ft_glyph_cache);
@@ -43,7 +39,7 @@ FT_Error Face_Requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 
 	FT_Open_Args args;
 	args.flags = FT_OPEN_STREAM;
-	args.stream = &(gdimm_font::instance().get_info(font_index).stream);
+	args.stream = &(gdimm_font_man::instance().get_info(font_index).stream);
 	
 	return FT_Open_Face(library, &args, 0, aface);
 }

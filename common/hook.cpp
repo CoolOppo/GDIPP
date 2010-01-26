@@ -2,8 +2,7 @@
 #include "hook.h"
 #include "global.h"
 #include "text.h"
-#include "fontlink.h"
-#include <uxtheme.h>
+#include "font_chg.h"
 #include <tlhelp32.h>
 
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
@@ -16,34 +15,44 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	gdimm_text text(hdc);
-
-	// assign clip rect
-	if (((options & ETO_CLIPPED) == 0))
-		text.clip_rect = NULL;
-	else
+	if ((options & ETO_CLIPPED) != 0)
 	{
-		if (lprect && ((lprect->right - lprect->left == 0) || (lprect->bottom - lprect->top == 0)))
+		assert(lprect != NULL);
+		
+		// completely clipped
+		if ((lprect->right == lprect->left) || (lprect->bottom == lprect->top))
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-		text.clip_rect = lprect;
 	}
 
-	// cursor position for the text
-	text.cursor.x = x;
-	text.cursor.y = y;
+	gdimm_text text(hdc, x, y, lprect, lpDx);
 
 	if ((options & ETO_OPAQUE) != 0)
-		text.draw_background(lprect);
+		text.draw_background();
 
-	text.distances = lpDx;
-	text.is_glyph_index = ((options & ETO_GLYPH_INDEX) != 0);
-	
-	int text_height = text.text_out(lpString, c);
-	if (text_height != 0)
-		return TRUE;
-	else
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	const WCHAR *str = lpString;
+	WCHAR *glyph_indices = NULL;
+
+	text.prepare();
+
+	if ((options & ETO_GLYPH_INDEX) == 0)
+	{
+		glyph_indices = new WCHAR[c];
+
+		if (text.to_glyph_indices(lpString, c, glyph_indices))
+			str = glyph_indices;
+		else
+		{
+			delete[] glyph_indices;
+			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		}
+	}
+
+	text.text_out(str, c);
+
+	if (glyph_indices != NULL)
+		delete[] glyph_indices;
+
+	return TRUE;
 }
 
 // enumerate all the threads in the current process, except the excluded one
