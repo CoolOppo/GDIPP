@@ -72,7 +72,7 @@ CAPTION "About demo"
 FONT 8, "Tahoma"
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "demo, ≤‚ ‘§À§€§Û§¥ Test",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "demo ¿¥≤‚ ‘§À§€§Û§¥ƒ‹∑Òœ‘ æ Test",IDC_STATIC,42,14,114,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,42,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END

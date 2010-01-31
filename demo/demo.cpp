@@ -6,6 +6,9 @@
 
 #define MAX_LOADSTRING 100
 
+#define render
+#define test
+
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
@@ -34,9 +37,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_DEMO, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
+#ifdef render
 	HMODULE h_gdimm = LoadLibrary(TEXT("dll.dll"));
 	if (h_gdimm == NULL)
 		return GetLastError();
+#endif
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow))
@@ -56,7 +61,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		}
 	}
 
+#ifdef render
 	FreeLibrary(h_gdimm);
+#endif
 
 	return (int) msg.wParam;
 }
@@ -166,7 +173,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
+
+#ifdef test
 		ExtTextOut(hdc, 10, 10, 0, NULL, test_str, lstrlen(test_str), NULL);
+#endif
+
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:

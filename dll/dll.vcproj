@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -65,7 +65,7 @@
 				AdditionalDependencies="EasyHook32.lib msimg32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames="LIBCMTD"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -182,7 +182,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\font_chg.cpp"
+				RelativePath="..\common\font_link.cpp"
 				>
 			</File>
 			<File
@@ -232,7 +232,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\common\font_chg.h"
+				RelativePath="..\common\font_link.h"
 				>
 			</File>
 			<File

@@ -16,13 +16,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
-		InitializeFreeType();
+		initialize_freetype();
 		gdimm_hook::instance().hook();
 		break;
 
 	case DLL_PROCESS_DETACH:
 		gdimm_hook::instance().unhook();
-		DestroyFreeType();
+		destroy_freetype();
 		break;
 	}
 	return TRUE;

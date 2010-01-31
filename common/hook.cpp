@@ -2,15 +2,11 @@
 #include "hook.h"
 #include "global.h"
 #include "text.h"
-#include "font_chg.h"
+#include "font_link.h"
 #include <tlhelp32.h>
 
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	// draw non-TrueType fonts with original function
-	if (!is_font_true_type(hdc))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
 	// no text to render
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -24,33 +20,37 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	gdimm_text text(hdc, x, y, lprect, lpDx);
+	gdimm_text text(hdc, x, y);
+	
+	// draw non-TrueType fonts with original function
+	if (!text.is_font_true_type())
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if ((options & ETO_OPAQUE) != 0)
-		text.draw_background();
-
-	const WCHAR *str = lpString;
-	WCHAR *glyph_indices = NULL;
-
-	text.prepare();
+		text.draw_background(lprect);
 
 	if ((options & ETO_GLYPH_INDEX) == 0)
 	{
-		glyph_indices = new WCHAR[c];
+		if (c > 2)
+			int a = 0;
 
-		if (text.to_glyph_indices(lpString, c, glyph_indices))
-			str = glyph_indices;
-		else
+		WCHAR *glyph_indices = new WCHAR[c];
+		wmemset(glyph_indices, 0xffff, c);
+
+		unsigned int start = 0;
+		while (start < c)
 		{
-			delete[] glyph_indices;
-			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+			unsigned int processed = text.to_glyph_indices(lpString, start, c, glyph_indices);
+			if (processed == 0)
+				break;
+			
+			text.text_out(glyph_indices + start, processed, lprect, lpDx);
+			start += processed;
 		}
-	}
-
-	text.text_out(str, c);
-
-	if (glyph_indices != NULL)
 		delete[] glyph_indices;
+	}
+	else
+		text.text_out(lpString, c, lprect, lpDx);
 
 	return TRUE;
 }
@@ -101,10 +101,10 @@ bool _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 	NTSTATUS eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
-	eh_error = LhSetInclusiveACL(threads, thread_count, h_hook);
+	eh_error = LhSetInclusiveACL(_thread_ids, _thread_count, h_hook);
 	assert(eh_error == 0);
 
-	hook_handles.push_back(h_hook);
+	_hook_handles.push_back(h_hook);
 
 	return true;
 }
@@ -113,12 +113,12 @@ void _gdimm_hook::hook()
 {
 	// get all threads in this process
 	int exclude_thr = 0; //GetCurrentThreadId();
-	BOOL ret = enum_threads(NULL, &thread_count, exclude_thr);
-	assert(ret == TRUE);
+	BOOL b_ret = enum_threads(NULL, &_thread_count, exclude_thr);
+	assert(b_ret);
 
-	threads = new DWORD[thread_count];
-	ret = enum_threads(threads, &thread_count, exclude_thr);
-	assert(ret == TRUE);
+	_thread_ids = new DWORD[_thread_count];
+	b_ret = enum_threads(_thread_ids, &_thread_count, exclude_thr);
+	assert(b_ret);
 
 	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook);
 }
@@ -126,13 +126,13 @@ void _gdimm_hook::hook()
 // EasyHook unhook procedure
 void _gdimm_hook::unhook() const
 {
-	delete[] threads;
+	delete[] _thread_ids;
 
 	NTSTATUS eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);
 	eh_error = LhWaitForPendingRemovals();
 	assert(eh_error == 0);
 
-	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = hook_handles.begin(); iter != hook_handles.end(); iter++)
+	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = _hook_handles.begin(); iter != _hook_handles.end(); iter++)
 		delete *iter;
 }

@@ -1,17 +1,16 @@
 #include "stdafx.h"
-#include "font_chg.h"
+#include "font_link.h"
 #include <algorithm>
 
 #define MAX_KEY_NAME 255
 #define ERROR_MSG_LEN 1024
 
-_gdimm_font_chg::_gdimm_font_chg()
+_gdimm_font_link::_gdimm_font_link()
 {
 	get_font_link_info();
-	get_font_sub_info();
 }
 
-void _gdimm_font_chg::get_font_link_info()
+void _gdimm_font_link::get_font_link_info()
 {
 	// read font linking information from registry, and store in map
 
@@ -38,7 +37,7 @@ void _gdimm_font_chg::get_font_link_info()
 		DWORD name_len = MAX_KEY_NAME;
 		DWORD data_len = MAX_PATH;
 
-		enum_ret = RegEnumValue(key_ft, curr_index, value_name, &name_len, NULL, NULL, (BYTE*)value_data, &data_len);
+		enum_ret = RegEnumValue(key_ft, curr_index, value_name, &name_len, NULL, NULL, (BYTE*) value_data, &data_len);
 		if (enum_ret == ERROR_NO_MORE_ITEMS)
 			break;
 		assert(enum_ret == ERROR_SUCCESS);
@@ -68,8 +67,8 @@ void _gdimm_font_chg::get_font_link_info()
 		assert(enum_ret == ERROR_SUCCESS);
 
 		name_len = MAX_KEY_NAME;
-		value_data = (TCHAR*)malloc(data_len);
-		enum_ret = RegEnumValue(key_fl, curr_index, value_name, &name_len, NULL, NULL, (BYTE*)value_data, &data_len);
+		value_data = (TCHAR*) malloc(data_len);
+		enum_ret = RegEnumValue(key_fl, curr_index, value_name, &name_len, NULL, NULL, (BYTE*) value_data, &data_len);
 		assert(enum_ret == ERROR_SUCCESS);
 
 		size_t line_start = 0;
@@ -104,7 +103,7 @@ void _gdimm_font_chg::get_font_link_info()
 			line_start += curr_font.length() + 1;
 		}
 
-		fl_table[value_name] = font_list;
+		_fl_table[value_name] = font_list;
 		free(value_data);
 		curr_index++;
 	} while (enum_ret == ERROR_SUCCESS);
@@ -115,45 +114,11 @@ void _gdimm_font_chg::get_font_link_info()
 	assert(dw_ret == ERROR_SUCCESS);
 }
 
-void _gdimm_font_chg::get_font_sub_info()
+const TCHAR *_gdimm_font_link::lookup(const TCHAR *font_name, size_t index) const
 {
-	// read font substitutes information from registry, and store in map
+	fl_mapping::const_iterator iter = _fl_table.find(font_name);
 
-	DWORD dw_ret, enum_ret;
-	DWORD curr_index;
-
-	const TCHAR *FontSubstitutes = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes");
-
-	HKEY key_fs;
-	dw_ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, FontSubstitutes, 0, KEY_QUERY_VALUE, &key_fs);
-	assert(dw_ret == ERROR_SUCCESS);
-
-	curr_index = 0;
-	while (true)
-	{
-		TCHAR value_name[MAX_KEY_NAME];
-		TCHAR value_data[MAX_KEY_NAME];
-		DWORD name_len = MAX_KEY_NAME;
-		DWORD data_len = MAX_KEY_NAME;
-
-		enum_ret = RegEnumValue(key_fs, curr_index, value_name, &name_len, NULL, NULL, (BYTE*)value_data, &data_len);
-		if (enum_ret == ERROR_NO_MORE_ITEMS)
-			break;
-		assert(enum_ret == ERROR_SUCCESS);
-
-		fs_table[value_name] = value_data;
-		curr_index++;
-	} while (enum_ret == ERROR_SUCCESS);
-
-	dw_ret = RegCloseKey(key_fs);
-	assert(dw_ret == ERROR_SUCCESS);
-}
-
-const TCHAR *_gdimm_font_chg::fl_lookup(const TCHAR *font_name, size_t index) const
-{
-	fl_mapping::const_iterator iter = fl_table.find(font_name);
-
-	if (iter == fl_table.end())
+	if (iter == _fl_table.end())
 		return NULL;
 	else
 	{
@@ -162,14 +127,4 @@ const TCHAR *_gdimm_font_chg::fl_lookup(const TCHAR *font_name, size_t index) co
 		else
 			return NULL;
 	}
-}
-
-const TCHAR *_gdimm_font_chg::fs_lookup(const TCHAR *font_name) const
-{
-	fs_mapping::const_iterator iter = fs_table.find(font_name);
-
-	if (iter == fs_table.end())
-		return NULL;
-	else
-		return iter->second.c_str();
 }

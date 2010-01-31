@@ -16,19 +16,17 @@ struct font_info
 class _gdimm_font_man
 {
 	// face name -> face id
-	map<t_string, unsigned int> font_indices;
+	map<t_string, unsigned int> _font_indices;
 	// face id -> face info
-	map<unsigned int, font_info> loaded_fonts;
+	map<unsigned int, font_info> _loaded_fonts;
 
 	static DWORD get_font_size(HDC hdc, DWORD *table_header);
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_CloseFunc(FT_Stream stream);
-	void use_mapping(const t_string &font_full_name);
+	void use_mapping(const TCHAR *font_full_name);
 
 public:
-	static LOGFONT get_font_attr(HDC hdc);
-	static t_string get_font_full_name(HDC hdc);
-	unsigned int lookup_index(const t_string &font_full_name, HDC hdc);
+	unsigned int lookup_index(HDC hdc, const TCHAR *font_full_name);
 	font_info &get_info(unsigned int id);
 };
 
