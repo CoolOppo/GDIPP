@@ -7,6 +7,9 @@
 
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
+	//if ((options & ETO_GLYPH_INDEX) != 0 || c <= 2)
+	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
 	// no text to render
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -20,37 +23,15 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	gdimm_text text(hdc, x, y);
-	
-	// draw non-TrueType fonts with original function
-	if (!text.is_font_true_type())
+	gdimm_text::instance().init(hdc, x, y);
+
+	if (!gdimm_text::instance().is_true_type())
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if ((options & ETO_OPAQUE) != 0)
-		text.draw_background(lprect);
+		gdimm_text::instance().draw_background(lprect);
 
-	if ((options & ETO_GLYPH_INDEX) == 0)
-	{
-		if (c > 2)
-			int a = 0;
-
-		WCHAR *glyph_indices = new WCHAR[c];
-		wmemset(glyph_indices, 0xffff, c);
-
-		unsigned int start = 0;
-		while (start < c)
-		{
-			unsigned int processed = text.to_glyph_indices(lpString, start, c, glyph_indices);
-			if (processed == 0)
-				break;
-			
-			text.text_out(glyph_indices + start, processed, lprect, lpDx);
-			start += processed;
-		}
-		delete[] glyph_indices;
-	}
-	else
-		text.text_out(lpString, c, lprect, lpDx);
+	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX);
 
 	return TRUE;
 }
