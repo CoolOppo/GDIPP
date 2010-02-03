@@ -30,15 +30,6 @@ inline FT_F26Dot6 fix_to_26dot6(const FIXED &fx)
 	return *(LONG*)(&fx) >> 10;
 }
 
-inline void minimize_origin(const FT_Vector &new_point, FT_Vector &origin)
-{
-	if (new_point.x < origin.x)
-		origin.x = new_point.x;
-	
-	if (new_point.y < origin.y)
-		origin.y = new_point.y;
-}
-
 template <typename T>
 inline char sign(T n)
 {
@@ -221,14 +212,13 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			vector<short> contour_pos;
 
 			DWORD header_off = 0;
-			FT_Vector outline_origin = {LONG_MAX, LONG_MAX};
 			do
 			{
 				BYTE *header_ptr = outline_buf + header_off;
 				TTPOLYGONHEADER *header = (TTPOLYGONHEADER*) header_ptr;
 				FT_Vector start_pt = {fix_to_26dot6(header->pfxStart.x), fix_to_26dot6(header->pfxStart.y)};
 				points.push_back(start_pt);
-				minimize_origin(start_pt, outline_origin);
+				tags.push_back(FT_CURVE_TAG_ON);
 
 				DWORD curve_off = sizeof(TTPOLYGONHEADER);
 				while (curve_off < header->cb)
@@ -255,7 +245,6 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 						FT_Vector curr_pt = {fix_to_26dot6(curve->apfx[j].x), fix_to_26dot6(curve->apfx[j].y)};
 						points.push_back(curr_pt);
 						tags.push_back(curr_tag);
-						minimize_origin(curr_pt, outline_origin);
 					}
 					
 					curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
@@ -266,6 +255,8 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			} while (header_off < outline_buf_len);
 
 			delete[] outline_buf;
+
+			assert(points.size() == tags.size());
 			
 			FT_OutlineGlyphRec outline_glyph = 
 			{
@@ -287,12 +278,17 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			};
 
 			FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
-			outline_origin.x = -outline_origin.x;
-			outline_origin.y = -outline_origin.y;
-			FT_Glyph_To_Bitmap(&generic_glyph, FT_RENDER_MODE_LCD, NULL, FALSE);
+			FT_Error ft_error = FT_Glyph_To_Bitmap(&generic_glyph, FT_RENDER_MODE_LCD, NULL, FALSE);
+			assert(ft_error == 0);
 			FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) generic_glyph;
 
+			if (bmp_glyph->bitmap.pitch == 0)
+			{
+				debug_output(ft_error);
+				debug_output(TEXT(""));
+			}
 			draw_glyph_lcd(bmp_glyph);
+			FT_Done_Glyph(generic_glyph);
 		}
 
 		// advance cursor

@@ -2,7 +2,6 @@
 
 #include "global.h"
 #include <map>
-
 using namespace std;
 
 struct font_info

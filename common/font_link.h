@@ -3,7 +3,6 @@
 #include "global.h"
 #include <map>
 #include <vector>
-
 using namespace std;
 
 class _gdimm_font_link
