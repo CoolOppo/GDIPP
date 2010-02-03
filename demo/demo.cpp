@@ -7,7 +7,7 @@
 #define MAX_LOADSTRING 100
 
 #define render
-//#define test
+#define test
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -150,7 +150,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 
-	LPCTSTR test_str = TEXT("测试一下");//TEXT("Hello 测试一次 World");
+	LPCTSTR test_str = TEXT("Hello测试文字GgJjQq");
 
 	switch (message)
 	{

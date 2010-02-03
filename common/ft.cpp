@@ -13,11 +13,9 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-#ifdef NDEBUG
 	// enable FreeType LCD filter
-	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_DEFAULT);
+	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_LIGHT);
 	assert(ft_error == 0);
-#endif
 
 	ft_error = FTC_Manager_New(ft_lib, 1, 0, 0, face_requester, NULL, &ft_cache_man);
 	assert(ft_error == 0);

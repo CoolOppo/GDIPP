@@ -2,21 +2,18 @@
 #include "text.h"
 #include "global.h"
 #include "ft.h"
+#include "font_man.h"
 #include <cmath>
 #include <limits.h>
 #include <vector>
 using namespace std;
 
-struct COLORRGB
-{
-	BYTE r;
-	BYTE g;
-	BYTE b;
-	BYTE pad;
-};
-#define REFTORGB(ref) (*((COLORRGB*) &ref))
+// helper definitions
 
+#define REFTORGB(ref) (*((COLORRGB*) &ref))
 #define AlignDown(num, alignment) (num - num & (alignment -	1))
+
+// helper functions
 
 inline int AlignUp(int num, int alignment)
 {
@@ -28,102 +25,151 @@ inline int AlignUp(int num, int alignment)
 		return (num / alignment + 1) * alignment;
 }
 
-FT_F26Dot6 _gdimm_text::fix_to_26dot6(const FIXED &fx)
+inline FT_F26Dot6 fix_to_26dot6(const FIXED &fx)
 {
 	return *(LONG*)(&fx) >> 10;
 }
 
-void _gdimm_text::minimize_origin(const FT_Vector &new_pt, FT_Vector &origin)
+inline void minimize_origin(const FT_Vector &new_point, FT_Vector &origin)
 {
-	if (new_pt.x < origin.x)
-		origin.x = new_pt.x;
+	if (new_point.x < origin.x)
+		origin.x = new_point.x;
 	
-	if (new_pt.y < origin.y)
-		origin.y = new_pt.y;
+	if (new_point.y < origin.y)
+		origin.y = new_point.y;
 }
 
-void _gdimm_text::prepare_bitmap(WORD bit_count)
+template <typename T>
+inline char sign(T n)
 {
-	BITMAPINFO bmi = {0};
+	if (n == 0)
+		return T(0);
+	else
+		return (n < 0) ? T(-1) : T(1);
+}
 
+void _gdimm_text::load_metrics()
+{
+	int metric_size = GetOutlineTextMetrics(_hdc_text, 0, NULL);
+	assert(metric_size != 0);
+
+	if (_metric_buf != NULL)
+		delete[] _metric_buf;
+
+	_metric_buf = new BYTE[metric_size];
+	_outline_metrics = (OUTLINETEXTMETRIC*) _metric_buf;
+	metric_size = GetOutlineTextMetrics(_hdc_text, metric_size, _outline_metrics);
+	assert(metric_size != 0);
+
+	_text_height = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
+}
+
+void _gdimm_text::get_glyph_clazz()
+{
+	TCHAR *font_full_name = (TCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFullName);
+	unsigned int font_index = gdimm_font_man::instance().lookup_index(_hdc_text, font_full_name);
+
+	FT_Error ft_error;
+	FTC_FaceID face_id = (FTC_FaceID) font_index;
+
+	FT_Face font_face;
+	ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &font_face);
+	assert(ft_error == 0);
+
+	FTC_ScalerRec cache_scale = {face_id, _text_height, _text_height, 1, 0, 0};
+	FT_Size font_size;
+	ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
+	assert(ft_error == 0);
+
+	FT_Load_Char(font_face, _outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
+
+	FT_Glyph stub;
+	FT_Get_Glyph(font_face->glyph, &stub);
+	_glyph_clazz = stub->clazz;
+	FT_Done_Glyph(stub);
+}
+
+void _gdimm_text::draw_glyph_lcd(const FT_BitmapGlyph glyph) const
+{
+	const FT_Bitmap bitmap = glyph->bitmap;
+	const WORD src_byte_count = 3;	// 24-bit
+	const WORD dest_bit_count = 24;
+	const WORD dest_byte_count = dest_bit_count / 8;
+	const LONG bmp_width = bitmap.width / src_byte_count;
+	const LONG bmp_height = bitmap.rows;
+	const int abs_pitch = abs(bitmap.pitch);
+	const char pitch_sign = sign(bitmap.pitch);
+
+	BITMAPINFO bmi = {0};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biBitCount = bit_count;
-	bmi.bmiHeader.biWidth = _glyph_metrics.gmBlackBoxX;
-	bmi.bmiHeader.biHeight = _glyph_metrics.gmBlackBoxY;
+	bmi.bmiHeader.biBitCount = dest_bit_count;
+	bmi.bmiHeader.biWidth = bmp_width;
+	bmi.bmiHeader.biHeight = -1 * pitch_sign * bmp_height;
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biCompression = BI_RGB;
+	
+	BYTE *dest_bits;
+	HBITMAP dest_bitmap = CreateDIBSection(_hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
+	assert(dest_bitmap != NULL);
 
-	_hbmp = CreateDIBSection(_hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &_bmp_buf, NULL, 0);
-	assert(_hbmp != NULL);
-
-	memset(_bmp_buf, _bg_color, AlignUp(_glyph_metrics.gmBlackBoxX * 3, sizeof(DWORD)) * _glyph_metrics.gmBlackBoxY);
-}
-
-void bitmap_span(int y, int count, const FT_Span *spans, void *user)
-{
-	_gdimm_text *test = (_gdimm_text*) user;
-	const COLORRGB fg_rgb = REFTORGB(test->_fg_color);
-	const COLORRGB bg_rgb = REFTORGB(test->_bg_color);
-
-	for (int i = 0; i < count; i++)
+	for (int j = 0; j < bmp_height; j++)
 	{
-        BYTE b = (spans[i].coverage * fg_rgb.b + (255 - spans[i].coverage) * bg_rgb.b) / 255;
-        BYTE g = (spans[i].coverage * fg_rgb.g + (255 - spans[i].coverage) * bg_rgb.g) / 255;
-        BYTE r = (spans[i].coverage * fg_rgb.r + (255 - spans[i].coverage) * bg_rgb.r) / 255;
-
-		int bmp_buf_ptr = AlignUp(test->_glyph_metrics.gmBlackBoxX * 3, sizeof(DWORD)) * y + spans[i].x * 3;
-		for (int j = 0; j < spans[i].len; j++)
+		for (int i = 0; i < bmp_width; i++)
 		{
-			test->_bmp_buf[bmp_buf_ptr++] = b;
-			test->_bmp_buf[bmp_buf_ptr++] = g;
-			test->_bmp_buf[bmp_buf_ptr++] = r;
+			int src_ptr = j * abs_pitch + i * src_byte_count;
+			int dest_ptr = src_ptr;
+
+			BYTE r = bitmap.buffer[src_ptr];
+			BYTE g = bitmap.buffer[src_ptr+1];
+			BYTE b = bitmap.buffer[src_ptr+2];
+			
+			dest_bits[dest_ptr] = (b * _fg_rgb.b + (255 - b) * _bg_rgb.b) / 255;
+			dest_bits[dest_ptr+1] = (g * _fg_rgb.g + (255 - g) * _bg_rgb.g) / 255;
+			dest_bits[dest_ptr+2] = (r * _fg_rgb.r + (255 - r) * _bg_rgb.r) / 255;
 		}
 	}
-}
 
-void _gdimm_text::draw_bitmap()
-{
 	HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
 	assert(hdc_canvas != NULL);
+	SelectObject(hdc_canvas, dest_bitmap);
 
-	SelectObject(hdc_canvas, _hbmp);
-
-	BOOL b_ret = TransparentBlt(
-		_hdc_text,
-		_cursor.x + _glyph_metrics.gmptGlyphOrigin.x,
-		_cursor.y + _text_height - _glyph_metrics.gmptGlyphOrigin.y,
-		_glyph_metrics.gmBlackBoxX,
-		_glyph_metrics.gmBlackBoxY,
-		hdc_canvas,
-		0,
-		0,
-		_glyph_metrics.gmBlackBoxX,
-		_glyph_metrics.gmBlackBoxY,
-		_bg_color);
+	int x = _cursor.x + glyph->left;
+	int y = _cursor.y + _text_height - glyph->top;
+	BOOL b_ret = TransparentBlt(_hdc_text, x, y, bmp_width, bmp_height, hdc_canvas, 0, 0, bmp_width, bmp_height, _bg_color);
 	assert(b_ret == TRUE);
-
-	DeleteObject(_hbmp);
+	
+	DeleteObject(dest_bitmap);
 	DeleteDC(hdc_canvas);
 }
 
-void _gdimm_text::init(HDC hdc, int x, int y)
+bool _gdimm_text::init(HDC hdc, int x, int y)
 {
+	TEXTMETRIC text_metric;
+	BOOL b_ret = GetTextMetrics(hdc, &text_metric);
+	assert(b_ret);
+
+	if ((text_metric.tmPitchAndFamily & TMPF_TRUETYPE) != TMPF_TRUETYPE)
+		return false;
+
 	_hdc_text = hdc;
 	_cursor.x = x;
 	_cursor.y = y;
 
 	// get foreground and background color
+
 	_fg_color = GetTextColor(_hdc_text);
 	assert(_fg_color != CLR_INVALID);
+	_fg_rgb = REFTORGB(_fg_color);
+
 	_bg_color = GetBkColor(_hdc_text);
 	assert(_bg_color != CLR_INVALID);
+	_bg_rgb = REFTORGB(_bg_color);
 
-	GetTextMetrics(_hdc_text, &_text_metrics);
-}
+	_metric_buf = NULL;
+	load_metrics();
+	get_glyph_clazz();
 
-BOOL _gdimm_text::is_true_type() const
-{
-	return (_text_metrics.tmPitchAndFamily & TMPF_TRUETYPE);
+	return true;
 }
 
 void _gdimm_text::draw_background(CONST RECT *lprect) const
@@ -152,11 +198,9 @@ void _gdimm_text::draw_background(CONST RECT *lprect) const
 
 void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lprect, CONST INT *lpDx, BOOL is_glyph_index)
 {
-	_text_height = _text_metrics.tmHeight - _text_metrics.tmInternalLeading;
-
 	// identity matrix
 	MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
-	UINT glyph_format = GGO_NATIVE;
+	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
 	if (is_glyph_index != 0)
 		glyph_format |= GGO_GLYPH_INDEX;
 
@@ -164,11 +208,6 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 	{
 		DWORD outline_buf_len = GetGlyphOutline(_hdc_text, str[i], glyph_format, &_glyph_metrics, 0, NULL, &id_mat);
 		assert(outline_buf_len != GDI_ERROR);
-		/*if (outline_buf_len == GDI_ERROR)
-		{
-			debug_output(GetLastError());
-			continue;
-		}*/
 
 		// some character's glyph outline is empty (e.g. space)
 		if (outline_buf_len > 0)
@@ -228,31 +267,32 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 
 			delete[] outline_buf;
 			
-			FT_Outline outline = 
+			FT_OutlineGlyphRec outline_glyph = 
 			{
-				contour_pos.size(),
-				points.size(),
-				&points[0],
-				&tags[0],
-				&contour_pos[0],
-				FT_OUTLINE_NONE
+				{
+					ft_lib,
+					_glyph_clazz,
+					FT_GLYPH_FORMAT_OUTLINE,
+					0,
+					0
+				},
+				{
+					contour_pos.size(),
+					points.size(),
+					&points[0],
+					&tags[0],
+					&contour_pos[0],
+					FT_OUTLINE_NONE
+				}
 			};
 
-			if (outline_origin.x != 0 || outline_origin.y != 0)
-				FT_Outline_Translate(&outline, -outline_origin.x, -outline_origin.y);
+			FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
+			outline_origin.x = -outline_origin.x;
+			outline_origin.y = -outline_origin.y;
+			FT_Glyph_To_Bitmap(&generic_glyph, FT_RENDER_MODE_LCD, NULL, FALSE);
+			FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) generic_glyph;
 
-			prepare_bitmap(24);
-
-			FT_Raster_Params param = {0};
-			param.source = &outline;
-			param.flags = FT_RASTER_FLAG_AA | FT_RASTER_FLAG_DIRECT;
-			param.gray_spans = bitmap_span;
-			param.user = this;
-
-			FT_Error ft_error = FT_Outline_Render(ft_lib, &outline, &param);
-			assert(ft_error == 0);
-
-			draw_bitmap();
+			draw_glyph_lcd(bmp_glyph);
 		}
 
 		// advance cursor

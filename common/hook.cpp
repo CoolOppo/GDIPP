@@ -23,9 +23,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	gdimm_text::instance().init(hdc, x, y);
-
-	if (!gdimm_text::instance().is_true_type())
+	if (!gdimm_text::instance().init(hdc, x, y))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if ((options & ETO_OPAQUE) != 0)
