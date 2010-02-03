@@ -37,10 +37,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_DEMO, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
+	HMODULE h_gdimm = NULL;
+
 #ifdef render
-	HMODULE h_gdimm = LoadLibrary(TEXT("dll.dll"));
-	if (h_gdimm == NULL)
-		return GetLastError();
+	h_gdimm = LoadLibrary(TEXT("dll.dll"));
 #endif
 
 	// Perform application initialization:
@@ -61,9 +61,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		}
 	}
 
-#ifdef render
-	FreeLibrary(h_gdimm);
-#endif
+	if (h_gdimm != NULL)
+		FreeLibrary(h_gdimm);
 
 	return (int) msg.wParam;
 }
