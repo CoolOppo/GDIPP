@@ -7,14 +7,14 @@
 
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	//if ((options & ETO_GLYPH_INDEX) != 0 || c <= 2)
+	//if ((options & ETO_GLYPH_INDEX) == ETO_GLYPH_INDEX || c < 20)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if ((options & ETO_CLIPPED) != 0)
+	if ((options & ETO_CLIPPED) == ETO_CLIPPED)
 	{
 		assert(lprect != NULL);
 		
@@ -26,8 +26,11 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 	if (!gdimm_text::instance().init(hdc, x, y))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if ((options & ETO_OPAQUE) != 0)
-		gdimm_text::instance().draw_background(lprect);
+	if ((options & ETO_OPAQUE) == ETO_OPAQUE)
+	{
+		BOOL b_ret = ExtTextOutW(hdc, x, y, ETO_OPAQUE, lprect, NULL, 0, lpDx);
+		assert(b_ret);
+	}
 
 	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX);
 

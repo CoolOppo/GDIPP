@@ -53,9 +53,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-	LPCTSTR target_proc = TEXT("notepad.exe");
-	LPCTSTR target_path = TEXT("C:\\Windows\\notepad.exe");
-
 	DWORD dw_ret;
 	BOOL b_ret;
 
@@ -64,14 +61,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	assert(dw_ret != 0);
 
 	b_ret = PathRemoveFileSpec(hook_dll);
-	assert(b_ret == TRUE);
+	assert(b_ret);
 
 	b_ret = PathAppend(hook_dll, TEXT("dll.dll"));
-	assert(b_ret == TRUE);
+	assert(b_ret);
 
-	DWORD proc_id = get_proc_id(target_proc);
+	TCHAR proc_name[MAX_PATH];
+	lstrcpyn(proc_name, lpCmdLine, MAX_PATH);
+	PathStripPath(proc_name);
+	PathAddExtension(proc_name, TEXT(".exe"));
+
+	DWORD proc_id = get_proc_id(proc_name);
 	if (proc_id == -1)
-		proc_id = load_process(target_path);
+		proc_id = load_process(lpCmdLine);
 
 	inject_dll(proc_id, hook_dll);
 

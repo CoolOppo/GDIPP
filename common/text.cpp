@@ -4,7 +4,6 @@
 #include "ft.h"
 #include "font_man.h"
 #include <cmath>
-#include <limits.h>
 #include <vector>
 using namespace std;
 
@@ -15,7 +14,7 @@ using namespace std;
 
 // helper functions
 
-inline int AlignUp(int num, int alignment)
+inline int align_up(int num, int alignment)
 {
 	if (num == 0)
 		return alignment;
@@ -80,35 +79,20 @@ void _gdimm_text::get_glyph_clazz()
 	FT_Done_Glyph(stub);
 }
 
-void _gdimm_text::draw_glyph_lcd(const FT_BitmapGlyph glyph) const
+void _gdimm_text::set_bmp_bits_24(const FT_Bitmap &bitmap, BYTE *dest_bits) const
 {
-	const FT_Bitmap bitmap = glyph->bitmap;
-	const WORD src_byte_count = 3;	// 24-bit
-	const WORD dest_bit_count = 24;
-	const WORD dest_byte_count = dest_bit_count / 8;
+	const WORD src_byte_count = 3;
 	const LONG bmp_width = bitmap.width / src_byte_count;
 	const LONG bmp_height = bitmap.rows;
-	const int abs_pitch = abs(bitmap.pitch);
-	const char pitch_sign = sign(bitmap.pitch);
-
-	BITMAPINFO bmi = {0};
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biBitCount = dest_bit_count;
-	bmi.bmiHeader.biWidth = bmp_width;
-	bmi.bmiHeader.biHeight = -1 * pitch_sign * bmp_height;
-	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biCompression = BI_RGB;
-	
-	BYTE *dest_bits;
-	HBITMAP dest_bitmap = CreateDIBSection(_hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
-	assert(dest_bitmap != NULL);
+	const int src_pitch = abs(bitmap.pitch);
+	const int dest_pitch = align_up(bmp_width * 3, sizeof(DWORD));
 
 	for (int j = 0; j < bmp_height; j++)
 	{
 		for (int i = 0; i < bmp_width; i++)
 		{
-			int src_ptr = j * abs_pitch + i * src_byte_count;
-			int dest_ptr = src_ptr;
+			int src_ptr = j * src_pitch + i * src_byte_count;
+			int dest_ptr = j * dest_pitch + i * 3;
 
 			BYTE r = bitmap.buffer[src_ptr];
 			BYTE g = bitmap.buffer[src_ptr+1];
@@ -119,16 +103,80 @@ void _gdimm_text::draw_glyph_lcd(const FT_BitmapGlyph glyph) const
 			dest_bits[dest_ptr+2] = (r * _fg_rgb.r + (255 - r) * _bg_rgb.r) / 255;
 		}
 	}
+}
 
-	HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
-	assert(hdc_canvas != NULL);
-	SelectObject(hdc_canvas, dest_bitmap);
+void _gdimm_text::set_bmp_bits_32(const FT_Bitmap &bitmap, BYTE *dest_bits) const
+{
+	const WORD src_byte_count = 3;
+	const LONG bmp_width = bitmap.width / src_byte_count;
+	const LONG bmp_height = bitmap.rows;
+	const int src_pitch = abs(bitmap.pitch);
+	const int dest_pitch = align_up(bmp_width * 4, sizeof(DWORD));
+
+	for (int j = 0; j < bmp_height; j++)
+	{
+		for (int i = 0; i < bmp_width; i++)
+		{
+			int src_ptr = j * src_pitch + i * src_byte_count;
+			int dest_ptr = j * dest_pitch + i * 4;
+
+			BYTE r = bitmap.buffer[src_ptr];
+			BYTE g = bitmap.buffer[src_ptr+1];
+			BYTE b = bitmap.buffer[src_ptr+2];
+			
+			dest_bits[dest_ptr] = (b * _fg_rgb.b + (255 - b) * dest_bits[dest_ptr]) / 255;
+			dest_bits[dest_ptr+1] = (g * _fg_rgb.g + (255 - g) * dest_bits[dest_ptr+1]) / 255;
+			dest_bits[dest_ptr+2] = (r * _fg_rgb.r + (255 - r) * dest_bits[dest_ptr+2]) / 255;
+			//dest_bits[dest_ptr+3] = (r + g + b) / 3;
+		}
+	}
+}
+
+void _gdimm_text::draw_glyph(const FT_BitmapGlyph glyph, WORD dest_bit_count) const
+{
+	const FT_Bitmap bitmap = glyph->bitmap;
+	const WORD src_byte_count = 3;
+	const WORD dest_byte_count = dest_bit_count / 8;
+	const LONG bmp_width = bitmap.width / src_byte_count;
+	const LONG bmp_height = bitmap.rows;
+	const char src_pitch_sign = sign(bitmap.pitch);
+	int lines_ret;
+	BOOL b_ret;
 
 	int x = _cursor.x + glyph->left;
 	int y = _cursor.y + _text_height - glyph->top;
-	BOOL b_ret = TransparentBlt(_hdc_text, x, y, bmp_width, bmp_height, hdc_canvas, 0, 0, bmp_width, bmp_height, _bg_color);
-	assert(b_ret == TRUE);
-	
+
+	BITMAPINFO bmi = {0};
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+	HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
+	assert(hdc_canvas != NULL);
+
+	HBITMAP dest_bitmap = CreateCompatibleBitmap(_hdc_text, bmp_width, bmp_height);
+	assert(dest_bitmap != NULL);
+
+	SelectObject(hdc_canvas, dest_bitmap);
+	b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, x, y, SRCCOPY);
+	assert(b_ret);
+
+	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, bmp_height, NULL, &bmi, DIB_RGB_COLORS);
+	assert(lines_ret != 0);
+	assert(bmi.bmiHeader.biSizeImage != 0);
+
+	bmi.bmiHeader.biHeight = -1 * src_pitch_sign * bmi.bmiHeader.biHeight;
+	bmi.bmiHeader.biCompression = BI_RGB;
+
+	BYTE *dest_bits = new BYTE[bmi.bmiHeader.biSizeImage];
+	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, bmp_height, dest_bits, &bmi, DIB_RGB_COLORS);
+	assert(lines_ret == bmp_height);
+
+	set_bmp_bits_32(bitmap, dest_bits);
+
+	lines_ret = SetDIBitsToDevice(_hdc_text, x, y, bmp_width, bmp_height, 0, 0, 0, bmp_height, dest_bits, &bmi, DIB_RGB_COLORS);
+	assert(lines_ret == bmp_height);
+
+	delete[] dest_bits;
+	//DeleteObject(a_bitmap);
 	DeleteObject(dest_bitmap);
 	DeleteDC(hdc_canvas);
 }
@@ -170,8 +218,6 @@ void _gdimm_text::draw_background(CONST RECT *lprect) const
 	const LONG rect_height = lprect->bottom - lprect->top;
 
 	// create brush with background color
-	COLORREF _bg_color = GetBkColor(_hdc_text);
-	assert(_bg_color != CLR_INVALID);
 	HBRUSH bg_brush = CreateSolidBrush(_bg_color);
 	assert(bg_brush != NULL);
 
@@ -179,8 +225,8 @@ void _gdimm_text::draw_background(CONST RECT *lprect) const
 	HBRUSH old_brush = (HBRUSH) SelectObject(_hdc_text, bg_brush);
 
 	// paint rect with brush
-	BOOL ret = PatBlt(_hdc_text, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
-	assert(ret == TRUE);
+	BOOL b_ret = PatBlt(_hdc_text, lprect->left, lprect->top, rect_width, rect_height, PATCOPY);
+	assert(b_ret);
 	DeleteObject(bg_brush);
 
 	// restore old brush
@@ -281,13 +327,8 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			FT_Error ft_error = FT_Glyph_To_Bitmap(&generic_glyph, FT_RENDER_MODE_LCD, NULL, FALSE);
 			assert(ft_error == 0);
 			FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) generic_glyph;
+			draw_glyph(bmp_glyph, 32);
 
-			if (bmp_glyph->bitmap.pitch == 0)
-			{
-				debug_output(ft_error);
-				debug_output(TEXT(""));
-			}
-			draw_glyph_lcd(bmp_glyph);
 			FT_Done_Glyph(generic_glyph);
 		}
 
@@ -298,5 +339,14 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			_cursor.x += lpDx[i];
 
 		_cursor.y += _glyph_metrics.gmCellIncY;
+	}
+
+	UINT align = GetTextAlign(_hdc_text);
+	assert(align != GDI_ERROR);
+
+	if ((align & TA_UPDATECP) == TA_UPDATECP)
+	{
+		BOOL b_ret = MoveToEx(_hdc_text, _cursor.x, _cursor.y, NULL);
+		assert(b_ret);
 	}
 }

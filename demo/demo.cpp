@@ -3,11 +3,10 @@
 
 #include "stdafx.h"
 #include "demo.h"
+#include <stdlib.h>
+#include <time.h>
 
 #define MAX_LOADSTRING 100
-
-#define render
-#define test
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -19,6 +18,15 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+
+#define render
+#define test
+
+const LPCTSTR test_str = TEXT("Hello²âÊÔÎÄ×ÖGgJjQq");
+int test_count = 100;
+DWORD start = 0;
+DWORD end = 0;
+TCHAR elapse_str[128] = {0};
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -149,8 +157,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 
-	LPCTSTR test_str = TEXT("Hello²âÊÔÎÄ×ÖGgJjQq");
-
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -170,15 +176,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_PAINT:
+		{
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
 
 #ifdef test
-		SetTextColor(hdc, RGB(16, 96, 32));
-		ExtTextOut(hdc, 10, 10, 0, NULL, test_str, lstrlen(test_str), NULL);
+		if (start == 0)
+		{
+			srand((unsigned) time(NULL));
+			start = GetTickCount();
+		}
+
+		for (; test_count >= 0; test_count--)
+		{
+			BYTE r = rand() % 255;
+			BYTE g = rand() % 255;
+			BYTE b = rand() % 255;
+			SetTextColor(hdc, RGB(r, g, b));
+
+			int x = rand() % ((ps.rcPaint.right - ps.rcPaint.left) / 1);
+			int y = rand() % ((ps.rcPaint.bottom - ps.rcPaint.top) / 1);
+
+			ExtTextOut(hdc, x, y, 0, NULL, test_str, lstrlen(test_str), NULL);
+		}
+
+		if (end == 0)
+		{
+			end = GetTickCount();
+			wsprintf(elapse_str, TEXT("Elapsed time: %u milliseconds"), end - start);
+		}
+
+		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW+1));
+		ExtTextOut(hdc, 10, 10, 0, NULL, elapse_str, lstrlen(elapse_str), NULL);
 #endif
 
 		EndPaint(hWnd, &ps);
+		}
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

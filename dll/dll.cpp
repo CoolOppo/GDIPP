@@ -25,5 +25,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		destroy_freetype();
 		break;
 	}
+	
 	return TRUE;
 }

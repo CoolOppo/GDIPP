@@ -137,10 +137,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib EasyHook32.lib msimg32.lib"
+				AdditionalDependencies="EasyHook32.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)FreeType\objs&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames="LIBCMT"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

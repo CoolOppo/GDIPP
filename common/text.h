@@ -35,7 +35,9 @@ class _gdimm_text
 
 	void load_metrics();
 	void get_glyph_clazz();
-	void draw_glyph_lcd(const FT_BitmapGlyph glyph) const;
+	void set_bmp_bits_24(const FT_Bitmap &bitmap, BYTE *dest_bits) const;
+	void set_bmp_bits_32(const FT_Bitmap &bitmap, BYTE *dest_bits) const;
+	void draw_glyph(const FT_BitmapGlyph glyph, WORD dest_bit_count) const;
 
 public:
 	bool init(HDC hdc, int x, int y);
