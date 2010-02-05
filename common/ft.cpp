@@ -26,14 +26,14 @@ void initialize_freetype()
 
 void destroy_freetype()
 {
-	//FTC_Manager_Done(ft_cache_man);
+	FTC_Manager_Done(ft_cache_man);
 	FT_Error ft_error = FT_Done_FreeType(ft_lib);
 	assert(ft_error == 0);
 }
 
 FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *aface)
 {
-	unsigned int font_index = (unsigned int) face_id;
+	const unsigned int font_index = (unsigned int) face_id;
 
 	FT_Open_Args args;
 	args.flags = FT_OPEN_STREAM;

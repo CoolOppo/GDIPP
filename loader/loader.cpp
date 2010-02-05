@@ -30,14 +30,14 @@ DWORD get_proc_id(LPCTSTR proc_name)
 	return -1;
 }
 
-DWORD load_process(LPCTSTR proc_name)
+DWORD load_process(LPTSTR proc_name, LPCTSTR curr_dir)
 {
 	STARTUPINFO si = {0};
 	si.cb = sizeof(si);
 	PROCESS_INFORMATION pi = {0};
 
-	BOOL b_ret = CreateProcess(proc_name, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-	assert(b_ret == TRUE);
+	BOOL b_ret = CreateProcess(NULL, proc_name, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	assert(b_ret);
 
 	return pi.dwProcessId;
 }
@@ -67,13 +67,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	assert(b_ret);
 
 	TCHAR proc_name[MAX_PATH];
+	TCHAR curr_dir[MAX_PATH];
 	lstrcpyn(proc_name, lpCmdLine, MAX_PATH);
+	lstrcpyn(curr_dir, lpCmdLine, MAX_PATH);
 	PathStripPath(proc_name);
 	PathAddExtension(proc_name, TEXT(".exe"));
+	PathRemoveFileSpec(curr_dir);
 
 	DWORD proc_id = get_proc_id(proc_name);
 	if (proc_id == -1)
-		proc_id = load_process(lpCmdLine);
+		proc_id = load_process(lpCmdLine, curr_dir);
 
 	inject_dll(proc_id, hook_dll);
 

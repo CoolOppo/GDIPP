@@ -22,4 +22,5 @@ public:
 
 void debug_output(const TCHAR *str = TEXT(""));
 void debug_output(const TCHAR *str, unsigned int c);
+void debug_output(const void *ptr, unsigned int size);
 void debug_output(DWORD num);

@@ -33,13 +33,13 @@ unsigned long _gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long off
 	if (count == 0)
 		return 0;
 
-	font_info info = gdimm_font_man::instance()._loaded_fonts[stream->descriptor.value];
+	const font_info info = gdimm_font_man::instance()._loaded_fonts[stream->descriptor.value];
 
 	// use mapping
 	/*memcpy(buffer, (unsigned char*) info.mapping_start + offset, count);
 	return count;*/
 
-	DWORD read_size = GetFontData(info.hdc, info.table_header, offset, buffer, count);
+	const DWORD read_size = GetFontData(info.hdc, info.table_header, offset, buffer, count);
 	assert(read_size != GDI_ERROR);
 	return read_size;
 }
@@ -55,12 +55,12 @@ void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
 	// prefix is fixed for all mapping names, defined in mapping_prefix
 	// font full name is extracted from physical font file via GetOutlineTextMetrics()
 
-	unsigned int font_index = _font_indices[font_full_name];
+	const unsigned int font_index = _font_indices[font_full_name];
 	font_info &info = _loaded_fonts[font_index];
 
 	const t_string mapping_prefix = TEXT("Global\\gdimm_");
-	t_string mapping_name = mapping_prefix + font_full_name;
-	HANDLE h_mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
+	const t_string mapping_name = mapping_prefix + font_full_name;
+	const HANDLE h_mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
 	assert(h_mapping != NULL);
 	bool new_mapping = (GetLastError() != ERROR_ALREADY_EXISTS);
 
@@ -78,15 +78,14 @@ void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
 
 unsigned int _gdimm_font_man::lookup_index(HDC hdc, const TCHAR *font_full_name)
 {
-	map<t_string, unsigned int>::const_iterator iter = _font_indices.find(font_full_name);
+	const map<t_string, unsigned int>::const_iterator iter = _font_indices.find(font_full_name);
 	if (iter == _font_indices.end())
 	{
-		unsigned int new_index = _loaded_fonts.size();
+		const unsigned int new_index = _loaded_fonts.size();
 		_font_indices[font_full_name] = new_index;
 
 		font_info new_font = {0};
 		new_font.hdc = hdc;
-
 		new_font.stream.size = get_font_size(hdc, &new_font.table_header);
 		new_font.stream.descriptor.value = new_index;
 		new_font.stream.read = stream_IoFunc;
@@ -99,7 +98,7 @@ unsigned int _gdimm_font_man::lookup_index(HDC hdc, const TCHAR *font_full_name)
 	else
 	{
 		// update HDC
-		unsigned int old_index = iter->second;
+		const unsigned int old_index = iter->second;
 		_loaded_fonts[old_index].hdc = hdc;
 		return old_index;
 	}

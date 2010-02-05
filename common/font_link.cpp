@@ -80,24 +80,24 @@ void _gdimm_font_link::get_font_link_info()
 			if (curr_font.length() == 0)
 				break;
 
-			size_t first_comma = curr_font.find(TEXT(','));
-			t_string font_face;
+			const size_t first_comma = curr_font.find(TEXT(','));
+			t_string font_name;
 
 			// if ttc file, use the specified font face
 			// otherwise, use the mapping table
 			if (first_comma != string::npos && lstrcmpi(curr_font.substr(first_comma - 3, 3).c_str(), TEXT("ttc")) == 0)
 			{
 				size_t second_comma = curr_font.find(TEXT(','), first_comma + 1);
-				font_face = curr_font.substr(first_comma + 1, second_comma - first_comma - 1);
+				font_name = curr_font.substr(first_comma + 1, second_comma - first_comma - 1);
 			}
 			else
 			{
 				transform(curr_font.begin(), curr_font.end(), curr_font.begin(), tolower);
-				font_face = fonts_table[curr_font.substr(0, first_comma)];
+				font_name = fonts_table[curr_font.substr(0, first_comma)];
 			}
 
-			if (font_list.size() == 0 || font_face != font_list[font_list.size() - 1])
-				font_list.push_back(font_face);
+			if (font_list.size() == 0 || font_name != font_list[font_list.size() - 1])
+				font_list.push_back(font_name);
 
 			// including the trailing '\0'
 			line_start += curr_font.length() + 1;
@@ -116,7 +116,7 @@ void _gdimm_font_link::get_font_link_info()
 
 const TCHAR *_gdimm_font_link::lookup(const TCHAR *font_name, size_t index) const
 {
-	fl_mapping::const_iterator iter = _fl_table.find(font_name);
+	const fl_mapping::const_iterator iter = _fl_table.find(font_name);
 
 	if (iter == _fl_table.end())
 		return NULL;

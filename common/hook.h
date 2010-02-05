@@ -19,6 +19,4 @@ public:
 	void unhook() const;
 };
 
-DWORD WINAPI create_hooks(LPVOID lpParameter);
-
 typedef singleton<_gdimm_hook> gdimm_hook;

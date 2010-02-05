@@ -7,7 +7,7 @@
 
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	//if ((options & ETO_GLYPH_INDEX) == ETO_GLYPH_INDEX || c < 20)
+	//if ((options & ETO_GLYPH_INDEX) == ETO_GLYPH_INDEX || c < 10)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -32,23 +32,23 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 		assert(b_ret);
 	}
 
-	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX);
-
+	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX, options & ETO_PDY);
+	//return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	return TRUE;
 }
 
 // enumerate all the threads in the current process, except the excluded one
 BOOL _gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) const
 {
-	THREADENTRY32 te32;
+	THREADENTRY32 te32 = {0};
 	te32.dwSize = sizeof(THREADENTRY32);
 
-	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+	const HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 	if (h_snapshot == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	BOOL success = Thread32First(h_snapshot, &te32);
-	if (success == FALSE)
+	BOOL b_ret = Thread32First(h_snapshot, &te32);
+	if (b_ret == FALSE)
 	{
 		CloseHandle(h_snapshot);
 		return FALSE;
@@ -74,12 +74,12 @@ bool _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 {
 	// pre-condition: the dll file <lib_name> must have been loaded in this process
 	
-	HMODULE h_lib = GetModuleHandle(lib_name);
+	const HMODULE h_lib = GetModuleHandle(lib_name);
 	if (h_lib == NULL)
 		return false;
 
 	// install hook with EasyHook
-	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
+	const TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
 	NTSTATUS eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
@@ -94,7 +94,7 @@ bool _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 void _gdimm_hook::hook()
 {
 	// get all threads in this process
-	int exclude_thr = 0; //GetCurrentThreadId();
+	const int exclude_thr = 0; //GetCurrentThreadId();
 	BOOL b_ret = enum_threads(NULL, &_thread_count, exclude_thr);
 	assert(b_ret);
 
