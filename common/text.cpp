@@ -3,6 +3,7 @@
 #include "global.h"
 #include "ft.h"
 #include "font_man.h"
+#include "font_link.h"
 #include <cmath>
 #include <vector>
 using namespace std;
@@ -37,6 +38,17 @@ inline char sign(T n)
 		return (n < 0) ? T(-1) : T(1);
 }
 
+_gdimm_text::_gdimm_text()
+{
+	_metric_buf = NULL;
+}
+
+_gdimm_text::~_gdimm_text()
+{
+	if (_metric_buf != NULL)
+		delete[] _metric_buf;
+}
+
 void _gdimm_text::load_metrics()
 {
 	// load outline metrics, which also include the text metrics, of the DC
@@ -63,7 +75,7 @@ void _gdimm_text::get_glyph_clazz()
 	use the clazz for all subsequent FT_OutlineGlyph
 	*/
 
-	const TCHAR *font_full_name = (TCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFullName);
+	const TCHAR *font_full_name = get_full_name();
 	unsigned int font_index = gdimm_font_man::instance().lookup_index(_hdc_text, font_full_name);
 
 	FT_Error ft_error;
@@ -302,65 +314,70 @@ void _gdimm_text::draw_glyph(const FT_BitmapGlyph glyph) const
 	free(bmi);
 }
 
-bool _gdimm_text::init(HDC hdc, int x, int y)
+const TCHAR *_gdimm_text::get_family_name() const
 {
-	TEXTMETRIC text_metric;
-	BOOL b_ret = GetTextMetrics(hdc, &text_metric);
-	assert(b_ret);
+	return (const TCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFamilyName);
+}
 
-	// not support non-TrueType font
-	if ((text_metric.tmPitchAndFamily & TMPF_TRUETYPE) != TMPF_TRUETYPE)
-		return false;
+const TCHAR *_gdimm_text::get_full_name() const
+{
+	return (const TCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFullName);
+}
 
+void _gdimm_text::init(HDC hdc, int x, int y, BOOL is_update_cp)
+{
 	_hdc_text = hdc;
 
-	/*
-	if UPDATECP is set, check if the HDC is seen before
-	if yes, use the stored cursor; if not use the specified position
-	if UPDATECP is not set, use the specified position, and check if the HDC is seen before
-	if yes, remove the stored corresponding cursor
-	*/
-
-	const UINT align = GetTextAlign(hdc);
-	assert(align != GDI_ERROR);
-	map<HDC, FT_Vector>::const_iterator dcc_iter = dc_cursors.find(hdc);
-	if ((align & TA_UPDATECP) == TA_UPDATECP)
-	{
-		if (dcc_iter == dc_cursors.end())
-		{
-			_cursor.x = x;
-			_cursor.y = y;
-		}
-		else
-			_cursor = dc_cursors[hdc];
-
-		_update_cursor = true;
-	}
-	else
-	{
-		if (dcc_iter != dc_cursors.end())
-			dc_cursors.erase(dcc_iter);
-
-		_cursor.x = x;
-		_cursor.y = y;
-		_update_cursor = false;
-	}
-
 	// get foreground color
-	_fg_color = GetTextColor(hdc);
+	_fg_color = GetTextColor(_hdc_text);
 	assert(_fg_color != CLR_INVALID);
 	_fg_rgb = REFTORGB(_fg_color);
 
-	// load metrics
-	_metric_buf = NULL;
-	load_metrics();
+	_update_cursor = is_update_cp;
+	if (is_update_cp)
+	{
+		POINT cp;
+		GetCurrentPositionEx(_hdc_text, &cp);
+		_cursor.x = cp.x;
+		_cursor.y = cp.y;
+	}
+	else
+	{
+		_cursor.x = x;
+		_cursor.y = y;
+	}
 
+	// DC font related procedures
+	// must be called once the DC's selected font is changed
+	load_metrics();
 	get_glyph_clazz();
+}
+
+bool _gdimm_text::to_glyph_indices(const WCHAR *text, unsigned int count, WORD *glyph_indices)
+{
+	DWORD dw_ret;
+
+	dw_ret = GetGlyphIndices(_hdc_text, text, count, glyph_indices, GGI_MARK_NONEXISTING_GLYPHS);
+	assert(dw_ret != GDI_ERROR);
+
+	int fl_index = 0;
+	while (glyph_indices[0] == 0xffff)
+	{
+		if (!gdimm_font_link::instance().font_link(_hdc_text, get_family_name(), fl_index++))
+			return false;
+
+		dw_ret = GetGlyphIndices(_hdc_text, text, count, glyph_indices, GGI_MARK_NONEXISTING_GLYPHS);
+		assert(dw_ret != GDI_ERROR);
+
+		// redo DC font related procedures
+		load_metrics();
+		get_glyph_clazz();
+	}
 
 	return true;
 }
 
-void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lprect, CONST INT *lpDx, BOOL is_glyph_index, BOOL is_pdy)
+void _gdimm_text::text_out(const WORD *string, unsigned int count, CONST RECT *lprect, CONST INT *lpDx, BOOL is_glyph_index, BOOL is_pdy)
 {
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int dx_factor = (is_pdy ? 2 : 1);
@@ -368,7 +385,7 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 	// identity matrix
 	const MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
 	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
-	if (is_glyph_index != 0)
+	if (is_glyph_index)
 		glyph_format |= GGO_GLYPH_INDEX;
 
 	for (unsigned int i = 0; i < count; i++)
@@ -376,21 +393,21 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 		GLYPHMETRICS glyph_metrics;
 
 		// get glyph metrics
-		DWORD outline_buf_len = GetGlyphOutline(_hdc_text, str[i], glyph_format, &glyph_metrics, 0, NULL, &id_mat);
+		DWORD outline_buf_len = GetGlyphOutline(_hdc_text, string[i], glyph_format, &glyph_metrics, 0, NULL, &id_mat);
 		assert(outline_buf_len != GDI_ERROR);
 
 		// some character's glyph outline is empty (e.g. space), skip
 		if (outline_buf_len > 0)
 		{
 			BYTE *outline_buf = new BYTE[outline_buf_len];
-			outline_buf_len = GetGlyphOutline(_hdc_text, str[i], glyph_format, &glyph_metrics, outline_buf_len, outline_buf, &id_mat);
+			outline_buf_len = GetGlyphOutline(_hdc_text, string[i], glyph_format, &glyph_metrics, outline_buf_len, outline_buf, &id_mat);
 			assert(outline_buf_len != GDI_ERROR);
 
 			vector<FT_Vector> points;
 			vector<char> tags;
 			vector<short> contour_pos;
 
-			// parse outline structures
+			// parse outline glyph_indicesuctures
 			DWORD header_off = 0;
 			do
 			{
@@ -445,8 +462,8 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			1. FT_Outline_Render: could pass a callback span function to directly draw scanlines to DC
 			   unfortunately it only output 8-bit bitmap
 			2. FT_Outline_Get_Bitmap: merely a wrapper of FT_Outline_Render
-			3. FT_Glyph_To_Bitmap: first construct FT_OutlineGlyph from FT_Outline, then render glyph to get FT_Bitmap
-			   when constructing FreeType glyph, the private clazz field must be provided
+			3. FT_Glyph_To_Bitmap: first conglyph_indicesuct FT_OutlineGlyph from FT_Outline, then render glyph to get FT_Bitmap
+			   when conglyph_indicesucting FreeType glyph, the private clazz field must be provided
 			   support 24-bit bitmap
 
 			we use method 3
@@ -479,7 +496,7 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 			draw_glyph(bmp_glyph);
 
 			FT_Done_Glyph(generic_glyph);
-			// the FT_OutlineGlyph is manually constructed, no need to destroy it
+			// the FT_OutlineGlyph is manually conglyph_indicesucted, no need to deglyph_indicesoy it
 		}
 
 		// advance cursor
@@ -491,11 +508,12 @@ void _gdimm_text::text_out(const WCHAR *str, unsigned int count, CONST RECT *lpr
 		_cursor.y += glyph_metrics.gmCellIncY;
 	}
 
-	// if UPDATECP is set, update current position after text out
+	// if TA_UPDATECP is set, update current position after text out
 	if (_update_cursor)
 	{
-		dc_cursors[_hdc_text] = _cursor;
 		BOOL b_ret = MoveToEx(_hdc_text, _cursor.x, _cursor.y, NULL);
 		assert(b_ret);
 	}
+
+	gdimm_font_link::instance().restore_font(_hdc_text);
 }

@@ -11,6 +11,7 @@ class _gdimm_hook
 	DWORD *_thread_ids;
 	DWORD _thread_count;
 
+
 	BOOL enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude = 0) const;
 	bool install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 
