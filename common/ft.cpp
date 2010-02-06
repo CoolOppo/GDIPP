@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ft.h"
 #include "font_man.h"
+#include FT_LCD_FILTER_H
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;

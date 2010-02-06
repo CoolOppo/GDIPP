@@ -6,29 +6,16 @@
 #include <usp10.h>
 #include <tlhelp32.h>
 
-bool is_dc_valid(HDC hdc)
-{
-	TEXTMETRIC text_metric;
-	BOOL b_ret = GetTextMetrics(hdc, &text_metric);
-	assert(b_ret);
-
-	// not support non-TrueType font
-	if ((text_metric.tmPitchAndFamily & TMPF_TRUETYPE) != TMPF_TRUETYPE)
-		return false;
-
-	return true;
-}
-
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	//if ((options & ETO_GLYPH_INDEX) || c < 10)
+	//if ((options & ETO_GLYPH_INDEX) || c < 5)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	//if ((options & ETO_IGNORELANGUAGE) && c == 3)
+	//	int a = 0;
 
 	// no text to render
 	if (lpString == NULL || c == 0)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-	if (!is_dc_valid(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if (options & ETO_CLIPPED)
@@ -40,54 +27,22 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lp
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
+	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	if (!gdimm_text::instance().init(hdc, x, y))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
 	if (options & ETO_OPAQUE)
 	{
 		BOOL b_ret = ExtTextOutW(hdc, x, y, ETO_OPAQUE, lprect, NULL, 0, lpDx);
 		assert(b_ret);
 	}
 
-	/*
-	if the string comes with glyph indices (ETO_GLYPH_INDEX is set), all glyphs can be found from DC's current font
-	if ETO_IGNORELANGUAGE is set, directly render the text
-	otherwise, the string is plain text
-	first separate it into runs, get glyph indices (and do font linking if needed) on each run and render
-	*/
+	if (c > 10)
+		int a = 0;
 
-	if ((options & ETO_GLYPH_INDEX) || (options & ETO_IGNORELANGUAGE))
-	{
-		UINT text_align = GetTextAlign(hdc);
-		assert(text_align != GDI_ERROR);
-
-		gdimm_text::instance().init(hdc, x, y, text_align & TA_UPDATECP);
-		gdimm_text::instance().text_out((const WORD*) lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX, options & ETO_PDY);
-	}
-	else
-	{
-		SCRIPT_ITEM *items = new SCRIPT_ITEM[c + 1];
-		int item_num;
-
-		HRESULT hr = ScriptItemize(lpString, c, max(c, 2), NULL, NULL, items, &item_num);
-		assert(SUCCEEDED(hr));
-
-		// between each run, unconditionally set TA_UPDATECP
-		POINT orig_pos;
-		MoveToEx(hdc, x, y, &orig_pos);
-		gdimm_text::instance().init(hdc, x, y, TRUE);
-
-		WORD *glyph_indices = new WORD[c];
-		for (int i = 0; i < item_num; i++)
-		{
-			int item_chars = items[i+1].iCharPos - items[i].iCharPos;
-
-			gdimm_text::instance().to_glyph_indices(lpString + items[i].iCharPos, item_chars, glyph_indices + items[i].iCharPos);
-			gdimm_text::instance().text_out(glyph_indices + items[i].iCharPos, item_chars, lprect, lpDx, TRUE, options & ETO_PDY);
-		}
-
-		MoveToEx(hdc, orig_pos.x, orig_pos.y, NULL);
-		delete[] glyph_indices;
-		delete[] items;
-	}
-
+	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX, options & ETO_PDY);
 	return TRUE;
 }
 

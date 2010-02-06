@@ -129,7 +129,7 @@ const TCHAR *_gdimm_font_link::lookup(const TCHAR *font_name, size_t index) cons
 	}
 }
 
-bool _gdimm_font_link::font_link(HDC hdc, const TCHAR *family_name, int fl_index)
+/*bool _gdimm_font_link::font_link(HDC hdc, const TCHAR *family_name, int fl_index)
 {
 	const TCHAR *linked_font_name = lookup(family_name, fl_index);
 	if (linked_font_name == NULL)
@@ -165,4 +165,4 @@ bool _gdimm_font_link::restore_font(HDC hdc)
 
 	_orig_hfonts.erase(iter);
 	return true;
-}
+}*/

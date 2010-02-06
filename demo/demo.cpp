@@ -187,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			start = GetTickCount();
 		}
 
-		for (; test_count >= 0; test_count--)
+		for (; test_count > 0; test_count--)
 		{
 			BYTE r = rand() % 255;
 			BYTE g = rand() % 255;
