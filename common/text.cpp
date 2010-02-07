@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "text.h"
-#include "global.h"
 #include "ft.h"
 #include "font_man.h"
 #include "font_link.h"
@@ -8,6 +7,8 @@
 #include <cmath>
 #include <vector>
 using namespace std;
+
+const FT_Glyph_Class *glyph_clazz = NULL;
 
 inline FT_F26Dot6 fix_to_26dot6(const FIXED &fx)
 {
@@ -18,7 +19,6 @@ inline FT_F26Dot6 fix_to_26dot6(const FIXED &fx)
 _gdimm_text::_gdimm_text()
 {
 	_metric_buf = NULL;
-	_glyph_clazz = NULL;
 }
 
 _gdimm_text::~_gdimm_text()
@@ -27,7 +27,7 @@ _gdimm_text::~_gdimm_text()
 		delete[] _metric_buf;
 }
 
-bool _gdimm_text::load_metrics()
+bool _gdimm_text::get_metrics()
 {
 	// load outline metrics, which also include the text metrics, of the DC
 
@@ -54,11 +54,6 @@ void _gdimm_text::get_glyph_clazz()
 	use the clazz for all subsequent FT_OutlineGlyph
 	*/
 
-	// since we only deal with fonts with outlines, the glyph clazz must be ft_outline_glyph_class
-	// therefore this function is called only once
-	if (_glyph_clazz != NULL)
-		return;
-
 	const TCHAR *font_full_name = get_full_name();
 	unsigned int font_index = gdimm_font_man::instance().lookup_index(_hdc_text, font_full_name);
 
@@ -79,11 +74,25 @@ void _gdimm_text::get_glyph_clazz()
 
 	FT_Glyph useless;
 	FT_Get_Glyph(font_face->glyph, &useless);
-	_glyph_clazz = useless->clazz;
+	glyph_clazz = useless->clazz;
 	FT_Done_Glyph(useless);
 }
 
-void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up) const
+void _gdimm_text::draw_background(CONST RECT *lprect) const
+{
+	COLORREF _bg_color = GetBkColor(_hdc_text);
+	assert(_bg_color != CLR_INVALID);
+
+	const HBRUSH bg_brush = CreateSolidBrush(_bg_color);
+	assert(bg_brush != NULL);
+
+	int i_ret = FillRect(_hdc_text, lprect, bg_brush);
+	assert(i_ret != 0);
+
+	DeleteObject(bg_brush);
+}
+
+void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up, bool inverted) const
 {
 	// both bitmap are 1-bit, 8 pixels per byte, in most-significant order
 
@@ -91,7 +100,6 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits
 	const LONG bmp_height = src_bitmap.rows;
 	const int src_pitch = abs(src_bitmap.pitch);
 	const int dest_pitch = FT_PAD_CEIL(max(bmp_width / 8, 1), sizeof(DWORD));
-	const bool fg_color_set = (_fg_color != 0);
 
 	for (int j = 0; j < bmp_height; j++)
 	{
@@ -110,9 +118,9 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits
 				dest_ptr += j * dest_pitch;
 
 			const int bit_pos = 7 - i % 8;
-			const bool bit_set = ((src_bitmap.buffer[src_ptr] & (1 << bit_pos)) == 0);
+			const bool bit_set = ((src_bitmap.buffer[src_ptr] & (1 << bit_pos)) != 0);
 
-			if (bit_set == fg_color_set)
+			if (bit_set != inverted)
 				dest_bits[dest_ptr] |= (1 << bit_pos);
 			else
 				dest_bits[dest_ptr] &= ~(1 << bit_pos);
@@ -224,15 +232,15 @@ void _gdimm_text::set_bmp_bits_alpha(const FT_Bitmap &src_bitmap, BYTE *dest_bit
 			const BYTE g = src_bitmap.buffer[src_ptr+1];
 			const BYTE b = src_bitmap.buffer[src_ptr+2];
 			
-			//dest_bits[dest_ptr] = (b * _fg_rgb.rgbBlue + (255 - b) * dest_bits[dest_ptr]) / 255;
-			//dest_bits[dest_ptr+1] = (g * _fg_rgb.rgbGreen + (255 - g) * dest_bits[dest_ptr+1]) / 255;
-			//dest_bits[dest_ptr+2] = (r * _fg_rgb.rgbRed + (255 - r) * dest_bits[dest_ptr+2]) / 255;
-			//dest_bits[dest_ptr+3] = (r + g + b) / 3;
+			dest_bits[dest_ptr] = (b * _fg_rgb.rgbBlue + (255 - b) * dest_bits[dest_ptr]) / 255;
+			dest_bits[dest_ptr+1] = (g * _fg_rgb.rgbGreen + (255 - g) * dest_bits[dest_ptr+1]) / 255;
+			dest_bits[dest_ptr+2] = (r * _fg_rgb.rgbRed + (255 - r) * dest_bits[dest_ptr+2]) / 255;
+			dest_bits[dest_ptr+3] = 0;
 		}
 	}
 }
 
-WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, UINT width, UINT height, BITMAPINFO *&bmi) const
+WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, BITMAPINFO *&bmi) const
 {
 	// create glyph bitmap base on the destination bitmap format
 
@@ -242,15 +250,15 @@ WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, UINT width, UINT height, BI
 	const HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
 	assert(hdc_canvas != NULL);
 
-	const HBITMAP dest_bitmap = CreateCompatibleBitmap(_hdc_text, width, height);
+	const HBITMAP dest_bitmap = CreateCompatibleBitmap(_hdc_text, 1, 1);
 	assert(dest_bitmap != NULL);
 	
 	SelectObject(hdc_canvas, dest_bitmap);
-	b_ret = BitBlt(hdc_canvas, 0, 0, width, height, _hdc_text, _cursor.x, _cursor.y, SRCCOPY);
+	b_ret = BitBlt(hdc_canvas, 0, 0, 1, 1, _hdc_text, _cursor.x, _cursor.y, SRCCOPY);
 	assert(b_ret);
 	
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, height, NULL, bmi, DIB_RGB_COLORS);
+	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, 1, NULL, bmi, DIB_RGB_COLORS);
 	assert(lines_ret != 0);
 
 	if (bmi->bmiHeader.biClrUsed > 1)
@@ -262,7 +270,7 @@ WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, UINT width, UINT height, BI
 		bmi = (BITMAPINFO*) realloc(bmi, sizeof(BITMAPINFOHEADER) + bmi->bmiHeader.biClrUsed * sizeof(RGBQUAD));
 		assert(bmi != NULL);
 	}
-	else if (bmi->bmiHeader.biCompression == BI_BITFIELDS && bmi->bmiHeader.biBitCount == 32)
+	else if (bmi->bmiHeader.biCompression == BI_BITFIELDS && bmi->bmiHeader.biBitCount % 16 == 0)
 	{
 		// the next GetDIBits will alloc 3 RGBQUAD to the color table
 		// need to realloc the BITMAPINFO				
@@ -301,14 +309,15 @@ WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, UINT width, UINT height, BI
 
 void _gdimm_text::draw_glyph(const FT_BitmapGlyph bmp_glyph, WORD src_bit_count, BITMAPINFO *bmi) const
 {
+	int lines_ret;
+	BOOL b_ret;
+
 	const FT_Bitmap &src_bitmap = bmp_glyph->bitmap;
 	const WORD src_byte_count = max(src_bit_count / 8, 1);
 	const LONG bmp_width = src_bitmap.width / src_byte_count;
 	const LONG bmp_height = src_bitmap.rows;	
 	const int x = _cursor.x + bmp_glyph->left;
 	const int y = _cursor.y - bmp_glyph->top;
-	int lines_ret;
-	BOOL b_ret;
 
 	/*
 	the way we draw bitmap to DC is
@@ -324,8 +333,8 @@ void _gdimm_text::draw_glyph(const FT_BitmapGlyph bmp_glyph, WORD src_bit_count,
 
 	const HBITMAP dest_bitmap = CreateCompatibleBitmap(_hdc_text, bmp_width, bmp_height);
 	assert(dest_bitmap != NULL);
-
 	SelectObject(hdc_canvas, dest_bitmap);
+
 	b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, x, y, SRCCOPY);
 	assert(b_ret);
 
@@ -348,7 +357,7 @@ void _gdimm_text::draw_glyph(const FT_BitmapGlyph bmp_glyph, WORD src_bit_count,
 	switch (bmi->bmiHeader.biBitCount)
 	{
 	case 1:
-		set_bmp_bits_mono(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0);
+		set_bmp_bits_mono(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0, *((WORD*) &_fg_rgb) == *((WORD*) bmi->bmiColors));
 		break;
 	case 8:
 		set_bmp_bits_gray(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0);
@@ -379,14 +388,17 @@ const TCHAR *_gdimm_text::get_full_name() const
 	return (const TCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFullName);
 }
 
-bool _gdimm_text::init(HDC hdc, int x, int y)
+bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 {
 	_hdc_text = hdc;
 
-	if (!load_metrics())
+	if (!get_metrics())
 		return false;
-
-	get_glyph_clazz();
+	
+	// since we only deal with fonts with outlines, the glyph clazz must be ft_outline_glyph_class
+	// therefore this function is called only once
+	if (glyph_clazz == NULL)
+		get_glyph_clazz();
 
 	// get foreground color
 	_fg_color = GetTextColor(_hdc_text);
@@ -396,7 +408,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y)
 	_fg_rgb.rgbRed = GetRValue(_fg_color);
 	_fg_rgb.rgbReserved = 0;
 	
-	_text_alignment = GetTextAlign(hdc);
+	_text_alignment = GetTextAlign(_hdc_text);
 	assert(_text_alignment != GDI_ERROR);
 	
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
@@ -413,6 +425,10 @@ bool _gdimm_text::init(HDC hdc, int x, int y)
 		_cursor.y = y;
 		_update_cursor = false;
 	}
+
+	_eto_options = options;
+
+	return true;
 }
 
 /*bool _gdimm_text::to_glyph_indices(const WCHAR *text, unsigned int count, WORD *glyph_indices)
@@ -433,26 +449,19 @@ bool _gdimm_text::init(HDC hdc, int x, int y)
 	}
 
 	// redo DC font related procedures
-	load_metrics();
+	get_metrics();
 
 	gdimm_font_link::instance().restore_font(_hdc_text);
 	return true;
 }*/
 
-void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *lprect, CONST INT *lpDx, BOOL is_glyph_index, BOOL is_pdy)
+void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *lprect, CONST INT *lpDx)
 {
-	// is ETO_PDY is set, lpDx contains both x increment and y displacement
-	const int dx_factor = (is_pdy ? 2 : 1);
-
-	// identity matrix
-	const MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
-	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
-	SIZE text_extent;
 	BOOL b_ret;
 
-	if (is_glyph_index)
+	SIZE text_extent;
+	if (_eto_options & ETO_GLYPH_INDEX)
 	{
-		glyph_format |= GGO_GLYPH_INDEX;
 		b_ret = GetTextExtentPointI(_hdc_text, (WORD*) string, count, &text_extent);
 		assert(b_ret);
 	}
@@ -461,6 +470,35 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 		b_ret = GetTextExtentPoint32(_hdc_text, string, count, &text_extent);
 		assert(b_ret);
 	}
+
+	// draw background if needed
+
+	if (_eto_options & ETO_OPAQUE)
+	{
+		assert(lprect != NULL);
+		draw_background(lprect);
+	}
+
+	if (GetBkMode(_hdc_text) == OPAQUE)
+	{
+		RECT text_rect;
+		b_ret = SetRect(&text_rect, _cursor.x, _cursor.y, _cursor.x + text_extent.cx, _cursor.y + text_extent.cy);
+		assert(b_ret);
+
+		if (_eto_options & ETO_CLIPPED)
+			IntersectRect(&text_rect, &text_rect, lprect);
+
+		draw_background(&text_rect);
+	}
+	
+	// is ETO_PDY is set, lpDx contains both x increment and y displacement
+	const int dx_factor = ((_eto_options & ETO_PDY) ? 2 : 1);
+
+	// identity matrix
+	const MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
+	if (_eto_options & ETO_GLYPH_INDEX)
+		glyph_format |= GGO_GLYPH_INDEX;
 
 	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & _text_alignment)
 	{
@@ -571,7 +609,7 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 			{
 				{
 					ft_lib,
-					_glyph_clazz,
+					glyph_clazz,
 					FT_GLYPH_FORMAT_OUTLINE,
 					0,
 					0
@@ -589,7 +627,7 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 			FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
 			BITMAPINFO *bmi = (BITMAPINFO*) calloc(1, sizeof(BITMAPINFO));
 
-			WORD bit_count = create_bitmap(&generic_glyph, glyph_metrics.gmBlackBoxX, glyph_metrics.gmBlackBoxY, bmi);
+			WORD bit_count = create_bitmap(&generic_glyph, bmi);
 			draw_glyph((FT_BitmapGlyph) generic_glyph, bit_count, bmi);
 
 			free(bmi);

@@ -1,129 +1,150 @@
 #include "stdafx.h"
 #include "hook.h"
-#include "global.h"
 #include "text.h"
-#include "font_link.h"
-#include <usp10.h>
 #include <tlhelp32.h>
 
-BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
-{
-	//if ((options & ETO_GLYPH_INDEX) || c < 5)
-	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+CRITICAL_SECTION in_ExtTextOutW;
 
-	//if ((options & ETO_IGNORELANGUAGE) && c == 3)
-	//	int a = 0;
+__gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
+{
+	BOOL b_ret = TRUE;
+
+	//if (c < 10)
+	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	
+	// completely clipped
+	if ((options & ETO_CLIPPED) && IsRectEmpty(lprect))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (options & ETO_CLIPPED)
-	{
-		assert(lprect != NULL);
-		
-		// completely clipped
-		if ((lprect->right == lprect->left) || (lprect->bottom == lprect->top))
-			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	}
-
+	// probably a printer
 	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!gdimm_text::instance().init(hdc, x, y))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	/*if (!TryEnterCriticalSection(&in_ExtTextOutW))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);*/
+	EnterCriticalSection(&in_ExtTextOutW);
 
-	if (options & ETO_OPAQUE)
-	{
-		BOOL b_ret = ExtTextOutW(hdc, x, y, ETO_OPAQUE, lprect, NULL, 0, lpDx);
-		assert(b_ret);
-	}
+	if (gdimm_text::instance().init(hdc, x, y, options))
+		gdimm_text::instance().text_out(lpString, c, lprect, lpDx);
+	else
+		b_ret = ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	
+	LeaveCriticalSection(&in_ExtTextOutW);
+	return b_ret;
+}
 
-	if (c > 10)
-		int a = 0;
+__out_opt
+HANDLE
+WINAPI
+CreateThread_hook(
+    __in_opt  LPSECURITY_ATTRIBUTES lpThreadAttributes,
+    __in      SIZE_T dwStackSize,
+    __in      LPTHREAD_START_ROUTINE lpStartAddress,
+    __in_opt  LPVOID lpParameter,
+    __in      DWORD dwCreationFlags,
+    __out_opt LPDWORD lpThreadId
+    )
+{
+	HANDLE h_thread = CreateThread(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId);
+	gdimm_hook::instance().hook();
+	return h_thread;
+}
 
-	gdimm_text::instance().text_out(lpString, c, lprect, lpDx, options & ETO_GLYPH_INDEX, options & ETO_PDY);
-	return TRUE;
+bool operator<(const hook_info &hook1, const hook_info &hook2)
+{
+	return (memcmp(&hook1, &hook2, sizeof(hook_info)) < 0);
+}
+
+_gdimm_hook::_gdimm_hook()
+{
+	InitializeCriticalSection(&in_ExtTextOutW);
+	_hooks[hook_info(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook)] = NULL;
+	_hooks[hook_info(TEXT("kernel32"), "CreateThread", CreateThread_hook)] = NULL;
 }
 
 // enumerate all the threads in the current process, except the excluded one
-BOOL _gdimm_hook::enum_threads(DWORD *thread_ids, DWORD *count, DWORD exclude) const
+bool _gdimm_hook::enum_threads(DWORD exclude, vector<DWORD> &thread_ids) const
 {
+	BOOL b_ret;
+
 	THREADENTRY32 te32 = {0};
 	te32.dwSize = sizeof(THREADENTRY32);
 
 	const HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 	if (h_snapshot == INVALID_HANDLE_VALUE)
-		return FALSE;
+		return false;
 
-	BOOL b_ret = Thread32First(h_snapshot, &te32);
+	b_ret = Thread32First(h_snapshot, &te32);
 	if (b_ret == FALSE)
 	{
 		CloseHandle(h_snapshot);
-		return FALSE;
+		return false;
 	}
 
 	const DWORD curr_proc_id = GetCurrentProcessId();
-	(*count) = 0;
 	do
 	{
 		if (te32.th32OwnerProcessID == curr_proc_id && te32.th32ThreadID != exclude)
-		{
-			if (thread_ids)
-				thread_ids[*count] = te32.th32ThreadID;
-			(*count)++;
-		}
+			thread_ids.push_back(te32.th32ThreadID);
+
 	} while (Thread32Next(h_snapshot, &te32));
 
 	CloseHandle(h_snapshot);
-	return TRUE;
+	return true;
 }
 
-bool _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
+void _gdimm_hook::install_hook(vector<DWORD> &thread_ids)
 {
-	// pre-condition: the dll file <lib_name> must have been loaded in this process
-	
-	const HMODULE h_lib = GetModuleHandle(lib_name);
-	if (h_lib == NULL)
-		return false;
+	NTSTATUS eh_error;
 
-	// install hook with EasyHook
-	const TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
-	NTSTATUS eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
-	assert(eh_error == 0);
+	for (map<const hook_info, TRACED_HOOK_HANDLE>::iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
+	{
+		// the target library module must have been loaded in this process before hooking
+		const HMODULE h_lib = GetModuleHandle(iter->first.lib_name);
+		if (h_lib == NULL)
+			continue;
 
-	eh_error = LhSetInclusiveACL(_thread_ids, _thread_count, h_hook);
-	assert(eh_error == 0);
+		TRACED_HOOK_HANDLE &h_hook = iter->second;
+		if (h_hook == NULL)
+		{
+			h_hook = new HOOK_TRACE_INFO();
+			
+			eh_error = LhInstallHook(GetProcAddress(h_lib, iter->first.proc_name), iter->first.hook_proc, NULL, h_hook);
+			assert(eh_error == 0);
+		}
 
-	_hook_handles.push_back(h_hook);
-
-	return true;
+		// activate hook
+		eh_error = LhSetInclusiveACL(&thread_ids[0], thread_ids.size(), h_hook);
+		assert(eh_error == 0);
+	}
 }
 
 void _gdimm_hook::hook()
 {
-	// get all threads in this process
-	const int exclude_thr = 0; //GetCurrentThreadId();
-	BOOL b_ret = enum_threads(NULL, &_thread_count, exclude_thr);
-	assert(b_ret);
+	bool b_ret;
 
-	_thread_ids = new DWORD[_thread_count];
-	b_ret = enum_threads(_thread_ids, &_thread_count, exclude_thr);
+	// get target thread IDs in this process
+	const int exclude_id = 0; //GetCurrentThreadId();
+	vector<DWORD> thread_ids;
+	b_ret = enum_threads(exclude_id, thread_ids);
 	assert(b_ret);
+	assert(!thread_ids.empty());
 
-	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook);
+	install_hook(thread_ids);
 }
 
-// EasyHook unhook procedure
-void _gdimm_hook::unhook() const
+void _gdimm_hook::unhook()
 {
-	delete[] _thread_ids;
-
 	NTSTATUS eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);
+
 	eh_error = LhWaitForPendingRemovals();
 	assert(eh_error == 0);
 
-	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = _hook_handles.begin(); iter != _hook_handles.end(); iter++)
-		delete *iter;
+	for (map<const hook_info, TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
+		delete iter->second;
 }

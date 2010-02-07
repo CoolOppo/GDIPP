@@ -181,6 +181,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// TODO: Add any drawing code here...
 
 #ifdef test
+		SetBkMode(hdc, TRANSPARENT);
+
 		if (start == 0)
 		{
 			srand((unsigned) time(NULL));

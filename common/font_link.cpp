@@ -14,7 +14,8 @@ void _gdimm_font_link::get_font_link_info()
 {
 	// read font linking information from registry, and store in map
 
-	DWORD dw_ret, enum_ret;
+	DWORD dw_ret;
+	DWORD enum_ret;
 	DWORD curr_index;
 
 	const TCHAR *FontLink = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink");

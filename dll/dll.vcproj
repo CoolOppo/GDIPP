@@ -42,8 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)common&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib msimg32.lib"
+				AdditionalDependencies="EasyHook32.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -119,8 +119,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)common&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
