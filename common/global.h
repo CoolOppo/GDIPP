@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 using namespace std;
 
 typedef basic_string<TCHAR> t_string;
@@ -13,10 +14,36 @@ class singleton
 	singleton& operator=(const singleton&);      // Prevent assignment
 
 public:
-	static T &instance()		
+	static T &instance()
 	{
 		static T _instance;
 		return _instance;
+	}
+};
+
+class critical_section
+{
+	static CRITICAL_SECTION _cs;
+
+public:
+	critical_section()
+	{
+		EnterCriticalSection(&_cs);
+	}
+
+	~critical_section()
+	{
+		LeaveCriticalSection(&_cs);
+	}
+
+	static void initialize()
+	{
+		InitializeCriticalSection(&_cs);
+	}
+
+	static void release()
+	{
+		DeleteCriticalSection(&_cs);
 	}
 };
 

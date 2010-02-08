@@ -27,6 +27,68 @@ _gdimm_text::~_gdimm_text()
 		delete[] _metric_buf;
 }
 
+WORD _gdimm_text::get_bmp_bit_count(WORD dc_bit_count)
+{
+	switch (dc_bit_count)
+	{
+	case 1:
+		return 1;
+	case 8:
+		return 8;
+	case 24:
+	case 32:
+		return 24;
+	default:
+		return 0;
+	}
+}
+
+FT_Render_Mode _gdimm_text::get_render_mode(WORD dc_bit_count)
+{
+	switch (dc_bit_count)
+	{
+	case 1:
+		return FT_RENDER_MODE_MONO;
+	case 8:
+		return FT_RENDER_MODE_NORMAL;
+	case 24:
+	case 32:
+		return FT_RENDER_MODE_LCD;
+	default:
+		return FT_RENDER_MODE_NORMAL;
+	}
+}
+
+bitmap_glyph_metrics _gdimm_text::get_glyph_metrics(const vector<FT_BitmapGlyph> &glyphs, const vector<POINT> &positions, WORD bit_count)
+{
+	const WORD byte_count = max(bit_count / 8, 1);
+	bitmap_glyph_metrics metrics = {0};
+
+	for (unsigned int i = 0; i < glyphs.size(); i++)
+	{
+		metrics.ascent = max(metrics.ascent, glyphs[i]->top);
+		metrics.descent = max(metrics.descent, glyphs[i]->bitmap.rows - glyphs[i]->top);
+	}
+
+	const int last_index = glyphs.size() - 1;
+	metrics.width = positions[last_index].x + glyphs[last_index]->bitmap.width / byte_count - positions[0].x;
+	metrics.height = metrics.ascent + metrics.descent;
+	metrics.bearing_x = glyphs[0]->left;
+
+	return metrics;
+}
+
+void _gdimm_text::draw_background(HDC hdc, CONST RECT *bg_rect, COLORREF color)
+{
+    const HBRUSH bg_brush = CreateSolidBrush(color);
+    assert(bg_brush != NULL);
+
+	int i_ret = FillRect(hdc, bg_rect, bg_brush);
+    assert(i_ret != 0);
+
+    DeleteObject(bg_brush);
+}
+
 bool _gdimm_text::get_metrics()
 {
 	// load outline metrics, which also include the text metrics, of the DC
@@ -78,46 +140,32 @@ void _gdimm_text::get_glyph_clazz()
 	FT_Done_Glyph(useless);
 }
 
-void _gdimm_text::draw_background(CONST RECT *lprect) const
-{
-	COLORREF _bg_color = GetBkColor(_hdc_text);
-	assert(_bg_color != CLR_INVALID);
-
-	const HBRUSH bg_brush = CreateSolidBrush(_bg_color);
-	assert(bg_brush != NULL);
-
-	int i_ret = FillRect(_hdc_text, lprect, bg_brush);
-	assert(i_ret != 0);
-
-	DeleteObject(bg_brush);
-}
-
-void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up, bool inverted) const
+void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up, bool inverted) const
 {
 	// both bitmap are 1-bit, 8 pixels per byte, in most-significant order
 
-	const LONG bmp_width = src_bitmap.width;
-	const LONG bmp_height = src_bitmap.rows;
+	const LONG src_width = src_bitmap.width;
+	const LONG src_height = src_bitmap.rows;
 	const int src_pitch = abs(src_bitmap.pitch);
-	const int dest_pitch = FT_PAD_CEIL(max(bmp_width / 8, 1), sizeof(DWORD));
+	const int dest_pitch = FT_PAD_CEIL(max(dest_width / 8, 1), sizeof(DWORD));
 
-	for (int j = 0; j < bmp_height; j++)
+	for (int j = 0; j < src_height; j++)
 	{
-		for (int i = 0; i < bmp_width; i++)
+		for (int i = 0; i < src_width; i++)
 		{
 			int src_ptr = i / 8;
 			if (src_bitmap.pitch > 0)
 				src_ptr += j * src_pitch;
 			else
-				src_ptr += (bmp_height - j - 1) * src_pitch;
+				src_ptr += (src_height - j - 1) * src_pitch;
 			
-			int dest_ptr = i / 8;
+			int dest_ptr = (dest_x + i) / 8;
 			if (is_dest_up)
-				dest_ptr += (bmp_height - j - 1) * dest_pitch;
+				dest_ptr += (dest_height - dest_y - j - 1) * dest_pitch;
 			else
-				dest_ptr += j * dest_pitch;
+				dest_ptr += (dest_y + j) * dest_pitch;
 
-			const int bit_pos = 7 - i % 8;
+			const BYTE bit_pos = 7 - i % 8;
 			const bool bit_set = ((src_bitmap.buffer[src_ptr] & (1 << bit_pos)) != 0);
 
 			if (bit_set != inverted)
@@ -128,32 +176,32 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits
 	}
 }
 
-void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up) const
+void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const
 {
 	// both bitmaps are 8-bit, 1 byte per pixel
 
 	const WORD src_byte_count = 1;
-	const LONG bmp_width = src_bitmap.width / src_byte_count;
-	const LONG bmp_height = src_bitmap.rows;
+	const LONG src_width = src_bitmap.width / src_byte_count;
+	const LONG src_height = src_bitmap.rows;
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_count = 3;
-	const int dest_pitch = FT_PAD_CEIL(bmp_width * dest_byte_count, sizeof(DWORD));
+	const int dest_pitch = FT_PAD_CEIL(dest_width * dest_byte_count, sizeof(DWORD));
 
-	for (int j = 0; j < bmp_height; j++)
+	for (int j = 0; j < src_height; j++)
 	{
-		for (int i = 0; i < bmp_width; i++)
+		for (int i = 0; i < src_width; i++)
 		{
 			int src_ptr = i * src_byte_count;
 			if (src_bitmap.pitch > 0)
 				src_ptr += j * src_pitch;
 			else
-				src_ptr += (bmp_height - j - 1) * src_pitch;
+				src_ptr += (src_height - j - 1) * src_pitch;
 			
-			int dest_ptr = i * dest_byte_count;
+			int dest_ptr = (dest_x + i) * dest_byte_count;
 			if (is_dest_up)
-				dest_ptr += (bmp_height - j - 1) * dest_pitch;
+				dest_ptr += (dest_height - dest_y - j - 1) * dest_pitch;
 			else
-				dest_ptr += j * dest_pitch;
+				dest_ptr += (dest_y + j) * dest_pitch;
 
 			const BYTE gray_level = src_bitmap.buffer[src_ptr];
 			dest_bits[dest_ptr] = (gray_level * gray_level + (255 - gray_level) * dest_bits[dest_ptr]) / 255;
@@ -161,33 +209,33 @@ void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap, BYTE *dest_bits
 	}
 }
 
-void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up) const
+void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const
 {
 	// the source bitmap is 24-bit, 3 bytes per pixel, in order of R, G, B channels
 	// the destination bitmap is 24-bit, 3 bytes per pixel, in order of B, G, R channels
 
 	const WORD src_byte_count = 3;
-	const LONG bmp_width = src_bitmap.width / src_byte_count;
-	const LONG bmp_height = src_bitmap.rows;
+	const LONG src_width = src_bitmap.width / src_byte_count;
+	const LONG src_height = src_bitmap.rows;
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_count = 3;
-	const int dest_pitch = FT_PAD_CEIL(bmp_width * dest_byte_count, sizeof(DWORD));
+	const int dest_pitch = FT_PAD_CEIL(dest_width * dest_byte_count, sizeof(DWORD));
 
-	for (int j = 0; j < bmp_height; j++)
+	for (int j = 0; j < src_height; j++)
 	{
-		for (int i = 0; i < bmp_width; i++)
+		for (int i = 0; i < src_width; i++)
 		{
 			int src_ptr = i * src_byte_count;
 			if (src_bitmap.pitch > 0)
 				src_ptr += j * src_pitch;
 			else
-				src_ptr += (bmp_height - j - 1) * src_pitch;
+				src_ptr += (src_height - j - 1) * src_pitch;
 			
-			int dest_ptr = i * dest_byte_count;
+			int dest_ptr = (dest_x + i) * dest_byte_count;
 			if (is_dest_up)
-				dest_ptr += (bmp_height - j - 1) * dest_pitch;
+				dest_ptr += (dest_height - dest_y - j - 1) * dest_pitch;
 			else
-				dest_ptr += j * dest_pitch;
+				dest_ptr += (dest_y + j) * dest_pitch;
 
 			const BYTE r = src_bitmap.buffer[src_ptr];
 			const BYTE g = src_bitmap.buffer[src_ptr+1];
@@ -200,50 +248,48 @@ void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap, BYTE *dest_bits,
 	}
 }
 
-void _gdimm_text::set_bmp_bits_alpha(const FT_Bitmap &src_bitmap, BYTE *dest_bits, bool is_dest_up) const
+void _gdimm_text::set_bmp_bits_alpha(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const
 {
 	// the destination bitmap is 32-bit, 4 bytes per pixel, in order of B, G, R, A channels
 	// each row is aligned to DWORD
 
 	const WORD src_byte_count = 3;
-	const LONG bmp_width = src_bitmap.width / src_byte_count;
-	const LONG bmp_height = src_bitmap.rows;
+	const LONG src_width = src_bitmap.width / src_byte_count;
+	const LONG src_height = src_bitmap.rows;
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_count = 4;
-	const int dest_pitch = FT_PAD_CEIL(bmp_width * dest_byte_count, sizeof(DWORD));
+	const int dest_pitch = FT_PAD_CEIL(dest_width * dest_byte_count, sizeof(DWORD));
 
-	for (int j = 0; j < bmp_height; j++)
+	for (int j = 0; j < src_height; j++)
 	{
-		for (int i = 0; i < bmp_width; i++)
+		for (int i = 0; i < src_width; i++)
 		{
 			int src_ptr = i * src_byte_count;
 			if (src_bitmap.pitch > 0)
 				src_ptr += j * src_pitch;
 			else
-				src_ptr += (bmp_height - j - 1) * src_pitch;
+				src_ptr += (src_height - j - 1) * src_pitch;
 			
-			int dest_ptr = i * dest_byte_count;
+			int dest_ptr = (dest_x + i) * dest_byte_count;
 			if (is_dest_up)
-				dest_ptr += (bmp_height - j - 1) * dest_pitch;
+				dest_ptr += (dest_height - dest_y - j - 1) * dest_pitch;
 			else
-				dest_ptr += j * dest_pitch;
+				dest_ptr += (dest_y + j) * dest_pitch;
 
-			const BYTE r = src_bitmap.buffer[src_ptr];
-			const BYTE g = src_bitmap.buffer[src_ptr+1];
-			const BYTE b = src_bitmap.buffer[src_ptr+2];
+			const BYTE bmp_r = src_bitmap.buffer[src_ptr];
+			const BYTE bmp_g = src_bitmap.buffer[src_ptr+1];
+			const BYTE bmp_b = src_bitmap.buffer[src_ptr+2];
 			
-			dest_bits[dest_ptr] = (b * _fg_rgb.rgbBlue + (255 - b) * dest_bits[dest_ptr]) / 255;
-			dest_bits[dest_ptr+1] = (g * _fg_rgb.rgbGreen + (255 - g) * dest_bits[dest_ptr+1]) / 255;
-			dest_bits[dest_ptr+2] = (r * _fg_rgb.rgbRed + (255 - r) * dest_bits[dest_ptr+2]) / 255;
+			dest_bits[dest_ptr] = (bmp_b * _fg_rgb.rgbBlue + (255 - bmp_b) * dest_bits[dest_ptr]) / 255;
+			dest_bits[dest_ptr+1] = (bmp_g * _fg_rgb.rgbGreen + (255 - bmp_g) * dest_bits[dest_ptr+1]) / 255;
+			dest_bits[dest_ptr+2] = (bmp_r * _fg_rgb.rgbRed + (255 - bmp_r) * dest_bits[dest_ptr+2]) / 255;
 			dest_bits[dest_ptr+3] = 0;
 		}
 	}
 }
 
-WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, BITMAPINFO *&bmi) const
+void _gdimm_text::get_dc_bmi(BITMAPINFO *&bmi) const
 {
-	// create glyph bitmap base on the destination bitmap format
-
 	int lines_ret;
 	BOOL b_ret;
 
@@ -257,10 +303,12 @@ WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, BITMAPINFO *&bmi) const
 	b_ret = BitBlt(hdc_canvas, 0, 0, 1, 1, _hdc_text, _cursor.x, _cursor.y, SRCCOPY);
 	assert(b_ret);
 	
+	// fill bmi with device bitmap properties
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, 1, NULL, bmi, DIB_RGB_COLORS);
 	assert(lines_ret != 0);
 
+	bool need_color_table = true;
 	if (bmi->bmiHeader.biClrUsed > 1)
 	{
 		// the next GetDIBits will alloc as many RGBQUAD to the color table as biClrUsed specifies
@@ -278,47 +326,28 @@ WORD _gdimm_text::create_bitmap(FT_Glyph *glyph_ptr, BITMAPINFO *&bmi) const
 		bmi = (BITMAPINFO*) realloc(bmi, sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD));
 		assert(bmi != NULL);
 	}
+	else
+		need_color_table = false;
 
-	FT_Render_Mode render_mode;
-	WORD src_bit_count;
-	switch (bmi->bmiHeader.biBitCount)
+	if (need_color_table)
 	{
-	case 1:
-		render_mode = FT_RENDER_MODE_MONO;
-		src_bit_count = 1;
-		break;
-	case 8:
-		render_mode = FT_RENDER_MODE_NORMAL;
-		src_bit_count = 8;
-		break;
-	case 24:
-	case 32:
-		render_mode = FT_RENDER_MODE_LCD;
-		src_bit_count = 24;
-		break;
+		// fill bmi's color table
+		BYTE useless[4];
+		lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, 1, useless, bmi, DIB_RGB_COLORS);
+		assert(lines_ret == 1);
 	}
-
-	FT_Error ft_error = FT_Glyph_To_Bitmap(glyph_ptr, render_mode, NULL, FALSE);
-	assert(ft_error == 0);
 
 	DeleteObject(dest_bitmap);
 	DeleteDC(hdc_canvas);
-
-	return src_bit_count;
 }
 
-void _gdimm_text::draw_glyph(const FT_BitmapGlyph bmp_glyph, WORD src_bit_count, BITMAPINFO *bmi) const
+void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
+	const vector<POINT> &positions,
+	const POINT &src_origin,
+	const bitmap_glyph_metrics &metrics,
+	CONST RECT *clip_rect,
+	BITMAPINFO *bmi) const
 {
-	int lines_ret;
-	BOOL b_ret;
-
-	const FT_Bitmap &src_bitmap = bmp_glyph->bitmap;
-	const WORD src_byte_count = max(src_bit_count / 8, 1);
-	const LONG bmp_width = src_bitmap.width / src_byte_count;
-	const LONG bmp_height = src_bitmap.rows;	
-	const int x = _cursor.x + bmp_glyph->left;
-	const int y = _cursor.y - bmp_glyph->top;
-
 	/*
 	the way we draw bitmap to DC is
 	1. create compatible DC and bitmap of the physical DC
@@ -328,52 +357,124 @@ void _gdimm_text::draw_glyph(const FT_BitmapGlyph bmp_glyph, WORD src_bit_count,
 	5. draw the updated physical DC bitmap back to the physical DC
 	*/
 
-	const HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
-	assert(hdc_canvas != NULL);
+	BOOL b_ret;
 
-	const HBITMAP dest_bitmap = CreateCompatibleBitmap(_hdc_text, bmp_width, bmp_height);
-	assert(dest_bitmap != NULL);
-	SelectObject(hdc_canvas, dest_bitmap);
-
-	b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, x, y, SRCCOPY);
-	assert(b_ret);
-
-	bmi->bmiHeader.biWidth = bmp_width;
-	bmi->bmiHeader.biHeight = bmp_height;
-	bmi->bmiHeader.biSizeImage = FT_PAD_CEIL(max(bmp_width * bmi->bmiHeader.biBitCount / 8, 1), sizeof(DWORD)) * bmp_height;
-
-	BYTE *dest_bits = new BYTE[bmi->bmiHeader.biSizeImage];
-	lines_ret = GetDIBits(hdc_canvas, dest_bitmap, 0, bmp_height, dest_bits, bmi, DIB_RGB_COLORS);
-	assert(lines_ret == bmp_height);
-
-	/*
-	Windows DIB and FreeType Bitmap have different ways to indicate bitmap direction
-	biHeight > 0 means the Windows DIB is bottom-up
-	biHeight < 0 means the Windows DIB is top-down
-	pitch > 0 means the FreeType bitmap is down flow
-	pitch > 0 means the FreeType bitmap is up flow
-	*/
-
-	switch (bmi->bmiHeader.biBitCount)
+	POINT dest_origin = src_origin;
+	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & _text_alignment)
 	{
-	case 1:
-		set_bmp_bits_mono(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0, *((WORD*) &_fg_rgb) == *((WORD*) bmi->bmiColors));
+	case TA_LEFT:
 		break;
-	case 8:
-		set_bmp_bits_gray(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0);
+	case TA_RIGHT:
+		dest_origin.x -= metrics.width;
 		break;
-	case 24:
-		set_bmp_bits_lcd(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0);
+	case TA_CENTER:
+		dest_origin.x -= metrics.width / 2;
 		break;
-	case 32:
-		set_bmp_bits_alpha(src_bitmap, dest_bits, bmi->bmiHeader.biHeight > 0);
+	}
+	switch ((TA_TOP | TA_BOTTOM | TA_BASELINE) & _text_alignment)
+	{
+	case TA_TOP:
+		break;
+	case TA_BOTTOM:
+		dest_origin.y -= metrics.height;
+		break;
+	case TA_BASELINE:
+		dest_origin.y -= metrics.ascent;
 		break;
 	}
 
-	lines_ret = SetDIBitsToDevice(_hdc_text, x, y, bmp_width, bmp_height, 0, 0, 0, bmp_height, dest_bits, bmi, DIB_RGB_COLORS);
-	assert(lines_ret == bmp_height);
+	const LONG dest_x = dest_origin.x + metrics.bearing_x;
+	const LONG dest_y = dest_origin.y;
 
-	delete[] dest_bits;
+	bmi->bmiHeader.biWidth = metrics.width;
+	bmi->bmiHeader.biHeight = metrics.height;
+	bmi->bmiHeader.biSizeImage = 0;
+	if (bmi->bmiHeader.biBitCount == 1)
+		int a = 0;
+	//bmi->bmiHeader.biSizeImage = FT_PAD_CEIL(max(metrics.width * bmi->bmiHeader.biBitCount / 8, 1), sizeof(DWORD)) * metrics.height;
+	
+	BYTE *dest_bits;
+	const HBITMAP dest_bitmap = CreateDIBSection(_hdc_text, bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
+	assert(dest_bitmap != NULL);
+
+	const HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
+	assert(hdc_canvas != NULL);
+	SelectObject(hdc_canvas, dest_bitmap);
+
+	if (GetBkMode(_hdc_text) == OPAQUE)
+	{
+		COLORREF bg_color = GetBkColor(_hdc_text);
+        assert(bg_color != CLR_INVALID);
+
+		RECT bg_rect = {0, 0 , metrics.width, metrics.height};
+		//ExtTextOut(hdc_canvas, 0, 0, ETO_OPAQUE, &bg_rect, NULL, 0, NULL);
+		draw_background(hdc_canvas, &bg_rect, bg_color);
+	}
+	else
+	{
+		b_ret = BitBlt(hdc_canvas, 0, 0, metrics.width, metrics.height, _hdc_text, dest_x, dest_y, SRCCOPY);
+		assert(b_ret);
+	}
+
+	for (unsigned int i = 0; i < glyphs.size(); i++)
+	{
+		/*
+		Windows DIB and FreeType Bitmap have different ways to indicate bitmap direction
+		biHeight > 0 means the Windows DIB is bottom-up
+		biHeight < 0 means the Windows DIB is top-down
+		pitch > 0 means the FreeType bitmap is down flow
+		pitch > 0 means the FreeType bitmap is up flow
+		*/
+
+		const int x = (glyphs[i]->left - metrics.bearing_x) + (positions[i].x - src_origin.x);
+		const int y = (metrics.ascent - glyphs[i]->top) + (positions[i].y - src_origin.y);
+
+		switch (bmi->bmiHeader.biBitCount)
+		{
+		case 1:
+			set_bmp_bits_mono(glyphs[i]->bitmap, dest_bits, x, y, metrics.width, metrics.height, bmi->bmiHeader.biHeight > 0, *((WORD*) &_fg_rgb) == *((WORD*) bmi->bmiColors));
+			break;
+		case 8:
+			set_bmp_bits_gray(glyphs[i]->bitmap, dest_bits, x, y, metrics.width, metrics.height, bmi->bmiHeader.biHeight > 0);
+			break;
+		case 24:
+			set_bmp_bits_lcd(glyphs[i]->bitmap, dest_bits, x, y, metrics.width, metrics.height, bmi->bmiHeader.biHeight > 0);
+			break;
+		case 32:
+			set_bmp_bits_alpha(glyphs[i]->bitmap, dest_bits, x, y, metrics.width, metrics.height, bmi->bmiHeader.biHeight > 0);
+			break;
+		}
+
+		if (bmi->bmiHeader.biBitCount == 1)
+			break;
+	}
+
+	if (_eto_options & ETO_CLIPPED)
+	{
+		RECT dest_rect = {dest_x, dest_y, dest_x + metrics.width, dest_y + metrics.height};
+		IntersectRect(&dest_rect, &dest_rect, clip_rect);
+		const LONG dest_x_off = dest_rect.left - dest_x;
+		const LONG dest_y_off = dest_rect.top - dest_y;
+		const LONG dest_width = dest_rect.right - dest_rect.left;
+		const LONG dest_height = dest_rect.bottom - dest_rect.top;
+
+		b_ret = BitBlt(_hdc_text,
+			dest_rect.left,
+			dest_rect.top,
+			dest_width,
+			dest_height,
+			hdc_canvas,
+			dest_x_off,
+			dest_y_off,
+			SRCCOPY);
+		assert(b_ret);
+	}
+	else
+	{
+		b_ret = BitBlt(_hdc_text, dest_x, dest_y, metrics.width, metrics.height, hdc_canvas, 0, 0, SRCCOPY);
+		assert(b_ret);
+	}
+
 	DeleteObject(dest_bitmap);
 	DeleteDC(hdc_canvas);
 }
@@ -400,13 +501,14 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	if (glyph_clazz == NULL)
 		get_glyph_clazz();
 
+	_eto_options = options;
+
 	// get foreground color
 	_fg_color = GetTextColor(_hdc_text);
 	assert(_fg_color != CLR_INVALID);
 	_fg_rgb.rgbBlue = GetBValue(_fg_color);
 	_fg_rgb.rgbGreen = GetGValue(_fg_color);
 	_fg_rgb.rgbRed = GetRValue(_fg_color);
-	_fg_rgb.rgbReserved = 0;
 	
 	_text_alignment = GetTextAlign(_hdc_text);
 	assert(_text_alignment != GDI_ERROR);
@@ -425,8 +527,6 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 		_cursor.y = y;
 		_update_cursor = false;
 	}
-
-	_eto_options = options;
 
 	return true;
 }
@@ -455,13 +555,22 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	return true;
 }*/
 
-void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *lprect, CONST INT *lpDx)
+bool _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *lprect, CONST INT *lpDx)
 {
 	BOOL b_ret;
+	FT_Error ft_error;
+	
+	// is ETO_PDY is set, lpDx contains both x increment and y displacement
+	const int dx_factor = ((_eto_options & ETO_PDY) ? 2 : 1);
 
+	// identity matrix
+	const MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
 	SIZE text_extent;
+
 	if (_eto_options & ETO_GLYPH_INDEX)
 	{
+		glyph_format |= GGO_GLYPH_INDEX;
 		b_ret = GetTextExtentPointI(_hdc_text, (WORD*) string, count, &text_extent);
 		assert(b_ret);
 	}
@@ -471,58 +580,13 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 		assert(b_ret);
 	}
 
-	// draw background if needed
+	BITMAPINFO *bmi = (BITMAPINFO*) calloc(1, sizeof(BITMAPINFO));
+	get_dc_bmi(bmi);
+	const FT_Render_Mode render_mode = get_render_mode(bmi->bmiHeader.biBitCount);
 
-	if (_eto_options & ETO_OPAQUE)
-	{
-		assert(lprect != NULL);
-		draw_background(lprect);
-	}
-
-	if (GetBkMode(_hdc_text) == OPAQUE)
-	{
-		RECT text_rect;
-		b_ret = SetRect(&text_rect, _cursor.x, _cursor.y, _cursor.x + text_extent.cx, _cursor.y + text_extent.cy);
-		assert(b_ret);
-
-		if (_eto_options & ETO_CLIPPED)
-			IntersectRect(&text_rect, &text_rect, lprect);
-
-		draw_background(&text_rect);
-	}
-	
-	// is ETO_PDY is set, lpDx contains both x increment and y displacement
-	const int dx_factor = ((_eto_options & ETO_PDY) ? 2 : 1);
-
-	// identity matrix
-	const MAT2 id_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
-	UINT glyph_format = GGO_NATIVE | GGO_UNHINTED;
-	if (_eto_options & ETO_GLYPH_INDEX)
-		glyph_format |= GGO_GLYPH_INDEX;
-
-	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & _text_alignment)
-	{
-	case TA_LEFT:
-		break;
-	case TA_RIGHT:
-		_cursor.x -= text_extent.cx;
-		break;
-	case TA_CENTER:
-		_cursor.x -= text_extent.cx / 2;
-		break;
-	}
-
-	switch ((TA_TOP | TA_BOTTOM | TA_BASELINE) & _text_alignment)
-	{
-	case TA_TOP:
-		_cursor.y += _outline_metrics->otmTextMetrics.tmAscent;
-		break;
-	case TA_BOTTOM:
-		_cursor.y -= _outline_metrics->otmTextMetrics.tmDescent;
-		break;
-	case TA_BASELINE:
-		break;
-	}
+	vector<FT_BitmapGlyph> glyphs;
+	vector<POINT> positions;
+	POINT bitmap_origin = _cursor;
 
 	for (unsigned int i = 0; i < count; i++)
 	{
@@ -543,7 +607,7 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 			vector<char> tags;
 			vector<short> contour_pos;
 
-			// parse outline glyph_indicesuctures
+			// parse outline coutours
 			DWORD header_off = 0;
 			do
 			{
@@ -551,8 +615,8 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 				const TTPOLYGONHEADER *header = (TTPOLYGONHEADER*) header_ptr;
 
 				// FreeType uses 26.6 format, while Windows gives logical units
-				const FT_Vector start_pt = {fix_to_26dot6(header->pfxStart.x), fix_to_26dot6(header->pfxStart.y)};
-				points.push_back(start_pt);
+				const FT_Vector start_point = {fix_to_26dot6(header->pfxStart.x), fix_to_26dot6(header->pfxStart.y)};
+				points.push_back(start_point);
 				tags.push_back(FT_CURVE_TAG_ON);
 
 				DWORD curve_off = sizeof(TTPOLYGONHEADER);
@@ -577,8 +641,8 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 
 					for (int j = 0; j < curve->cpfx; j++)
 					{
-						const FT_Vector curr_pt = {fix_to_26dot6(curve->apfx[j].x), fix_to_26dot6(curve->apfx[j].y)};
-						points.push_back(curr_pt);
+						const FT_Vector curr_point = {fix_to_26dot6(curve->apfx[j].x), fix_to_26dot6(curve->apfx[j].y)};
+						points.push_back(curr_point);
 						tags.push_back(curr_tag);
 					}
 					
@@ -625,14 +689,12 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 			};
 
 			FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
-			BITMAPINFO *bmi = (BITMAPINFO*) calloc(1, sizeof(BITMAPINFO));
+			ft_error = FT_Glyph_To_Bitmap(&generic_glyph, render_mode, NULL, FALSE);
+			assert(ft_error == 0);
 
-			WORD bit_count = create_bitmap(&generic_glyph, bmi);
-			draw_glyph((FT_BitmapGlyph) generic_glyph, bit_count, bmi);
-
-			free(bmi);
-			FT_Done_Glyph(generic_glyph);
-			// the FT_OutlineGlyph is manually conglyph_indicesucted, no need to destroy it
+			FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) generic_glyph;
+			glyphs.push_back(bmp_glyph);
+			positions.push_back(_cursor);
 		}
 
 		// advance cursor
@@ -644,10 +706,32 @@ void _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 		_cursor.y += glyph_metrics.gmCellIncY;
 	}
 
-	// if TA_UPDATECP is set, update current position after text out
-	if (_update_cursor)
+	bool has_glyph = (!glyphs.empty());
+	if (has_glyph)
 	{
-		b_ret = MoveToEx(_hdc_text, _cursor.x, _cursor.y, NULL);
-		assert(b_ret);
+		const WORD bmp_bit_count = get_bmp_bit_count(bmi->bmiHeader.biBitCount);
+		assert(bmp_bit_count != 0);
+
+		bitmap_glyph_metrics metrics = get_glyph_metrics(glyphs, positions, bmp_bit_count);
+		metrics.width = max(metrics.width, text_extent.cx);
+		metrics.ascent = max(metrics.ascent, _outline_metrics->otmTextMetrics.tmAscent);
+		metrics.descent = max(metrics.descent, _outline_metrics->otmTextMetrics.tmDescent);
+		metrics.height = metrics.ascent + metrics.descent;
+
+		draw_glyph(glyphs, positions, bitmap_origin, metrics, lprect, bmi);
+		
+		for (unsigned int i = 0; i < glyphs.size(); i++)
+			FT_Done_Glyph((FT_Glyph) glyphs[i]);
+		// the FT_OutlineGlyph is manually constructed, no need to destroy it
+		
+		// if TA_UPDATECP is set, update current position after text out
+		if (_update_cursor)
+		{
+			b_ret = MoveToEx(_hdc_text, _cursor.x, _cursor.y, NULL);
+			assert(b_ret);
+		}
 	}
+	
+	free(bmi);
+	return has_glyph;
 }

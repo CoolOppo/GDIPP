@@ -180,8 +180,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
 
+		RECT rect = {10, 5, 200, 50};
+		SetBkMode(hdc, OPAQUE);
+		SetBkColor(hdc, RGB(100, 110, 120));
+		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
+
 #ifdef test
-		SetBkMode(hdc, TRANSPARENT);
+		//SetBkMode(hdc, TRANSPARENT);
 
 		if (start == 0)
 		{
@@ -209,7 +214,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW+1));
-		ExtTextOut(hdc, 10, 10, 0, NULL, elapse_str, lstrlen(elapse_str), NULL);
+		ExtTextOut(hdc, 100, 25, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
 #endif
 
 		EndPaint(hWnd, &ps);

@@ -3,11 +3,10 @@
 #include "text.h"
 #include <tlhelp32.h>
 
-CRITICAL_SECTION in_ExtTextOutW;
-
 __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
-	BOOL b_ret = TRUE;
+	//if ((options & ETO_GLYPH_INDEX))// || c < 3)
+	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	//if (c < 10)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -26,15 +25,19 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 
 	/*if (!TryEnterCriticalSection(&in_ExtTextOutW))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);*/
-	EnterCriticalSection(&in_ExtTextOutW);
-
-	if (gdimm_text::instance().init(hdc, x, y, options))
-		gdimm_text::instance().text_out(lpString, c, lprect, lpDx);
-	else
-		b_ret = ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	
-	LeaveCriticalSection(&in_ExtTextOutW);
-	return b_ret;
+	critical_section lock;
+
+	if (options & ETO_OPAQUE)
+		ExtTextOutW(hdc, x, y, ETO_OPAQUE, lprect, NULL, 0, NULL);
+
+	if (!gdimm_text::instance().init(hdc, x, y, options))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	if (!gdimm_text::instance().text_out(lpString, c, lprect, lpDx))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	return TRUE;
 }
 
 __out_opt
@@ -61,7 +64,7 @@ bool operator<(const hook_info &hook1, const hook_info &hook2)
 
 _gdimm_hook::_gdimm_hook()
 {
-	InitializeCriticalSection(&in_ExtTextOutW);
+	critical_section::initialize();
 	_hooks[hook_info(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook)] = NULL;
 	_hooks[hook_info(TEXT("kernel32"), "CreateThread", CreateThread_hook)] = NULL;
 }
@@ -147,4 +150,6 @@ void _gdimm_hook::unhook()
 
 	for (map<const hook_info, TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
 		delete iter->second;
+
+	critical_section::release();
 }

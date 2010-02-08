@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "global.h"
 
+CRITICAL_SECTION critical_section::_cs;
+
 #define debug_file_name "C:\\gdimm_debug.txt"
 
 void debug_output(const TCHAR *str)
