@@ -4,15 +4,6 @@
 #include <vector>
 using namespace std;
 
-struct bitmap_glyph_metrics
-{
-	FT_Int width;
-	FT_Int height;
-	FT_Int ascent;
-	FT_Int descent;
-	FT_Int bearing_x;
-};
-
 class _gdimm_text
 {
 	// device context attributes
@@ -20,33 +11,47 @@ class _gdimm_text
 	POINT _cursor;
 	BOOL _update_cursor;
 	UINT _text_alignment;
-
-	// colors
-	COLORREF _fg_color;
+	int _char_extra;
 	RGBQUAD _fg_rgb;
 
 	// metrics
 	BYTE *_metric_buf;
 	OUTLINETEXTMETRIC *_outline_metrics;
+	LOGFONT _font_attr;
 
 	//misc
 	UINT _eto_options;
 
-	static WORD get_bmp_bit_count(WORD dc_bit_count);
-	static FT_Render_Mode get_render_mode(WORD dc_bit_count);
-	static bitmap_glyph_metrics get_glyph_metrics(const vector<FT_BitmapGlyph> &glyphs, const vector<POINT> &positions, WORD bit_count);
 	static void draw_background(HDC hdc, CONST RECT *bg_rect, COLORREF color);
+	static WORD get_bmp_bit_count(WORD dc_bit_count);
+	FT_Render_Mode get_render_mode(WORD dc_bit_count) const;
 	bool get_metrics();
 	void get_glyph_clazz();
-	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up, bool inverted) const;
-	void set_bmp_bits_gray(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const;
-	void set_bmp_bits_lcd(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const;
-	void set_bmp_bits_alpha(const FT_Bitmap &src_bitmap, BYTE *dest_bits, int dest_x, int dest_y, int dest_width, int dest_height, bool is_dest_up) const;
-	void get_dc_bmi(BITMAPINFO *&bmi) const;
+	void get_bmi(BITMAPINFO *&bmi) const;
+	FT_BitmapGlyph get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &matrix, FT_Render_Mode render_mode) const;
+	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
+		int src_x, int src_y,
+		BYTE *dest_bits,
+		int dest_x,	int dest_y,
+		int dest_width, int dest_height,
+		bool is_dest_up,
+		WORD dest_bit_count) const;
+	void set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
+		int src_x, int src_y,
+		BYTE *dest_bits,
+		int dest_x, int dest_y,
+		int dest_width, int dest_height,
+		bool is_dest_up) const;
+	void set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
+		int src_x, int src_y,
+		BYTE *dest_bits,
+		int dest_x, int dest_y,
+		int dest_width, int dest_height,
+		bool is_dest_up,
+		WORD dest_bit_count) const;
 	void draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &positions,
 		const POINT &src_origin,
-		const bitmap_glyph_metrics &metrics,
 		CONST RECT *clip_rect,
 		BITMAPINFO *bmi) const;
 
@@ -54,6 +59,8 @@ class _gdimm_text
 	const TCHAR *get_full_name() const;
 
 public:
+	bool test;
+
 	_gdimm_text();
 	~_gdimm_text();
 	bool init(HDC hdc, int x, int y, UINT options);

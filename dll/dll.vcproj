@@ -63,6 +63,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook32.lib"
+				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -138,6 +139,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook32.lib"
+				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"

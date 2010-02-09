@@ -5,12 +5,6 @@
 
 __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
-	//if ((options & ETO_GLYPH_INDEX))// || c < 3)
-	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-	//if (c < 10)
-	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
 	// no text to render
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -22,9 +16,6 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 	// probably a printer
 	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-	/*if (!TryEnterCriticalSection(&in_ExtTextOutW))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);*/
 	
 	critical_section lock;
 
@@ -33,6 +24,30 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 
 	if (!gdimm_text::instance().init(hdc, x, y, options))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+#ifdef _DEBUG
+	const WCHAR *debug_text = NULL;//L"10%";
+
+	if (debug_text)
+	{
+		bool break_now = false;
+		if (options & ETO_GLYPH_INDEX)
+		{
+			const size_t debug_len = wcslen(debug_text);
+			WORD *gi = new WORD[debug_len];
+			GetGlyphIndices(hdc, debug_text, debug_len, gi, 0);
+
+			if (memcmp((WORD*) lpString, gi, sizeof(WORD) * debug_len) == 0)
+				break_now = true;
+			delete[] gi;
+		}
+		else if (lstrcmp(lpString, debug_text) == 0)
+			break_now = true;
+
+		if (break_now)
+			gdimm_text::instance().test = true;
+	}
+#endif
 
 	if (!gdimm_text::instance().text_out(lpString, c, lprect, lpDx))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);

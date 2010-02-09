@@ -180,14 +180,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
 
-		RECT rect = {10, 5, 200, 50};
-		SetBkMode(hdc, OPAQUE);
-		SetBkColor(hdc, RGB(100, 110, 120));
-		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
-
 #ifdef test
-		//SetBkMode(hdc, TRANSPARENT);
-
 		if (start == 0)
 		{
 			srand((unsigned) time(NULL));
@@ -214,7 +207,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW+1));
+		
+		RECT rect = {10, 5, 200, 50};
+		SetBkMode(hdc, OPAQUE);
+		SetBkColor(hdc, RGB(240, 240, 240));
+		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
+		SetTextColor(hdc, RGB(255, 0, 100));
+		HFONT f = CreateFont(-11, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
+		SelectObject(hdc, f);
 		ExtTextOut(hdc, 100, 25, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		DeleteObject(f);
 #endif
 
 		EndPaint(hWnd, &ps);

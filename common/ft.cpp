@@ -13,7 +13,7 @@ void initialize_freetype()
 	assert(ft_error == 0);
 
 	// enable FreeType LCD filter
-	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_LIGHT);
+	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_DEFAULT);
 	assert(ft_error == 0);
 
 	ft_error = FTC_Manager_New(ft_lib, 1, 0, 0, face_requester, NULL, &ft_cache_man);
