@@ -48,7 +48,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HMODULE h_gdimm = NULL;
 
 #ifdef render
-	h_gdimm = LoadLibrary(TEXT("dll.dll"));
+	h_gdimm = LoadLibrary(TEXT("gdimm.dll"));
 #endif
 
 	// Perform application initialization:
