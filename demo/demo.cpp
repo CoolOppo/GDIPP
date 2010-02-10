@@ -213,9 +213,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetBkColor(hdc, RGB(240, 240, 240));
 		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
 		SetTextColor(hdc, RGB(255, 0, 100));
-		HFONT f = CreateFont(-11, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
+		
+		HFONT f = CreateFont(-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		SelectObject(hdc, f);
 		ExtTextOut(hdc, 100, 25, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		ExtTextOut(hdc, 100, 25, ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
 		DeleteObject(f);
 #endif
 

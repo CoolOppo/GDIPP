@@ -45,3 +45,15 @@ void debug_output(DWORD num)
 	fclose(f);
 #endif
 }
+
+void debug_output_process_name()
+{
+#ifdef _DEBUG
+	HANDLE h_proc = GetCurrentProcess();
+	DWORD name_size = MAX_PATH;
+	TCHAR name_str[MAX_PATH];
+	QueryFullProcessImageName(h_proc, 0, name_str, &name_size);
+
+	debug_output(name_str, name_size);
+#endif
+}

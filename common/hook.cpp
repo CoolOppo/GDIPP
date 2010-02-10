@@ -26,22 +26,24 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 #ifdef _DEBUG
-	const WCHAR *debug_text = NULL;//L"10%";
+	const WCHAR *debug_text = NULL;//L"Tuesday";
+	const int start_index = 0;
 
 	if (debug_text)
 	{
 		bool break_now = false;
+		const size_t debug_len = wcslen(debug_text);
+
 		if (options & ETO_GLYPH_INDEX)
 		{
-			const size_t debug_len = wcslen(debug_text);
 			WORD *gi = new WORD[debug_len];
 			GetGlyphIndices(hdc, debug_text, debug_len, gi, 0);
 
-			if (memcmp((WORD*) lpString, gi, sizeof(WORD) * debug_len) == 0)
+			if (memcmp((WORD*) lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
 				break_now = true;
 			delete[] gi;
 		}
-		else if (lstrcmp(lpString, debug_text) == 0)
+		else if (wcsncmp(lpString + start_index, debug_text, debug_len) == 0)
 			break_now = true;
 
 		if (break_now)

@@ -63,7 +63,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	b_ret = PathRemoveFileSpec(hook_dll);
 	assert(b_ret);
 
-	b_ret = PathAppend(hook_dll, TEXT("dll.dll"));
+	b_ret = PathAppend(hook_dll, TEXT("gdimm.dll"));
 	assert(b_ret);
 
 	TCHAR proc_name[MAX_PATH];

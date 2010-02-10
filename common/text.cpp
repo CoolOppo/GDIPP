@@ -16,6 +16,11 @@ inline FT_F26Dot6 to_26dot6(const FIXED &fixed)
 	return *((FT_F26Dot6*) &fixed) >> 10;
 }
 
+inline FT_F26Dot6 to_26dot6(int i)
+{
+	return i << 6;
+}
+
 // convert integer to 16.16 fixed float type
 inline FT_Pos to_16dot16(int i)
 {
@@ -74,12 +79,23 @@ WORD _gdimm_text::get_bmp_bit_count(WORD dc_bit_count)
 	}
 }
 
+int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
+{
+	switch (bitmap.pixel_mode)
+	{
+	case FT_PIXEL_MODE_LCD:
+		return bitmap.width / 3;
+	default:
+		return bitmap.width;
+	}
+}
+
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
 FT_Render_Mode _gdimm_text::get_render_mode(WORD dc_bit_count) const
 {
 	// non-antialiased font
 	// draw with monochrome mode
-	if (_font_attr.lfQuality & NONANTIALIASED_QUALITY)
+	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY)
 		return FT_RENDER_MODE_MONO;
 
 	switch (dc_bit_count)
@@ -97,7 +113,7 @@ FT_Render_Mode _gdimm_text::get_render_mode(WORD dc_bit_count) const
 }
 
 // get various metrics of the DC
-bool _gdimm_text::get_metrics()
+bool _gdimm_text::get_dc_metrics()
 {
 	// get outline metrics of the DC, which also include the text metrics
 	int metric_size = GetOutlineTextMetrics(_hdc_text, 0, NULL);
@@ -117,6 +133,31 @@ bool _gdimm_text::get_metrics()
 	GetObject(h_font, sizeof(LOGFONT), &_font_attr);
 
 	return true;
+}
+
+void _gdimm_text::get_text_metrics(const vector<FT_BitmapGlyph> &glyphs,
+	const vector<POINT> &positions,
+	int &width,
+	int &height,
+	int &ascent,
+	int &extra_height) const
+{
+	const size_t last_index = glyphs.size() - 1;
+
+	width = positions[last_index].x + get_ft_bmp_width(glyphs[last_index]->bitmap) - positions[0].x;
+	height = _outline_metrics->otmTextMetrics.tmHeight;
+	ascent = _outline_metrics->otmTextMetrics.tmAscent;
+
+	// the height of the glyphs taller than the text metrics. 0 if the glyphs are shorter
+	extra_height = height;
+
+	for (size_t i = 0; i <= last_index; i++)
+	{
+		height = max(height, glyphs[i]->bitmap.rows);
+		ascent = max(ascent, glyphs[i]->top);
+	}
+
+	extra_height = max(height - extra_height, 0);
 }
 
 void _gdimm_text::get_glyph_clazz()
@@ -213,10 +254,15 @@ convert the outline to FT_OutlineGlyph,
 render the glyph to a FT_BitmapGlyph,
 and we have bitmap
 */
-FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &matrix, FT_Render_Mode render_mode) const
+FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch,
+	UINT ggo_format,
+	const MAT2 &matrix,
+	FT_Render_Mode render_mode,
+	GLYPHMETRICS *out_metrics) const
 {
 	FT_Error ft_error;
 	GLYPHMETRICS glyph_metrics;
+	FT_BitmapGlyph bmp_glyph = NULL;
 
 	// get glyph metrics
 	DWORD outline_buf_len = GetGlyphOutline(_hdc_text, ch, ggo_format, &glyph_metrics, 0, NULL, &matrix);
@@ -243,13 +289,13 @@ FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &mat
 			// FreeType uses 26.6 format, while Windows gives logical units
 			const FT_Vector start_point = {to_26dot6(header->pfxStart.x), to_26dot6(header->pfxStart.y)};
 			points.push_back(start_point);
-			tags.push_back(FT_CURVE_TAG_ON);
+			tags.push_back(FT_CURVE_TAG_ON);	// the first point is on the curve
 
 			DWORD curve_off = sizeof(TTPOLYGONHEADER);
 			while (curve_off < header->cb)
 			{
 				const TTPOLYCURVE *curve = (TTPOLYCURVE*)(header_ptr + curve_off);
-				char curr_tag;
+				char curr_tag = 0;
 				switch (curve->wType)
 				{
 					case TT_PRIM_LINE:
@@ -261,16 +307,18 @@ FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &mat
 					case TT_PRIM_CSPLINE:
 						curr_tag = FT_CURVE_TAG_CUBIC;
 						break;
-					default:
-						curr_tag = 0;
 				}
 
 				for (int j = 0; j < curve->cpfx; j++)
 				{
 					const FT_Vector curr_point = {to_26dot6(curve->apfx[j].x), to_26dot6(curve->apfx[j].y)};
-					points.push_back(curr_point);
-					tags.push_back(curr_tag);
+					if (memcmp(&curr_point, &start_point, sizeof(FT_Vector)) != 0)
+					{
+						points.push_back(curr_point);
+						tags.push_back(curr_tag);
+					}
 				}
+				tags[tags.size()-1] = FT_CURVE_TAG_ON;	// the last point is on the curve
 				
 				curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
 			}
@@ -294,15 +342,15 @@ FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &mat
 
 		we use method 3
 		*/
-		
-		const FT_OutlineGlyphRec outline_glyph = 
+
+		FT_OutlineGlyphRec outline_glyph = 
 		{
 			{
 				ft_lib,
 				glyph_clazz,
 				FT_GLYPH_FORMAT_OUTLINE,
-				to_16dot16(glyph_metrics.gmCellIncX),
-				to_16dot16(glyph_metrics.gmCellIncY)
+				0,
+				0
 			},
 			{
 				contour_pos.size(),
@@ -318,14 +366,16 @@ FT_BitmapGlyph _gdimm_text::get_glyph(WCHAR ch, UINT ggo_format, const MAT2 &mat
 		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, render_mode, NULL, FALSE);
 		assert(ft_error == 0);
 
-		return (FT_BitmapGlyph) generic_glyph;
+		bmp_glyph = (FT_BitmapGlyph) generic_glyph;
 	}
 
-	return NULL;
+	if (out_metrics)
+		*out_metrics = glyph_metrics;
+
+	return bmp_glyph;
 }
 
 void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
-	int src_x, int src_y,
 	BYTE *dest_bits,
 	int dest_x, int dest_y,
 	int dest_width, int dest_height,
@@ -342,12 +392,12 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
 	const int dest_pitch = get_pitch(dest_width, dest_bit_count);
 	const bool use_zero_color = (*(DWORD*) &_fg_rgb == 0);
 
-	for (int j = 0; j < (src_height - src_y); j++)
+	for (int j = 0; j < src_height; j++)
 	{
-		for (int i = 0; i < (src_width - src_x); i++)
+		for (int i = 0; i < src_width; i++)
 		{
-			const int src_ptr = (src_y + j) * src_pitch + (src_x + i) / 8;
-			const BYTE src_bit_pos = 7 - (src_x + i) % 8;
+			const int src_ptr = j * src_pitch + i / 8;
+			const BYTE src_bit_pos = 7 - i % 8;
 			const bool is_bit_set = ((src_bitmap.buffer[src_ptr] & (1 << src_bit_pos)) != 0);
 
 			if (is_bit_set)
@@ -376,7 +426,6 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
 }
 
 void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
-	int src_x, int src_y,
 	BYTE *dest_bits,
 	int dest_x, int dest_y,
 	int dest_width, int dest_height,
@@ -394,7 +443,7 @@ void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
 	{
 		for (int i = 0; i < src_width; i++)
 		{
-			const int src_ptr = (src_y + j) * src_pitch + src_x + i;
+			const int src_ptr = j * src_pitch + i;
 			int dest_ptr = dest_x + i;
 			if (is_dest_up == (src_bitmap.pitch > 0))
 				dest_ptr += max(dest_height - dest_y - j - 1, 0) * dest_pitch;
@@ -408,7 +457,6 @@ void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
 }
 
 void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
-	int src_x, int src_y,
 	BYTE *dest_bits,
 	int dest_x, int dest_y,
 	int dest_width, int dest_height,
@@ -429,13 +477,13 @@ void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
 	const int dest_pitch = get_pitch(dest_width, dest_bit_count);
 
 	// rows about to be copied
-	for (int j = 0; j < (src_height - src_y); j++)
+	for (int j = 0; j < src_height; j++)
 	{
 		// width about to be copied
-		for (int i = 0; i < (src_width - src_x); i++)
+		for (int i = 0; i < src_width; i++)
 		{
 			// source byte, always treat as down flow
-			const int src_ptr = (src_y + j) * src_pitch + (src_x + i) * src_byte_count;
+			const int src_ptr = j * src_pitch + i * src_byte_count;
 
 			// destination byte, compute according to two flow directions
 			int dest_ptr = (dest_x + i) * dest_byte_count;
@@ -458,7 +506,6 @@ void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
 
 void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 	const vector<POINT> &positions,
-	const POINT &src_origin,
 	CONST RECT *clip_rect,
 	BITMAPINFO *bmi) const
 {
@@ -473,16 +520,15 @@ void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 
 	// 1.
 
-	// horizontal bearing
-	const int left_bearing = glyphs[0]->left;
-	const int right_bearing = glyphs[glyphs.size()-1]->left;
-	const int text_width = (_cursor.x - src_origin.x) - (left_bearing + right_bearing);
-	const int text_height = _outline_metrics->otmTextMetrics.tmHeight;
-	const int text_ascent = _outline_metrics->otmTextMetrics.tmAscent;
+	int text_width;
+	int text_height;
+	int text_ascent;
+	int text_extra_height;
+	get_text_metrics(glyphs, positions, text_width, text_height, text_ascent, text_extra_height);
 
-	assert(text_width > 0);
-
+	const POINT src_origin = positions[0];
 	POINT dest_origin = src_origin;
+	dest_origin.y -= text_extra_height;
 	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & _text_alignment)
 	{
 	case TA_LEFT:
@@ -547,16 +593,13 @@ void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 		pitch > 0 means the FreeType bitmap is up flow
 		*/
 
-		const int src_x = max(-glyphs[i]->left, 0);
-		const int src_y = 0;
-		const int dest_x = max(glyphs[i]->left, 0) + (positions[i].x - src_origin.x);
-		const int dest_y = (text_ascent - glyphs[i]->top) + (positions[i].y - src_origin.y);
+		const int dest_x = positions[i].x - src_origin.x;
+		const int dest_y = max(text_ascent - glyphs[i]->top, 0) + (positions[i].y - src_origin.y);
 
 		switch (glyphs[i]->bitmap.pixel_mode)
 		{
 		case FT_PIXEL_MODE_MONO:
 			set_bmp_bits_mono(glyphs[i]->bitmap,
-				src_x, src_y,
 				dest_bits,
 				dest_x, dest_y,
 				text_width, text_height,
@@ -565,7 +608,6 @@ void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 			break;
 		case FT_PIXEL_MODE_GRAY:
 			set_bmp_bits_gray(glyphs[i]->bitmap,
-				src_x, src_y,
 				dest_bits,
 				dest_x, dest_y,
 				text_width, text_height,
@@ -573,7 +615,6 @@ void _gdimm_text::draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
 			break;
 		case FT_PIXEL_MODE_LCD:
 			set_bmp_bits_lcd(glyphs[i]->bitmap,
-				src_x, src_y,
 				dest_bits,
 				dest_x, dest_y,
 				text_width, text_height,
@@ -629,7 +670,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 {
 	_hdc_text = hdc;
 
-	if (!get_metrics())
+	if (!get_dc_metrics())
 		return false;
 	
 	// since we only deal with fonts with outlines, the glyph clazz must be ft_outline_glyph_class
@@ -647,6 +688,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	_fg_rgb.rgbRed = GetRValue(fg_color);
 	
 	_char_extra = GetTextCharacterExtra(_hdc_text);
+	assert(_char_extra != 0x8000000);
 	
 	_text_alignment = GetTextAlign(_hdc_text);
 	assert(_text_alignment != GDI_ERROR);
@@ -688,7 +730,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	}
 
 	// redo DC font related procedures
-	get_metrics();
+	get_dc_metrics();
 
 	gdimm_font_link::instance().restore_font(_hdc_text);
 	return true;
@@ -721,41 +763,41 @@ bool _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 	get_bmi(bmi);
 	const FT_Render_Mode render_mode = get_render_mode(bmi->bmiHeader.biBitCount);
 
+	// Windows renders monochrome better than FreeType
+	if (render_mode == FT_RENDER_MODE_MONO)
+	{
+		free(bmi);
+		return false;
+	}
+
 	vector<FT_BitmapGlyph> glyphs;
 	vector<POINT> positions;
-	POINT bitmap_origin = _cursor;
 
 	for (unsigned int i = 0; i < count; i++)
 	{
-		FT_BitmapGlyph bmp_glyph = get_glyph(string[i], ggo_format, id_matrix, render_mode);
-		int char_width;
+		// we do not care about non-printable characters
+		if (!(_eto_options & ETO_GLYPH_INDEX) && !iswprint(string[i]))
+			continue;
+
+		GLYPHMETRICS glyph_metrics;
+		FT_BitmapGlyph bmp_glyph = get_glyph(string[i], ggo_format, id_matrix, render_mode, &glyph_metrics);
+
+		if (_char_extra > 0)
+			debug_output_process_name();
 
 		// glyph is NULL if the glyph outline is empty (e.g. space character, non-printing characters)
-		if (bmp_glyph == NULL)
-		{
-			// get character with for advancing
-			if (_eto_options & ETO_GLYPH_INDEX)
-				GetCharWidthI(_hdc_text, string[i], 1, NULL, &char_width);
-			else
-				GetCharWidth32(_hdc_text, string[i], string[i], &char_width);
-		}
-		else
+		if (bmp_glyph != NULL)
 		{
 			glyphs.push_back(bmp_glyph);
-			positions.push_back(_cursor);
-			char_width = from_16dot16(bmp_glyph->root.advance.x);
+			POINT glyph_pos = {_cursor.x + bmp_glyph->left, _cursor.y};
+			positions.push_back(glyph_pos);
 		}
 
-		// for the last character, lpDx[i] may be 0
-		int x_advance = 0;
-		if (lpDx != NULL)
-			x_advance = lpDx[i * dx_factor];
-
-		if (x_advance == 0)
-			x_advance = char_width + _char_extra;
-
 		// advance cursor
-		_cursor.x += x_advance;
+		if (lpDx == NULL)
+			_cursor.x += glyph_metrics.gmCellIncX + _char_extra;
+		else
+			_cursor.x += lpDx[i * dx_factor];
 	}
 	
 	// if TA_UPDATECP is set, update current position after text out
@@ -765,9 +807,10 @@ bool _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 		assert(b_ret);
 	}
 
-	if (!glyphs.empty())
+	const bool has_glyph = !glyphs.empty();
+	if (has_glyph)
 	{
-		draw_glyph(glyphs, positions, bitmap_origin, lprect, bmi);
+		draw_glyph(glyphs, positions, lprect, bmi);
 		
 		for (unsigned int i = 0; i < glyphs.size(); i++)
 			FT_Done_Glyph((FT_Glyph) glyphs[i]);
@@ -775,5 +818,5 @@ bool _gdimm_text::text_out(const WCHAR *string, unsigned int count, CONST RECT *
 	}
 	
 	free(bmi);
-	return true;
+	return has_glyph;
 }
