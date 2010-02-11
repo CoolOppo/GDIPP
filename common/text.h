@@ -13,6 +13,7 @@ class _gdimm_text
 	UINT _text_alignment;
 	int _char_extra;
 	RGBQUAD _fg_rgb;
+	COLORREF _bg_color;
 
 	// metrics
 	BYTE *_metric_buf;
@@ -22,44 +23,37 @@ class _gdimm_text
 	//misc
 	UINT _eto_options;
 
-	static void draw_background(HDC hdc, CONST RECT *bg_rect, COLORREF color);
 	static WORD get_bmp_bit_count(WORD dc_bit_count);
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
+	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 	FT_Render_Mode get_render_mode(WORD dc_bit_count) const;
 	bool get_dc_metrics();
-	void get_text_metrics(const vector<FT_BitmapGlyph> &glyphs,
-		const vector<POINT> &positions,
-		int &width,
-		int &height,
-		int &ascent,
-		int &extra_height) const;
 	void get_glyph_clazz();
 	void get_bmi(BITMAPINFO *&bmi) const;
-	FT_BitmapGlyph get_glyph(WCHAR ch,
-		UINT ggo_format,
-		const MAT2 &matrix,
-		FT_Render_Mode render_mode,
-		GLYPHMETRICS *out_metrics) const;
+	/*void parse_outline(const BYTE *outline_buf,
+		DWORD buf_len,
+		const vector<FT_Vector> &points,
+		const vector<) const;*/
 	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
+		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
-		int dest_x,	int dest_y,
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bit_count) const;
 	void set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
+		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
-		int dest_x, int dest_y,
 		int dest_width, int dest_height,
 		bool is_dest_up) const;
 	void set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
+		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
-		int dest_x, int dest_y,
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bit_count) const;
-	void draw_glyph(const vector<FT_BitmapGlyph> &glyphs,
-		const vector<POINT> &positions,
-		CONST RECT *clip_rect,
+	void draw_bitmap(const FT_BitmapGlyph bmp_glyph,
+		 POINT &src_origin,
+		CONST RECT *lprect,
 		BITMAPINFO *bmi) const;
 
 	const TCHAR *get_family_name() const;

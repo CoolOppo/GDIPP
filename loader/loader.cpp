@@ -44,7 +44,11 @@ DWORD load_process(LPTSTR proc_name, LPCTSTR curr_dir)
 
 void inject_dll(DWORD proc_id, LPTSTR dll_path)
 {
+#ifdef _M_X64
+	NTSTATUS eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, dll_path, NULL, 0);
+#else
 	NTSTATUS eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, dll_path, NULL, NULL, 0);
+#endif
 	assert(eh_error == 0);
 }
 

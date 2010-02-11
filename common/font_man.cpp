@@ -78,10 +78,10 @@ void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
 
 unsigned int _gdimm_font_man::lookup_index(HDC hdc, const TCHAR *font_full_name)
 {
-	const map<t_string, unsigned int>::const_iterator iter = _font_indices.find(font_full_name);
+	const map<t_string, long>::const_iterator iter = _font_indices.find(font_full_name);
 	if (iter == _font_indices.end())
 	{
-		const unsigned int new_index = _loaded_fonts.size();
+		const long new_index = _loaded_fonts.size();
 		_font_indices[font_full_name] = new_index;
 
 		font_info new_font = {0};

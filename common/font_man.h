@@ -15,7 +15,7 @@ struct font_info
 class _gdimm_font_man
 {
 	// face name -> face id
-	map<t_string, unsigned int> _font_indices;
+	map<t_string, long> _font_indices;
 	// face id -> face info
 	map<unsigned int, font_info> _loaded_fonts;
 

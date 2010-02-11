@@ -19,11 +19,16 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
-#define render
-#define test
+  #define render
+  #define test
+
+#ifdef _DEBUG
+int test_count = 0;
+#else
+int test_count = 2000;
+#endif
 
 const LPCTSTR test_str = TEXT("Hello≤‚ ‘Œƒ◊÷GgJjQq");
-int test_count = 100;
 DWORD start = 0;
 DWORD end = 0;
 TCHAR elapse_str[128] = {0};
@@ -208,16 +213,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW+1));
 		
-		RECT rect = {10, 5, 200, 50};
+		RECT rect = {50, 100, 300, 200};
 		SetBkMode(hdc, OPAQUE);
 		SetBkColor(hdc, RGB(240, 240, 240));
 		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
 		SetTextColor(hdc, RGB(255, 0, 100));
 		
-		HFONT f = CreateFont(-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
+		//HFONT f = CreateFont(-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
+		HFONT f = CreateFont(-20, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		SelectObject(hdc, f);
-		ExtTextOut(hdc, 100, 25, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
-		ExtTextOut(hdc, 100, 25, ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		ExtTextOut(hdc, 400, 100, 0, &rect, elapse_str, lstrlen(elapse_str), NULL);
 		DeleteObject(f);
 #endif
 
