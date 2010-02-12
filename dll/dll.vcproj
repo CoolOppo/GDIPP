@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib"
+				AdditionalDependencies="EasyHook32.lib dbghelp.lib"
 				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -124,7 +124,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib"
+				AdditionalDependencies="EasyHook64.lib dbghelp.lib"
 				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -202,8 +202,8 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
-				RuntimeLibrary="2"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -219,13 +219,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib"
+				AdditionalDependencies="EasyHook32.lib dbghelp.lib"
 				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -279,7 +281,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_EXPORTS;FT2_BUILD_LIBRARY"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -296,7 +298,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib"
+				AdditionalDependencies="EasyHook64.lib dbghelp.lib"
 				OutputFile="$(OutDir)\$(SolutionName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -359,6 +361,10 @@
 			</File>
 			<File
 				RelativePath="..\common\hook.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pe.cpp"
 				>
 			</File>
 			<File
@@ -425,6 +431,10 @@
 			</File>
 			<File
 				RelativePath="..\common\hook.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\pe.h"
 				>
 			</File>
 			<File

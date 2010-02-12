@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <map>
 using namespace std;
 
 typedef basic_string<TCHAR> t_string;
@@ -47,8 +46,8 @@ public:
 	}
 };
 
+void debug_output_process_name();
 void debug_output(const TCHAR *str = TEXT(""));
 void debug_output(const TCHAR *str, unsigned int c);
 void debug_output(const void *ptr, unsigned int size);
 void debug_output(DWORD num);
-void debug_output_process_name();

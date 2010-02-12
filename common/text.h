@@ -23,17 +23,12 @@ class _gdimm_text
 	//misc
 	UINT _eto_options;
 
-	static WORD get_bmp_bit_count(WORD dc_bit_count);
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
+	int get_dc_bpp() const;
 	FT_Render_Mode get_render_mode(WORD dc_bit_count) const;
 	bool get_dc_metrics();
 	void get_glyph_clazz();
-	void get_bmi(BITMAPINFO *&bmi) const;
-	/*void parse_outline(const BYTE *outline_buf,
-		DWORD buf_len,
-		const vector<FT_Vector> &points,
-		const vector<) const;*/
 	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
@@ -51,17 +46,15 @@ class _gdimm_text
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bit_count) const;
-	void draw_bitmap(const FT_BitmapGlyph bmp_glyph,
+	bool draw_bitmap(const FT_BitmapGlyph bmp_glyph,
 		 POINT &src_origin,
 		CONST RECT *lprect,
-		BITMAPINFO *bmi) const;
+		int dc_bit_count) const;
 
 	const TCHAR *get_family_name() const;
 	const TCHAR *get_full_name() const;
 
 public:
-	bool test;
-
 	_gdimm_text();
 	~_gdimm_text();
 	bool init(HDC hdc, int x, int y, UINT options);

@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "global.h"
 #include "hook.h"
 #include "ft.h"
 
@@ -16,15 +17,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
+		critical_section::initialize();
 		initialize_freetype();
-		gdimm_hook::instance().hook();
-		break;
+		return gdimm_hook::instance().hook();
 
 	case DLL_PROCESS_DETACH:
 		gdimm_hook::instance().unhook();
 		destroy_freetype();
+		critical_section::release();
 		break;
 	}
-	
+
 	return TRUE;
 }

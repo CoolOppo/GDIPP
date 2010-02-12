@@ -5,6 +5,18 @@ CRITICAL_SECTION critical_section::_cs;
 
 #define debug_file_name "C:\\gdimm_debug.txt"
 
+void debug_output_process_name()
+{
+#ifdef _DEBUG
+	HANDLE h_proc = GetCurrentProcess();
+	DWORD name_size = MAX_PATH;
+	TCHAR name_str[MAX_PATH];
+	QueryFullProcessImageName(h_proc, 0, name_str, &name_size);
+
+	debug_output(name_str, name_size);
+#endif
+}
+
 void debug_output(const TCHAR *str)
 {
 #ifdef _DEBUG
@@ -43,17 +55,5 @@ void debug_output(DWORD num)
 	fopen_s(&f, debug_file_name, "a+");
 	fwprintf(f, TEXT("%u\n"), num);
 	fclose(f);
-#endif
-}
-
-void debug_output_process_name()
-{
-#ifdef _DEBUG
-	HANDLE h_proc = GetCurrentProcess();
-	DWORD name_size = MAX_PATH;
-	TCHAR name_str[MAX_PATH];
-	QueryFullProcessImageName(h_proc, 0, name_str, &name_size);
-
-	debug_output(name_str, name_size);
 #endif
 }

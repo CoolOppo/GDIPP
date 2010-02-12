@@ -12,7 +12,7 @@ class _gdimm_hook
 	void install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 
 public:
-	void hook();
+	bool hook();
 	void unhook();
 };
 

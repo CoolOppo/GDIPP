@@ -19,19 +19,29 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 	// probably a printer
 	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	
-	critical_section lock;
 
-	if (!gdimm_text::instance().init(hdc, x, y, options))
+	/*
+	the DC use another map mode, which transform the GDI coordination space
+	we tried to implement MM_ANISOTROPIC, and found that the text looks worse than the native API
+
+	recommendation for implementing MM_ANISOTROPIC:
+	1. call GetViewportExtEx, GetViewportOrgEx, GetWindowExtEx and GetWindowOrgEx to get the new coordinations
+	2. for all metrics come from GDI API, they are transform, while the outline metrics remain the same
+	3. apply some multiplier to restore GDI metrics
+	4. when drawing the bitmap back to DC, use StretchBlt
+	yes, it is slow, ugly, but it works. hope you can find a better way
+	*/
+	if (GetMapMode(hdc) != MM_TEXT)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
+	
 #ifdef _DEBUG
-	const WCHAR *debug_text = NULL;//L"Clear";
+	const WCHAR *debug_text = NULL;
+	//const WCHAR *debug_text = L"Fuck";
 	const int start_index = 0;
 
 	if (debug_text)
 	{
-		bool break_now = false;
+		bool is_target = false;
 		const size_t debug_len = wcslen(debug_text);
 
 		if (options & ETO_GLYPH_INDEX)
@@ -40,16 +50,22 @@ __gdi_entry BOOL  WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y,
 			GetGlyphIndices(hdc, debug_text, debug_len, gi, 0);
 
 			if (memcmp((WORD*) lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
-				break_now = true;
+				is_target = true;
+
 			delete[] gi;
 		}
-		else if (wcsncmp(lpString + start_index, debug_text, debug_len) == 0)
-			break_now = true;
+		else
+			is_target = (wcsncmp(lpString + start_index, debug_text, debug_len) == 0);
 
-		if (break_now)
-			gdimm_text::instance().test = true;
+		if (!is_target)
+			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 #endif
+
+	critical_section lock;
+
+	if (!gdimm_text::instance().init(hdc, x, y, options))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if (!gdimm_text::instance().text_out(lpString, c, lprect, lpDx))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -77,11 +93,10 @@ void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 	_hooks.push_back(h_hook);
 }
 
-void _gdimm_hook::hook()
+bool _gdimm_hook::hook()
 {
-	critical_section::initialize();
-
 	install_hook(TEXT("gdi32"), "ExtTextOutW", ExtTextOutW_hook);
+	return !(_hooks.empty());
 }
 
 void _gdimm_hook::unhook()
@@ -96,6 +111,4 @@ void _gdimm_hook::unhook()
 
 	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
 		delete *iter;
-
-	critical_section::release();
 }

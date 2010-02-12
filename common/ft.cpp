@@ -25,8 +25,11 @@ void initialize_freetype()
 
 void destroy_freetype()
 {
+	FT_Error ft_error;
+
 	FTC_Manager_Done(ft_cache_man);
-	FT_Error ft_error = FT_Done_FreeType(ft_lib);
+	
+	ft_error = FT_Done_FreeType(ft_lib);
 	assert(ft_error == 0);
 }
 
