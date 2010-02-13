@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ft.h"
 #include "font_man.h"
+#include "setting.h"
+
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_ImageCache ft_glyph_cache;
@@ -13,8 +15,7 @@ void initialize_freetype()
 	assert(ft_error == 0);
 
 	// enable FreeType LCD filter
-	ft_error = FT_Library_SetLcdFilter(ft_lib, FT_LCD_FILTER_DEFAULT);
-	assert(ft_error == 0);
+	FT_Library_SetLcdFilter(ft_lib, (FT_LcdFilter) gdimm_setting::instance().get_value<int>(TEXT("lcd_filter")));
 
 	ft_error = FTC_Manager_New(ft_lib, 1, 0, 0, face_requester, NULL, &ft_cache_man);
 	assert(ft_error == 0);

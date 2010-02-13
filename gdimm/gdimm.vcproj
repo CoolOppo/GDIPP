@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="dll"
+	Name="gdimm"
 	ProjectGUID="{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
 	RootNamespace="dll"
 	Keyword="Win32Proj"
@@ -65,8 +65,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib dbghelp.lib"
-				OutputFile="$(OutDir)\$(SolutionName).dll"
+				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -143,8 +143,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib dbghelp.lib"
-				OutputFile="$(OutDir)\$(SolutionName).dll"
+				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -219,8 +219,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib dbghelp.lib"
-				OutputFile="$(OutDir)\$(SolutionName).dll"
+				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				DelayLoadDLLs=""
@@ -298,8 +298,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib dbghelp.lib"
-				OutputFile="$(OutDir)\$(SolutionName).dll"
+				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -340,10 +340,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\dll.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\common\font_link.cpp"
 				>
 			</File>
@@ -356,6 +352,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gdimm.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\common\global.cpp"
 				>
 			</File>
@@ -364,7 +364,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\pe.cpp"
+				RelativePath="..\common\setting.cpp"
 				>
 			</File>
 			<File
@@ -434,7 +434,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\pe.h"
+				RelativePath="..\common\setting.h"
 				>
 			</File>
 			<File

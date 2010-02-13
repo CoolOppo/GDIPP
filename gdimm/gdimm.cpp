@@ -1,10 +1,11 @@
-// dll.cpp : Defines the exported functions for the DLL application.
+// gdimm.cpp : Defines the exported functions for the DLL application.
 //
 
 #include "stdafx.h"
 #include "global.h"
 #include "hook.h"
 #include "ft.h"
+#include "setting.h"
 
 extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* InRemoteInfo) {}
 
@@ -18,6 +19,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
 		critical_section::initialize();
+		gdimm_setting::instance().load_settings(hModule);
 		initialize_freetype();
 		return gdimm_hook::instance().hook();
 

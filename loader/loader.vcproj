@@ -65,6 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				GenerateDebugInformation="true"
@@ -140,6 +141,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				GenerateDebugInformation="true"
@@ -214,6 +216,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"
@@ -290,6 +293,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"
@@ -380,6 +384,22 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath=".\loader.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\loader.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\small.ico"
 				>
 			</File>
 		</Filter>

@@ -37,7 +37,11 @@ DWORD load_process(LPTSTR proc_name, LPCTSTR curr_dir)
 	PROCESS_INFORMATION pi = {0};
 
 	BOOL b_ret = CreateProcess(NULL, proc_name, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-	assert(b_ret);
+	if (!b_ret)
+	{
+		MessageBox(NULL, TEXT("Fail to load the program. Please verify that it is an exe file and try again."), TEXT("Error"), MB_OK | MB_ICONERROR);
+		return 0;
+	}
 
 	return pi.dwProcessId;
 }
@@ -67,8 +71,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	b_ret = PathRemoveFileSpec(hook_dll);
 	assert(b_ret);
 
-	b_ret = PathAppend(hook_dll, TEXT("gdimm.dll"));
+#ifdef _M_X64
+	b_ret = PathAppend(hook_dll, TEXT("gdimm_64.dll"));
+#else
+	b_ret = PathAppend(hook_dll, TEXT("gdimm_32.dll"));
+#endif
 	assert(b_ret);
+
+	if (lstrlen(lpCmdLine) == 0)
+	{
+		MessageBox(NULL, TEXT("Drag an exe file to me and I will load it with gdimm."), TEXT("loader"), MB_OK | MB_ICONINFORMATION);
+		return EXIT_SUCCESS;
+	}
 
 	TCHAR proc_name[MAX_PATH];
 	TCHAR curr_dir[MAX_PATH];
@@ -82,7 +96,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	if (proc_id == -1)
 		proc_id = load_process(lpCmdLine, curr_dir);
 
-	inject_dll(proc_id, hook_dll);
-
-	return 0;
+	if (proc_id != 0)
+	{
+		inject_dll(proc_id, hook_dll);
+		return EXIT_SUCCESS;
+	}
+	else
+		return EXIT_FAILURE;
 }

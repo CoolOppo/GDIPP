@@ -53,7 +53,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HMODULE h_gdimm = NULL;
 
 #ifdef render
-	h_gdimm = LoadLibrary(TEXT("gdimm.dll"));
+
+#ifdef _M_X64
+	h_gdimm = LoadLibrary(TEXT("gdimm_64.dll"));
+#else
+	h_gdimm = LoadLibrary(TEXT("gdimm_32.dll"));
+#endif
+
 #endif
 
 	// Perform application initialization:
@@ -222,7 +228,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//HFONT f = CreateFont(-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		HFONT f = CreateFont(-20, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		SelectObject(hdc, f);
-		ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		//ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
 		ExtTextOut(hdc, 400, 100, 0, &rect, elapse_str, lstrlen(elapse_str), NULL);
 		DeleteObject(f);
 #endif
