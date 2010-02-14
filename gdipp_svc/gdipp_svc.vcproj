@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+<?xml version="1.0" encoding="gb2312"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="demo"
-	ProjectGUID="{BA4DBF79-1ABB-423B-9E1D-9233A57279C2}"
-	RootNamespace="demo"
+	Name="gdipp_svc"
+	ProjectGUID="{D8F37991-4EE8-43F0-BFC7-3FCD7393D3BF}"
+	RootNamespace="svc"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="196613"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -44,6 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,8 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="EasyHook32.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -117,6 +120,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -136,8 +140,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="EasyHook64.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -191,6 +197,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -208,8 +215,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="EasyHook32.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -265,6 +274,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -282,8 +292,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="EasyHook64.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -321,7 +333,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\demo.cpp"
+				RelativePath=".\gdipp_svc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\global.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\inject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\mon.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sink.cpp"
 				>
 			</File>
 			<File
@@ -367,11 +395,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\demo.h"
+				RelativePath="..\common\global.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Resource.h"
+				RelativePath=".\inject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sink.h"
 				>
 			</File>
 			<File
@@ -385,15 +421,13 @@
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\demo.ico"
+				RelativePath=".\gdipp_svc.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\demo.rc"
+				RelativePath=".\gdipp_svc.rc"
 				>
 			</File>
 			<File

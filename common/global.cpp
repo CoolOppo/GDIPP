@@ -1,7 +1,23 @@
 #include "stdafx.h"
 #include "global.h"
+#include <shlwapi.h>
 
 CRITICAL_SECTION critical_section::_cs;
+
+void get_dir_file_path(TCHAR source_path[MAX_PATH], const TCHAR *file_name, HMODULE h_module)
+{
+	DWORD dw_ret;
+	BOOL b_ret;
+
+	dw_ret = GetModuleFileName(h_module, source_path, MAX_PATH);
+	assert(dw_ret != 0);
+
+	b_ret = PathRemoveFileSpec(source_path);
+	assert(b_ret);
+
+	b_ret = PathAppend(source_path, file_name);
+	assert(b_ret);
+}
 
 #define debug_file_name "C:\\gdimm_debug.txt"
 

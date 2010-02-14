@@ -8,30 +8,21 @@ using namespace std;
 
 _gdimm_setting::_gdimm_setting()
 {
+	_settings[TEXT("bold_strength")] = TEXT("0.0");
 	_settings[TEXT("hinting")] = TEXT("0");
-	_settings[TEXT("render_mono")] = TEXT("0");
 	_settings[TEXT("gray_render")] = TEXT("0");
 	_settings[TEXT("lcd_filter")] = TEXT("1");
 	_settings[TEXT("max_height")] = TEXT("72");
+	_settings[TEXT("render_mono")] = TEXT("0");
 }
 
-void _gdimm_setting::load_settings(HMODULE hModule)
+void _gdimm_setting::load_settings(HMODULE h_module)
 {
 	HRESULT hr;
-	DWORD dw_ret;
-	BOOL b_ret;
 
 	// get setting file path
-
 	TCHAR setting_path[MAX_PATH];
-	dw_ret = GetModuleFileName(hModule, setting_path, MAX_PATH);
-	assert(dw_ret != 0);
-
-	b_ret = PathRemoveFileSpec(setting_path);
-	assert(b_ret);
-
-	b_ret = PathAppend(setting_path, TEXT("setting.xml"));
-	assert(b_ret);
+	get_dir_file_path(setting_path, TEXT("setting.xml"), h_module);
 
 	IStream *stream;
 	hr = SHCreateStreamOnFileEx(setting_path, STGM_READ, FILE_ATTRIBUTE_NORMAL, FALSE, NULL, &stream);

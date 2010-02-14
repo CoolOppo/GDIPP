@@ -27,7 +27,7 @@ LANGUAGE 9, 1
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 
-IDI_DEMO       ICON         "loader.ico"
+IDI_DEMO       ICON         "gdipp_loader.ico"
 IDI_SMALL               ICON         "small.ico"
 
 #endif

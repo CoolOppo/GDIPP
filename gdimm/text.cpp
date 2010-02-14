@@ -17,6 +17,12 @@ inline FT_F26Dot6 to_26dot6(const FIXED &fixed)
 	return *((FT_F26Dot6*) &fixed) >> 10;
 }
 
+// convert 8.23 fixed float type to 26.6 format
+inline FT_F26Dot6 to_26dot6(float x)
+{
+	return (FT_F26Dot6)(x * 32);
+}
+
 inline FT_F26Dot6 to_26dot6(int i)
 {
 	return i << 6;
@@ -166,7 +172,8 @@ void _gdimm_text::get_glyph_clazz()
 	FT_Done_Glyph(useless);
 }
 
-FT_BitmapGlyph _gdimm_text::get_glyph_bmp(WCHAR ch,
+FT_BitmapGlyph _gdimm_text::get_glyph_bmp(
+	WCHAR ch,
 	UINT ggo_format,
 	const MAT2 &matrix,
 	FT_Render_Mode render_mode,
@@ -278,6 +285,10 @@ FT_BitmapGlyph _gdimm_text::get_glyph_bmp(WCHAR ch,
 		}
 	};
 
+	const float bold_strength = gdimm_setting::instance().get_value<float>(TEXT("bold_strength"));
+	ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(bold_strength));
+	assert(ft_error == 0);
+
 	// convert outline to bitmap
 	FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
 	ft_error = FT_Glyph_To_Bitmap(&generic_glyph, render_mode, NULL, FALSE);
@@ -286,7 +297,8 @@ FT_BitmapGlyph _gdimm_text::get_glyph_bmp(WCHAR ch,
 	return (FT_BitmapGlyph) generic_glyph;
 }
 
-void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
+void _gdimm_text::set_bmp_bits_mono(
+	const FT_Bitmap &src_bitmap,
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
@@ -336,7 +348,8 @@ void _gdimm_text::set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
 	}
 }
 
-void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
+void _gdimm_text::set_bmp_bits_gray(
+	const FT_Bitmap &src_bitmap,
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
@@ -384,7 +397,8 @@ void _gdimm_text::set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
 	}
 }
 
-void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
+void _gdimm_text::set_bmp_bits_lcd(
+	const FT_Bitmap &src_bitmap,
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
@@ -442,7 +456,8 @@ void _gdimm_text::set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
 4. copy the canvas bitmap back to DC, apply clipping if necessary
 return true if successfully draw the bitmap, otherwise return false
 */
-bool _gdimm_text::draw_glyphs(const vector<FT_BitmapGlyph> &glyphs,
+bool _gdimm_text::draw_glyphs(
+	const vector<FT_BitmapGlyph> &glyphs,
 	const vector<POINT> &glyph_pos,
 	CONST RECT *lprect,
 	int dc_bpp) const

@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="loader"
+	Name="gdipp_loader"
 	ProjectGUID="{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}"
 	RootNamespace="notepad"
 	Keyword="Win32Proj"
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -197,7 +197,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -274,7 +274,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -333,7 +333,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\loader.cpp"
+				RelativePath=".\gdipp_loader.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\global.cpp"
 				>
 			</File>
 			<File
@@ -379,6 +383,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\common\global.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -391,11 +399,11 @@
 			Name="Resource Files"
 			>
 			<File
-				RelativePath=".\loader.ico"
+				RelativePath=".\gdipp_loader.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\loader.rc"
+				RelativePath=".\gdipp_loader.rc"
 				>
 			</File>
 			<File

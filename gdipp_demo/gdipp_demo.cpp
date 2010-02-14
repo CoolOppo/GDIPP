@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "demo.h"
+#include "gdipp_demo.h"
 #include <stdlib.h>
 #include <time.h>
 

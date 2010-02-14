@@ -13,7 +13,11 @@ class _gdimm_hook
 
 public:
 	bool hook();
+	void disable_hook();
 	void unhook();
 };
 
 typedef singleton<_gdimm_hook> gdimm_hook;
+
+extern ULONG svc_proc_id;
+extern HMODULE h_self;

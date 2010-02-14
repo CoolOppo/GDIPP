@@ -1,5 +1,5 @@
 // stdafx.cpp : source file that includes just the standard includes
-// demo.pch will be the pre-compiled header
+// gdipp_demo.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"

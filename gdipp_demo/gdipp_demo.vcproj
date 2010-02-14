@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="gb2312"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="gdimm"
-	ProjectGUID="{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
-	RootNamespace="dll"
+	Name="gdipp_demo"
+	ProjectGUID="{BA4DBF79-1ABB-423B-9E1D-9233A57279C2}"
+	RootNamespace="demo"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -23,8 +23,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			UseOfMFC="0"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -45,11 +44,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -65,11 +63,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -100,8 +95,7 @@
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			UseOfMFC="0"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -123,11 +117,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -143,11 +136,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -178,7 +168,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -201,9 +191,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
-				RuntimeLibrary="0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -219,15 +208,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -256,7 +241,7 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -280,9 +265,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
-				RuntimeLibrary="0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -298,11 +282,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -340,31 +321,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\font_link.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\font_man.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ft.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\gdimm.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\global.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\hook.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\setting.cpp"
+				RelativePath=".\gdipp_demo.cpp"
 				>
 			</File>
 			<File
@@ -403,10 +360,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\text.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -414,27 +367,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\font_link.h"
+				RelativePath=".\gdipp_demo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\font_man.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ft.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\global.h"
-				>
-			</File>
-			<File
-				RelativePath=".\hook.h"
-				>
-			</File>
-			<File
-				RelativePath=".\setting.h"
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
@@ -445,8 +382,22 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 			<File
-				RelativePath=".\text.h"
+				RelativePath=".\gdipp_demo.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\gdipp_demo.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\small.ico"
 				>
 			</File>
 		</Filter>

@@ -29,30 +29,35 @@ class _gdimm_text
 	FT_Render_Mode get_render_mode(WORD dc_bpp) const;
 	bool get_dc_metrics();
 	void get_glyph_clazz();
-	FT_BitmapGlyph get_glyph_bmp(WCHAR ch,
+	FT_BitmapGlyph get_glyph_bmp(
+		WCHAR ch,
 		UINT ggo_format,
 		const MAT2 &matrix,
 		FT_Render_Mode render_mode,
 		GLYPHMETRICS &glyph_metrics) const;
-	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
+	void set_bmp_bits_mono(
+		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bpp) const;
-	void set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
+	void set_bmp_bits_gray(
+		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bpp) const;
-	void set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
+	void set_bmp_bits_lcd(
+		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
 		bool is_dest_up,
 		WORD dest_bpp) const;
-	bool draw_glyphs(const vector<FT_BitmapGlyph> &glyphs,
+	bool draw_glyphs(
+		const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,
 		CONST RECT *lprect,
 		int dc_bpp) const;

@@ -28,7 +28,7 @@ LANGUAGE 9, 1
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 
-IDI_DEMO       ICON         "demo.ico"
+IDI_DEMO       ICON         "gdipp_demo.ico"
 IDI_SMALL               ICON         "small.ico"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -68,11 +68,11 @@ END
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About demo"
+CAPTION "About gdipp_demo"
 FONT 8, "Tahoma"
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "demo 来测试にほんご能否显示 Test",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "gdipp_demo 测试にほんご能否显示",IDC_STATIC,42,14,114,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,42,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END
@@ -132,7 +132,7 @@ END
 STRINGTABLE
 BEGIN
    IDC_DEMO   "DEMO"
-   IDS_APP_TITLE       "demo"
+   IDS_APP_TITLE       "gdipp_demo"
 END
 
 #endif

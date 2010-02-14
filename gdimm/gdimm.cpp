@@ -7,8 +7,6 @@
 #include "ft.h"
 #include "setting.h"
 
-extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* InRemoteInfo) {}
-
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -17,11 +15,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		DisableThreadLibraryCalls(hModule);
+		h_self = hModule;
+
 		critical_section::initialize();
 		gdimm_setting::instance().load_settings(hModule);
 		initialize_freetype();
 		return gdimm_hook::instance().hook();
+
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+		break;
 
 	case DLL_PROCESS_DETACH:
 		gdimm_hook::instance().unhook();

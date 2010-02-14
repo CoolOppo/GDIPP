@@ -46,6 +46,8 @@ public:
 	}
 };
 
+void get_dir_file_path(TCHAR source_path[MAX_PATH], const TCHAR *file_name, HMODULE h_module = NULL);
+
 void debug_output_process_name();
 void debug_output(const TCHAR *str = TEXT(""));
 void debug_output(const TCHAR *str, unsigned int c);

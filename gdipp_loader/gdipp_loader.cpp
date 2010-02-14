@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "global.h"
 #include <easyhook.h>
 #include <shlwapi.h>
 #include <tlhelp32.h>
@@ -46,13 +47,16 @@ DWORD load_process(LPTSTR proc_name, LPCTSTR curr_dir)
 	return pi.dwProcessId;
 }
 
-void inject_dll(DWORD proc_id, LPTSTR dll_path)
+void inject_gdimm(DWORD proc_id, LPTSTR gdimm_path)
 {
+	NTSTATUS eh_error;
+
 #ifdef _M_X64
-	NTSTATUS eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, dll_path, NULL, 0);
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path, NULL, 0);
 #else
-	NTSTATUS eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, dll_path, NULL, NULL, 0);
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, gdimm_path, NULL, NULL, 0);
 #endif
+
 	assert(eh_error == 0);
 }
 
@@ -61,22 +65,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-	DWORD dw_ret;
 	BOOL b_ret;
-
-	TCHAR hook_dll[MAX_PATH];
-	dw_ret = GetModuleFileName(NULL, hook_dll, MAX_PATH);
-	assert(dw_ret != 0);
-
-	b_ret = PathRemoveFileSpec(hook_dll);
-	assert(b_ret);
-
-#ifdef _M_X64
-	b_ret = PathAppend(hook_dll, TEXT("gdimm_64.dll"));
-#else
-	b_ret = PathAppend(hook_dll, TEXT("gdimm_32.dll"));
-#endif
-	assert(b_ret);
 
 	if (lstrlen(lpCmdLine) == 0)
 	{
@@ -88,9 +77,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	TCHAR curr_dir[MAX_PATH];
 	lstrcpyn(proc_name, lpCmdLine, MAX_PATH);
 	lstrcpyn(curr_dir, lpCmdLine, MAX_PATH);
+	
 	PathStripPath(proc_name);
-	PathAddExtension(proc_name, TEXT(".exe"));
-	PathRemoveFileSpec(curr_dir);
+	
+	b_ret = PathAddExtension(proc_name, TEXT(".exe"));
+	assert(b_ret);
+
+	b_ret = PathRemoveFileSpec(curr_dir);
+	assert(b_ret);
 
 	DWORD proc_id = get_proc_id(proc_name);
 	if (proc_id == -1)
@@ -98,7 +92,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	if (proc_id != 0)
 	{
-		inject_dll(proc_id, hook_dll);
+		TCHAR gdimm_path[MAX_PATH];
+#ifdef _M_X64
+		get_dir_file_path(gdimm_path, TEXT("gdimm_64.dll"));
+#else
+		get_dir_file_path(gdimm_path, TEXT("gdimm_32.dll"));
+#endif
+
+		inject_gdimm(proc_id, gdimm_path);
 		return EXIT_SUCCESS;
 	}
 	else

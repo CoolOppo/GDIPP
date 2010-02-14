@@ -11,7 +11,7 @@ class _gdimm_setting
 
 public:
 	_gdimm_setting();
-	void load_settings(HMODULE hModule);
+	void load_settings(HMODULE h_module);
 
 	template <typename T>
 	T get_value(const TCHAR *name) const;
