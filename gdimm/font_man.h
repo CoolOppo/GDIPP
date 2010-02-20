@@ -6,7 +6,7 @@ using namespace std;
 
 struct font_info
 {
-	HDC hdc;
+	HFONT hfont;
 	DWORD table_header;
 	FT_StreamRec stream;
 	LPVOID mapping_start;
@@ -14,19 +14,23 @@ struct font_info
 
 class _gdimm_font_man
 {
-	// face name -> face id
-	map<t_string, long> _font_indices;
-	// face id -> face info
-	map<unsigned int, font_info> _loaded_fonts;
+	// face name -> font id
+	map<t_string, long> _font_ids;
+	// font id -> face info
+	map<long, font_info> _loaded_fonts;
 
-	static DWORD get_font_size(HDC hdc, DWORD *table_header);
+	HDC _font_holder;
+
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
-	static void stream_CloseFunc(FT_Stream stream);
+	static void stream_CloseFunc(FT_Stream stream) {};
+	DWORD get_font_size(HFONT hfont, DWORD *table_header);
 	void use_mapping(const TCHAR *font_full_name);
 
 public:
-	unsigned int lookup_index(HDC hdc, const TCHAR *font_full_name);
-	font_info &get_info(unsigned int id);
+	_gdimm_font_man();
+	long register_font(HFONT hfont, const TCHAR *font_family, const TCHAR *font_style);
+	long lookup_font(const LOGFONT &font_attr, const TCHAR *font_family, const TCHAR *font_style);
+	FT_Stream prepare_request(long font_id);
 };
 
 typedef singleton<_gdimm_font_man> gdimm_font_man;

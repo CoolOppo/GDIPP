@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook32.lib msxml6.lib comsupp.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook64.lib msxml6.lib comsupp.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -219,7 +219,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib xmllite.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook32.lib msxml6.lib comsupp.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -298,7 +298,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib xmllite.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook64.lib msxml6.lib comsupp.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -364,7 +364,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\setting.cpp"
+				RelativePath="..\common\setting.cpp"
 				>
 			</File>
 			<File
@@ -426,6 +426,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ft2build.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ftoption.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\global.h"
 				>
 			</File>
@@ -434,7 +442,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\setting.h"
+				RelativePath="..\common\setting.h"
 				>
 			</File>
 			<File

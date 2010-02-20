@@ -46,6 +46,16 @@ public:
 	}
 };
 
+/*
+GDIPP_SERVICE: gdimm.dll monitors the injector process, and unload itself once the injector process is terminated
+GDIPP_LOADER: gdimm.dll does not care about the injector
+*/
+enum INJECTOR_TYPE
+{
+	GDIPP_SERVICE,
+	GDIPP_LOADER
+};
+
 void get_dir_file_path(TCHAR source_path[MAX_PATH], const TCHAR *file_name, HMODULE h_module = NULL);
 
 void debug_output_process_name();

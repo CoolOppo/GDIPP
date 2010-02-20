@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "sink.h"
 #include "inject.h"
+#include "setting.h"
 
 sink_inject::sink_inject()
 {
@@ -41,7 +42,8 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 	for (LONG i = 0; i < lObjectCount; i++)
 	{
 		VARIANT var_event;
-		VARIANT var_proc_id;
+		BSTR a;
+		apObjArray[i]->GetObjectText(0, &a);
 
 		VariantInit(&var_event);
 		hr = apObjArray[i]->Get(TEXT("TargetInstance"), 0, &var_event, NULL, NULL);
@@ -50,7 +52,21 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		IWbemClassObject *proc_obj;
 		hr = V_UNKNOWN(&var_event)->QueryInterface(IID_IWbemClassObject, (void**) &proc_obj);
 		assert(SUCCEEDED(hr));
+		VariantClear(&var_event);
 
+		VARIANT var_exe_name;
+		VariantInit(&var_exe_name);
+		hr = proc_obj->Get(TEXT("Name"), 0, &var_exe_name, NULL, NULL);
+		assert(SUCCEEDED(hr));
+
+		if (gdimm_setting::instance().is_proc_excluded(V_BSTR(&var_exe_name)))
+		{
+			VariantClear(&var_exe_name);
+			proc_obj->Release();
+			continue;
+		}
+
+		VARIANT var_proc_id;
 		VariantInit(&var_proc_id);
 		hr = proc_obj->Get(TEXT("ProcessId"), 0, &var_proc_id, NULL, NULL);
 		assert(SUCCEEDED(hr));
@@ -58,7 +74,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		svc_injector::instance().inject(V_I4(&var_proc_id));
 
 		VariantClear(&var_proc_id);
-		VariantClear(&var_event);
+		proc_obj->Release();
 	}
 
 	return WBEM_S_NO_ERROR;

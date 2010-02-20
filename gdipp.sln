@@ -9,10 +9,19 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "freetype\builds\win32\vc2008\freetype.vcproj", "{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_svc", "gdipp_svc\gdipp_svc.vcproj", "{D8F37991-4EE8-43F0-BFC7-3FCD7393D3BF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_demo", "gdipp_demo\gdipp_demo.vcproj", "{BA4DBF79-1ABB-423B-9E1D-9233A57279C2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_loader", "gdipp_loader\gdipp_loader.vcproj", "{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

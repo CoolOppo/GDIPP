@@ -15,7 +15,7 @@ void _svc_mon::start_monitor()
 	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
 	assert(SUCCEEDED(hr));
 
-	hr = CoCreateInstance(CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*) &_loc);
+	hr = CoCreateInstance(__uuidof(WbemLocator), NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_loc));
 	assert(SUCCEEDED(hr));
 
 	hr = _loc->ConnectServer(_bstr_t(TEXT("ROOT\\CIMV2")), NULL, NULL, NULL, WBEM_FLAG_CONNECT_USE_MAX_WAIT, NULL, NULL, &_svc);
@@ -24,7 +24,7 @@ void _svc_mon::start_monitor()
 	hr = CoSetProxyBlanket(_svc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
 	assert(SUCCEEDED(hr));
 
-	hr = CoCreateInstance(CLSID_UnsecuredApartment, NULL, CLSCTX_LOCAL_SERVER, IID_IUnsecuredApartment, (void**) &_unsec_app);
+	hr = CoCreateInstance(__uuidof(UnsecuredApartment), NULL, CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&_unsec_app));
 	assert(SUCCEEDED(hr));
 
 	_sink = new sink_inject;

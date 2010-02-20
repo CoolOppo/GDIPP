@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
+				AdditionalDependencies="EasyHook32.lib msxml6.lib wbemuuid.lib comsuppw.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -140,7 +140,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
+				AdditionalDependencies="EasyHook64.lib msxml6.lib wbemuuid.lib comsuppw.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
+				AdditionalDependencies="EasyHook32.lib msxml6.lib wbemuuid.lib comsuppw.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -292,7 +292,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib wbemuuid.lib comsuppw.lib"
+				AdditionalDependencies="EasyHook64.lib msxml6.lib wbemuuid.lib comsuppw.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -346,6 +346,10 @@
 			</File>
 			<File
 				RelativePath=".\mon.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\common\setting.cpp"
 				>
 			</File>
 			<File
@@ -404,6 +408,10 @@
 			</File>
 			<File
 				RelativePath=".\mon.h"
+				>
+			</File>
+			<File
+				RelativePath="..\common\setting.h"
 				>
 			</File>
 			<File

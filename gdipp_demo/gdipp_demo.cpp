@@ -1,6 +1,3 @@
-// demo.cpp : Defines the entry point for the application.
-//
-
 #include "stdafx.h"
 #include "gdipp_demo.h"
 #include <stdlib.h>
@@ -28,7 +25,7 @@ int test_count = 0;
 int test_count = 2000;
 #endif
 
-const LPCTSTR test_str = TEXT("Hello²âÊÔÎÄ×ÖGgJjQq");
+const LPCTSTR test_str = TEXT("²âÊÔÎÄ×ÖHello GgJjQq");
 DWORD start = 0;
 DWORD end = 0;
 TCHAR elapse_str[128] = {0};

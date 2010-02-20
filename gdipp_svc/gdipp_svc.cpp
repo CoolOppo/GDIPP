@@ -1,9 +1,7 @@
-// svc.cpp : Defines the entry point for the application.
-//
-
 #include "stdafx.h"
 #include "mon.h"
 #include "inject.h"
+#include "setting.h"
 #include <tlhelp32.h>
 #include <vector>
 using namespace std;
@@ -27,7 +25,7 @@ bool enum_processes(vector<DWORD> &proc_ids)
 	{
 		do
 		{
-			if (pe32.th32ProcessID >= 1000)
+			if (!gdimm_setting::instance().is_proc_excluded(pe32.szExeFile))
 				proc_ids.push_back(pe32.th32ProcessID);
 		} while (Process32Next(h_snapshot, &pe32));
 	}
@@ -84,22 +82,29 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	// report initial status to the SCM
 	set_svc_status(SERVICE_START_PENDING);
 
-	// report running status when initialization is complete
-	set_svc_status(SERVICE_RUNNING);
+	gdimm_setting::instance().load_settings(SERVICE_BRANCH, NULL);
 
 	// inject running processes
-	vector<DWORD> proc_ids;
-	if (enum_processes(proc_ids))
+	if (gdimm_setting::instance().get_service_setting<bool>(TEXT("init_inject")))
 	{
-		for (vector<DWORD>::const_iterator iter = proc_ids.begin(); iter != proc_ids.end(); iter++)
-			svc_injector::instance().inject(*iter);
+		vector<DWORD> proc_ids;
+		if (enum_processes(proc_ids))
+		{
+			for (vector<DWORD>::const_iterator iter = proc_ids.begin(); iter != proc_ids.end(); iter++)
+				svc_injector::instance().inject(*iter);
+		}
 	}
 
 	// monitor future processes
 	svc_mon::instance().start_monitor();
 
+	// report running status when initialization is complete
+	set_svc_status(SERVICE_RUNNING);
+
 	while (svc_status.dwCurrentState == SERVICE_RUNNING)
 		Sleep(1000);
+
+	set_svc_status(SERVICE_STOP_PENDING);
 
 	svc_mon::instance().stop_monitor();
 
@@ -111,11 +116,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 					   LPTSTR    lpCmdLine,
 					   int       nCmdShow)
 {
+	BOOL b_ret;
+
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
 		{SVC_NAME, (LPSERVICE_MAIN_FUNCTION) svc_main},
 		{NULL, NULL},
 	};
 
-	StartServiceCtrlDispatcher(dispatch_table);
+	b_ret = StartServiceCtrlDispatcher(dispatch_table);
+	assert(b_ret);
 }

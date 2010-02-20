@@ -104,7 +104,7 @@ void _gdimm_font_link::get_font_link_info()
 			line_start += curr_font.length() + 1;
 		}
 
-		_fl_table[value_name] = font_list;
+		_link_table[value_name] = font_list;
 		free(value_data);
 		curr_index++;
 	} while (enum_ret == ERROR_SUCCESS);
@@ -117,9 +117,9 @@ void _gdimm_font_link::get_font_link_info()
 
 const TCHAR *_gdimm_font_link::lookup(const TCHAR *font_name, size_t index) const
 {
-	const map<t_string, vector<t_string>>::const_iterator iter = _fl_table.find(font_name);
+	const map<t_string, vector<t_string>>::const_iterator iter = _link_table.find(font_name);
 
-	if (iter == _fl_table.end())
+	if (iter == _link_table.end())
 		return NULL;
 	else
 	{
@@ -130,40 +130,12 @@ const TCHAR *_gdimm_font_link::lookup(const TCHAR *font_name, size_t index) cons
 	}
 }
 
-/*bool _gdimm_font_link::font_link(HDC hdc, const TCHAR *family_name, int fl_index)
+const size_t _gdimm_font_link::get_link_count(const TCHAR *font_name) const
 {
-	const TCHAR *linked_font_name = lookup(family_name, fl_index);
-	if (linked_font_name == NULL)
-		return false;
+	const map<t_string, vector<t_string>>::const_iterator iter = _link_table.find(font_name);
 
-	TEXTMETRIC text_metrics;
-	GetTextMetrics(hdc, &text_metrics);
-
-	HFONT orig_hfont = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
-	LOGFONT font_attr;
-	GetObject(orig_hfont, sizeof(LOGFONT), &font_attr);
-
-	lstrcpyn(font_attr.lfFaceName, linked_font_name, LF_FACESIZE);
-	font_attr.lfWidth = 0;
-
-	HFONT linked_hfont = CreateFontIndirect(&font_attr);
-	assert(linked_hfont != NULL);
-
-	// backup DC's original font
-	_orig_hfonts[hdc] = (HFONT) SelectObject(hdc, linked_hfont);
-	return true;
+	if (iter == _link_table.end())
+		return 0;
+	else
+		return iter->second.size();
 }
-
-bool _gdimm_font_link::restore_font(HDC hdc)
-{
-	map<const HDC, HFONT>::iterator iter = _orig_hfonts.find(hdc);
-
-	if (iter == _orig_hfonts.end())
-		return false;
-
-	HGDIOBJ linked_hfont = SelectObject(hdc, _orig_hfonts[hdc]);
-	DeleteObject(linked_hfont);
-
-	_orig_hfonts.erase(iter);
-	return true;
-}*/

@@ -6,9 +6,17 @@
 ULONG svc_proc_id = 0;
 HMODULE h_self = NULL;
 
-extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* InRemoteInfo)
+extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
-	svc_proc_id = InRemoteInfo->HostPID;
+	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
+	switch (injector_type)
+	{
+	case GDIPP_SERVICE:
+		svc_proc_id = remote_info->HostPID;
+		break;
+	case GDIPP_LOADER:
+		break;
+	}
 }
 
 DWORD WINAPI unload_self(LPVOID lpThreadParameter)
@@ -33,7 +41,8 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	//if ((options & ETO_GLYPH_INDEX) || c <= 2)
+	//if ((options & ETO_GLYPH_INDEX))
+	//if (c <= 10)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -64,7 +73,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//const WCHAR *debug_text = L"Fuck";
+	//const WCHAR *debug_text = L"ʱ";
 	const int start_index = 0;
 
 	if (debug_text)
