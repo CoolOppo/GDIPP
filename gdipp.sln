@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdimm", "gdimm\gdimm.vcproj", "{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
 	ProjectSection(ProjectDependencies) = postProject
+		{D8742C31-15F3-4452-AF09-79F97277003A} = {D8742C31-15F3-4452-AF09-79F97277003A}
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B} = {78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}
 	EndProjectSection
 EndProject
@@ -10,6 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "freetype\builds
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_svc", "gdipp_svc\gdipp_svc.vcproj", "{D8F37991-4EE8-43F0-BFC7-3FCD7393D3BF}"
 	ProjectSection(ProjectDependencies) = postProject
+		{D8742C31-15F3-4452-AF09-79F97277003A} = {D8742C31-15F3-4452-AF09-79F97277003A}
 		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
 	EndProjectSection
 EndProject
@@ -22,6 +24,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_loader", "gdipp_loade
 	ProjectSection(ProjectDependencies) = postProject
 		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\src\pugixml.vcproj", "{D8742C31-15F3-4452-AF09-79F97277003A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +75,14 @@ Global
 		{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}.Release|Win32.Build.0 = Release|Win32
 		{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}.Release|x64.ActiveCfg = Release|x64
 		{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}.Release|x64.Build.0 = Release|x64
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|Win32.Build.0 = Debug|Win32
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|x64.ActiveCfg = Debug|x64
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|x64.Build.0 = Debug|x64
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|Win32.ActiveCfg = Release|Win32
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|Win32.Build.0 = Release|Win32
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.ActiveCfg = Release|x64
+		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

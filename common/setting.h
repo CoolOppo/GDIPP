@@ -1,8 +1,7 @@
 #pragma once
 
 #include "global.h"
-#include <objbase.h>
-#include <msxml2.h>
+#include <pugixml.hpp>
 #include <list>
 #include <map>
 #include <set>
@@ -26,19 +25,17 @@ class _gdimm_setting
 	set<const wstring, ci_less> _exclude_names;
 
 	void set_default();
-	void load_branch(IXMLDOMDocument *xml_doc, WCHAR *xpath);
-	void load_exclude(IXMLDOMDocument *xml_doc);
+	void load_branch(const pugi::xml_document &xml_doc, const char *xpath);
+	void load_exclude(const pugi::xml_document &xml_doc);
 
 public:
 	_gdimm_setting();
-	void load_settings(HMODULE h_module);
+	bool load_settings(HMODULE h_module);
 	bool is_name_excluded(const WCHAR *name) const
 	{ return (_exclude_names.find(name) != _exclude_names.end()); }
 
 	template <typename T>
 	T get_gdimm_setting(const WCHAR *setting_name, const WCHAR *branch_name = L"common") const;
-	template <typename T>
-	T get_service_setting(const WCHAR *setting_name) const;
 };
 
 template <typename T>
@@ -66,7 +63,7 @@ T _gdimm_setting::get_gdimm_setting(const WCHAR *setting_name, const WCHAR *bran
 
 	// convert string to type T
 	T setting_value;
-	basic_istringstream<WCHAR>(setting_iter->second) >> setting_value;
+	wistringstream(setting_iter->second) >> setting_value;
 
 	return setting_value;
 }

@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "mon.h"
-#include "inject.h"
 #include "setting.h"
-#include <vector>
-using namespace std;
 
 #define SVC_NAME TEXT("gdipp_svc")
 

@@ -1,165 +1,117 @@
 #include "stdafx.h"
 #include "setting.h"
-#include <comutil.h>
+#include <fstream>
+using namespace std;
 
 _gdimm_setting::_gdimm_setting()
 {
 	setting_map gdimm_default;
-	gdimm_default[L"auto_hinting"] = L"0";
-	gdimm_default[L"bold_strength"] = L"0.0";
-	gdimm_default[L"freetype_loader"] = L"1";
-	gdimm_default[L"hinting"] = L"1";
-	gdimm_default[L"lcd_filter"] = L"1";
-	gdimm_default[L"light_mode"] = L"0";
-	gdimm_default[L"max_height"] = L"72";
-	gdimm_default[L"render_mono"] = L"0";
-	gdimm_default[L"subpixel_render"] = L"1";
+	gdimm_default[L"auto_hinting"]		= L"0";
+	gdimm_default[L"bold_strength"]		= L"0.0";
+	gdimm_default[L"freetype_loader"]	= L"1";
+	gdimm_default[L"hinting"]			= L"1";
+	gdimm_default[L"lcd_filter"]		= L"1";
+	gdimm_default[L"light_mode"]		= L"0";
+	gdimm_default[L"max_height"]		= L"72";
+	gdimm_default[L"render_mono"]		= L"0";
+	gdimm_default[L"subpixel_render"]	= L"1";
 
 	_setting_branchs.push_back(gdimm_default);
 	_branch_names[L"common"] = &_setting_branchs.back();
 }
 
-void _gdimm_setting::load_branch(IXMLDOMDocument *xml_doc, WCHAR *xpath)
+void _gdimm_setting::load_branch(const pugi::xml_document &xml_doc, const char *xpath)
 {
-	HRESULT hr;
+	int name_len;
 
-	IXMLDOMNodeList *branch_list;
-	IXMLDOMNode *curr_branch;
-	setting_map *branch_setting;
-
-	hr = xml_doc->selectNodes(xpath, &branch_list);
-	assert(SUCCEEDED(hr));
-
-	while (true)
+	pugi::xpath_node_set target_node_set = xml_doc.select_nodes(xpath);
+	for (pugi::xpath_node_set::const_iterator set_iter = target_node_set.begin(); set_iter != target_node_set.end(); set_iter++)
 	{
-		hr = branch_list->nextNode(&curr_branch);
-		if (curr_branch == NULL)
-			break;
-
-		// if the node has the attribute "name", use it as the branch name
-		// otherwise, use the node name as the branch name
-		IXMLDOMNamedNodeMap *node_attr;
-		hr = curr_branch->get_attributes(&node_attr);
-		assert(SUCCEEDED(hr));
-		
-		IXMLDOMNode *name_node;
-		hr = node_attr->getNamedItem(L"name", &name_node);
-		assert(SUCCEEDED(hr));
-
-		BSTR branch_name;
-		if (name_node == NULL)
-			hr = curr_branch->get_nodeName(&branch_name);
+		pugi::xml_attribute node_attr = set_iter->node().attribute("name");
+		const char *mb_name;
+		if (node_attr.empty())
+			mb_name = set_iter->node().name();
 		else
-		{
-			hr = name_node->get_text(&branch_name);
-			name_node->Release();
-		}
-		assert(SUCCEEDED(hr));
-		
+			mb_name = node_attr.value();
+
+		name_len = MultiByteToWideChar(CP_UTF8, 0, mb_name, -1, NULL, 0);
+		WCHAR *branch_name = new WCHAR[name_len];
+		name_len = MultiByteToWideChar(CP_UTF8, 0, mb_name, -1, branch_name, name_len);
+		assert(name_len != 0);
+
 		// create new setting branch if necessary, otherwise use the existing
-		branch_map::const_iterator iter = _branch_names.find(branch_name);
-		if (iter == _branch_names.end())
+		branch_map::const_iterator branch_iter = _branch_names.find(branch_name);
+		setting_map *branch_setting;
+
+		if (branch_iter == _branch_names.end())
 		{
 			_setting_branchs.push_back(setting_map());
 			branch_setting = &_setting_branchs.back();
 			_branch_names[branch_name] = branch_setting;
 		}
 		else
-			branch_setting = iter->second;
+			branch_setting = branch_iter->second;
+
+		delete[] branch_name;
 		
-		// add all child nodes to the setting branch
-		IXMLDOMNodeList *setting_list;
-		hr = curr_branch->get_childNodes(&setting_list);
-		assert(SUCCEEDED(hr));
-
-		IXMLDOMNode *setting_node;
-		while (true)
+		for (pugi::xml_node_iterator setting_iter = set_iter->node().begin(); setting_iter != set_iter->node().end(); setting_iter++)
 		{
-			hr = setting_list->nextNode(&setting_node);
-			if (setting_node == NULL)
-				break;
+			name_len = MultiByteToWideChar(CP_UTF8, 0, setting_iter->name(), -1, NULL, 0);
+			WCHAR *setting_name = new WCHAR[name_len];
+			name_len = MultiByteToWideChar(CP_UTF8, 0, setting_iter->name(), -1, setting_name, name_len);
+			assert(name_len != 0);
 
-			BSTR setting_name;
-			BSTR setting_value;
-
-			hr = setting_node->get_nodeName(&setting_name);
-			assert(SUCCEEDED(hr));
-
-			hr = setting_node->get_text(&setting_value);
-			assert(SUCCEEDED(hr));
+			name_len = MultiByteToWideChar(CP_UTF8, 0, setting_iter->first_child().value(), -1, NULL, 0);
+			WCHAR *setting_value = new WCHAR[name_len];
+			name_len = MultiByteToWideChar(CP_UTF8, 0, setting_iter->first_child().value(), -1, setting_value, name_len);
+			assert(name_len != 0);
 
 			(*branch_setting)[setting_name] = setting_value;
 
-			setting_node->Release();
+			delete[] setting_name;
+			delete[] setting_value;
 		}
-
-		curr_branch->Release();
-		setting_list->Release();
-		node_attr->Release();
 	}
-
-	branch_list->Release();
 }
 
-void _gdimm_setting::load_exclude(IXMLDOMDocument *xml_doc)
+void _gdimm_setting::load_exclude(const pugi::xml_document &xml_doc)
 {
-	HRESULT hr;
+	int name_len;
 
-	IXMLDOMNodeList *node_list;
-	IXMLDOMNode *curr_node;
-
-	hr = xml_doc->selectNodes(L"/gdipp/exclude/*", &node_list);
-	assert(SUCCEEDED(hr));
-
-	while (true)
+	pugi::xpath_node_set target_node_set = xml_doc.select_nodes("/gdipp/exclude/*");
+	for (pugi::xpath_node_set::const_iterator iter = target_node_set.begin(); iter != target_node_set.end(); iter++)
 	{
-		hr = node_list->nextNode(&curr_node);
-		if (curr_node == NULL)
-			break;
+		name_len = MultiByteToWideChar(CP_UTF8, 0, iter->node().first_child().value(), -1, NULL, 0);
+		WCHAR *name = new WCHAR[name_len];
+		name_len = MultiByteToWideChar(CP_UTF8, 0, iter->node().first_child().value(), -1, name, name_len);
+		assert(name_len != 0);
 
-		BSTR proc_name;
-		hr = curr_node->get_text(&proc_name);
-		assert(SUCCEEDED(hr));
-
-		_exclude_names.insert(proc_name);
+		_exclude_names.insert(name);
 	}
 }
 
-void _gdimm_setting::load_settings(HMODULE h_module)
+bool _gdimm_setting::load_settings(HMODULE h_module)
 {
-	HRESULT hr;
-
-	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	assert(SUCCEEDED(hr));
-
-	IXMLDOMDocument * xml_doc;
-	hr = CoCreateInstance(__uuidof(DOMDocument), NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&xml_doc));
-	assert(SUCCEEDED(hr));
-
 	// get setting file path
 	WCHAR setting_path[MAX_PATH];
 	get_dir_file_path(setting_path, L"setting.xml", h_module);
 
-	VARIANT var_file_path;
-	VariantInit(&var_file_path);
-	V_BSTR(&var_file_path) = bstr_t(setting_path);
-	V_VT(&var_file_path) = VT_BSTR;
+	ifstream f(setting_path);
+	if (f.bad())
+		return false;
 
-	VARIANT_BOOL var_success;
-	hr = xml_doc->load(var_file_path, &var_success);
-	assert(SUCCEEDED(hr) && var_success);
-	VariantClear(&var_file_path);
+	pugi::xml_document xml_doc;
+	xml_doc.load(f);
 
 	if (h_module != NULL)
 	{
-		load_branch(xml_doc, L"/gdipp/gdimm/common");
-		load_branch(xml_doc, L"/gdipp/gdimm/proc");
-		load_branch(xml_doc, L"/gdipp/gdimm/font");
+		load_branch(xml_doc, "/gdipp/gdimm/common");
+		load_branch(xml_doc, "/gdipp/gdimm/process");
+		load_branch(xml_doc, "/gdipp/gdimm/font");
 	}
 
 	load_exclude(xml_doc);
 
-	xml_doc->Release();
-
-	CoUninitialize();
+	f.close();
+	return true;
 }
