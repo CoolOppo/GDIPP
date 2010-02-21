@@ -87,6 +87,8 @@ void _gdimm_setting::load_exclude(const pugi::xml_document &xml_doc)
 		assert(name_len != 0);
 
 		_exclude_names.insert(name);
+
+		delete[] name;
 	}
 }
 

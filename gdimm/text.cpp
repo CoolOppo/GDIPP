@@ -8,7 +8,6 @@
 #include <cmath>
 
 const FT_Glyph_Class *glyph_clazz = NULL;
-const double pi = 4 * atan(1.0);
 
 // convert 16.16 fixed float type to 26.6 format
 inline FT_F26Dot6 to_26dot6(const FIXED &fixed)
