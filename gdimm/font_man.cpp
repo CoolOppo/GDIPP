@@ -1,14 +1,11 @@
 #include "stdafx.h"
 #include "font_man.h"
 #include <mmsystem.h>
+#include <string>
+using namespace std;
 
 // table name for GetFontData() to get whole ttc file data
 #define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
-
-_gdimm_font_man::_gdimm_font_man()
-{
-	_font_holder = CreateCompatibleDC(NULL);
-}
 
 unsigned long _gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
 {
@@ -51,7 +48,7 @@ DWORD _gdimm_font_man::get_font_size(HFONT hfont, DWORD *table_header)
 	return font_size;
 }
 
-void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
+void _gdimm_font_man::use_mapping(const WCHAR *font_full_name)
 {
 	// the mapping name consists of two parts: prefix and font full name
 	// prefix is fixed for all mapping names, defined in mapping_prefix
@@ -60,11 +57,11 @@ void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
 	const unsigned int font_id = _font_ids[font_full_name];
 	font_info &info = _loaded_fonts[font_id];
 
-	const t_string mapping_prefix = TEXT("Global\\gdimm_");
-	const t_string mapping_name = mapping_prefix + font_full_name;
-	const HANDLE h_mapping = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
+	const wstring mapping_prefix = L"Global\\gdimm_";
+	const wstring mapping_name = mapping_prefix + font_full_name;
+	const HANDLE h_mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
 	assert(h_mapping != NULL);
-	bool new_mapping = (GetLastError() != ERROR_ALREADY_EXISTS);
+	const bool new_mapping = (GetLastError() != ERROR_ALREADY_EXISTS);
 
 	// map memory
 	info.mapping_start = MapViewOfFile(h_mapping, FILE_MAP_ALL_ACCESS, 0, 0, info.stream.size);
@@ -78,10 +75,10 @@ void _gdimm_font_man::use_mapping(const TCHAR *font_full_name)
 	}
 }
 
-long _gdimm_font_man::register_font(HFONT hfont, const TCHAR *font_family, const TCHAR *font_style)
+long _gdimm_font_man::register_font(HFONT hfont, const WCHAR *font_family, const WCHAR *font_style)
 {
-	const t_string font_full_name = t_string(font_family) + TEXT(" ") + font_style;
-	const map<t_string, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
+	const wstring font_full_name = wstring(font_family) + L" " + font_style;
+	const map<wstring, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
 
 	if (iter == _font_ids.end())
 	{
@@ -106,16 +103,16 @@ long _gdimm_font_man::register_font(HFONT hfont, const TCHAR *font_family, const
 	}
 }
 
-long _gdimm_font_man::lookup_font(const LOGFONT &font_attr, const TCHAR *font_family, const TCHAR *font_style)
+long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *font_style)
 {
-	const t_string font_full_name = t_string(font_family) + TEXT(" ") + font_style;
-	const map<t_string, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
+	const wstring font_full_name = wstring(font_family) + L" " + font_style;
+	const map<wstring, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
 
 	if (iter == _font_ids.end())
 	{
-		LOGFONT linked_font_attr = font_attr;
-		lstrcpyn(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
-		HFONT new_hfont = CreateFontIndirect(&linked_font_attr);
+		LOGFONTW linked_font_attr = font_attr;
+		wcsncpy_s(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
+		HFONT new_hfont = CreateFontIndirectW(&linked_font_attr);
 
 		return register_font(new_hfont, font_family, font_style);
 	}

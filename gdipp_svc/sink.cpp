@@ -1,16 +1,23 @@
 #include "stdafx.h"
 #include "sink.h"
-#include "inject.h"
+#include "global.h"
 #include "setting.h"
+#include <easyhook.h>
 
 sink_inject::sink_inject()
 {
 	_ref = 0;
+	get_dir_file_path(_gdimm_path_32, L"gdimm_32.dll");
+	get_dir_file_path(_gdimm_path_64, L"gdimm_64.dll");
 }
 
-ULONG sink_inject::AddRef()
+bool sink_inject::inject(LONG proc_id)
 {
-	return InterlockedIncrement(&_ref);
+	NTSTATUS eh_error;
+
+	const INJECTOR_TYPE injector_type = GDIPP_SERVICE;
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, _gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+	return (eh_error == 0);
 }
 
 ULONG sink_inject::Release()
@@ -38,15 +45,12 @@ HRESULT sink_inject::QueryInterface(REFIID riid, void **ppv)
 HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 {
 	HRESULT hr;
-
+	
 	for (LONG i = 0; i < lObjectCount; i++)
 	{
 		VARIANT var_event;
-		BSTR a;
-		apObjArray[i]->GetObjectText(0, &a);
-
 		VariantInit(&var_event);
-		hr = apObjArray[i]->Get(TEXT("TargetInstance"), 0, &var_event, NULL, NULL);
+		hr = apObjArray[i]->Get(L"TargetInstance", 0, &var_event, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
 		IWbemClassObject *proc_obj;
@@ -56,10 +60,10 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 
 		VARIANT var_exe_name;
 		VariantInit(&var_exe_name);
-		hr = proc_obj->Get(TEXT("Name"), 0, &var_exe_name, NULL, NULL);
+		hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		if (gdimm_setting::instance().is_proc_excluded(V_BSTR(&var_exe_name)))
+		if (gdimm_setting::instance().is_name_excluded(V_BSTR(&var_exe_name)))
 		{
 			VariantClear(&var_exe_name);
 			proc_obj->Release();
@@ -68,23 +72,14 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 
 		VARIANT var_proc_id;
 		VariantInit(&var_proc_id);
-		hr = proc_obj->Get(TEXT("ProcessId"), 0, &var_proc_id, NULL, NULL);
+		hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		svc_injector::instance().inject(V_I4(&var_proc_id));
+		inject(V_I4(&var_proc_id));
 
 		VariantClear(&var_proc_id);
 		proc_obj->Release();
 	}
 
-	return WBEM_S_NO_ERROR;
-}
-
-HRESULT sink_inject::SetStatus(
-	LONG lFlags,
-	HRESULT hResult,
-	BSTR strParam,
-	IWbemClassObject __RPC_FAR *pObjParam)
-{
 	return WBEM_S_NO_ERROR;
 }

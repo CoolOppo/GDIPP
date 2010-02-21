@@ -18,13 +18,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		h_self = hModule;
 
 		critical_section::initialize();
-		gdimm_setting::instance().load_settings(GDIMM_BRANCH, hModule);
+		gdimm_setting::instance().load_settings(hModule);
 		initialize_freetype();
 		return gdimm_hook::instance().hook();
-
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-		break;
 
 	case DLL_PROCESS_DETACH:
 		gdimm_hook::instance().unhook();

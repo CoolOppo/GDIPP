@@ -12,10 +12,10 @@ class _svc_mon
 	IUnknown* _stub_unk;
 	IWbemObjectSink* _stub_sink;
 
-	void get_gdimm_path();
+	void release_all();
 
 public:
-	void start_monitor();
+	bool start_monitor();
 	void stop_monitor();
 };
 

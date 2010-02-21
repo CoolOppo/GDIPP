@@ -2,36 +2,24 @@
 #include "setting.h"
 #include <comutil.h>
 
-void _gdimm_setting::set_default(LOAD_BRANCH branch_type)
+_gdimm_setting::_gdimm_setting()
 {
-	if (branch_type & GDIMM_BRANCH)
-	{
-		setting_map gdimm_default;
-		gdimm_default[TEXT("auto_hinting")] = TEXT("0");
-		gdimm_default[TEXT("bold_strength")] = TEXT("0.0");
-		gdimm_default[TEXT("freetype_loader")] = TEXT("1");
-		gdimm_default[TEXT("hinting")] = TEXT("1");
-		gdimm_default[TEXT("lcd_filter")] = TEXT("1");
-		gdimm_default[TEXT("light_mode")] = TEXT("0");
-		gdimm_default[TEXT("max_height")] = TEXT("72");
-		gdimm_default[TEXT("render_mono")] = TEXT("0");
-		gdimm_default[TEXT("subpixel_render")] = TEXT("1");
+	setting_map gdimm_default;
+	gdimm_default[L"auto_hinting"] = L"0";
+	gdimm_default[L"bold_strength"] = L"0.0";
+	gdimm_default[L"freetype_loader"] = L"1";
+	gdimm_default[L"hinting"] = L"1";
+	gdimm_default[L"lcd_filter"] = L"1";
+	gdimm_default[L"light_mode"] = L"0";
+	gdimm_default[L"max_height"] = L"72";
+	gdimm_default[L"render_mono"] = L"0";
+	gdimm_default[L"subpixel_render"] = L"1";
 
-		_setting_branchs.push_back(gdimm_default);
-		_branch_names[TEXT("common")] = &_setting_branchs.back();
-	}
-
-	if (branch_type & SERVICE_BRANCH)
-	{
-		setting_map service_default;
-		service_default[TEXT("init_inject")] = TEXT("0");
-
-		_setting_branchs.push_back(service_default);
-		_branch_names[TEXT("service")] = &_setting_branchs.back();
-	}
+	_setting_branchs.push_back(gdimm_default);
+	_branch_names[L"common"] = &_setting_branchs.back();
 }
 
-void _gdimm_setting::load_branch(IXMLDOMDocument *xml_doc, TCHAR *xpath)
+void _gdimm_setting::load_branch(IXMLDOMDocument *xml_doc, WCHAR *xpath)
 {
 	HRESULT hr;
 
@@ -55,7 +43,7 @@ void _gdimm_setting::load_branch(IXMLDOMDocument *xml_doc, TCHAR *xpath)
 		assert(SUCCEEDED(hr));
 		
 		IXMLDOMNode *name_node;
-		hr = node_attr->getNamedItem(TEXT("name"), &name_node);
+		hr = node_attr->getNamedItem(L"name", &name_node);
 		assert(SUCCEEDED(hr));
 
 		BSTR branch_name;
@@ -113,14 +101,14 @@ void _gdimm_setting::load_branch(IXMLDOMDocument *xml_doc, TCHAR *xpath)
 	branch_list->Release();
 }
 
-void _gdimm_setting::load_exclude_proc(IXMLDOMDocument *xml_doc)
+void _gdimm_setting::load_exclude(IXMLDOMDocument *xml_doc)
 {
 	HRESULT hr;
 
 	IXMLDOMNodeList *node_list;
 	IXMLDOMNode *curr_node;
 
-	hr = xml_doc->selectNodes(TEXT("/gdipp/service/exclude"), &node_list);
+	hr = xml_doc->selectNodes(L"/gdipp/exclude/*", &node_list);
 	assert(SUCCEEDED(hr));
 
 	while (true)
@@ -133,15 +121,13 @@ void _gdimm_setting::load_exclude_proc(IXMLDOMDocument *xml_doc)
 		hr = curr_node->get_text(&proc_name);
 		assert(SUCCEEDED(hr));
 
-		_exclude_proc.insert(proc_name);
+		_exclude_names.insert(proc_name);
 	}
 }
 
-void _gdimm_setting::load_settings(LOAD_BRANCH branch_type, HMODULE h_module)
+void _gdimm_setting::load_settings(HMODULE h_module)
 {
 	HRESULT hr;
-
-	set_default(branch_type);
 
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	assert(SUCCEEDED(hr));
@@ -151,12 +137,12 @@ void _gdimm_setting::load_settings(LOAD_BRANCH branch_type, HMODULE h_module)
 	assert(SUCCEEDED(hr));
 
 	// get setting file path
-	TCHAR setting_path[MAX_PATH];
-	get_dir_file_path(setting_path, TEXT("setting.xml"), h_module);
+	WCHAR setting_path[MAX_PATH];
+	get_dir_file_path(setting_path, L"setting.xml", h_module);
 
 	VARIANT var_file_path;
 	VariantInit(&var_file_path);
-	V_BSTR(&var_file_path) = _bstr_t(setting_path);
+	V_BSTR(&var_file_path) = bstr_t(setting_path);
 	V_VT(&var_file_path) = VT_BSTR;
 
 	VARIANT_BOOL var_success;
@@ -164,18 +150,14 @@ void _gdimm_setting::load_settings(LOAD_BRANCH branch_type, HMODULE h_module)
 	assert(SUCCEEDED(hr) && var_success);
 	VariantClear(&var_file_path);
 
-	if (branch_type & GDIMM_BRANCH)
+	if (h_module != NULL)
 	{
-		load_branch(xml_doc, TEXT("/gdipp/gdimm/common"));
-		load_branch(xml_doc, TEXT("/gdipp/gdimm/proc"));
-		load_branch(xml_doc, TEXT("/gdipp/gdimm/font"));
+		load_branch(xml_doc, L"/gdipp/gdimm/common");
+		load_branch(xml_doc, L"/gdipp/gdimm/proc");
+		load_branch(xml_doc, L"/gdipp/gdimm/font");
 	}
-	
-	if (branch_type & SERVICE_BRANCH)
-	{
-		load_branch(xml_doc, TEXT("/gdipp/service"));
-		load_exclude_proc(xml_doc);
-	}
+
+	load_exclude(xml_doc);
 
 	xml_doc->Release();
 

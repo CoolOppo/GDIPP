@@ -15,6 +15,7 @@ extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE
 		svc_proc_id = remote_info->HostPID;
 		break;
 	case GDIPP_LOADER:
+		RhWakeUpProcess();
 		break;
 	}
 }
@@ -42,7 +43,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if ((options & ETO_GLYPH_INDEX))
-	//if (c <= 10)
+	//if (c <= 8)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -73,10 +74,10 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//const WCHAR *debug_text = L"ʱ";
+	//const WCHAR *debug_text = L"Process Explorer";
 	const int start_index = 0;
 
-	if (debug_text)
+	if (debug_text != NULL)
 	{
 		bool is_target = false;
 		const size_t debug_len = wcslen(debug_text);
@@ -84,7 +85,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		if (options & ETO_GLYPH_INDEX)
 		{
 			WORD *gi = new WORD[debug_len];
-			GetGlyphIndices(hdc, debug_text, debug_len, gi, 0);
+			GetGlyphIndicesW(hdc, debug_text, debug_len, gi, 0);
 
 			if (memcmp((WORD*) lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
 				is_target = true;
