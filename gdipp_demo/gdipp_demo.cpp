@@ -212,17 +212,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			end = GetTickCount();
 			wsprintf(elapse_str, TEXT("Elapsed time: %u milliseconds"), end - start);
+			RedrawWindow(hWnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW);
 		}
 
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW+1));
-		
 		RECT rect = {50, 100, 300, 200};
 		SetBkMode(hdc, OPAQUE);
 		SetBkColor(hdc, RGB(240, 240, 240));
 		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
 		SetTextColor(hdc, RGB(255, 0, 100));
 		
-		//HFONT f = CreateFont(-12, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		HFONT f = CreateFont(-20, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Segoe UI"));
 		SelectObject(hdc, f);
 		//ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);

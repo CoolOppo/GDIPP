@@ -5,6 +5,7 @@
 #include "font_link.h"
 #include "setting.h"
 #include FT_INTERNAL_OBJECTS_H	// for FT_PAD_CEIL
+#include FT_TRUETYPE_TABLES_H
 #include <cmath>
 
 const FT_Glyph_Class *glyph_clazz = NULL;
@@ -82,7 +83,7 @@ FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *fo
 	{
 		const bool auto_hinting = gdimm_setting::instance().get_gdimm_setting<bool>(L"auto_hinting", font_family);
 		const bool light_mode = gdimm_setting::instance().get_gdimm_setting<bool>(L"light_mode", font_family);
-		load_flag = (auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT);
+		load_flag = (auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT) | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
 
 		switch (render_mode)
 		{
@@ -791,21 +792,44 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	const WCHAR *dc_font_family = get_font_family();
 	const WCHAR *final_font_family = dc_font_family;
 	const WCHAR *font_style = get_font_style();
+	FT_UInt32 load_flags = get_load_mode(render_mode, final_font_family);
+
 	const HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
+	assert(curr_hfont != NULL);
+
 	long font_id = gdimm_font_man::instance().register_font(curr_hfont, dc_font_family, font_style);
 	FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
+
 	const size_t link_count = gdimm_font_link::instance().get_link_count(dc_font_family);
 	int link_index = 0;
 
-	// glyph metrics setup
+	/*
+	glyph metrics setup
+
+	while the height in FreeType scaler has the same meaning as the height value in LOGFONT structure, the widths are different
+	what we know is, when the width in LOGFONT is the xAvgCharWidth defined in the TrueType OS/2 table,
+	the corresponding FreeType scaler width is the height
+	therefore we need conversion when LOGFONT width is not 0
+	simple calculation yields new_freetype_width = logfont_width * em_square / xAvgCharWidth
+	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, never be 0
+	*/
+
 	const LONG glyph_height = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
-	LONG glyph_width = glyph_height;
-	if (_font_attr.lfWidth == 0 || _wcsicmp(_font_attr.lfFaceName, get_font_family()) != 0)
-		// use device aspect
-		glyph_width = MulDiv(glyph_height, _outline_metrics->otmTextMetrics.tmDigitizedAspectX, _outline_metrics->otmTextMetrics.tmDigitizedAspectY);
+	LONG glyph_width;
+
+	if (_font_attr.lfWidth == 0)
+		glyph_width = glyph_height;
 	else
-		glyph_width = _font_attr.lfWidth;
-	FTC_ImageTypeRec img_type = {0, glyph_width, glyph_height, get_load_mode(render_mode, final_font_family)};
+	{
+		// get the OS/2 table of the current font
+		FT_Face ft_face;
+		FTC_Manager_LookupFace(ft_cache_man, ft_face_id, &ft_face);
+		TT_OS2 *os2_table = (TT_OS2*) FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+
+		// compare the xAvgCharWidth against the current average char width
+		glyph_width = MulDiv(_outline_metrics->otmTextMetrics.tmAveCharWidth, _outline_metrics->otmEMSquare, os2_table->xAvgCharWidth);
+	}
+	FTC_ScalerRec ft_scaler = {ft_face_id, glyph_width, glyph_height, 1, 0, 0};
 
 	vector<FT_BitmapGlyph> glyphs;
 	vector<POINT> glyph_pos;
@@ -856,17 +880,17 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 		// glyph index -> glyph outline lookup
 
 		// use load mode for the new font family
-		img_type.face_id = ft_face_id;
+		ft_scaler.face_id = ft_face_id;
 
-		// if font linked, get the render mode and load mode for the new font family
+		// if font linked, get the new render mode and load mode for the linked font family
 		if (font_linked)
 		{
 			render_mode = get_render_mode(dc_bmp.bmBitsPixel, final_font_family);
-			img_type.flags = get_load_mode(render_mode, final_font_family);
+			load_flags = get_load_mode(render_mode, final_font_family);
 		}
 		
 		FT_Glyph glyph;
-		ft_error = FTC_ImageCache_Lookup(ft_glyph_cache, &img_type, glyph_index, &glyph, NULL);
+		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &ft_scaler, load_flags, glyph_index, &glyph, NULL);
 		if (ft_error != 0)
 			return false;
 

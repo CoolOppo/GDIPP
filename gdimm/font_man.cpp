@@ -7,6 +7,17 @@ using namespace std;
 // table name for GetFontData() to get whole ttc file data
 #define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
 
+_gdimm_font_man::~_gdimm_font_man()
+{
+	// delete fonts created by the font manager
+
+	for (map<long, font_info>::const_iterator iter = _loaded_fonts.begin(); iter != _loaded_fonts.end(); iter++)
+	{
+		if (iter->second.owned)
+			DeleteObject(iter->second.hfont);
+	}
+}
+
 unsigned long _gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
 {
 	// callback function, called when freetype requests font data
@@ -80,6 +91,8 @@ long _gdimm_font_man::register_font(HFONT hfont, const WCHAR *font_family, const
 	const wstring font_full_name = wstring(font_family) + L" " + font_style;
 	const map<wstring, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
 
+	SelectObject(_font_holder, hfont);
+
 	if (iter == _font_ids.end())
 	{
 		const long new_font_id = _loaded_fonts.size();
@@ -87,6 +100,7 @@ long _gdimm_font_man::register_font(HFONT hfont, const WCHAR *font_family, const
 
 		font_info new_font = {0};
 		new_font.hfont = hfont;
+		new_font.owned = false;
 		new_font.stream.size = get_font_size(hfont, &new_font.table_header);
 		new_font.stream.descriptor.value = new_font_id;
 		new_font.stream.read = stream_IoFunc;
@@ -114,16 +128,16 @@ long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_f
 		wcsncpy_s(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
 		HFONT new_hfont = CreateFontIndirectW(&linked_font_attr);
 
-		return register_font(new_hfont, font_family, font_style);
+		long font_id = register_font(new_hfont, font_family, font_style);
+		_loaded_fonts[font_id].owned = true;
+
+		return font_id;
 	}
 	else
-		return iter->second;
-}
+	{
+		long font_id = iter->second;
+		SelectObject(_font_holder, _loaded_fonts[font_id].hfont);
 
-FT_Stream _gdimm_font_man::prepare_request(long font_id)
-{
-	font_info &info = _loaded_fonts[font_id];
-
-	SelectObject(_font_holder, info.hfont);
-	return &info.stream;
+		return font_id;
+	}
 }

@@ -31,7 +31,8 @@ int APIENTRY wWinMain(
 	const INJECTOR_TYPE injector_type = GDIPP_LOADER;
 	ULONG proc_id;
 	eh_error = RhCreateAndInject(argv[0], argv[1], 0, EASYHOOK_INJECT_DEFAULT, gdimm_path_32, gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE), &proc_id);
-	assert(eh_error == 0);
+	if (eh_error != 0)
+		MessageBox(NULL, TEXT("Unable to create the target process."), TEXT("gdipp_loader"), MB_OK | MB_ICONERROR);
 
 	LocalFree(argv);
 

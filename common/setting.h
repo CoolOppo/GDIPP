@@ -8,12 +8,6 @@
 #include <sstream>
 using namespace std;
 
-struct ci_less
-{
-	bool operator()(const wstring &string1, const wstring &string2) const
-	{ return _wcsicmp(string1.c_str(), string2.c_str()) < 0; }
-};
-
 class _gdimm_setting
 {
 	// map keys are case-insensitive

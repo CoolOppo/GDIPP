@@ -8,11 +8,18 @@ HMODULE h_self = NULL;
 
 extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
+	BOOL b_ret;
+
 	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
 	switch (injector_type)
 	{
 	case GDIPP_SERVICE:
 		svc_proc_id = remote_info->HostPID;
+		
+		// force the foreground window of the injected process to redraw
+		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		assert(b_ret);
+
 		break;
 	case GDIPP_LOADER:
 		RhWakeUpProcess();
@@ -43,7 +50,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if ((options & ETO_GLYPH_INDEX))
-	//if (c <= 8)
+	//if (c != 7)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -74,7 +81,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//const WCHAR *debug_text = L"Process Explorer";
+	//const WCHAR *debug_text = L"Connecting";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -95,7 +102,9 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		else
 			is_target = (wcsncmp(lpString + start_index, debug_text, debug_len) == 0);
 
-		if (!is_target)
+		if (is_target)
+			bool break_now = true;
+		else
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 #endif

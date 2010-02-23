@@ -64,3 +64,11 @@ void debug_output(long num)
 	fwprintf(f, L"%d\n", num);
 	fclose(f);
 }
+
+void debug_output(DWORD num)
+{
+	FILE *f;
+	fopen_s(&f, debug_file_name, "a+");
+	fwprintf(f, L"%u\n", num);
+	fclose(f);
+}

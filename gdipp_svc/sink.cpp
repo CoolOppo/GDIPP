@@ -4,6 +4,11 @@
 #include "setting.h"
 #include <easyhook.h>
 
+DWORD WINAPI start(LPVOID lpThreadParameter)
+{
+	return 0;
+}
+
 sink_inject::sink_inject()
 {
 	_ref = 0;
@@ -75,7 +80,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		inject(V_I4(&var_proc_id));
+		bool a = inject(V_I4(&var_proc_id));
 
 		VariantClear(&var_proc_id);
 		proc_obj->Release();

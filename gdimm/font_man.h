@@ -7,6 +7,7 @@ using namespace std;
 struct font_info
 {
 	HFONT hfont;
+	bool owned;
 	DWORD table_header;
 	FT_StreamRec stream;
 	LPVOID mapping_start;
@@ -29,10 +30,12 @@ class _gdimm_font_man
 public:
 	_gdimm_font_man()
 	{ _font_holder = CreateCompatibleDC(NULL); }
+	~_gdimm_font_man();
 
 	long register_font(HFONT hfont, const WCHAR *font_family, const WCHAR *font_style);
 	long lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *font_style);
-	FT_Stream prepare_request(long font_id);
+	FT_Stream get_font_stream(long font_id)
+	{ return &_loaded_fonts[font_id].stream; }
 };
 
 typedef singleton<_gdimm_font_man> gdimm_font_man;
