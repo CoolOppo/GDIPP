@@ -3,6 +3,7 @@
 #include "global.h"
 #include "setting.h"
 #include <easyhook.h>
+#include <tlhelp32.h>
 
 DWORD WINAPI start(LPVOID lpThreadParameter)
 {
@@ -19,6 +20,29 @@ sink_inject::sink_inject()
 bool sink_inject::inject(LONG proc_id)
 {
 	NTSTATUS eh_error;
+
+	// if the target process has loaded gdimm, do not inject
+
+	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, proc_id);
+	assert(h_snapshot != INVALID_HANDLE_VALUE);
+
+	MODULEENTRY32 me32 = {0};
+	me32.dwSize = sizeof(MODULEENTRY32);
+
+	if (Module32First(h_snapshot, &me32))
+	{
+		do
+		{
+			// exclude the trailing "32.dll" and "64.dll"
+			if (_wcsnicmp(me32.szExePath, _gdimm_path_32, wcslen(_gdimm_path_32) - 6) == 0)
+			{
+				CloseHandle(h_snapshot);
+				return false;
+			}
+		} while (Module32Next(h_snapshot, &me32));
+	}
+
+	CloseHandle(h_snapshot);
 
 	const INJECTOR_TYPE injector_type = GDIPP_SERVICE;
 	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, _gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
@@ -80,7 +104,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		bool a = inject(V_I4(&var_proc_id));
+		inject(V_I4(&var_proc_id));
 
 		VariantClear(&var_proc_id);
 		proc_obj->Release();

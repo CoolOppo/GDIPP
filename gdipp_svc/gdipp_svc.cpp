@@ -108,4 +108,7 @@ int APIENTRY _tWinMain(
 
 	b_ret = StartServiceCtrlDispatcher(dispatch_table);
 	assert(b_ret);
+
+	//svc_mon::instance().start_monitor();
+	//Sleep(INFINITE);
 }
