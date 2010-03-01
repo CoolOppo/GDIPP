@@ -6,13 +6,13 @@ using namespace std;
 _gdimm_setting::_gdimm_setting()
 {
 	setting_map gdimm_default;
-	gdimm_default[L"auto_hinting"]		= L"0";
+	gdimm_default[L"auto_hinting"]		= L"1";
 	gdimm_default[L"bold_strength"]		= L"0.0";
 	gdimm_default[L"embedded_bitmap"]	= L"0";
 	gdimm_default[L"freetype_loader"]	= L"1";
 	gdimm_default[L"hinting"]			= L"1";
 	gdimm_default[L"lcd_filter"]		= L"1";
-	gdimm_default[L"light_mode"]		= L"0";
+	gdimm_default[L"light_mode"]		= L"1";
 	gdimm_default[L"max_height"]		= L"72";
 	gdimm_default[L"render_mono"]		= L"0";
 	gdimm_default[L"subpixel_render"]	= L"1";

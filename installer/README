@@ -1,0 +1,60 @@
+gdipp version test 5
+====================
+
+The gdipp project is the relaunch of the suspended gdi++.dll  project. Like the InkStone project, we found the source code of gdi++.dll project is too complex to manage, and decide to start over a new code base. The goal of gdipp project is to continue the development of gdi++, expand its functionality, improve its performance, provide better compatibility for the current and future Windows versions (potentially at the cost of removing compatibility for old Windows), create detailed and formal documentation, as well as tools to help using it.
+
+Under the installed directory, the following files are contained (depend on the chosen load mode, some files may not be installed). Here is some brief descriptions of each:
+
+  * gdimm_xx.dll. The main component of the gdipp project, comparative of gdi++.dll. Most of the font management, text rendering and API simulating is taken place here. gdimm means gdi-- for emphasizing its design idea of simplicity comparing to gdi++.dll.
+
+  * gdipp_svc_xx.exe: installed as a Windows service. It monitors process creation and automatically inject gdimm.dll. Stopping the service also unloads gdimm.dll, and revert to Windows default. It can be set to start with system via services.msc. The display name of the service is "gdipp Service".
+
+  * gdipp_loader_xx.exe: accept an executable file path as argument and run it, comparative of gdi++.exe. If the process is successfully spawned, inject gdimm.dll to the running process, and the new process will render text with gdimm.dll instantly.
+
+  * gdipp_demo_xx.exe: a demo to illustrate and debug the gdimm.dll. It loads the gdimm.dll and use the gdimm text out functions to render benchmark text. If no gdimm.dll is found in the current directory, it uses the original Windows APIs.
+
+
+User settings
+===============
+
+gdimm.dll improves user experience by allowing them to tweak settings. All user settings are in setting.xml, which is placed at the same directory as gdimm.dll. A default setting file is provided, and the XML structure should not be changed. In case of any setting item not presented in setting.xml, or setting.xml is missing, gdimm.dll uses the default values in place of the missing one. Changed settings are not instantly effective. Both 32-bit and 64-bit versions use the same setting.xml.
+
+Below is a list of the descriptions of each setting item. The values in the parentheses are the default. For boolean values, 0 means disable and 1 means enable. Note that the default settings are quite conservative. You are expected to change them to fit your feet.
+
+  * auto_hinting (0): enable/disable auto hinting in the FreeType loader mode. Auto hinting is a special hinting mode of FreeType. Check http://freetype.sourceforge.net/autohinting/index.html for details. This value is only effective if freetype_loader is 1, and always enabled if light_mode is 1.
+  * bold_strength (0.0): adjust the weight of all text. The format is fraction. 0 means no change, positive fraction emboldens the text, while negative fraction affects the opposite way. Additional computation is require for any non-zero value.
+  * embedded_bitmap (0): enable/disable use of embedded bitmap in the font file. If enable, the glyph bitmaps are shown as-is.
+  * freetype_loader (1): enable/disable FreeType loader mode. In FreeType loader mode, all character glyphs are loaded by FreeType, otherwise by GetGlyphOutline API. The two modes have different appearances. Besides, thanks to its cache subsystem, FreeType mode has way better performance, while GGO mode has slightly better compatibility. Some settings are only available in FreeType mode.
+  * hinting (0): enable/disable hinting. Hinting makes characters clear to read, at cost of transformed shapes. Disabling hinting make the edges of characters blur, but the glyph shapes are unchanged.
+  * lcd_filter (1): integer parameter passed to FT_Library_SetLcdFilter(). If you do not know the detail of it, use 1 or 2.
+  * light_mode (0): enable/disable light mode when loading glyphs in FreeType loader mode. According to FreeType documentation, "Many generated glyphs are more fuzzy but better resemble its original shape. A bit like rendering on Mac OS X". Only effective when freetype_loader is 1, and implies auto_hinting = 1.
+  * max_height (72): a non-negative integer value. gdimm.dll renders all text when it 0. For any positive numeber, gdimm.dll renders the characters whose height is no more than it, and leaves the rest to Windows. The main purpose of this item is for compatibility. It is not recommended to set it to 0.
+  * render_mono (0): the monochrome text are rendered by Windows when it is 0, otherwise by gdimm.dll. Monochrome text are rare to see, except some disabled menu items.
+  * subpixel_render (1): 0 means render text with gray levels, otherwise use subpixel rendering. Usually subpixel rendering is more suitable for LCD monitors.
+
+The XML file structure:
+
+  * the common node: all fonts and processes not specified individually use the common settings.
+  * the font nodes: these nodes store individual settings for certain fonts. The font name is specified in the name attribute. All the child nodes are the settings. Any setting item from the common node can be placed. You do not have to specify every item. Those missing ones use the common counterpart.
+  * the exclude node: all its child nodes are excluded from being processed by gdipp. Specifically, the processes are excluded from being injected by the gdipp service. The fonts are excluded from being rendered by gdimm.dll.
+
+
+Credits
+==========
+
+gdimm uses FreeType to manage fonts and glyphs. Check http://freetype.sourceforge.net for details.
+
+gdimm uses EasyHook to handle API hooking. Check http://easyhook.codeplex.com for details.
+
+gdimm uses pugixml to process XML. http://code.google.com/p/pugixml/ is the website.
+
+The installer is generated by Windows Installer XML toolset. Visit http://wix.sourceforge.net for their website.
+
+
+Thank you
+==========
+
+Please visit our website for documentation, bug feedback and feature request.
+
+gdipp project
+http://code.google.com/p/gdipp/

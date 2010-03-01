@@ -434,6 +434,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
 				RelativePath="..\common\setting.h"
 				>
 			</File>
@@ -447,6 +451,14 @@
 			</File>
 			<File
 				RelativePath=".\text.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath=".\gdimm.rc"
 				>
 			</File>
 		</Filter>

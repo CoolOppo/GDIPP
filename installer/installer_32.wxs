@@ -26,6 +26,7 @@
 						<File Name="gdipp_loader_32.exe" Source="..\Release\gdipp_loader_32.exe" />
 						<File Name="gdimm_32.dll" Source="..\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
 						<File Name="EasyHook32.dll" Source="..\EasyHook\EasyHook32.dll" Vital="yes" />
+						<File Id="gdipp_readme" Name="README" Source="README" />
 						
 						<Environment Id="update_path" Name="PATH" Value="[INSTALLDIR]" Action="set" Part="last" System="no" />
 					</Component>
@@ -54,6 +55,22 @@
 					<Component Id="gdipp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462">
 						<File Name="setting.xml" Source="setting.xml" Vital="yes" KeyPath="yes" />
 					</Component>
+
+					<Directory Id="freetype_dir" Name="FreeType">
+						<Component Id="freetype_doc" Guid="E7D7F0FD-F6A0-4BE8-9230-0BA86461C975">
+							<File Id="freetype_readme" Name="README" Source="FreeType\README" KeyPath="yes" />
+							<File Name="FTL.TXT" Source="FreeType\FTL.TXT" />
+							<File Name="GPL.TXT" Source="FreeType\GPL.TXT" />
+							<File Id="freetype_license" Name="LICENSE.TXT" Source="FreeType\LICENSE.TXT" />
+						</Component>
+					</Directory>
+
+					<Directory Id="easyhook_dir" Name="EasyHook">
+						<Component Id="easyhook_doc" Guid="63BE47ED-8547-42F4-86D6-773B99098DAF">
+							<File Name="README.txt" Source="EasyHook\README.txt" KeyPath="yes" />
+							<File Id="easyhook_license" Name="LICENSE.txt" Source="EasyHook\LICENSE.txt" />
+						</Component>
+					</Directory>
 				</Directory>
 			</Directory>
 
@@ -102,6 +119,8 @@
 		<Feature Id="gdipp" Level="1">
 			<ComponentRef Id="gdipp_32" />
 			<ComponentRef Id="gdipp_setting" />
+			<ComponentRef Id="freetype_doc" />
+			<ComponentRef Id="easyhook_doc" />
 			<ComponentRef Id="install_service_32" />
 			<ComponentRef Id="set_appinit_dlls_32" />
 			<ComponentRef Id="set_loadappinit_dlls_32" />
