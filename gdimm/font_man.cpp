@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "font_man.h"
 #include <mmsystem.h>
-#include <string>
-using namespace std;
 
 // table name for GetFontData() to get whole ttc file data
 #define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
@@ -140,4 +138,14 @@ long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_f
 
 		return font_id;
 	}
+}
+
+WORD _gdimm_font_man::get_glyph_index(WCHAR ch)
+{
+	WORD glyph_index;
+	
+	DWORD converted = GetGlyphIndices(_font_holder, &ch, 1, &glyph_index, GGI_MARK_NONEXISTING_GLYPHS);
+	assert(converted == 1);
+
+	return glyph_index;
 }

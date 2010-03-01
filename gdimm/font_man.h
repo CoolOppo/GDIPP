@@ -1,6 +1,5 @@
 #pragma once
 
-#include "global.h"
 #include <map>
 using namespace std;
 
@@ -34,6 +33,7 @@ public:
 
 	long register_font(HFONT hfont, const WCHAR *font_family, const WCHAR *font_style);
 	long lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *font_style);
+	WORD get_glyph_index(WCHAR ch);
 	FT_Stream get_font_stream(long font_id)
 	{ return &_loaded_fonts[font_id].stream; }
 };

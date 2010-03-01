@@ -4,8 +4,9 @@
 #include "font_man.h"
 #include "font_link.h"
 #include "setting.h"
-#include FT_INTERNAL_OBJECTS_H	// for FT_PAD_CEIL
+#include FT_OUTLINE_H
 #include FT_TRUETYPE_TABLES_H
+#include FT_INTERNAL_OBJECTS_H	// for FT_PAD_CEIL
 #include <cmath>
 
 const FT_Glyph_Class *glyph_clazz = NULL;
@@ -82,8 +83,13 @@ FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *fo
 	if (gdimm_setting::instance().get_gdimm_setting<bool>(L"hinting", font_family))
 	{
 		const bool auto_hinting = gdimm_setting::instance().get_gdimm_setting<bool>(L"auto_hinting", font_family);
+		const bool embedded_bitmap = gdimm_setting::instance().get_gdimm_setting<bool>(L"embedded_bitmap", font_family);
 		const bool light_mode = gdimm_setting::instance().get_gdimm_setting<bool>(L"light_mode", font_family);
-		load_flag = (auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT) | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+
+		load_flag = 
+			(auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT) |
+			(embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP) |
+			FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
 
 		switch (render_mode)
 		{
@@ -120,6 +126,32 @@ ULONGLONG start, gd = 0, go = 0, cc = 0;
 
 BITMAP _gdimm_text::get_dc_bmp() const
 {
+	/*BOOL b_ret;
+
+	const HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
+	assert(hdc_canvas != NULL);
+
+	// fill bmi with device bitmap properties
+	BITMAPINFO bmi = {0};
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = 1;
+	bmi.bmiHeader.biHeight = -1;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;
+	BYTE *bits;
+	HBITMAP b = CreateDIBSection(_hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &bits, NULL, 0);
+	SelectObject(hdc_canvas, b);
+	BitBlt(hdc_canvas, 0, 0, 1, 1, _hdc_text, _cursor.x, _cursor.y, SRCCOPY);
+	BITMAPINFO bmi2 = {0};
+	bmi2.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	GetDIBits(hdc_canvas, b, 0, 1, NULL, &bmi2, DIB_RGB_COLORS);
+
+	DIBSECTION bmp2 = {0};
+	GetObject(b, sizeof(DIBSECTION), &bmp2);
+
+	DeleteObject(b);
+	DeleteDC(hdc_canvas);*/
+
 	const HBITMAP dc_bitmap = (HBITMAP) GetCurrentObject(_hdc_text, OBJ_BITMAP);
 	assert(dc_bitmap != NULL);
 
@@ -314,8 +346,7 @@ void _gdimm_text::set_bmp_bits_mono(
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
-	WORD dest_bpp,
-	bool is_dest_up) const
+	WORD dest_bpp) const
 {
 	// the source bitmap is 1-bit, 8 pixels per byte, in most-significant order
 	// the destination is an non antialiased bitmap with ANY bpp
@@ -338,7 +369,7 @@ void _gdimm_text::set_bmp_bits_mono(
 			if (is_bit_set)
 			{
 				int dest_ptr = (x_in_dest + i) * dest_bpp / 8;
-				if (is_dest_up == (src_bitmap.pitch > 0))
+				if (src_bitmap.pitch > 0)
 					dest_ptr += max(dest_height - y_in_dest - j - 1, 0) * dest_pitch;
 				else
 					dest_ptr += min(y_in_dest + j, dest_height) * dest_pitch;
@@ -365,8 +396,7 @@ void _gdimm_text::set_bmp_bits_gray(
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
-	WORD dest_bpp,
-	bool is_dest_up) const
+	WORD dest_bpp) const
 {
 	// the source bitmap is 24-bit, 3 bytes per pixel, in order of R, G, B channels
 	// the destination bitmaps is 8-, 24- or 32-bit, each row is aligned to DWORD
@@ -387,7 +417,7 @@ void _gdimm_text::set_bmp_bits_gray(
 			const int src_ptr = j * src_pitch + i;
 
 			int dest_ptr = (x_in_dest + i) * dest_byte_per_px;
-			if (is_dest_up == (src_bitmap.pitch > 0))
+			if (src_bitmap.pitch > 0)
 				dest_ptr += max(dest_height - y_in_dest - j - 1, 0) * dest_pitch;
 			else
 				dest_ptr += min(y_in_dest + j, dest_height - 1) * dest_pitch;
@@ -403,7 +433,7 @@ void _gdimm_text::set_bmp_bits_gray(
 				dest_bits[dest_ptr+2] = (src_gray * _fg_rgb.rgbRed + (255 - src_gray) * dest_bits[dest_ptr+2]) / 255;
 			}
 
-			//if (dest_bpp == 32 && _bg_color == 0x00ffffff)
+			//if (dest_bpp == 32)
 			//	dest_bits[dest_ptr+3] = 0;
 		}
 	}
@@ -414,8 +444,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 	int x_in_dest, int y_in_dest,
 	BYTE *dest_bits,
 	int dest_width, int dest_height,
-	WORD dest_bpp,
-	bool is_dest_up) const
+	WORD dest_bpp) const
 {
 	// the source bitmap is 24-bit, 3 bytes per pixel, in order of R, G, B channels
 	// the destination bitmaps is 24- or 32-bit, 3(4) bytes per pixel, in order of B, G, R, (A) channels
@@ -441,7 +470,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 
 			// destination byte, compute according to two flow directions
 			int dest_ptr = (x_in_dest + i) * dest_byte_per_px;
-			if (is_dest_up == (src_bitmap.pitch > 0))
+			if (src_bitmap.pitch > 0)
 				dest_ptr += max(dest_height - y_in_dest - j - 1, 0) * dest_pitch;
 			else
 				dest_ptr += min(y_in_dest + j, dest_height - 1) * dest_pitch;
@@ -454,8 +483,8 @@ void _gdimm_text::set_bmp_bits_lcd(
 			dest_bits[dest_ptr+1] = (src_g * _fg_rgb.rgbGreen + (255 - src_g) * dest_bits[dest_ptr+1]) / 255;
 			dest_bits[dest_ptr+2] = (src_r * _fg_rgb.rgbRed + (255 - src_r) * dest_bits[dest_ptr+2]) / 255;
 
-			//if (dest_bpp == 32 && _bg_color == 0x00ffffff)
-			//	dest_bits[dest_ptr+3] = 1;
+			//if (dest_bpp == 32)
+			//	dest_bits[dest_ptr+3] = 0;
 		}
 	}
 }
@@ -528,6 +557,12 @@ bool _gdimm_text::draw_glyphs(
 
 	// 2.
 
+	/*
+	there is no "official" way to get the direction of the bitmap in the text HDC
+	it seems BitBlt would automatically convert the direction of its source bitmap if necessary
+	therefore we just use bottom-up, as it is more compatible
+	*/
+
 	BITMAPINFO bmi = {0};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = bmp_width;
@@ -561,10 +596,27 @@ bool _gdimm_text::draw_glyphs(
 		b_ret = TRUE;
 	}
 	else if (bk_mode == TRANSPARENT)
+	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
+
+		/*BITMAPINFO bmi = {0};
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = 10;
+		bmi.bmiHeader.biHeight = 1;
+		bmi.bmiHeader.biPlanes = dc_bmp.bmPlanes;
+		bmi.bmiHeader.biBitCount = dc_bmp.bmBitsPixel;
+		bmi.bmiHeader.biCompression = BI_RGB;
+
+		BYTE aaa[100];
+		GetDIBits(_hdc_text, (HBITMAP) GetCurrentObject(_hdc_text, OBJ_BITMAP), 0, 1, aaa, &bmi, DIB_RGB_COLORS);
+
+		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, 0, 0, SRCCOPY);
+		ExtTextOutW(_hdc_text, 23, 11, _eto_options, lprect, s, glyphs.size(), d);*/
 		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY);
+	}
 	else
 		b_ret = FALSE;
+	//return TRUE;
 
 	if (!b_ret)	
 	{
@@ -595,24 +647,21 @@ bool _gdimm_text::draw_glyphs(
 				x_in_dest, y_in_dest,
 				dest_bits,
 				bmp_width, bmp_height,
-				dc_bmp.bmBitsPixel,
-				bmp_height > 0);
+				dc_bmp.bmBitsPixel);
 			break;
 		case FT_PIXEL_MODE_GRAY:
 			set_bmp_bits_gray(glyphs[i]->bitmap,
 				x_in_dest, y_in_dest,
 				dest_bits,
 				bmp_width, bmp_height,
-				dc_bmp.bmBitsPixel,
-				bmp_height > 0);
+				dc_bmp.bmBitsPixel);
 			break;
 		case FT_PIXEL_MODE_LCD:
 			set_bmp_bits_lcd(glyphs[i]->bitmap,
 				x_in_dest, y_in_dest,
 				dest_bits,
 				bmp_width, bmp_height,
-				dc_bmp.bmBitsPixel,
-				bmp_height > 0);
+				dc_bmp.bmBitsPixel);
 			break;
 		}
 	}
@@ -642,6 +691,7 @@ bool _gdimm_text::draw_glyphs(
 	else
 	{
 		b_ret = BitBlt(_hdc_text, dest_origin.x, dest_origin.y, bmp_width, bmp_height, hdc_canvas, 0, 0, SRCCOPY);
+		//b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY);
 		assert(b_ret);
 	}
 
@@ -837,7 +887,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	
 	for (unsigned int i = 0; i < c; i++)
 	{
-		FT_UInt glyph_index;
+		WORD glyph_index;
 		bool font_linked = false;
 
 		if (_eto_options & ETO_GLYPH_INDEX)
@@ -853,10 +903,10 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 			while (true)
 			{
 				// character code -> glyph index lookup
-				glyph_index = FTC_CMapCache_Lookup(ft_cmap_cache, ft_face_id, -1, lpString[i]);
+				glyph_index = gdimm_font_man::instance().get_glyph_index(lpString[i]);
 
 				// break if either find the glyph index, or exhaust the font link count
-				if (glyph_index != 0 || link_times == link_count)
+				if (glyph_index != 0xffff || link_times == link_count)
 					break;
 
 				// do font linking
@@ -1019,6 +1069,9 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 
 bool _gdimm_text::text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
 {
+	//s = lpString;
+	//d = lpDx;
+
 	if (gdimm_setting::instance().get_gdimm_setting<bool>(L"freetype_loader", get_font_family()))
 		return text_out_ft(lpString, c, lprect, lpDx);
 	else

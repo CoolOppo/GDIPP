@@ -1,8 +1,9 @@
 #pragma once
 
+#include FT_CACHE_H
+
 extern FT_Library ft_lib;
 extern FTC_Manager ft_cache_man;
-extern FTC_CMapCache ft_cmap_cache;
 extern FTC_ImageCache ft_glyph_cache;
 
 void initialize_freetype();

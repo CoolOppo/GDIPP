@@ -18,7 +18,7 @@ public:
 	{ get_font_link_info(); }
 
 	const WCHAR *lookup(const WCHAR *font_name, size_t index) const;
-	const size_t get_link_count(const WCHAR *font_name) const;
+	size_t get_link_count(const WCHAR *font_name) const;
 };
 
 typedef singleton<_gdimm_font_link> gdimm_font_link;

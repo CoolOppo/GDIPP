@@ -38,6 +38,10 @@ void _gdimm_font_link::get_font_link_info()
 	l_ret = RegQueryInfoKeyW(key_ft, NULL, NULL, NULL, NULL, NULL, NULL, &value_count, NULL, &max_data_len, NULL, NULL);
 	assert(l_ret == ERROR_SUCCESS);
 
+	// no font installed
+	if (value_count == 0)
+		return;
+
 	// max_data_len is in BYTE
 	value_data = (BYTE*) malloc(max_data_len);
 	assert(value_data != NULL);
@@ -61,6 +65,10 @@ void _gdimm_font_link::get_font_link_info()
 
 	l_ret = RegQueryInfoKey(key_fl, NULL, NULL, NULL, NULL, NULL, NULL, &value_count, NULL, &max_data_len, NULL, NULL);
 	assert(l_ret == ERROR_SUCCESS);
+
+	// no font link information
+	if (value_count == 0)
+		return;
 
 	value_data = (BYTE*) realloc(value_data, max_data_len);
 	assert(value_data != NULL);
@@ -127,13 +135,13 @@ const WCHAR *_gdimm_font_link::lookup(const WCHAR *font_name, size_t index) cons
 	else
 	{
 		if (index < iter->second.size())
-			return iter->second[iter->second.size() - index - 1].c_str();
+			return iter->second[index].c_str();
 		else
 			return NULL;
 	}
 }
 
-const size_t _gdimm_font_link::get_link_count(const WCHAR *font_name) const
+size_t _gdimm_font_link::get_link_count(const WCHAR *font_name) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

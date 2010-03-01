@@ -8,6 +8,7 @@ _gdimm_setting::_gdimm_setting()
 	setting_map gdimm_default;
 	gdimm_default[L"auto_hinting"]		= L"0";
 	gdimm_default[L"bold_strength"]		= L"0.0";
+	gdimm_default[L"embedded_bitmap"]	= L"0";
 	gdimm_default[L"freetype_loader"]	= L"1";
 	gdimm_default[L"hinting"]			= L"1";
 	gdimm_default[L"lcd_filter"]		= L"1";
@@ -103,7 +104,8 @@ bool _gdimm_setting::load_settings(HMODULE h_module)
 		return false;
 
 	pugi::xml_document xml_doc;
-	xml_doc.load(f);
+	pugi::xml_parse_result xml_ret = xml_doc.load(f);
+	assert(xml_ret);
 
 	if (h_module != NULL)
 	{

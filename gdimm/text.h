@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.h"
+#include FT_GLYPH_H
 #include <vector>
 using namespace std;
 
@@ -17,11 +18,14 @@ class _gdimm_text
 
 	// metrics
 	BYTE *_metric_buf;
-	OUTLINETEXTMETRIC *_outline_metrics;
+	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 
 	//misc
 	UINT _eto_options;
+
+	LPCWSTR s;
+	CONST INT *d;
 
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
@@ -49,22 +53,19 @@ class _gdimm_text
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
-		WORD dest_bpp,
-		bool is_dest_up) const;
+		WORD dest_bpp) const;
 	void set_bmp_bits_gray(
 		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
-		WORD dest_bpp,
-		bool is_dest_up) const;
+		WORD dest_bpp) const;
 	void set_bmp_bits_lcd(
 		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
-		WORD dest_bpp,
-		bool is_dest_up) const;
+		WORD dest_bpp) const;
 	bool draw_glyphs(
 		const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,

@@ -30,10 +30,11 @@ DWORD start = 0;
 DWORD end = 0;
 TCHAR elapse_str[128] = {0};
 
-int APIENTRY _tWinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPTSTR    lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY _tWinMain(
+	HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPTSTR    lpCmdLine,
+	int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
@@ -187,6 +188,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
+
+		/*HDC d = CreateCompatibleDC(hdc);
+
+		BITMAPINFO bmi = {0};
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = 10;
+		bmi.bmiHeader.biHeight = 10;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		BYTE *bits;
+		HBITMAP bmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (VOID**) &bits, NULL, 0);
+		SelectObject(d, bmp);
+		BitBlt(d, 0, 0, 100, 10, hdc, 0, 0, SRCCOPY);
+		BOOL b = ExtTextOut(d, 0, 0, 0, NULL, L"ABC", 3, NULL);*/
 
 #ifdef test
 		if (start == 0)

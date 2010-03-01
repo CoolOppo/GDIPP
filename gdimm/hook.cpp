@@ -2,13 +2,17 @@
 #include "hook.h"
 #include "global.h"
 #include "text.h"
+#include <sddl.h>
 
 ULONG svc_proc_id = 0;
 HMODULE h_self = NULL;
 
-extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
+EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
 	BOOL b_ret;
+
+	if (remote_info->UserDataSize != sizeof(INJECTOR_TYPE))
+		return;
 
 	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
 	switch (injector_type)
@@ -22,6 +26,7 @@ extern "C" __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE
 
 		break;
 	case GDIPP_LOADER:
+		// wake up suspended process
 		RhWakeUpProcess();
 		break;
 	}
@@ -50,7 +55,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if ((options & ETO_GLYPH_INDEX))
-	//if (c != 7)
+	//if (c <= 7)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -69,7 +74,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	the DC use another map mode, which transform the GDI coordination space
 	we tried to implement MM_ANISOTROPIC, and found that the text looks worse than the native API
 
-	recommendation for implementing MM_ANISOTROPIC:
+	note for implementing MM_ANISOTROPIC:
 	1. call GetViewportExtEx, GetViewportOrgEx, GetWindowExtEx and GetWindowOrgEx to get the new coordinations
 	2. for all metrics come from GDI API, they are transform, while the outline metrics remain the same
 	3. apply some multiplier to restore GDI metrics
@@ -81,7 +86,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//const WCHAR *debug_text = L"Connecting";
+	//const WCHAR *debug_text = L"使用下面";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -120,6 +125,128 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	return TRUE;
 }
 
+void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
+{
+	BOOL b_ret;
+	DWORD dw_ret;
+
+	// alloc buffer for the injection data
+	// the minimum allocation unit is page
+	SYSTEM_INFO sys_info;
+	GetSystemInfo(&sys_info);
+	BYTE *inject_buffer = new BYTE[sys_info.dwPageSize];
+	memset(inject_buffer, 0xcc, sys_info.dwPageSize);
+
+	// put gdimm path at the end of the buffer, leave space at the beginning for code
+	const DWORD path_offset = sys_info.dwPageSize - MAX_PATH * sizeof(WCHAR);
+	dw_ret = GetModuleFileNameW(h_self, (WCHAR*)(inject_buffer + path_offset), MAX_PATH);
+	assert(dw_ret != 0);
+
+	// get eip of the spawned thread
+#ifdef _M_X64
+	WOW64_CONTEXT ctx = {0};
+	ctx.ContextFlags = CONTEXT_CONTROL;
+	b_ret = Wow64GetThreadContext(lpProcessInformation->hThread, &ctx);
+	assert(b_ret);
+#else
+	CONTEXT ctx = {0};
+	ctx.ContextFlags = CONTEXT_CONTROL;
+	b_ret = GetThreadContext(lpProcessInformation->hThread, &ctx);
+	assert(b_ret);
+#endif
+
+	LPVOID inject_base = VirtualAllocEx(lpProcessInformation->hProcess, NULL, sys_info.dwPageSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	assert(inject_base != NULL);
+
+	register BYTE *p = inject_buffer;
+
+#define emit_(t, x)	*(t* UNALIGNED) p = (t)(x); p += sizeof(t)
+#define emit_db(b)	emit_(BYTE, b)
+#define emit_dw(w)	emit_(WORD, w)
+#define emit_dd(d)	emit_(DWORD, d)
+
+	emit_db(0x50);		// push eax
+
+	emit_db(0x68);		// push gdimm path
+	emit_dd((DWORD) inject_base + path_offset);
+	emit_db(0xB8);		// mov eax, LoadLibraryW
+	emit_dd(LoadLibraryW);
+	emit_dw(0xD0FF);	// call eax
+
+	emit_db(0x58);		// pop eax -> LoadLibraryW has return value
+
+	emit_db(0x68);		// push original eip
+	emit_dd(ctx.Eip);
+	emit_db(0xC3);		// ret -> serve as an absolute jmp
+
+	// write injection data to target process space
+	b_ret = WriteProcessMemory(lpProcessInformation->hProcess, inject_base, inject_buffer, sys_info.dwPageSize, NULL);
+	assert(b_ret);
+
+	delete[] inject_buffer;
+
+	// notify code change
+	b_ret = FlushInstructionCache(lpProcessInformation->hProcess, inject_base, sys_info.dwPageSize);
+	assert(b_ret);
+
+	// set eip to the entry point of the injection code
+	ctx.Eip = (DWORD) inject_base;
+#ifdef _M_X64
+	b_ret = Wow64SetThreadContext(lpProcessInformation->hThread, &ctx);
+	assert(b_ret);
+#else
+	b_ret = SetThreadContext(lpProcessInformation->hThread, &ctx);
+	assert(b_ret);
+#endif
+}
+
+BOOL
+WINAPI
+CreateProcessAsUserW_hook(
+	__in_opt    HANDLE hToken,
+	__in_opt    LPCWSTR lpApplicationName,
+	__inout_opt LPWSTR lpCommandLine,
+	__in_opt    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+	__in_opt    LPSECURITY_ATTRIBUTES lpThreadAttributes,
+	__in        BOOL bInheritHandles,
+	__in        DWORD dwCreationFlags,
+	__in_opt    LPVOID lpEnvironment,
+	__in_opt    LPCWSTR lpCurrentDirectory,
+	__in        LPSTARTUPINFOW lpStartupInfo,
+	__out       LPPROCESS_INFORMATION lpProcessInformation)
+{
+	bool init_suspended = false;
+	if (dwCreationFlags & CREATE_SUSPENDED)
+		init_suspended = true;
+
+	dwCreationFlags |= CREATE_SUSPENDED;
+	if (!CreateProcessAsUserW(
+		hToken,
+		lpApplicationName,
+		lpCommandLine,
+		lpProcessAttributes,
+		lpThreadAttributes,
+		bInheritHandles,
+		dwCreationFlags,
+		lpEnvironment,
+		lpCurrentDirectory,
+		lpStartupInfo,
+		lpProcessInformation))
+		return FALSE;
+
+	// since the spawned process can be restricted, EasyHook may not work
+	// we inject LoadLibrary call at the entry point of the spawned thread
+	inject_at_eip(lpProcessInformation);
+
+	if (!init_suspended)
+	{
+		DWORD dw_ret = ResumeThread(lpProcessInformation->hThread);
+		assert(dw_ret != -1);
+	}
+
+	return TRUE;
+}
+
 void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	NTSTATUS eh_error;
@@ -143,6 +270,8 @@ void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 bool _gdimm_hook::hook()
 {
 	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
+	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
+
 	return !(_hooks.empty());
 }
 

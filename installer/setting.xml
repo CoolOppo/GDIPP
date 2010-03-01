@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<gdipp>
+	<gdimm>
+		<common>
+			<auto_hinting>0</auto_hinting>
+			<bold_strength>0.0</bold_strength>
+			<embedded_bitmap>0</embedded_bitmap>
+			<freetype_loader>1</freetype_loader>
+			<hinting>1</hinting>
+			<lcd_filter>1</lcd_filter>
+			<light_mode>0</light_mode>
+			<max_height>72</max_height>
+			<render_mono>0</render_mono>
+			<subpixel_render>1</subpixel_render>
+		</common>
+	</gdimm>
+
+	<exclude></exclude>
+</gdipp>

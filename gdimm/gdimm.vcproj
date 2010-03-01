@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -123,7 +123,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -201,7 +201,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -280,7 +280,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)FreeType\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -423,14 +423,6 @@
 			</File>
 			<File
 				RelativePath=".\ft.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ft2build.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ftoption.h"
 				>
 			</File>
 			<File
