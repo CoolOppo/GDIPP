@@ -11,13 +11,15 @@ int APIENTRY wWinMain(
 {
 	NTSTATUS eh_error;
 
-	int argc;
-	LPWSTR *argv = CommandLineToArgvW(lpCmdLine, &argc);
-	if (argc == 0)
+	if (lpCmdLine == NULL || wcslen(lpCmdLine) == 0)
 	{
 		MessageBox(NULL, TEXT("Drag an exe file to me and I will load it with gdimm.dll."), TEXT("gdipp_loader"), MB_OK | MB_ICONINFORMATION);
 		return EXIT_SUCCESS;
 	}
+
+	int argc;
+	LPWSTR *argv = CommandLineToArgvW(lpCmdLine, &argc);
+	assert(argv != NULL);
 
 	// concatenate parameters with space
 	for (int i = 2; i < argc; i++)

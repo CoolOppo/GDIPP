@@ -24,9 +24,6 @@ class _gdimm_text
 	//misc
 	UINT _eto_options;
 
-	LPCWSTR s;
-	CONST INT *d;
-
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 	
@@ -59,13 +56,15 @@ class _gdimm_text
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
-		WORD dest_bpp) const;
+		WORD dest_bpp,
+		BYTE alpha) const;
 	void set_bmp_bits_lcd(
 		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
-		WORD dest_bpp) const;
+		WORD dest_bpp,
+		BYTE alpha) const;
 	bool draw_glyphs(
 		const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,

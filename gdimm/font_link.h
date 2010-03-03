@@ -7,7 +7,7 @@ using namespace std;
 
 class _gdimm_font_link
 {
-	typedef map<const wstring, vector<wstring>, ci_less> link_map;
+	typedef map<const wstring, vector<wstring>, string_ci_less> link_map;
 
 	link_map _link_table;
 

@@ -6,6 +6,7 @@
 #include "hook.h"
 #include "ft.h"
 #include "setting.h"
+#include <shlwapi.h>
 
 BOOL APIENTRY DllMain(
 	HMODULE hModule,
@@ -15,10 +16,21 @@ BOOL APIENTRY DllMain(
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
+		DWORD dw_ret;
+
+		gdimm_setting::instance().init(hModule);
+
+		// check if this process is excluded
+		WCHAR exe_name[MAX_PATH];
+		dw_ret = GetModuleFileNameW(NULL, exe_name, MAX_PATH);
+		PathStripPathW(exe_name);
+
+		if (gdimm_setting::instance().is_name_excluded(exe_name))
+			return FALSE;
+
 		h_self = hModule;
 
 		critical_section::initialize();
-		gdimm_setting::instance().load_settings(hModule);
 		initialize_freetype();
 		return gdimm_hook::instance().hook();
 
@@ -26,6 +38,7 @@ BOOL APIENTRY DllMain(
 		gdimm_hook::instance().unhook();
 		destroy_freetype();
 		critical_section::release();
+
 		break;
 	}
 

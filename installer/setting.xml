@@ -11,9 +11,25 @@
 			<light_mode>1</light_mode>
 			<max_height>72</max_height>
 			<render_mono>0</render_mono>
+			<shadow>
+				<offset_x>1</offset_x>
+				<offset_y>1</offset_y>
+				<alpha>32</alpha>
+			</shadow>
 			<subpixel_render>1</subpixel_render>
 		</common>
+		
+		<process name="sample.exe">
+			<bold_strength>1.0</bold_strength>
+		</process>
+
+		<font name="sample_font">
+			<freetype_loader>0</freetype_loader>
+		</font>
 	</gdimm>
 
-	<exclude></exclude>
+	<exclude>
+		<process>excluded.exe</process>
+		<font>excluded_font</font>
+	</exclude>
 </gdipp>

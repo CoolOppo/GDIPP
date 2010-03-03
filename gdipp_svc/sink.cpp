@@ -5,11 +5,6 @@
 #include <easyhook.h>
 #include <tlhelp32.h>
 
-DWORD WINAPI start(LPVOID lpThreadParameter)
-{
-	return 0;
-}
-
 sink_inject::sink_inject()
 {
 	_ref = 0;

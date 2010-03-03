@@ -59,7 +59,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	// report initial status to the SCM
 	set_svc_status(SERVICE_START_PENDING, NO_ERROR, 3000);
 
-	gdimm_setting::instance().load_settings(NULL);
+	gdimm_setting::instance().init(NULL);
 
 	// monitor future processes
 	if (!svc_mon::instance().start_monitor())

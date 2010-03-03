@@ -25,10 +25,7 @@
 						<File Name="gdipp_demo_32.exe" Source="..\Release\gdipp_demo_32.exe" />
 						<File Name="gdipp_loader_32.exe" Source="..\Release\gdipp_loader_32.exe" />
 						<File Name="gdimm_32.dll" Source="..\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
-						<File Name="EasyHook32.dll" Source="..\EasyHook\EasyHook32.dll" Vital="yes" />
 						<File Id="gdipp_readme" Name="README" Source="README" />
-						
-						<Environment Id="update_path" Name="PATH" Value="[INSTALLDIR]" Action="set" Part="last" System="no" />
 					</Component>
 
 					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
@@ -36,10 +33,10 @@
 						<ServiceInstall Id="gdipp_svc_32_inst"
 										Name="gdipp_svc"
 										DisplayName="gdipp Service"
-										Description="Coordinator service of gdipp."
+										Description="!(loc.gdippSvcDesc)"
 										Start="auto"
 										Type="ownProcess"
-										LoadOrderGroup="Extended Base"
+										LoadOrderGroup="UIGroup"
 										ErrorControl="normal">
 							<ServiceDependency Id="winmgmt" />
 						</ServiceInstall>
@@ -52,7 +49,7 @@
 						<Condition>LOADMODE = 0</Condition>
 					</Component>
 
-					<Component Id="gdipp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462">
+					<Component Id="gdipp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462" NeverOverwrite="yes" Permanent="yes">
 						<File Name="setting.xml" Source="setting.xml" Vital="yes" KeyPath="yes" />
 					</Component>
 
@@ -72,6 +69,12 @@
 						</Component>
 					</Directory>
 				</Directory>
+			</Directory>
+
+			<Directory Id="SystemFolder">
+				<Component Id="easyhook_32" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8">
+					<File Name="EasyHook32.dll" Source="..\EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
+				</Component>
 			</Directory>
 
 			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes">
@@ -95,8 +98,6 @@
 			<Component Id="set_load_mode" Guid="6A61B1BF-5927-463A-9FC6-7EB3ED7E3CB0">
 				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
 			</Component>
-
-			<Directory Id="SystemFolder" />
 		</Directory>
 
 		<CustomAction Id="reset_appinit_dlls_32"
@@ -107,7 +108,6 @@
 					  ExeCommand='REG.EXE ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
 
 		<InstallExecuteSequence>
-			<ScheduleReboot After="InstallFinalize">LOADMODE = 1</ScheduleReboot>
 			<Custom Action="reset_appinit_dlls_32" After="InstallFinalize">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
@@ -121,6 +121,7 @@
 			<ComponentRef Id="gdipp_setting" />
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />
+			<ComponentRef Id="easyhook_32" />
 			<ComponentRef Id="install_service_32" />
 			<ComponentRef Id="set_appinit_dlls_32" />
 			<ComponentRef Id="set_loadappinit_dlls_32" />

@@ -5,61 +5,70 @@
 #include <list>
 #include <map>
 #include <set>
-#include <sstream>
+using namespace pugi;
 using namespace std;
+
+#define COMMON_BRANCH_NAME L"common"
 
 class _gdimm_setting
 {
+public:
+	struct shadow_setting
+	{
+		LONG offset_x;
+		LONG offset_y;
+		BYTE alpha;
+
+		shadow_setting();
+	};
+
+	struct setting_items
+	{
+		bool auto_hinting;
+		float bold_strength;
+		bool embedded_bitmap;
+		bool freetype_loader;
+		bool hinting;
+		BYTE lcd_filter;
+		bool light_mode;
+		LONG max_height;
+		bool render_mono;
+		shadow_setting shadow;
+		bool subpixel_render;
+
+		setting_items();
+	};
+
+private:
 	// map keys are case-insensitive
-	typedef map<const wstring, wstring, ci_less> setting_map;
-	typedef map<const wstring, setting_map*, ci_less> branch_map;
+	typedef map<const wstring, setting_items, string_ci_less> setting_map;
 
-	list<setting_map> _setting_branchs;
-	branch_map _branch_names;
-	set<const wstring, ci_less> _exclude_names;
+	setting_map _setting_branchs;
+	set<const wstring, string_ci_less> _exclude_names;
+	WCHAR _process_name[MAX_PATH];
 
-	void set_default();
-	void load_branch(const pugi::xml_document &xml_doc, const char *xpath);
-	void load_exclude(const pugi::xml_document &xml_doc);
+	template <typename T>
+	void evaluate_to_number(const xml_node &context_node, const char *expression, const T& default_value, T &out_value)
+	{
+		xpath_query query(expression);
+		if (query.evaluate_boolean(context_node))
+			out_value = query.evaluate_number(context_node);
+		else
+			out_value = default_value;
+	}
+
+	void load_settings(const xml_node &context_node, const setting_items &default_items, setting_items &settings);
+	void load_common(const xml_node &context_node);
+	void load_branchs(const xml_node &context_node, const setting_items &default_items, const char *xpath);
+	void load_exclude(const xml_node &context_node);
 
 public:
 	_gdimm_setting();
-	bool load_settings(HMODULE h_module);
+	bool init(HMODULE h_module);
 	bool is_name_excluded(const WCHAR *name) const
 	{ return (_exclude_names.find(name) != _exclude_names.end()); }
 
-	template <typename T>
-	T get_gdimm_setting(const WCHAR *setting_name, const WCHAR *branch_name = L"common") const;
+	const setting_items &get_setting_items(const WCHAR *branch_name = COMMON_BRANCH_NAME) const;
 };
-
-template <typename T>
-T _gdimm_setting::get_gdimm_setting(const WCHAR *setting_name, const WCHAR *branch_name) const
-{
-	branch_map::const_iterator branch_iter = _branch_names.find(branch_name);
-	const setting_map *common_branch = &_setting_branchs.front();
-	const setting_map *target_branch;
-
-	// if not exist the specified branch, use the common branch
-	if (branch_iter == _branch_names.end())
-		target_branch = common_branch;
-	else
-		target_branch = branch_iter->second;
-
-	setting_map::const_iterator setting_iter = target_branch->find(setting_name);
-	
-	// if not exist the specified setting, use the counterpart in the commomn branch
-	if (setting_iter == target_branch->end())
-	{
-		target_branch = common_branch;
-		setting_iter = target_branch->find(setting_name);
-	}
-	assert(setting_iter != target_branch->end());
-
-	// convert string to type T
-	T setting_value;
-	wistringstream(setting_iter->second) >> setting_value;
-
-	return setting_value;
-}
 
 typedef singleton<_gdimm_setting> gdimm_setting;

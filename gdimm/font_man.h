@@ -3,17 +3,17 @@
 #include <map>
 using namespace std;
 
-struct font_info
-{
-	HFONT hfont;
-	bool owned;
-	DWORD table_header;
-	FT_StreamRec stream;
-	LPVOID mapping_start;
-};
-
 class _gdimm_font_man
 {
+	struct font_info
+	{
+		HFONT hfont;
+		bool owned;
+		DWORD table_header;
+		FT_StreamRec stream;
+		LPVOID mapping_start;
+	};
+
 	// face name -> font id
 	map<wstring, long> _font_ids;
 	// font id -> face info

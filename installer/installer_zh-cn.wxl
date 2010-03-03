@@ -604,4 +604,26 @@
 
 		如果您只是偶尔需要渲染个别程序，请选择本模式。
 	</String>
+
+	<String Id="gdippSvcDesc" Overridable="yes">
+		gdipp 协调服务。
+	</String>
+	<String Id="gdippCompleteTitle" Overridable="yes">
+		gdipp
+	</String>
+	<String Id="gdippCompleteDesc" Overridable="yes">
+		gdipp 完整组件包
+	</String>
+	<String Id="gdipp64bitTitle" Overridable="yes">
+		64 位组件
+	</String>
+	<String Id="gdipp64bitDesc" Overridable="yes">
+		安装 gdipp 64 位组件。渲染 64 位程序的必要选项。
+	</String>
+	<String Id="gdipp32bitTitle" Overridable="yes">
+		32 位组件
+	</String>
+	<String Id="gdipp32bitDesc" Overridable="yes">
+		安装 gdipp 32 位组件。如果你希望 32 位程序也被渲染，请选择此选项。需要同时安装 gdipp 64 位组件。
+	</String>
 </WixLocalization>

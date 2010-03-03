@@ -33,7 +33,7 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About gdipp_demo"
+CAPTION "About gdipp Demo"
 FONT 9, "SimSun", 400, 0, 0x0
 BEGIN
     LTEXT           "使用下面 Edit Box 输入にほんご",IDC_STATIC,27,11,114,8,SS_NOPREFIX
@@ -150,8 +150,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,0,0
- PRODUCTVERSION 0,5,0,0
+ FILEVERSION 0,5,1,0
+ PRODUCTVERSION 0,5,1,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -168,11 +168,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "gdipp Project"
             VALUE "FileDescription", "gdipp Demo"
-            VALUE "FileVersion", "0, 5"
+            VALUE "FileVersion", "0, 5, 1, 0"
             VALUE "InternalName", "gdipp_demo"
             VALUE "OriginalFilename", "gdipp_demo.exe"
             VALUE "ProductName", "gdipp Demo"
-            VALUE "ProductVersion", "0, 5, 0, 0"
+            VALUE "ProductVersion", "0, 5, 1, 0"
         END
     END
     BLOCK "VarFileInfo"

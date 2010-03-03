@@ -3,6 +3,10 @@
 #include <string>
 using namespace std;
 
+#define FT_PAD_FLOOR( x, n )  ( (x) & ~((n)-1) )
+#define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
+#define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
+
 template <typename T>
 class singleton
 {
@@ -44,7 +48,7 @@ public:
 	}
 };
 
-struct ci_less
+struct string_ci_less
 {
 	bool operator()(const wstring &string1, const wstring &string2) const
 	{ return _wcsicmp(string1.c_str(), string2.c_str()) < 0; }
