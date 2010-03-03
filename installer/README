@@ -1,4 +1,4 @@
-gdipp version test 5
+gdipp README
 ====================
 
 The gdipp project is the relaunch of the suspended gdi++.dll  project. Like the InkStone project, we found the source code of gdi++.dll project is too complex to manage, and decide to start over a new code base. The goal of gdipp project is to continue the development of gdi++, expand its functionality, improve its performance, provide better compatibility for the current and future Windows versions (potentially at the cost of removing compatibility for old Windows), create detailed and formal documentation, as well as tools to help using it.

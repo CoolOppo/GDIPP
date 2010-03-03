@@ -78,15 +78,13 @@ FT_Render_Mode _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_famil
 
 FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const
 {
-	FT_UInt32 load_flag;
 	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+	FT_UInt32 load_flag = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
+		(settings.embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
 	if (settings.hinting)
 	{
-		load_flag = 
-			(settings.auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT) |
-			(settings.embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP) |
-			FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+		load_flag |= (settings.auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT);
 
 		switch (render_mode)
 		{
@@ -99,7 +97,7 @@ FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *fo
 		}
 	}
 	else
-		load_flag = FT_LOAD_NO_HINTING;
+		load_flag |= FT_LOAD_NO_HINTING;
 
 	return load_flag;
 }

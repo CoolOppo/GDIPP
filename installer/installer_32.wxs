@@ -26,6 +26,7 @@
 						<File Name="gdipp_loader_32.exe" Source="..\Release\gdipp_loader_32.exe" />
 						<File Name="gdimm_32.dll" Source="..\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
 						<File Id="gdipp_readme" Name="README" Source="README" />
+						<File Id="gdipp_changelog" Name="ChangeLog" Source="ChangeLog" />
 					</Component>
 
 					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
