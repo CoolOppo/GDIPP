@@ -1,0 +1,42 @@
+gdipp ChangeLog
+====================
+
+0.5.1 (Rev 04a6f9e10a):
+gdimm:
+  * Draw shadow.
+  * Process individual setting.
+  * Optimize setting algorithms.
+  * Fix a bug that fonts with embedded bitmap cannot be rendered when hinting is disabled.
+  * gdimm checks process exclusion.
+
+gdipp Loader:
+  * Fix a bug in 0.5 that it loads itself infinitely if no argument is fed.
+
+Installer:
+  * Install EasyHook to System folder for better compatiblity.
+  * Start gdipp Service earlier so that explorer can be rendered after Windows starts.
+  * setting.xml will not be overwritten when installing, and will not be delete after uninstallation.
+  * Remove prompt to user to reboot after installation, if the Registry load mode was chosen.
+
+
+0.5 (Rev 232a51a224):
+gdimm:
+  * Chrome inside sandbox can be rendered now.
+  * More stable algorithm for loading font linking registry values.
+  * Font link match direction is changed back to "first -> last".
+  * Fix a bug which causes memory leaking.
+  * Fix a bug about font stream.
+  * Force redrawing host process after being injected by gdipp Service.
+  * Correct calculation of character width, thus the text in the Aero theme Window titlebars can be rendered.
+  * Get glyph index by calling GetGlyphIndices, better compatibility.
+  * Add setting for embedded bitmap.
+  * Compile FreeType into gdimm.dll.
+
+gdipp Service:
+  * Checks if the target process has already loaded gdimm.dll.
+
+gdipp Demo and gdipp Loader:
+  * Remove dependency for Visual C++ 2008 Runtime.
+
+Installer:
+  * Distribute gdipp with installer, made by Windows Install XML.
