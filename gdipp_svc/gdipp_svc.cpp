@@ -2,7 +2,11 @@
 #include "mon.h"
 #include "setting.h"
 
-#define SVC_NAME TEXT("gdipp_svc")
+#ifdef _M_X64
+#define SVC_NAME TEXT("gdipp_svc_64")
+#else
+#define SVC_NAME TEXT("gdipp_svc_32")
+#endif
 
 SERVICE_STATUS			svc_status = {0};
 SERVICE_STATUS_HANDLE	svc_status_handle = NULL;

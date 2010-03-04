@@ -1,31 +1,29 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>3.5</ProductVersion>
     <ProjectGuid>{2ff6f817-b94e-4993-a194-bbec35e9b40a}</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>gdipp_32_zh-cn</OutputName>
+    <OutputName>gdipp_$(Platform)</OutputName>
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <DefineConstants>Debug</DefineConstants>
-  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <LinkerAdditionalOptions>-ext WixUIExtension -sval</LinkerAdditionalOptions>
-    <SuppressValidation>False</SuppressValidation>
+    <LinkerAdditionalOptions>-ext WixUIExtension</LinkerAdditionalOptions>
+    <SuppressValidation>True</SuppressValidation>
     <Cultures>zh-cn</Cultures>
-    <WixVariables>
-    </WixVariables>
-    <CompilerAdditionalOptions>
-    </CompilerAdditionalOptions>
     <DefineConstants>codepage=936</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>"E:\Windows Installer XML\bin\torch.exe" -p -t language en-us\$(OutputName)$(TargetExt) $(Cultures)\$(OutputName)$(TargetExt) -out $(Cultures).mst
+"E:\Windows Installer XML\bin\EmbedTransform.exe" en-us\$(OutputName)$(TargetExt) $(Cultures).mst
+del $(Cultures).mst</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="installer_32.wxs" />
@@ -43,4 +41,9 @@
 	<Target Name="AfterBuild">
 	</Target>
 	-->
+  <PropertyGroup>
+    <PostBuildEvent>"$(WIX)\bin\torch.exe" -p -t language en-us\$(TargetFileName) $(Cultures)\$(TargetFileName) -out $(Cultures).mst
+"$(WIX)\bin\EmbedTransform.exe" en-us\$(TargetFileName) $(Cultures).mst
+del $(Cultures).mst</PostBuildEvent>
+  </PropertyGroup>
 </Project>

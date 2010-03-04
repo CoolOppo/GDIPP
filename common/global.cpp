@@ -5,7 +5,7 @@
 
 CRITICAL_SECTION critical_section::_cs;
 
-void get_dir_file_path(WCHAR source_path[MAX_PATH], const WCHAR *file_name, HMODULE h_module)
+void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_path[MAX_PATH])
 {
 	DWORD dw_ret;
 	BOOL b_ret;

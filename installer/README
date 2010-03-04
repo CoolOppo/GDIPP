@@ -38,7 +38,23 @@ The XML file structure:
   * the common node: all fonts and processes not specified individually use the common settings.
   * the process nodes under gdimm node: these nodes store individual settings for certain process. The process name is specified in the name attribute. All the child nodes are the settings. Any setting item from the common node can be placed (lcd_filter will not be used). You do not have to specify every item. Those missing ones use the common counterpart.
   * the font nodes under the gdimm node: similar to the process nodes, except they are individual settings for certain fonts. If the current process is listed in the process nodes, missing items will firstly fallback to the corresponding process setting, then to the common counterpart.
-  * the exclude node: all its child nodes are excluded from being rendered by gdimm.dll. Specifically, the processes are excluded from being injected by the gdipp Service. The fonts are excluded from being rendered by gdimm.dll.
+  * the exclude node: all its child nodes are excluded from being rendered by gdimm.dll. Specifically, the processes are excluded from being injected by the gdipp Service. The fonts are excluded from being rendered by gdimm.dll. Changes are effective after gdipp Service's restarting.
+
+The folliwing system processes are recommended to exclude for the sack of system stability:
+
+<process>conhost.exe</process>
+<process>csrss.exe</process>
+<process>dllhost.exe</process>
+<process>dwm.exe</process>
+<process>lsass.exe</process>
+<process>lsm.exe</process>
+<process>services.exe</process>
+<process>smss.exe</process>
+<process>svchost.exe</process>
+<process>taskhost.exe</process>
+<process>userinit.exe</process>
+<process>wininit.exe</process>
+<process>winlogon.exe</process>
 
 
 Credits

@@ -117,7 +117,7 @@ bool _gdimm_setting::init(HMODULE h_module)
 {
 	// get setting file path
 	WCHAR setting_path[MAX_PATH];
-	get_dir_file_path(setting_path, L"setting.xml", h_module);
+	get_dir_file_path(h_module, L"setting.xml", setting_path);
 
 	ifstream f(setting_path);
 	if (f.bad())

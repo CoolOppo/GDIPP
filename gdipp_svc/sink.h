@@ -5,8 +5,9 @@
 class sink_inject: public IWbemObjectSink
 {
 	LONG _ref;
-	WCHAR _gdimm_path_32[MAX_PATH];
+
 	WCHAR _gdimm_path_64[MAX_PATH];
+	WCHAR _gdimm_path_32[MAX_PATH];
 
 	bool inject(LONG proc_id);
 

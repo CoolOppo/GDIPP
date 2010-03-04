@@ -28,7 +28,7 @@ class _gdimm_text
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 	
 	BITMAP get_dc_bmp() const;
-	FT_Render_Mode get_render_mode(WORD dc_bpp, const WCHAR *font_family) const;
+	bool get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const;
 	FT_UInt32 get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const;
 	bool get_dc_metrics();
 	void get_glyph_clazz();

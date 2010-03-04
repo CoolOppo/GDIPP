@@ -55,25 +55,33 @@ int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 }
 
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
-FT_Render_Mode _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family) const
+bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const
 {
 	// non-antialiased font
 	// draw with monochrome mode
 	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY)
-		return FT_RENDER_MODE_MONO;
-
-	switch (dc_bpp)
+		render_mode = FT_RENDER_MODE_MONO;
+	else
 	{
-	case 1:
-		return FT_RENDER_MODE_MONO;
-	case 8:
-		return FT_RENDER_MODE_NORMAL;
-	case 24:
-	case 32:
-		return (gdimm_setting::instance().get_setting_items(font_family).subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
-	default:
-		return FT_RENDER_MODE_NORMAL;
+		switch (dc_bpp)
+		{
+		case 1:
+			render_mode = FT_RENDER_MODE_MONO;
+			break;
+		case 8:
+			render_mode = FT_RENDER_MODE_NORMAL;
+			break;
+		case 24:
+		case 32:
+			render_mode = (gdimm_setting::instance().get_setting_items(font_family).subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
+			break;
+		default:
+			// we do not support 16 bpp currently
+			return false;
+		}
 	}
+
+	return true;
 }
 
 FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const
@@ -316,7 +324,7 @@ void _gdimm_text::set_bmp_bits_mono(
 	WORD dest_bpp) const
 {
 	// the source bitmap is 1-bit, 8 pixels per byte, in most-significant order
-	// the destination is an non antialiased bitmap with ANY bpp
+	// the destination is an non antialiased bitmap with 8, 24 or 32 bpp
 	// the source bitmap is not blended with the destination bitmap
 
 	const LONG src_width = src_bitmap.width;
@@ -366,9 +374,10 @@ void _gdimm_text::set_bmp_bits_gray(
 	WORD dest_bpp,
 	BYTE alpha) const
 {
-	// the source bitmap is 24-bit, 3 bytes per pixel, in order of R, G, B channels
-	// the destination bitmaps is 8-, 24- or 32-bit, each row is aligned to DWORD
-	// for 24- and 32-bit destination bitmaps, all color channels have the same value
+	// the source bitmap is 8-bit with 256 gray levels
+	// the destination bitmaps has 8, 24 or 32 bpp
+	// each row is aligned to DWORD
+	// for LCD destination bitmaps, all color channels have the same value
 
 	assert(dest_bpp >= 8);
 
@@ -400,7 +409,7 @@ void _gdimm_text::set_bmp_bits_gray(
 
 				dest_bits[dest_ptr] = (alpha * dest_gray + (255 - alpha) * dest_bits[dest_ptr]) / 255;
 			}
-			else if (dest_bpp >= 24)
+			else
 			{
 				const BYTE dest_r = (src_gray * _fg_rgb.rgbRed + (255 - src_gray) * dest_bits[dest_ptr+2]) / 255;
 				const BYTE dest_g = (src_gray * _fg_rgb.rgbGreen + (255 - src_gray) * dest_bits[dest_ptr+1]) / 255;
@@ -425,11 +434,11 @@ void _gdimm_text::set_bmp_bits_lcd(
 	WORD dest_bpp,
 	BYTE alpha) const
 {
-	// the source bitmap is 24-bit, 3 bytes per pixel, in order of R, G, B channels
-	// the destination bitmaps is 24- or 32-bit, 3(4) bytes per pixel, in order of B, G, R, (A) channels
+	// the source bitmap is 24-bit, in order of R, G, B channels
+	// the destination bitmaps has 24 or 32 bpp, in order of B, G, R, (A) channels
 	// each row is aligned to DWORD
 
-	assert(dest_bpp >= 24);
+	assert(dest_bpp >= 16);
 
 	const WORD src_byte_per_px = 3;
 	const LONG src_width = src_bitmap.width / src_byte_per_px;
@@ -700,7 +709,10 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 	if (dc_bmp.bmBitsPixel == 0)
 		return false;
 
-	const FT_Render_Mode render_mode = get_render_mode(dc_bmp.bmBitsPixel, get_font_family());
+	FT_Render_Mode render_mode;
+	if (!get_render_mode(dc_bmp.bmBitsPixel, get_font_family(), render_mode))
+		return false;
+
 	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(get_font_family());
 
 	// Windows renders monochrome bitmap better than FreeType
@@ -813,7 +825,9 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	if (dc_bmp.bmBitsPixel == 0)
 		return false;
 
-	FT_Render_Mode render_mode = get_render_mode(dc_bmp.bmBitsPixel, get_font_family());
+	FT_Render_Mode render_mode;
+	if (!get_render_mode(dc_bmp.bmBitsPixel, get_font_family(), render_mode))
+		return false;
 
 	// Windows renders monochrome bitmap better than FreeType
 	if (render_mode == FT_RENDER_MODE_MONO && !gdimm_setting::instance().get_setting_items(get_font_family()).render_mono)
@@ -919,7 +933,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 		// if font linked, get the new render mode and load mode for the linked font family
 		if (font_linked)
 		{
-			render_mode = get_render_mode(dc_bmp.bmBitsPixel, final_font_family);
+			get_render_mode(dc_bmp.bmBitsPixel, final_font_family, render_mode);
 			load_flags = get_load_mode(render_mode, final_font_family);
 		}
 		

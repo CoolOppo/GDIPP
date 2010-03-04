@@ -605,8 +605,11 @@
 		Choose this mode if you just occasionally need rendering for certain programs.
 	</String>
 
-	<String Id="gdippSvcDesc" Overridable="yes">
-		gdipp coordinator service.
+	<String Id="gdippSvcDesc32" Overridable="yes">
+		gdipp 32-bit coordinator service.
+	</String>
+	<String Id="gdippSvcDesc64" Overridable="yes">
+		gdipp 64-bit coordinator service.
 	</String>
 	<String Id="gdippCompleteTitle" Overridable="yes">
 		gdipp
@@ -624,6 +627,6 @@
 		32-bit components
 	</String>
 	<String Id="gdipp32bitDesc" Overridable="yes">
-		Install gdipp 32-bit components. Choose if you want the 32-bit programs also be rendered. Require the gdipp 64-bit components be installed.
+		Install gdipp 32-bit components. Required to render 32-bit programs.
 	</String>
 </WixLocalization>

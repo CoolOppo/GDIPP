@@ -4,12 +4,14 @@
 #include "setting.h"
 #include <easyhook.h>
 #include <tlhelp32.h>
+#include <shlwapi.h>
 
 sink_inject::sink_inject()
 {
 	_ref = 0;
-	get_dir_file_path(_gdimm_path_32, L"gdimm_32.dll");
-	get_dir_file_path(_gdimm_path_64, L"gdimm_64.dll");
+
+	get_dir_file_path(NULL, L"gdimm_64.dll", _gdimm_path_64);
+	get_dir_file_path(NULL, L"gdimm_32.dll", _gdimm_path_32);
 }
 
 bool sink_inject::inject(LONG proc_id)
@@ -40,7 +42,13 @@ bool sink_inject::inject(LONG proc_id)
 	CloseHandle(h_snapshot);
 
 	const INJECTOR_TYPE injector_type = GDIPP_SERVICE;
-	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, _gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+
+#ifdef _M_X64
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+#else
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+#endif
+
 	return (eh_error == 0);
 }
 

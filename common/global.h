@@ -64,7 +64,7 @@ enum INJECTOR_TYPE
 	GDIPP_LOADER
 };
 
-void get_dir_file_path(WCHAR source_path[MAX_PATH], const WCHAR *file_name, HMODULE h_module = NULL);
+void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_path[MAX_PATH]);
 
 void debug_output_process_name();
 void debug_output(const WCHAR *str = L"");
