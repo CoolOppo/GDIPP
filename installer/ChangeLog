@@ -1,6 +1,18 @@
 gdipp ChangeLog
 ====================
 
+0.5.2 (Rev b20e48eea2):
+gdimm:
+  * Exclude bitmap with 16 bpp.
+
+gdipp Loader and Service:
+  * Inject 32-bit and 64-bit process separately.
+
+Installer:
+  * Install 32-bit and 64-bit services separately.
+  * Merge all languages into one msi.
+
+
 0.5.1 (Rev 04a6f9e10a):
 gdimm:
   * Draw shadow.

@@ -576,7 +576,7 @@
 	<String Id="LoadModeDlg_LoaderText" Overridable="yes">Program Loader</String>
 	<String Id="LoadModeDlg_GroupBoxText" Overridable="yes">Description</String>
 	<String Id="LoadModeDlg_ServiceDesc" Overridable="yes">
-		This is the default mode. Require Administrator account.
+		This is the default mode. Require Administrator privilege.
 		
 		If you choose this mode, a Windows service is installed, which will be started with Windows, and renders any program spawned when it is running.
 
@@ -587,7 +587,7 @@
 		Choose this mode if you want system-wide rendering, while still maintain system stability.
 	</String>
 	<String Id="LoadModeDlg_RegistryDesc" Overridable="yes">
-		If you choose this mode, the installer will modify the registry to support system-wide rendering. Require Administrator account.
+		If you choose this mode, the installer will modify the registry to support system-wide rendering. Require Administrator privilege.
 
 		The rendering replacement in this mode is possibly more thorough than the Windows Service mode, at the cost of system stability. Meanwhile, some functions of gdipp cannot be used with this mode.
 
@@ -605,27 +605,15 @@
 		Choose this mode if you just occasionally need rendering for certain programs.
 	</String>
 
-	<String Id="gdippSvcDesc32" Overridable="yes">
-		gdipp 32-bit coordinator service.
-	</String>
-	<String Id="gdippSvcDesc64" Overridable="yes">
-		gdipp 64-bit coordinator service.
-	</String>
-	<String Id="gdippCompleteTitle" Overridable="yes">
-		gdipp
-	</String>
-	<String Id="gdippCompleteDesc" Overridable="yes">
-		gdipp complete package.
-	</String>
-	<String Id="gdipp64bitTitle" Overridable="yes">
-		64-bit components
-	</String>
+	<String Id="gdippSvcDesc32" Overridable="yes">gdipp 32-bit coordinator service.</String>
+	<String Id="gdippSvcDesc64" Overridable="yes">gdipp 64-bit coordinator service.</String>
+	<String Id="gdippCompleteTitle" Overridable="yes">gdipp</String>
+	<String Id="gdippCompleteDesc" Overridable="yes">gdipp complete package.</String>
+	<String Id="gdipp64bitTitle" Overridable="yes">64-bit components</String>
 	<String Id="gdipp64bitDesc" Overridable="yes">
 		Install gdipp 64-bit components. Required to render 64-bit programs.
 	</String>
-	<String Id="gdipp32bitTitle" Overridable="yes">
-		32-bit components
-	</String>
+	<String Id="gdipp32bitTitle" Overridable="yes">32-bit components</String>
 	<String Id="gdipp32bitDesc" Overridable="yes">
 		Install gdipp 32-bit components. Required to render 32-bit programs.
 	</String>

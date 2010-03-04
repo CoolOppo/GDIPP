@@ -576,7 +576,7 @@
 	<String Id="LoadModeDlg_LoaderText" Overridable="yes">程序加载器</String>
 	<String Id="LoadModeDlg_GroupBoxText" Overridable="yes">描述</String>
 	<String Id="LoadModeDlg_ServiceDesc" Overridable="yes">
-		这是默认的加载模式。您必须是系统管理员。
+		这是默认的加载模式。需要管理员权限。
 
 		如果您选择本模式，一个 Windows 服务会被创建并随 Windows 启动。所有在其运行期间启动的程序都会被渲染。
 
@@ -587,7 +587,7 @@
 		如果您需要系统全局的渲染，同时保证系统稳定性，请选择本模式。
 	</String>
 	<String Id="LoadModeDlg_RegistryDesc" Overridable="yes">
-		如果您选择本模式，安装程序会修改注册表，并进行系统全局的渲染。您必须是系统管理员。
+		如果您选择本模式，安装程序会修改注册表，并进行系统全局的渲染。需要管理员权限。
 
 		该模式的渲染可能比 Windows 服务模式替换的更加全面，代价是降低了系统稳定性。同时，gdipp 的某些在本模式下无法使用。
 
@@ -605,27 +605,15 @@
 		如果您只是偶尔需要渲染个别程序，请选择本模式。
 	</String>
 
-	<String Id="gdippSvcDesc32" Overridable="yes">
-		gdipp 32 位协调服务。
-	</String>
-	<String Id="gdippSvcDesc64" Overridable="yes">
-		gdipp 64 位协调服务。
-	</String>
-	<String Id="gdippCompleteTitle" Overridable="yes">
-		gdipp
-	</String>
-	<String Id="gdippCompleteDesc" Overridable="yes">
-		gdipp 完整组件包
-	</String>
-	<String Id="gdipp64bitTitle" Overridable="yes">
-		64 位组件
-	</String>
+	<String Id="gdippSvcDesc32" Overridable="yes">gdipp 32 位协调服务。</String>
+	<String Id="gdippSvcDesc64" Overridable="yes">gdipp 64 位协调服务。</String>
+	<String Id="gdippCompleteTitle" Overridable="yes">gdipp</String>
+	<String Id="gdippCompleteDesc" Overridable="yes">gdipp 完整组件包</String>
+	<String Id="gdipp64bitTitle" Overridable="yes">64 位组件</String>
 	<String Id="gdipp64bitDesc" Overridable="yes">
 		安装 gdipp 64 位组件。渲染 64 位程序的必要选项。
 	</String>
-	<String Id="gdipp32bitTitle" Overridable="yes">
-		32 位组件
-	</String>
+	<String Id="gdipp32bitTitle" Overridable="yes">32 位组件</String>
 	<String Id="gdipp32bitDesc" Overridable="yes">
 		安装 gdipp 32 位组件。渲染 32 位程序的必要选项。
 	</String>
