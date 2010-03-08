@@ -352,6 +352,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gamma.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\gdimm.cpp"
 				>
 			</File>
@@ -423,6 +427,10 @@
 			</File>
 			<File
 				RelativePath=".\ft.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gamma.h"
 				>
 			</File>
 			<File

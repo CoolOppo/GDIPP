@@ -29,7 +29,7 @@
 						<File Id="gdipp_changelog" Name="ChangeLog" Source="ChangeLog" />
 					</Component>
 
-					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
+					<Component Id="gdipp_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
 						<File Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Release\gdipp_svc_32.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_32_inst"
 										Name="gdipp_svc_32"
@@ -74,12 +74,12 @@
 
 			<Directory Id="SystemFolder">
 				<Component Id="easyhook_32" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8">
-					<File Name="EasyHook32.dll" Source="..\EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
+					<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
 				</Component>
 			</Directory>
 
 			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_32.dll]" KeyPath="yes" />
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_dll]" KeyPath="yes" />
 				<Condition>LOADMODE = 1</Condition>
 			</Component>
 
@@ -119,11 +119,11 @@
 
 		<Feature Id="gdipp" Level="1">
 			<ComponentRef Id="gdipp_32" />
+			<ComponentRef Id="gdipp_service_32" />
 			<ComponentRef Id="gdipp_setting" />
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />
 			<ComponentRef Id="easyhook_32" />
-			<ComponentRef Id="install_service_32" />
 			<ComponentRef Id="set_appinit_dlls_32" />
 			<ComponentRef Id="set_loadappinit_dlls_32" />
 			<ComponentRef Id="loader_shortcut_32" />

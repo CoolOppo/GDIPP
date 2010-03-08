@@ -16,16 +16,8 @@ BOOL APIENTRY DllMain(
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		DWORD dw_ret;
-
 		gdimm_setting::instance().init(hModule);
-
-		// check if this process is excluded
-		WCHAR exe_name[MAX_PATH];
-		dw_ret = GetModuleFileNameW(NULL, exe_name, MAX_PATH);
-		PathStripPathW(exe_name);
-
-		if (gdimm_setting::instance().is_name_excluded(exe_name))
+		if (gdimm_setting::instance().is_name_excluded(NULL))
 			return FALSE;
 
 		h_self = hModule;

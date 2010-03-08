@@ -103,18 +103,18 @@
 
 			<Directory Id="SystemFolder64">
 				<Component Id="easyhook_64" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8" Win64="yes">
-					<File Name="EasyHook64.dll" Source="..\EasyHook\EasyHook64.dll" Vital="yes" KeyPath="yes" />
+					<File Name="EasyHook64.dll" Source="$(var.SolutionDir)EasyHook\EasyHook64.dll" Vital="yes" KeyPath="yes" />
 				</Component>
 			</Directory>
 
 			<Directory Id="SystemFolder">
 				<Component Id="easyhook_32" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8" Win64="no">
-					<File Name="EasyHook32.dll" Source="..\EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
+					<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
 				</Component>
 			</Directory>
 
 			<Component Id="set_appinit_dlls_64" Guid="0AE1E07B-10E8-4A72-BB1F-71DF3DF1DBAC" Permanent="yes" Win64="yes">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_64.dll]" KeyPath="yes" />
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_dll]" KeyPath="yes" />
 				<Condition>LOADMODE = 1</Condition>
 			</Component>
 

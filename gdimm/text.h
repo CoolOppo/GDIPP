@@ -24,6 +24,9 @@ class _gdimm_text
 	//misc
 	UINT _eto_options;
 
+	// gamma ramps for gray, red, green, blue
+	const BYTE *_gamma_ramps[4];
+
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 	
@@ -32,6 +35,7 @@ class _gdimm_text
 	FT_UInt32 get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const;
 	bool get_dc_metrics();
 	void get_glyph_clazz();
+	void get_gamma_ramps(const WCHAR *font_family, bool is_lcd);
 	const WCHAR *get_font_family() const
 	{ return (const WCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFamilyName); }
 
@@ -43,7 +47,7 @@ class _gdimm_text
 		UINT ggo_format,
 		const MAT2 &matrix,
 		FT_Render_Mode render_mode,
-		float bold_strength,
+		float embolden,
 		GLYPHMETRICS &glyph_metrics) const;
 	void set_bmp_bits_mono(
 		const FT_Bitmap &src_bitmap,

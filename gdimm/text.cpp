@@ -5,6 +5,7 @@
 #include "font_man.h"
 #include "font_link.h"
 #include "setting.h"
+#include "gamma.h"
 #include FT_OUTLINE_H
 #include FT_TRUETYPE_TABLES_H
 #include <cmath>
@@ -57,28 +58,31 @@ int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
 bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const
 {
+	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+
 	// non-antialiased font
 	// draw with monochrome mode
-	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY)
-		render_mode = FT_RENDER_MODE_MONO;
-	else
+	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY && !settings.render_non_aa)
 	{
-		switch (dc_bpp)
-		{
-		case 1:
-			render_mode = FT_RENDER_MODE_MONO;
-			break;
-		case 8:
-			render_mode = FT_RENDER_MODE_NORMAL;
-			break;
-		case 24:
-		case 32:
-			render_mode = (gdimm_setting::instance().get_setting_items(font_family).subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
-			break;
-		default:
-			// we do not support 16 bpp currently
-			return false;
-		}
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	switch (dc_bpp)
+	{
+	case 1:
+		render_mode = FT_RENDER_MODE_MONO;
+		break;
+	case 8:
+		render_mode = FT_RENDER_MODE_NORMAL;
+		break;
+	case 24:
+	case 32:
+		render_mode = (settings.subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
+		break;
+	default:
+		// we do not support 16 bpp currently
+		return false;
 	}
 
 	return true;
@@ -192,12 +196,26 @@ void _gdimm_text::get_glyph_clazz()
 	FT_Done_Glyph(useless);
 }
 
+void _gdimm_text::get_gamma_ramps(const WCHAR *font_family, bool is_lcd)
+{
+	const _gdimm_setting::gamma_setting gamma = gdimm_setting::instance().get_setting_items(font_family).gamma;
+
+	if (is_lcd)
+	{
+		_gamma_ramps[1] = gdimm_gamma::instance().get_ramp(gamma.red);
+		_gamma_ramps[2] = gdimm_gamma::instance().get_ramp(gamma.green);
+		_gamma_ramps[3] = gdimm_gamma::instance().get_ramp(gamma.blue);
+	}
+	else
+		_gamma_ramps[0] = gdimm_gamma::instance().get_ramp(gamma.gray);
+}
+
 FT_BitmapGlyph _gdimm_text::outline_to_bitmap(
 	WCHAR ch,
 	UINT ggo_format,
 	const MAT2 &matrix,
 	FT_Render_Mode render_mode,
-	float bold_strength,
+	float embolden,
 	GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
@@ -305,7 +323,7 @@ FT_BitmapGlyph _gdimm_text::outline_to_bitmap(
 		}
 	};
 
-	ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(bold_strength));
+	ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(embolden));
 	assert(ft_error == 0);
 
 	// convert outline to bitmap
@@ -399,7 +417,7 @@ void _gdimm_text::set_bmp_bits_gray(
 			else
 				dest_ptr += min(y_in_dest + j, dest_height - 1) * dest_pitch;
 
-			const BYTE src_gray = src_bitmap.buffer[src_ptr];
+			const BYTE src_gray = _gamma_ramps[0][src_bitmap.buffer[src_ptr]];
 
 			if (dest_bpp == 8)
 			{
@@ -438,7 +456,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 	// the destination bitmaps has 24 or 32 bpp, in order of B, G, R, (A) channels
 	// each row is aligned to DWORD
 
-	assert(dest_bpp >= 16);
+	assert(dest_bpp >= 24);
 
 	const WORD src_byte_per_px = 3;
 	const LONG src_width = src_bitmap.width / src_byte_per_px;
@@ -446,6 +464,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
+	const bool zero_alpha_channel = gdimm_setting::instance().get_setting_items().zero_alpha;
 
 	// rows about to be copied
 	for (int j = 0; j < src_height; j++)
@@ -463,9 +482,9 @@ void _gdimm_text::set_bmp_bits_lcd(
 			else
 				dest_ptr += min(y_in_dest + j, dest_height - 1) * dest_pitch;
 
-			const BYTE src_r = src_bitmap.buffer[src_ptr];
-			const BYTE src_g = src_bitmap.buffer[src_ptr+1];
-			const BYTE src_b = src_bitmap.buffer[src_ptr+2];
+			const BYTE src_r = _gamma_ramps[1][src_bitmap.buffer[src_ptr]];
+			const BYTE src_g = _gamma_ramps[2][src_bitmap.buffer[src_ptr+1]];
+			const BYTE src_b = _gamma_ramps[3][src_bitmap.buffer[src_ptr+2]];
 			
 			const BYTE dest_r = (src_r * _fg_rgb.rgbRed + (255 - src_r) * dest_bits[dest_ptr+2]) / 255;
 			const BYTE dest_g = (src_g * _fg_rgb.rgbGreen + (255 - src_g) * dest_bits[dest_ptr+1]) / 255;
@@ -476,8 +495,8 @@ void _gdimm_text::set_bmp_bits_lcd(
 			dest_bits[dest_ptr+1] = (alpha * dest_g + (255 - alpha) * dest_bits[dest_ptr+1]) / 255;
 			dest_bits[dest_ptr+2] = (alpha * dest_r + (255 - alpha) * dest_bits[dest_ptr+2]) / 255;
 
-			//if (dest_bpp == 32)
-			//	dest_bits[dest_ptr+3] = 0;
+			if (dest_bpp == 32 && zero_alpha_channel)
+				dest_bits[dest_ptr+3] = 0;
 		}
 	}
 }
@@ -619,6 +638,9 @@ bool _gdimm_text::draw_glyphs(
 		const int x_in_dest = glyph_pos[i].x - src_origin.x;
 		const int y_in_dest = max(bmp_ascent - glyphs[i]->top, 0);
 
+		const int shadow_x = max(x_in_dest + shadow.offset_x, 0);
+		const int shadow_y = max(y_in_dest + shadow.offset_y, 0);
+
 		switch (glyphs[i]->bitmap.pixel_mode)
 		{
 		case FT_PIXEL_MODE_MONO:
@@ -629,9 +651,9 @@ bool _gdimm_text::draw_glyphs(
 				dc_bmp.bmBitsPixel);
 			break;
 		case FT_PIXEL_MODE_GRAY:
-			if (shadow.alpha > 0)
+			if (shadow.alpha > 0 && (shadow_x != 0 || shadow_y != 0))
 				set_bmp_bits_gray(glyphs[i]->bitmap,
-					x_in_dest + shadow.offset_x, y_in_dest + shadow.offset_y,
+					shadow_x, shadow_y,
 					dest_bits,
 					bmp_width, bmp_height,
 					dc_bmp.bmBitsPixel,
@@ -644,9 +666,9 @@ bool _gdimm_text::draw_glyphs(
 				255);
 			break;
 		case FT_PIXEL_MODE_LCD:
-			if (shadow.alpha > 0)
+			if (shadow.alpha > 0 && (shadow_x != 0 || shadow_y != 0))
 				set_bmp_bits_lcd(glyphs[i]->bitmap,
-					x_in_dest + shadow.offset_x, y_in_dest + shadow.offset_y,
+					shadow_x, shadow_y,
 					dest_bits,
 					bmp_width, bmp_height,
 					dc_bmp.bmBitsPixel,
@@ -755,7 +777,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 			ggo_format,
 			id_matrix,
 			render_mode,
-			settings.bold_strength,
+			settings.embolden,
 			glyph_metrics);
 
 		if (bmp_glyph != NULL)
@@ -948,12 +970,12 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 			return false;
 
 		// glyph outline -> glyph bitmap conversion
-		const float bold_strength = gdimm_setting::instance().get_setting_items(final_font_family).bold_strength;
-		if (bold_strength != 0)
+		const float embolden = gdimm_setting::instance().get_setting_items(final_font_family).embolden;
+		if (embolden != 0)
 		{
 			FT_Glyph src_glyph = glyph;
 			FT_Glyph_Copy(src_glyph, &glyph);
-			ft_error = FT_Outline_Embolden(&((FT_OutlineGlyph) glyph)->outline, to_26dot6(bold_strength));
+			ft_error = FT_Outline_Embolden(&((FT_OutlineGlyph) glyph)->outline, to_26dot6(embolden));
 			assert(ft_error == 0);
 
 			FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, TRUE);
@@ -1002,6 +1024,8 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	bool draw_success = false;
 	if (!glyphs.empty())
 	{
+		get_gamma_ramps(final_font_family, render_mode & FT_RENDER_MODE_LCD);
+
 		draw_success = draw_glyphs(glyphs, glyph_pos, max_glyph_height, lprect, dc_bmp);
 
 		for (size_t i = 0; i < glyphs.size(); i++)
