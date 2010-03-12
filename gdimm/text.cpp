@@ -58,7 +58,7 @@ int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
 bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const
 {
-	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
 
 	// non-antialiased font
 	// draw with monochrome mode
@@ -90,7 +90,7 @@ bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Rend
 
 FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const
 {
-	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
 	FT_UInt32 load_flag = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
 		(settings.embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
@@ -198,7 +198,7 @@ void _gdimm_text::get_glyph_clazz()
 
 void _gdimm_text::get_gamma_ramps(const WCHAR *font_family, bool is_lcd)
 {
-	const _gdimm_setting::gamma_setting gamma = gdimm_setting::instance().get_setting_items(font_family).gamma;
+	const gdimm_setting_items::gamma_setting gamma = gdimm_setting::instance().get_setting_items(font_family).gamma;
 
 	if (is_lcd)
 	{
@@ -610,7 +610,7 @@ bool _gdimm_text::draw_glyphs(
 	else if (bk_mode == TRANSPARENT)
 	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY);
+		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY | NOMIRRORBITMAP);
 	}
 	else
 		b_ret = FALSE;
@@ -624,7 +624,7 @@ bool _gdimm_text::draw_glyphs(
 
 	// 3.
 
-	const _gdimm_setting::shadow_setting &shadow = gdimm_setting::instance().get_setting_items(get_font_family()).shadow;
+	const gdimm_setting_items::shadow_setting &shadow = gdimm_setting::instance().get_setting_items(get_font_family()).shadow;
 	for (size_t i = 0; i < glyphs.size(); i++)
 	{
 		/*
@@ -702,12 +702,12 @@ bool _gdimm_text::draw_glyphs(
 			hdc_canvas,
 			dest_x,
 			dest_y,
-			SRCCOPY);
+			SRCCOPY | NOMIRRORBITMAP);
 		assert(b_ret);
 	}
 	else
 	{
-		b_ret = BitBlt(_hdc_text, dest_origin.x, dest_origin.y, bmp_width, bmp_height, hdc_canvas, 0, 0, SRCCOPY);
+		b_ret = BitBlt(_hdc_text, dest_origin.x, dest_origin.y, bmp_width, bmp_height, hdc_canvas, 0, 0, SRCCOPY | NOMIRRORBITMAP);
 		assert(b_ret);
 	}
 
@@ -735,7 +735,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 	if (!get_render_mode(dc_bmp.bmBitsPixel, get_font_family(), render_mode))
 		return false;
 
-	const _gdimm_setting::setting_items &settings = gdimm_setting::instance().get_setting_items(get_font_family());
+	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(get_font_family());
 
 	// Windows renders monochrome bitmap better than FreeType
 	if (render_mode == FT_RENDER_MODE_MONO && !settings.render_mono)

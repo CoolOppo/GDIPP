@@ -10,9 +10,8 @@ using namespace std;
 
 #define COMMON_BRANCH_NAME "common"
 
-class _gdimm_setting
+struct gdimm_setting_items
 {
-public:
 	struct gamma_setting
 	{
 		double gray;
@@ -32,29 +31,28 @@ public:
 		shadow_setting();
 	};
 
-	struct setting_items
-	{
-		bool auto_hinting;
-		bool embedded_bitmap;
-		float embolden;
-		bool freetype_loader;
-		gamma_setting gamma;
-		bool hinting;
-		BYTE lcd_filter;
-		bool light_mode;
-		LONG max_height;
-		bool render_mono;
-		bool render_non_aa;
-		shadow_setting shadow;
-		bool subpixel_render;
-		bool zero_alpha;
+	bool auto_hinting;
+	bool embedded_bitmap;
+	float embolden;
+	bool freetype_loader;
+	gamma_setting gamma;
+	bool hinting;
+	BYTE lcd_filter;
+	bool light_mode;
+	LONG max_height;
+	bool render_mono;
+	bool render_non_aa;
+	shadow_setting shadow;
+	bool subpixel_render;
+	bool zero_alpha;
 
-		setting_items();
-	};
+	gdimm_setting_items();
+};
 
-private:
+class _gdimm_setting
+{
 	// map keys are case-insensitive
-	typedef map<const wstring, setting_items, string_ci_less> setting_map;
+	typedef map<const wstring, gdimm_setting_items, string_ci_less> setting_map;
 
 	setting_map _setting_branchs;
 	set<const wstring, string_ci_less> _exclude_names;
@@ -70,9 +68,9 @@ private:
 			out_value = default_value;
 	}
 
-	void load_settings(const xml_node &context_node, const setting_items &default_items, setting_items &settings);
+	void load_settings(const xml_node &context_node, const gdimm_setting_items &default_items, gdimm_setting_items &settings);
 	void load_common(const xml_node &context_node);
-	void load_branchs(const xml_node &context_node, const setting_items &default_items, const char *xpath);
+	void load_branchs(const xml_node &context_node, const gdimm_setting_items &default_items, const char *xpath);
 	void load_exclude(const xml_node &context_node);
 
 public:
@@ -80,7 +78,7 @@ public:
 	bool init(HMODULE h_module);
 	bool is_name_excluded(const WCHAR *name) const;
 
-	const setting_items &get_setting_items(const WCHAR *font_family = TEXT(COMMON_BRANCH_NAME)) const;
+	const gdimm_setting_items &get_setting_items(const WCHAR *font_family = TEXT(COMMON_BRANCH_NAME)) const;
 };
 
 typedef singleton<_gdimm_setting> gdimm_setting;

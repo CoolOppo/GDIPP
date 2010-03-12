@@ -2,7 +2,6 @@
 #include "hook.h"
 #include "global.h"
 #include "text.h"
-#include <sddl.h>
 
 ULONG svc_proc_id = 0;
 HMODULE h_self = NULL;

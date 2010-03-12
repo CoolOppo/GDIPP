@@ -5,7 +5,7 @@
 #include <sstream>
 using namespace std;
 
-_gdimm_setting::gamma_setting::gamma_setting()
+gdimm_setting_items::gamma_setting::gamma_setting()
 {
 	// default setting
 	gray = 1.0;
@@ -14,7 +14,7 @@ _gdimm_setting::gamma_setting::gamma_setting()
 	blue = 1.0;
 }
 
-_gdimm_setting::shadow_setting::shadow_setting()
+gdimm_setting_items::shadow_setting::shadow_setting()
 {
 	// default setting
 	offset_x = 1;
@@ -22,7 +22,7 @@ _gdimm_setting::shadow_setting::shadow_setting()
 	alpha = 32;
 }
 
-_gdimm_setting::setting_items::setting_items()
+gdimm_setting_items::gdimm_setting_items()
 {
 	// default setting
 	auto_hinting = true;
@@ -45,7 +45,7 @@ _gdimm_setting::_gdimm_setting()
 {
 	DWORD dw_ret;
 
-	_setting_branchs[TEXT(COMMON_BRANCH_NAME)] = setting_items();
+	_setting_branchs[TEXT(COMMON_BRANCH_NAME)] = gdimm_setting_items();
 
 	dw_ret = GetModuleFileNameW(NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
@@ -53,7 +53,7 @@ _gdimm_setting::_gdimm_setting()
 	PathStripPathW(_process_name);
 }
 
-void _gdimm_setting::load_settings(const xml_node &context_node, const setting_items &default_items, setting_items &settings)
+void _gdimm_setting::load_settings(const xml_node &context_node, const gdimm_setting_items &default_items, gdimm_setting_items &settings)
 {
 	evaluate_to_number(context_node, "auto_hinting", default_items.auto_hinting, settings.auto_hinting);
 	evaluate_to_number(context_node, "embedded_bitmap", default_items.embedded_bitmap, settings.embedded_bitmap);
@@ -86,7 +86,7 @@ void _gdimm_setting::load_common(const xml_node &context_node)
 	load_settings(common_node, _setting_branchs[TEXT(COMMON_BRANCH_NAME)], _setting_branchs[TEXT(COMMON_BRANCH_NAME)]);
 }
 
-void _gdimm_setting::load_branchs(const xml_node &context_node, const setting_items &default_items, const char *xpath)
+void _gdimm_setting::load_branchs(const xml_node &context_node, const gdimm_setting_items &default_items, const char *xpath)
 {
 	xpath_node_set target_node_set = context_node.select_nodes(xpath);
 	for (xpath_node_set::const_iterator set_iter = target_node_set.begin(); set_iter != target_node_set.end(); set_iter++)
@@ -110,7 +110,7 @@ void _gdimm_setting::load_branchs(const xml_node &context_node, const setting_it
 		setting_map::const_iterator branch_iter = _setting_branchs.find(branch_name);
 
 		if (branch_iter == _setting_branchs.end())
-			_setting_branchs[branch_name] = setting_items();
+			_setting_branchs[branch_name] = gdimm_setting_items();
 
 		load_settings(curr_node, default_items, _setting_branchs[branch_name]);
 	}
@@ -154,7 +154,7 @@ bool _gdimm_setting::init(HMODULE h_module)
 		const xml_node gdimm_node = xml_doc.select_single_node("/gdipp/gdimm").node();
 		load_common(gdimm_node);
 
-		const setting_items &common_items = _setting_branchs[TEXT(COMMON_BRANCH_NAME)];
+		const gdimm_setting_items &common_items = _setting_branchs[TEXT(COMMON_BRANCH_NAME)];
 		load_branchs(gdimm_node, common_items, "process");
 
 		if (_setting_branchs.find(_process_name) == _setting_branchs.end())
@@ -181,7 +181,7 @@ bool _gdimm_setting::is_name_excluded(const WCHAR *name) const
 	return (iter != _exclude_names.end());
 }
 
-const _gdimm_setting::setting_items &_gdimm_setting::get_setting_items(const WCHAR *font_family) const
+const gdimm_setting_items &_gdimm_setting::get_setting_items(const WCHAR *font_family) const
 {
 	setting_map::const_iterator branch_iter = _setting_branchs.find(_process_name);
 
