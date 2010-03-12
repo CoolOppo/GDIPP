@@ -1,6 +1,15 @@
 gdipp ChangeLog
 ====================
 
+0.5.3 (Rev 74a4184f9d):
+gdimm:
+  * Add option of gamma correction.
+  * Add option of rendering non-AA font.
+  * Add option of zeroing the alpha channel.
+
+Installer:
+  * Fix a bug of service installing in the installer script.
+
 0.5.2 (Rev b20e48eea2):
 gdimm:
   * Exclude bitmap with 16 bpp.
