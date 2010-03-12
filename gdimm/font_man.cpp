@@ -123,6 +123,7 @@ long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_f
 	if (iter == _font_ids.end())
 	{
 		LOGFONTW linked_font_attr = font_attr;
+		linked_font_attr.lfOutPrecision = OUT_DEFAULT_PRECIS;
 		wcsncpy_s(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
 		HFONT new_hfont = CreateFontIndirectW(&linked_font_attr);
 
@@ -143,7 +144,7 @@ long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_f
 WORD _gdimm_font_man::get_glyph_index(WCHAR ch)
 {
 	WORD glyph_index;
-	
+
 	DWORD converted = GetGlyphIndices(_font_holder, &ch, 1, &glyph_index, GGI_MARK_NONEXISTING_GLYPHS);
 	assert(converted == 1);
 

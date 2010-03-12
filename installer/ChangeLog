@@ -10,6 +10,7 @@ gdimm:
 Installer:
   * Fix a bug of service installing in the installer script.
 
+
 0.5.2 (Rev b20e48eea2):
 gdimm:
   * Exclude bitmap with 16 bpp.

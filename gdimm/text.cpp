@@ -819,6 +819,8 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 	bool draw_success = false;
 	if (!glyphs.empty())
 	{
+		get_gamma_ramps(get_font_family(), render_mode & FT_RENDER_MODE_LCD);
+
 		draw_success = draw_glyphs(glyphs, glyph_pos, max_glyph_height, lprect, dc_bmp);
 		
 		for (size_t i = 0; i < glyphs.size(); i++)
