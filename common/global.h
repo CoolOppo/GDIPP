@@ -7,6 +7,12 @@ using namespace std;
 #define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
 #define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
 
+#ifdef _M_X64
+#define SVC_EVENT_NAME L"Global\\gdipp_svc_event_64"
+#else
+#define SVC_EVENT_NAME L"Global\\gdipp_svc_event_32"
+#endif
+
 template <typename T>
 class singleton
 {

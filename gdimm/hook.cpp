@@ -3,56 +3,10 @@
 #include "global.h"
 #include "text.h"
 
-ULONG svc_proc_id = 0;
 HMODULE h_self = NULL;
-
-EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
-{
-	BOOL b_ret;
-
-	if (remote_info->UserDataSize != sizeof(INJECTOR_TYPE))
-		return;
-
-	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
-	switch (injector_type)
-	{
-	case GDIPP_SERVICE:
-		svc_proc_id = remote_info->HostPID;
-		
-		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-		assert(b_ret);
-
-		break;
-	case GDIPP_LOADER:
-		// wake up suspended process
-		RhWakeUpProcess();
-		break;
-	}
-}
-
-DWORD WINAPI unload_self(LPVOID lpThreadParameter)
-{
-	critical_section lock;
-	FreeLibraryAndExitThread(h_self, 0);
-}
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
-	// check if the service process is running
-	// GetProcessVersion and OpenProcess are the two APIs that accept process ID as parameter
-	if (GetProcessVersion(svc_proc_id) == 0)
-	{
-		gdimm_hook::instance().disable_hook();
-
-		// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
-		critical_section lock;
-		HANDLE h_thread = CreateThread(NULL, 0, unload_self, NULL, 0, NULL);
-		assert(h_thread);
-
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	}
-
 	//if ((options & ETO_GLYPH_INDEX))
 	//if (c <= 7)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -244,6 +198,42 @@ CreateProcessAsUserW_hook(
 	}
 
 	return TRUE;
+}
+
+DWORD WINAPI unload_monitor(LPVOID lpThreadParameter)
+{
+	// wait until the service stops
+	HANDLE h_event = OpenEventW(SYNCHRONIZE, FALSE, SVC_EVENT_NAME);
+	WaitForSingleObject(h_event, INFINITE);
+	CloseHandle(h_event);
+
+	gdimm_hook::instance().disable_hook();
+	FreeLibraryAndExitThread(h_self, 0);
+}
+
+EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
+{
+	BOOL b_ret;
+
+	if (remote_info->UserDataSize != sizeof(INJECTOR_TYPE))
+		return;
+
+	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
+	switch (injector_type)
+	{
+	case GDIPP_SERVICE:
+		// force the foreground window of the injected process to redraw
+		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		assert(b_ret);
+
+		CreateThread(NULL, 0, unload_monitor, NULL, 0, NULL);
+
+		break;
+	case GDIPP_LOADER:
+		// wake up suspended process
+		RhWakeUpProcess();
+		break;
+	}
 }
 
 void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)

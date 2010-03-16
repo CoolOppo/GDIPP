@@ -1,0 +1,244 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="71596D05-3463-439F-A0D4-4D04768A5E87" UpgradeCode="6ED4EDF5-2D99-4B02-AD98-D58B1884CD9B"
+			 Name="gdipp !(bind.FileVersion.gdimm_dll)"
+			 Manufacturer="gdipp Project"
+			 Language="!(loc.LANGID)"
+			 Codepage="$(var.codepage)"
+			 Version="!(bind.FileVersion.gdimm_dll)">
+		<Package InstallerVersion="200" Compressed="yes" />
+
+		<?if $(var.Platform) = x86 ?>
+			<!-- if this is the x86 installer, do not install on 64-bit OS -->
+			<Condition Message="!(loc.VersionFailMsg)">
+				(VersionNT >= 501) AND (NOT VersionNT64)
+			</Condition>
+		<?else if $(var.Platform) = x64 ?>
+			<Condition Message="!(loc.VersionFailMsg)">
+				VersionNT64 >= 501
+			</Condition>
+		<?endif ?>
+
+		<Property Id="LOADMODE" Value="0">
+			<RegistrySearch Id="load_mode_registry" Root="HKCU" Key="Software\[ProductName]" Type="raw" />
+		</Property>
+
+		<Media Id="1" Cabinet="gdipp.cab" EmbedCab="yes" />
+
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<!-- install both 32-bit and 64-bit files in same directory -->
+				<Directory Id="INSTALLDIR" Name="gdipp">
+					<Component Id="gdipp_32" Guid="B94E958C-1843-4AEB-BB12-DEE8032CE0C8" Win64="no">
+						<File Name="gdipp_demo_32.exe" Source="$(var.SolutionDir)Release\gdipp_demo_32.exe" />
+						<File Name="gdipp_loader_32.exe" Source="$(var.SolutionDir)Release\gdipp_loader_32.exe" />
+						<File Name="gdimm_32.dll" Source="$(var.SolutionDir)Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
+					</Component>
+
+					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
+						<File Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Release\gdipp_svc_32.exe" KeyPath="yes" />
+						<ServiceInstall Id="gdipp_svc_32_inst"
+										Name="gdipp_svc_32"
+										DisplayName="gdipp Service (32 bit)"
+										Description="!(loc.gdippSvcDesc32)"
+										Start="auto"
+										Type="ownProcess"
+										LoadOrderGroup="UIGroup"
+										ErrorControl="normal">
+							<ServiceDependency Id="winmgmt" />
+						</ServiceInstall>
+						<ServiceControl Id="gdipp_svc_32_ctrl"
+										Name="gdipp_svc_32"
+										Start="install"
+										Stop="uninstall"
+										Remove="uninstall"
+										Wait="no" />
+						<Condition>LOADMODE = 0</Condition>
+					</Component>
+
+					<Component Id="gdipp_64" Guid="A7D01189-D404-4E93-B080-8E1687D328A1" Win64="yes">
+						<File Name="gdipp_demo_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_demo_64.exe" />
+						<File Name="gdipp_loader_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_loader_64.exe" />
+						<File Id="gdimm_dll" Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" Vital="yes" KeyPath="yes" />
+					</Component>
+
+					<Component Id="install_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">
+						<File Name="gdipp_svc_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_svc_64.exe" KeyPath="yes" />
+						<ServiceInstall Id="gdipp_svc_64_inst"
+										Name="gdipp_svc_64"
+										DisplayName="gdipp Service (64 bit)"
+										Description="!(loc.gdippSvcDesc64)"
+										Start="auto"
+										Type="ownProcess"
+										LoadOrderGroup="UIGroup"
+										ErrorControl="normal">
+							<ServiceDependency Id="winmgmt" />
+						</ServiceInstall>
+						<ServiceControl Id="gdipp_svc_64_ctrl"
+										Name="gdipp_svc_64"
+										Start="install"
+										Stop="uninstall"
+										Remove="uninstall"
+										Wait="no" />
+						<Condition>LOADMODE = 0</Condition>
+					</Component>
+
+					<Component Id="gdipp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462" NeverOverwrite="yes" Permanent="yes" Win64="no">
+						<File Name="setting.xml" Source="setting.xml" Vital="yes" KeyPath="yes" />
+					</Component>
+
+					<Component Id="gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
+						<File Name="README" Source="README" />
+						<File Name="ChangeLog" Source="ChangeLog" />
+					</Component>
+
+					<Directory Id="freetype_dir" Name="FreeType">
+						<Component Id="freetype_doc" Guid="E7D7F0FD-F6A0-4BE8-9230-0BA86461C975" Win64="no">
+							<File Id="freetype_readme" Name="README" Source="FreeType\README" KeyPath="yes" />
+							<File Name="FTL.TXT" Source="FreeType\FTL.TXT" />
+							<File Name="GPL.TXT" Source="FreeType\GPL.TXT" />
+							<File Id="freetype_license" Name="LICENSE.TXT" Source="FreeType\LICENSE.TXT" />
+						</Component>
+					</Directory>
+
+					<Directory Id="easyhook_dir" Name="EasyHook">
+						<Component Id="easyhook_doc" Guid="63BE47ED-8547-42F4-86D6-773B99098DAF" Win64="no">
+							<File Name="README.txt" Source="EasyHook\README.txt" KeyPath="yes" />
+							<File Id="easyhook_license" Name="LICENSE.txt" Source="EasyHook\LICENSE.txt" />
+						</Component>
+					</Directory>
+				</Directory>
+			</Directory>
+
+			<!-- copy EasyHook to system directory -->
+			<Directory Id="SystemFolder">
+				<Component Id="easyhook_32" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8" Win64="no">
+					<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
+				</Component>
+			</Directory>
+			
+			<Directory Id="System64Folder">
+				<Component Id="easyhook_64" Guid="BE321E3F-17B5-4F0F-BF0C-9470A5F1F933" Win64="yes">
+					<File Name="EasyHook64.dll" Source="$(var.SolutionDir)EasyHook\EasyHook64.dll" Vital="yes" KeyPath="yes" />
+				</Component>
+			</Directory>
+
+			<!-- set registry if registry load mode -->
+			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes" Win64="no">
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_32.dll]" KeyPath="yes" />
+				<Condition>LOADMODE = 1</Condition>
+			</Component>
+
+			<Component Id="set_loadappinit_dlls_32" Guid="C712E1E1-2AEB-4A6C-B474-B45DFEB349FF" Permanent="yes" Win64="no">
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="integer" Name="LoadAppInit_DLLs" Value="1" KeyPath="yes" />
+				<Condition>(VersionNT >= 600) AND (LOADMODE = 1)</Condition>
+			</Component>
+
+			<Component Id="set_appinit_dlls_64" Guid="0AE1E07B-10E8-4A72-BB1F-71DF3DF1DBAC" Permanent="yes" Win64="yes">
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_dll]" KeyPath="yes" />
+				<Condition>LOADMODE = 1</Condition>
+			</Component>
+
+			<Component Id="set_loadappinit_dlls_64" Guid="F6357385-87C1-4E49-A8EE-C505B7A93871" Permanent="yes" Win64="yes">
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="integer" Name="LoadAppInit_DLLs" Value="1" KeyPath="yes" />
+				<Condition>(VersionNT >= 600) AND (LOADMODE = 1)</Condition>
+			</Component>
+
+			<!-- create loader shortcut if loader load mode -->
+			<Directory Id="DesktopFolder" />
+			<Component Id="loader_shortcut_32" Guid="E7ECF638-8F20-4965-BC37-6EA384C59E47" NeverOverwrite="yes" Win64="no">
+				<!-- The registry value is to make ICE43 and ICE57 happy -->
+				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
+				<Shortcut Id="desktop_gdipp_loader_32" Name="gdipp Loader 32" Target="[!gdipp_loader_32.exe]" Directory="DesktopFolder" WorkingDirectory="INSTALLDIR" />
+				<Condition>LOADMODE = 2</Condition>
+			</Component>
+			
+			<Component Id="loader_shortcut_64" Guid="CD22D39C-4236-4D37-8583-319D02A809A2" NeverOverwrite="yes" Win64="yes">
+				<!-- The registry value is to make ICE43 and ICE57 happy -->
+				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
+				<Shortcut Id="desktop_gdipp_loader_64" Name="gdipp Loader 64" Target="[!gdipp_loader_64.exe]" Directory="DesktopFolder" WorkingDirectory="INSTALLDIR" />
+				<Condition>LOADMODE = 2</Condition>
+			</Component>
+
+			<!-- record the load mode in registry -->
+			<Component Id="set_load_mode" Guid="6A61B1BF-5927-463A-9FC6-7EB3ED7E3CB0" Win64="no">
+				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
+			</Component>
+		</Directory>
+
+		<CustomAction Id="reset_appinit_dlls"
+					  Directory="SystemFolder"
+					  ExeCommand='REG.EXE ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
+		<CustomAction Id="reset_loader_shortcut"
+					  Directory="SystemFolder"
+					  ExeCommand='REG.EXE ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
+		<CustomAction Id="reset_appinit_dlls_6432"
+					  Directory="SystemFolder"
+					  ExeCommand='REG.EXE ADD "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
+		<CustomAction Id="reset_loader_shortcut_6432"
+					  Directory="SystemFolder"
+					  ExeCommand='REG.EXE ADD "HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
+
+		<InstallExecuteSequence>
+			<Custom Action="reset_appinit_dlls" After="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
+			</Custom>
+			<Custom Action="reset_loader_shortcut" After="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT >= 600)
+			</Custom>
+			<!-- if this is the x64 installer, remember to reset the Wow6432Node values -->
+			<?if $(var.Platform) = x64 ?>
+				<Custom Action="reset_appinit_dlls_6432" After="InstallFinalize">
+					(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
+				</Custom>
+				<Custom Action="reset_loader_shortcut_6432" After="InstallFinalize">
+					(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT64 >= 600)
+				</Custom>
+			<?endif ?>
+		</InstallExecuteSequence>
+
+		<Feature Id="gdipp_all"
+				 Title="!(loc.gdippCompleteTitle)"
+				 Description="!(loc.gdippCompleteDesc)"
+					ConfigurableDirectory="INSTALLDIR"
+				 Display="expand"
+				 AllowAdvertise="no"
+				 Absent="disallow"
+				 Level="1">
+			<Feature Id="gdipp_32bit"
+					 Title="!(loc.gdipp32bitTitle)"
+					 Description="!(loc.gdipp32bitDesc)"
+					 AllowAdvertise="no"
+					 Level="1">
+				<ComponentRef Id="gdipp_32" />
+				<ComponentRef Id="easyhook_32" />
+				<ComponentRef Id="install_service_32" />
+				<ComponentRef Id="set_appinit_dlls_32" />
+				<ComponentRef Id="set_loadappinit_dlls_32" />
+				<ComponentRef Id="loader_shortcut_32" />
+			</Feature>
+			<Feature Id="gdipp_64bit"
+					 Title="!(loc.gdipp64bitTitle)"
+					 Description="!(loc.gdipp64bitDesc)"
+					 AllowAdvertise="no"
+					 Level="1">
+				<ComponentRef Id="gdipp_64" />
+				<ComponentRef Id="easyhook_64" />
+				<ComponentRef Id="install_service_64" />
+				<ComponentRef Id="set_appinit_dlls_64" />
+				<ComponentRef Id="set_loadappinit_dlls_64" />
+				<ComponentRef Id="loader_shortcut_64" />
+				<!-- do not show this feature in x86 installer -->
+				<Condition Level="0">NOT VersionNT64</Condition>
+			</Feature>
+			<ComponentRef Id="gdipp_doc" />
+			<ComponentRef Id="freetype_doc" />
+			<ComponentRef Id="easyhook_doc" />
+			<ComponentRef Id="gdipp_setting" />
+			<ComponentRef Id="set_load_mode" />
+		</Feature>
+
+		<UIRef Id="gdipp_WixUI_FeatureTree" />
+		<UIRef Id="WixUI_ErrorProgressText" />
+	</Product>
+</Wix>

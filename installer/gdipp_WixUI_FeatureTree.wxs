@@ -25,7 +25,8 @@
 
 			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1">Installed</Publish>
 			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">NOT Installed</Publish>
-			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="LoadModeDlg">1</Publish>
+			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed</Publish>
+			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="LoadModeDlg">NOT Installed</Publish>
 
 			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="LoadModeDlg" Order="1">NOT Installed OR WixUI_InstallMode = "Change"</Publish>
 			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed</Publish>
@@ -64,7 +65,7 @@
 				</Control>
 				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="372" Height="0" />
 				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
-					<Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+					<Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
 				</Control>
 				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
 					<Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish>

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "mon.h"
+#include "global.h"
 #include "setting.h"
 
 #ifdef _M_X64
@@ -63,35 +64,29 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	// report initial status to the SCM
 	set_svc_status(SERVICE_START_PENDING, NO_ERROR, 3000);
 
-	gdimm_setting::instance().init(NULL);
+	gdipp_setting::instance().init(NULL);
 
-	// monitor future processes
-	if (!svc_mon::instance().start_monitor())
-	{
-		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		return;
-	}
-
-	svc_stop_event = CreateEvent(
-		NULL,    // default security attributes
-		TRUE,    // manual reset event
-		FALSE,   // not signaled
-		NULL);   // no name
+	// create named event to synchronize between service and gdimm
+	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, SVC_EVENT_NAME);
 	if (svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
 
-	// report running status when initialization is complete
-	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
+	// monitor future processes
+	if (svc_mon::instance().start_monitor())
+	{
+		// report running status when initialization is complete
+		set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 
-	// wait for stop event
-	WaitForSingleObject(svc_stop_event, INFINITE);
+		// wait for stop event
+		WaitForSingleObject(svc_stop_event, INFINITE);
 
-	set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
+		set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
 
-	svc_mon::instance().stop_monitor();
+		svc_mon::instance().stop_monitor();
+	}
 
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
@@ -102,17 +97,21 @@ int APIENTRY _tWinMain(
 	LPTSTR    lpCmdLine,
 	int       nCmdShow)
 {
-	BOOL b_ret;
-
+#ifdef NDEBUG
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
 		{ SVC_NAME, (LPSERVICE_MAIN_FUNCTION) svc_main },
 		{ NULL, NULL },
 	};
 
-	b_ret = StartServiceCtrlDispatcher(dispatch_table);
-	assert(b_ret);
+	StartServiceCtrlDispatcher(dispatch_table);
+#else
+	gdipp_setting::instance().init(NULL);
 
-	//svc_mon::instance().start_monitor();
-	//Sleep(INFINITE);
+	if (svc_mon::instance().start_monitor())
+	{
+		Sleep(3000);
+		svc_mon::instance().stop_monitor();
+	}
+#endif
 }

@@ -15,7 +15,7 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	ft_error = FT_Library_SetLcdFilter(ft_lib, (FT_LcdFilter) gdimm_setting::instance().get_setting_items().lcd_filter);
+	ft_error = FT_Library_SetLcdFilter(ft_lib, (FT_LcdFilter) gdipp_setting::instance().get_gdimm_items().lcd_filter);
 
 	ft_error = FTC_Manager_New(ft_lib, 0, 0, 0, face_requester, NULL, &ft_cache_man);
 	assert(ft_error == 0);

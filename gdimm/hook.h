@@ -8,9 +8,8 @@ class _gdimm_hook
 {
 	vector<TRACED_HOOK_HANDLE> _hooks;
 
-	void install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
-
 public:
+	void install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 	bool hook();
 	void disable_hook();
 	void unhook();
@@ -18,5 +17,4 @@ public:
 
 typedef singleton<_gdimm_hook> gdimm_hook;
 
-extern ULONG svc_proc_id;
 extern HMODULE h_self;

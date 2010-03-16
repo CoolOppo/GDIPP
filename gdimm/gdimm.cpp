@@ -16,8 +16,8 @@ BOOL APIENTRY DllMain(
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		gdimm_setting::instance().init(hModule);
-		if (gdimm_setting::instance().is_name_excluded(NULL))
+		gdipp_setting::instance().init(hModule);
+		if (gdipp_setting::instance().is_name_excluded(NULL))
 			return FALSE;
 
 		h_self = hModule;

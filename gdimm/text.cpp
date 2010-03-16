@@ -58,7 +58,7 @@ int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
 bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const
 {
-	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+	const gdimm_setting_items &settings = gdipp_setting::instance().get_gdimm_items(font_family);
 
 	// non-antialiased font
 	// draw with monochrome mode
@@ -90,7 +90,7 @@ bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Rend
 
 FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const
 {
-	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(font_family);
+	const gdimm_setting_items &settings = gdipp_setting::instance().get_gdimm_items(font_family);
 	FT_UInt32 load_flag = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
 		(settings.embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
@@ -198,7 +198,7 @@ void _gdimm_text::get_glyph_clazz()
 
 void _gdimm_text::get_gamma_ramps(const WCHAR *font_family, bool is_lcd)
 {
-	const gdimm_setting_items::gamma_setting gamma = gdimm_setting::instance().get_setting_items(font_family).gamma;
+	const gdimm_setting_items::gamma_setting gamma = gdipp_setting::instance().get_gdimm_items(font_family).gamma;
 
 	if (is_lcd)
 	{
@@ -464,7 +464,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
-	const bool zero_alpha_channel = gdimm_setting::instance().get_setting_items().zero_alpha;
+	const bool zero_alpha_channel = gdipp_setting::instance().get_gdimm_items().zero_alpha;
 
 	// rows about to be copied
 	for (int j = 0; j < src_height; j++)
@@ -624,7 +624,7 @@ bool _gdimm_text::draw_glyphs(
 
 	// 3.
 
-	const gdimm_setting_items::shadow_setting &shadow = gdimm_setting::instance().get_setting_items(get_font_family()).shadow;
+	const gdimm_setting_items::shadow_setting &shadow = gdipp_setting::instance().get_gdimm_items(get_font_family()).shadow;
 	for (size_t i = 0; i < glyphs.size(); i++)
 	{
 		/*
@@ -735,7 +735,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 	if (!get_render_mode(dc_bmp.bmBitsPixel, get_font_family(), render_mode))
 		return false;
 
-	const gdimm_setting_items &settings = gdimm_setting::instance().get_setting_items(get_font_family());
+	const gdimm_setting_items &settings = gdipp_setting::instance().get_gdimm_items(get_font_family());
 
 	// Windows renders monochrome bitmap better than FreeType
 	if (render_mode == FT_RENDER_MODE_MONO && !settings.render_mono)
@@ -854,7 +854,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 		return false;
 
 	// Windows renders monochrome bitmap better than FreeType
-	if (render_mode == FT_RENDER_MODE_MONO && !gdimm_setting::instance().get_setting_items(get_font_family()).render_mono)
+	if (render_mode == FT_RENDER_MODE_MONO && !gdipp_setting::instance().get_gdimm_items(get_font_family()).render_mono)
 		return false;
 
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
@@ -972,7 +972,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 			return false;
 
 		// glyph outline -> glyph bitmap conversion
-		const float embolden = gdimm_setting::instance().get_setting_items(final_font_family).embolden;
+		const float embolden = gdipp_setting::instance().get_gdimm_items(final_font_family).embolden;
 		if (embolden != 0)
 		{
 			FT_Glyph src_glyph = glyph;
@@ -1044,14 +1044,14 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	if (!get_dc_metrics())
 		return false;
 
-	if (gdimm_setting::instance().is_name_excluded(get_font_family()))
+	if (gdipp_setting::instance().is_name_excluded(get_font_family()))
 		return false;
 
 	// ignore rotated DC
 	if (_font_attr.lfEscapement % 3600 != 0)
 		return false;
 
-	const LONG max_height = gdimm_setting::instance().get_setting_items(get_font_family()).max_height;
+	const LONG max_height = gdipp_setting::instance().get_gdimm_items(get_font_family()).max_height;
 	if (max_height != 0 && max_height < _outline_metrics->otmTextMetrics.tmHeight)
 		return false;
 
@@ -1093,7 +1093,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 
 bool _gdimm_text::text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
 {
-	if (gdimm_setting::instance().get_setting_items(get_font_family()).freetype_loader)
+	if (gdipp_setting::instance().get_gdimm_items(get_font_family()).freetype_loader)
 		return text_out_ft(lpString, c, lprect, lpDx);
 	else
 	{

@@ -3,24 +3,25 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>3.5</ProductVersion>
-    <ProjectGuid>{9a655bd4-dad6-4289-916c-01065e4816cf}</ProjectGuid>
+    <ProjectGuid>{c777953b-f65d-44ad-9226-0dfa5306d0f9}</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
     <OutputName>gdipp_$(Platform)</OutputName>
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
+    <Name>installer_32_en-us</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <LinkerAdditionalOptions>-ext WixUIExtension</LinkerAdditionalOptions>
     <SuppressValidation>True</SuppressValidation>
     <Cultures>en-us</Cultures>
     <DefineConstants>codepage=1252</DefineConstants>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="installer_32.wxs" />
-    <Compile Include="gdipp_WixUI_InstallDir.wxs" />
+    <Compile Include="installer.wxs" />
+    <Compile Include="gdipp_WixUI_FeatureTree.wxs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="installer_en-us.wxl" />
@@ -34,8 +35,4 @@
 	<Target Name="AfterBuild">
 	</Target>
 	-->
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
 </Project>

@@ -4,7 +4,6 @@
 #include "setting.h"
 #include <easyhook.h>
 #include <tlhelp32.h>
-#include <shlwapi.h>
 
 sink_inject::sink_inject()
 {
@@ -30,9 +29,10 @@ bool sink_inject::inject(LONG proc_id)
 	{
 		do
 		{
-			// exclude the trailing "32.dll" and "64.dll"
+			// full path without the trailing "32.dll" and "64.dll"
 			if (_wcsnicmp(me32.szExePath, _gdimm_path_32, wcslen(_gdimm_path_32) - 6) == 0)
 			{
+				// gdimm is loaded
 				CloseHandle(h_snapshot);
 				return false;
 			}
@@ -95,7 +95,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		if (gdimm_setting::instance().is_name_excluded(V_BSTR(&var_exe_name)))
+		if (gdipp_setting::instance().is_name_excluded(V_BSTR(&var_exe_name)))
 		{
 			VariantClear(&var_exe_name);
 			proc_obj->Release();

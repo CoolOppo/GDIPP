@@ -123,6 +123,12 @@ long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_f
 	if (iter == _font_ids.end())
 	{
 		LOGFONTW linked_font_attr = font_attr;
+
+		/*
+		this reset is essential to make GetGlyphIndices work correctly
+		for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
+		if create HFONT of Microsoft YaHei with such lfOutPrecision, GetGlyphIndices always fails
+		*/
 		linked_font_attr.lfOutPrecision = OUT_DEFAULT_PRECIS;
 		wcsncpy_s(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
 		HFONT new_hfont = CreateFontIndirectW(&linked_font_attr);

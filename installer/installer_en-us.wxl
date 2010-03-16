@@ -567,7 +567,7 @@
 	<String Id="UITextVolumeCostVolume" Overridable="yes">Volume</String>
 
 	<String Id="LANGID" Overridable="yes">1033</String>
-	<String Id="VersionFailMsg" Overridable="yes">[ProductName] cannot be installed on systems earlier than Windows XP.</String>
+	<String Id="VersionFailMsg" Overridable="yes">Version incompatible. [ProductName] cannot be installed on systems earlier than Windows XP.</String>
 
 	<String Id="LoadModeDlg_Title" Overridable="yes">gdipp Load Mode</String>
 	<String Id="LoadModeDlg_Description" Overridable="yes">Choose the load mode for gdipp.</String>

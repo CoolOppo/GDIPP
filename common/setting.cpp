@@ -41,11 +41,17 @@ gdimm_setting_items::gdimm_setting_items()
 	zero_alpha = false;
 }
 
-_gdimm_setting::_gdimm_setting()
+service_setting_items::service_setting_items()
+{
+	poll_interval = L"0.5";
+}
+
+_gdipp_setting::_gdipp_setting()
 {
 	DWORD dw_ret;
 
-	_setting_branchs[TEXT(COMMON_BRANCH_NAME)] = gdimm_setting_items();
+	_gdimm_branches[TEXT(GDIMM_COMMON_NAME)] = gdimm_setting_items();
+	_service_setting = service_setting_items();
 
 	dw_ret = GetModuleFileNameW(NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
@@ -53,7 +59,7 @@ _gdimm_setting::_gdimm_setting()
 	PathStripPathW(_process_name);
 }
 
-void _gdimm_setting::load_settings(const xml_node &context_node, const gdimm_setting_items &default_items, gdimm_setting_items &settings)
+void _gdipp_setting::load_settings(const xml_node &context_node, const gdimm_setting_items &default_items, gdimm_setting_items &settings)
 {
 	evaluate_to_number(context_node, "auto_hinting", default_items.auto_hinting, settings.auto_hinting);
 	evaluate_to_number(context_node, "embedded_bitmap", default_items.embedded_bitmap, settings.embedded_bitmap);
@@ -78,15 +84,15 @@ void _gdimm_setting::load_settings(const xml_node &context_node, const gdimm_set
 	evaluate_to_number(context_node, "shadow/alpha", default_items.shadow.alpha, settings.shadow.alpha);
 }
 
-void _gdimm_setting::load_common(const xml_node &context_node)
+void _gdipp_setting::load_common(const xml_node &context_node)
 {
-	const xml_node common_node = context_node.select_single_node(COMMON_BRANCH_NAME).node();
+	const xml_node common_node = context_node.select_single_node(GDIMM_COMMON_NAME).node();
 
 	// the default items should never be used
-	load_settings(common_node, _setting_branchs[TEXT(COMMON_BRANCH_NAME)], _setting_branchs[TEXT(COMMON_BRANCH_NAME)]);
+	load_settings(common_node, _gdimm_branches[TEXT(GDIMM_COMMON_NAME)], _gdimm_branches[TEXT(GDIMM_COMMON_NAME)]);
 }
 
-void _gdimm_setting::load_branchs(const xml_node &context_node, const gdimm_setting_items &default_items, const char *xpath)
+void _gdipp_setting::load_branchs(const xml_node &context_node, const gdimm_setting_items &default_items, const char *xpath)
 {
 	xpath_node_set target_node_set = context_node.select_nodes(xpath);
 	for (xpath_node_set::const_iterator set_iter = target_node_set.begin(); set_iter != target_node_set.end(); set_iter++)
@@ -107,16 +113,16 @@ void _gdimm_setting::load_branchs(const xml_node &context_node, const gdimm_sett
 		assert(name_len != 0);
 
 		// create new setting branch if necessary, otherwise use the existing
-		setting_map::const_iterator branch_iter = _setting_branchs.find(branch_name);
+		gdimm_map::const_iterator branch_iter = _gdimm_branches.find(branch_name);
 
-		if (branch_iter == _setting_branchs.end())
-			_setting_branchs[branch_name] = gdimm_setting_items();
+		if (branch_iter == _gdimm_branches.end())
+			_gdimm_branches[branch_name] = gdimm_setting_items();
 
-		load_settings(curr_node, default_items, _setting_branchs[branch_name]);
+		load_settings(curr_node, default_items, _gdimm_branches[branch_name]);
 	}
 }
 
-void _gdimm_setting::load_exclude(const xml_node &context_node)
+void _gdipp_setting::load_exclude(const xml_node &context_node)
 {
 	int name_len;
 
@@ -134,7 +140,7 @@ void _gdimm_setting::load_exclude(const xml_node &context_node)
 	}
 }
 
-bool _gdimm_setting::init(HMODULE h_module)
+bool _gdipp_setting::init(HMODULE h_module)
 {
 	// get setting file path
 	WCHAR setting_path[MAX_PATH];
@@ -148,19 +154,25 @@ bool _gdimm_setting::init(HMODULE h_module)
 	xml_parse_result xml_ret = xml_doc.load(f);
 	assert(xml_ret);
 
-	// if the setting is needed by gdimm, the module handle is not NULL
-	if (h_module != NULL)
+	if (h_module == NULL)
 	{
+		// the setting is requested by service
+
+	}
+	else
+	{
+		// the setting is requested by gdimm
+
 		const xml_node gdimm_node = xml_doc.select_single_node("/gdipp/gdimm").node();
 		load_common(gdimm_node);
 
-		const gdimm_setting_items &common_items = _setting_branchs[TEXT(COMMON_BRANCH_NAME)];
+		const gdimm_setting_items &common_items = _gdimm_branches[TEXT(GDIMM_COMMON_NAME)];
 		load_branchs(gdimm_node, common_items, "process");
 
-		if (_setting_branchs.find(_process_name) == _setting_branchs.end())
+		if (_gdimm_branches.find(_process_name) == _gdimm_branches.end())
 			load_branchs(gdimm_node, common_items, "font");
 		else
-			load_branchs(gdimm_node, _setting_branchs[_process_name], "font");
+			load_branchs(gdimm_node, _gdimm_branches[_process_name], "font");
 	}
 
 	load_exclude(xml_doc);
@@ -169,7 +181,7 @@ bool _gdimm_setting::init(HMODULE h_module)
 	return true;
 }
 
-bool _gdimm_setting::is_name_excluded(const WCHAR *name) const
+bool _gdipp_setting::is_name_excluded(const WCHAR *name) const
 {
 	set<const wstring, string_ci_less>::const_iterator iter;
 
@@ -181,16 +193,16 @@ bool _gdimm_setting::is_name_excluded(const WCHAR *name) const
 	return (iter != _exclude_names.end());
 }
 
-const gdimm_setting_items &_gdimm_setting::get_setting_items(const WCHAR *font_family) const
+const gdimm_setting_items &_gdipp_setting::get_gdimm_items(const WCHAR *font_family) const
 {
-	setting_map::const_iterator branch_iter = _setting_branchs.find(_process_name);
+	gdimm_map::const_iterator branch_iter = _gdimm_branches.find(_process_name);
 
 	// if not exist the specified branch, fallback to current process name branch and finally the common branch
-	if (branch_iter == _setting_branchs.end())
+	if (branch_iter == _gdimm_branches.end())
 	{
-		branch_iter = _setting_branchs.find(font_family);
-		if (branch_iter == _setting_branchs.end())
-			branch_iter = _setting_branchs.find(TEXT(COMMON_BRANCH_NAME));
+		branch_iter = _gdimm_branches.find(font_family);
+		if (branch_iter == _gdimm_branches.end())
+			branch_iter = _gdimm_branches.find(TEXT(GDIMM_COMMON_NAME));
 	}
 
 	return branch_iter->second;
