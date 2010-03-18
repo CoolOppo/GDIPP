@@ -37,7 +37,7 @@
 			</shadow>
 			<subpixel_render>1</subpixel_render>
 			<zero_alpha>0</zero_alpha>
-		</common>
+		</font>
 	</gdimm>
 	
 	<service>

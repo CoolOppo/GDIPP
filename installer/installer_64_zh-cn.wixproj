@@ -19,7 +19,7 @@ del $(Cultures).mst</PostBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
-    <LinkerAdditionalOptions>-ext WixUIExtension</LinkerAdditionalOptions>
+    <LinkerAdditionalOptions>-ext WixUIExtension -ext WixUtilExtension</LinkerAdditionalOptions>
     <SuppressValidation>True</SuppressValidation>
     <Cultures>zh-cn</Cultures>
     <DefineConstants>codepage=936</DefineConstants>

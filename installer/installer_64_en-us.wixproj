@@ -12,7 +12,7 @@
     <Name>installer_32_en-us</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
-    <LinkerAdditionalOptions>-ext WixUIExtension</LinkerAdditionalOptions>
+    <LinkerAdditionalOptions>-ext WixUIExtension -ext WixUtilExtension</LinkerAdditionalOptions>
     <SuppressValidation>True</SuppressValidation>
     <Cultures>en-us</Cultures>
     <DefineConstants>codepage=1252</DefineConstants>
