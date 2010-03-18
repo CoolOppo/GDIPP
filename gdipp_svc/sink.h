@@ -1,18 +1,12 @@
 #pragma once
 
-#include <wbemidl.h>
-
 class sink_inject: public IWbemObjectSink
 {
 	LONG _ref;
 
-	WCHAR _gdimm_path_64[MAX_PATH];
-	WCHAR _gdimm_path_32[MAX_PATH];
-
-	bool inject(LONG proc_id);
-
 public:
-	sink_inject();
+	sink_inject()
+	{ _ref = 0; }
 	virtual ULONG STDMETHODCALLTYPE AddRef()
 	{ return InterlockedIncrement(&_ref); }
 

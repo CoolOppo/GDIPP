@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "mon.h"
-#include "global.h"
-#include "setting.h"
+#include "inject.h"
 
 #ifdef _M_X64
 #define SVC_NAME TEXT("gdipp_svc_64")
@@ -74,6 +73,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
+	svc_injector::instance().init_inject();
+
 	// monitor future processes
 	if (svc_mon::instance().start_monitor())
 	{
@@ -107,6 +108,8 @@ int APIENTRY _tWinMain(
 	StartServiceCtrlDispatcher(dispatch_table);
 #else
 	gdipp_setting::instance().init(NULL);
+
+	svc_injector::instance().init_inject();
 
 	if (svc_mon::instance().start_monitor())
 	{

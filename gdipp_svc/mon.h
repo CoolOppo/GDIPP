@@ -1,8 +1,5 @@
 #pragma once
 
-#include "global.h"
-#include <wbemidl.h>
-
 class _svc_mon
 {
 	IWbemLocator *_loc;

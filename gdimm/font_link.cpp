@@ -31,7 +31,7 @@ void _gdimm_font_link::get_font_link_info()
 	BYTE *value_data;
 
 	// font file name -> font face name mapping
-	map<const wstring, wstring, string_ci_less> fonts_table;
+	map<const wstring, wstring, wstring_ci_less> fonts_table;
 
 	// get font_file_name -> font_face mapping from the "Fonts" registry key
 
@@ -106,7 +106,7 @@ void _gdimm_font_link::get_font_link_info()
 				}
 				else
 				{
-					map<const wstring, wstring, string_ci_less>::const_iterator iter = fonts_table.find(curr_font);
+					map<const wstring, wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
 					if (iter != fonts_table.end())
 						font_name = iter->second;
 				}

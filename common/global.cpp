@@ -1,7 +1,4 @@
 #include "stdafx.h"
-#include "global.h"
-#include <shlwapi.h>
-#include <cstdio>
 
 CRITICAL_SECTION critical_section::_cs;
 
@@ -18,6 +15,26 @@ void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_pa
 
 	b_ret = PathAppendW(source_path, file_name);
 	assert(b_ret);
+}
+
+const WCHAR *metric_family_name(const BYTE *metric_buf)
+{
+	return (const WCHAR*)(metric_buf + (UINT)((OUTLINETEXTMETRICW*) metric_buf)->otmpFamilyName);
+}
+
+const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
+}
+
+const WCHAR *metric_face_name(const BYTE *metric_buf)
+{
+	return (const WCHAR*)(metric_buf + (UINT)((OUTLINETEXTMETRICW*) metric_buf)->otmpFaceName);
+}
+
+const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
 }
 
 #define debug_file_name "C:\\gdimm_debug.txt"

@@ -1,13 +1,8 @@
 #pragma once
 
-#include "global.h"
-#include <map>
-#include <vector>
-using namespace std;
-
 class _gdimm_font_link
 {
-	typedef map<const wstring, vector<wstring>, string_ci_less> link_map;
+	typedef map<const wstring, vector<wstring>, wstring_ci_less> link_map;
 
 	link_map _link_table;
 

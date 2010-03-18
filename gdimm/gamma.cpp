@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "gamma.h"
-#include <cmath>
 
 _gdimm_gamma::~_gdimm_gamma()
 {

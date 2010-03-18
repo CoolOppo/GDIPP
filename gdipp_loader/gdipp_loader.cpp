@@ -1,8 +1,4 @@
 #include "stdafx.h"
-#include "global.h"
-#include <easyhook.h>
-#include <shellapi.h>
-#include <shlwapi.h>
 
 int APIENTRY wWinMain(
 	HINSTANCE hInstance,

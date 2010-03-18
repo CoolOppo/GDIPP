@@ -1,9 +1,5 @@
 #pragma once
 
-#include <easyhook.h>
-#include <vector>
-using namespace std;
-
 class _gdimm_hook
 {
 	vector<TRACED_HOOK_HANDLE> _hooks;

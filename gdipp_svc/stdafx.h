@@ -17,5 +17,21 @@
 #include <memory.h>
 #include <tchar.h>
 #include <assert.h>
+#include <tlhelp32.h>
+#include <shlwapi.h>
+#include <objbase.h>
+#include <wbemidl.h>
+#include <comutil.h>
+
+#include <string>
+#include <sstream>
+#include <list>
+#include <map>
+#include <fstream>
+#include <regex>
 
 // TODO: reference additional headers your program requires here
+#include "global.h"
+#include "setting.h"
+
+#include <easyhook.h>

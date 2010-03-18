@@ -43,7 +43,6 @@
 										Description="!(loc.gdippSvcDesc32)"
 										Start="auto"
 										Type="ownProcess"
-										LoadOrderGroup="UIGroup"
 										ErrorControl="normal">
 							<ServiceDependency Id="winmgmt" />
 						</ServiceInstall>

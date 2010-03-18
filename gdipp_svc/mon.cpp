@@ -1,10 +1,6 @@
 #include "stdafx.h"
 #include "mon.h"
 #include "sink.h"
-#include "setting.h"
-#include <objbase.h>
-#include <wbemidl.h>
-#include <comutil.h>
 
 void _svc_mon::release_all()
 {
@@ -69,13 +65,17 @@ bool _svc_mon::start_monitor()
 	hr = _stub_unk->QueryInterface(IID_IWbemObjectSink, (void**) &_stub_sink);
 	assert(SUCCEEDED(hr));
 
+	const WCHAR *interval_str = gdipp_setting::instance().get_service_setting("poll_interval");
+	if (interval_str == NULL)
+		interval_str = L"0.5";
+
 	const int query_str_len = 100;
 	WCHAR query_str[query_str_len];
 	swprintf(
 		query_str,
 		query_str_len,
 		L"SELECT * FROM __InstanceCreationEvent WITHIN %s WHERE TargetInstance ISA 'Win32_Process'",
-		gdipp_setting::instance().get_service_items().poll_interval);
+		interval_str);
 	hr = _svc->ExecNotificationQueryAsync(
 		bstr_t("WQL"),
 		bstr_t(query_str),

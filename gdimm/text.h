@@ -1,10 +1,5 @@
 #pragma once
 
-#include "global.h"
-#include FT_GLYPH_H
-#include <vector>
-using namespace std;
-
 class _gdimm_text
 {
 	// device context attributes
@@ -17,7 +12,7 @@ class _gdimm_text
 	COLORREF _bg_color;
 
 	// metrics
-	BYTE *_metric_buf;
+	vector<BYTE> _metric_buf;
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 
@@ -29,25 +24,21 @@ class _gdimm_text
 
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
+	static void oblique_outline(const FT_Outline *outline, double angle);
 	
-	BITMAP get_dc_bmp() const;
-	bool get_render_mode(WORD dc_bpp, const WCHAR *font_family, FT_Render_Mode &render_mode) const;
-	FT_UInt32 get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_family) const;
+	BITMAPINFO get_dc_bmp_info() const;
+	bool get_render_mode(WORD dc_bpp, const WCHAR *font_name, FT_Render_Mode &render_mode) const;
+	FT_UInt32 get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_name) const;
 	bool get_dc_metrics();
 	void get_glyph_clazz();
-	void get_gamma_ramps(const WCHAR *font_family, bool is_lcd);
-	const WCHAR *get_font_family() const
-	{ return (const WCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpFamilyName); }
-
-	const WCHAR *get_font_style() const
-	{ return (const WCHAR*)(_metric_buf + (UINT) _outline_metrics->otmpStyleName); }
+	void get_gamma_ramps(const WCHAR *font_name, bool is_lcd);
 
 	FT_BitmapGlyph outline_to_bitmap(
 		WCHAR ch,
 		UINT ggo_format,
 		const MAT2 &matrix,
 		FT_Render_Mode render_mode,
-		float embolden,
+		double embolden,
 		GLYPHMETRICS &glyph_metrics) const;
 	void set_bmp_bits_mono(
 		const FT_Bitmap &src_bitmap,
@@ -61,31 +52,26 @@ class _gdimm_text
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
 		WORD dest_bpp,
-		BYTE alpha) const;
+		WORD alpha) const;
 	void set_bmp_bits_lcd(
 		const FT_Bitmap &src_bitmap,
 		int x_in_dest, int y_in_dest,
 		BYTE *dest_bits,
 		int dest_width, int dest_height,
 		WORD dest_bpp,
-		BYTE alpha) const;
+		WORD alpha,
+		bool zero_alpha) const;
 	bool draw_glyphs(
 		const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,
 		int max_glyph_height,
 		CONST RECT *lprect,
-		const BITMAP &dc_bmp) const;
+		const BITMAPINFO &dc_bmp_info) const;
 
 	bool text_out_ggo(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 	bool text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 
 public:
-	_gdimm_text()
-	{ _metric_buf = NULL; }
-
-	~_gdimm_text()
-	{ if (_metric_buf != NULL) delete[] _metric_buf; }
-
 	bool init(HDC hdc, int x, int y, UINT options);
 	bool text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 };

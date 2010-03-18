@@ -17,5 +17,13 @@
 #include <memory.h>
 #include <tchar.h>
 #include <assert.h>
+#include <shellapi.h>
+#include <shlwapi.h>
+
+#include <string>
+#include <sstream>
 
 // TODO: reference additional headers your program requires here
+#include "global.h"
+
+#include <easyhook.h>

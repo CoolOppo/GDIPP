@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "font_man.h"
-#include <mmsystem.h>
 
 // table name for GetFontData() to get whole ttc file data
-#define ttcf_header mmioFOURCC('t', 't', 'c', 'f')
+#define TTCF_FONT_TABLE mmioFOURCC('t', 't', 'c', 'f')
 
 _gdimm_font_man::~_gdimm_font_man()
 {
@@ -35,39 +34,63 @@ unsigned long _gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long off
 	return read_size;
 }
 
-DWORD _gdimm_font_man::get_font_size(HFONT hfont, DWORD *table_header)
+HFONT _gdimm_font_man::create_linked_font(const LOGFONTW &font_attr, const WCHAR *font_family)
+{
+	LOGFONTW new_font_attr = font_attr;
+	
+	/*
+	this reset is essential to make GetGlyphIndices work correctly
+	for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
+	if create HFONT of Microsoft YaHei with such lfOutPrecision, GetGlyphIndices always fails
+	*/
+	new_font_attr.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	wcsncpy_s(new_font_attr.lfFaceName, font_family, LF_FACESIZE);
+
+	const HFONT new_hfont = CreateFontIndirectW(&new_font_attr);
+	assert(new_hfont != NULL);
+	SelectObject(_font_holder, new_hfont);
+
+	UINT metric_size = GetOutlineTextMetricsW(_font_holder, 0, NULL);
+	if (metric_size == 0)
+		return NULL;
+
+	_metric_buf.resize(metric_size);
+	metric_size = GetOutlineTextMetricsW(_font_holder, metric_size, (OUTLINETEXTMETRICW*) &_metric_buf[0]);
+	assert(metric_size != 0);
+
+	return new_hfont;
+}
+
+DWORD _gdimm_font_man::get_font_size(HFONT hfont, DWORD &table_header)
 {
 	SelectObject(_font_holder, hfont);
 
-	DWORD header = ttcf_header;
+	table_header = TTCF_FONT_TABLE;
 
 	// specify 0 as table index to retrieve font data from ttf files
 	// specify ttcf to retrieve from ttc files
-	DWORD font_size = GetFontData(_font_holder, header, 0, NULL, 0);
+	DWORD font_size = GetFontData(_font_holder, table_header, 0, NULL, 0);
 	if (font_size == GDI_ERROR)
 	{
-		header = 0;
-		font_size = GetFontData(_font_holder, header, 0, NULL, 0);
+		table_header = 0;
+		font_size = GetFontData(_font_holder, table_header, 0, NULL, 0);
 		assert(font_size != GDI_ERROR);
 	}
-
-	if (table_header != NULL)
-		*table_header = header;
 
 	return font_size;
 }
 
-void _gdimm_font_man::use_mapping(const WCHAR *font_full_name)
+void _gdimm_font_man::use_mapping(const WCHAR *font_face)
 {
 	// the mapping name consists of two parts: prefix and font full name
 	// prefix is fixed for all mapping names, defined in mapping_prefix
 	// font full name is extracted from physical font file via GetOutlineTextMetrics()
 
-	const unsigned int font_id = _font_ids[font_full_name];
+	const unsigned int font_id = _font_ids[font_face];
 	font_info &info = _loaded_fonts[font_id];
 
 	const wstring mapping_prefix = L"Global\\gdimm_";
-	const wstring mapping_name = mapping_prefix + font_full_name;
+	const wstring mapping_name = mapping_prefix + font_face;
 	const HANDLE h_mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
 	assert(h_mapping != NULL);
 	const bool new_mapping = (GetLastError() != ERROR_ALREADY_EXISTS);
@@ -84,67 +107,60 @@ void _gdimm_font_man::use_mapping(const WCHAR *font_full_name)
 	}
 }
 
-long _gdimm_font_man::register_font(HFONT hfont, const WCHAR *font_family, const WCHAR *font_style)
+long _gdimm_font_man::register_font(HFONT new_hfont, const WCHAR *font_face, bool *font_exist)
 {
-	const wstring font_full_name = wstring(font_family) + L" " + font_style;
-	const map<wstring, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
+	SelectObject(_font_holder, new_hfont);
 
-	SelectObject(_font_holder, hfont);
+	const map<wstring, long>::const_iterator iter = _font_ids.find(font_face);
+	bool found_hfont = (iter != _font_ids.end());
 
-	if (iter == _font_ids.end())
+	if (font_exist != NULL)
+		*font_exist = found_hfont;
+
+	if (found_hfont)
 	{
-		const long new_font_id = _loaded_fonts.size();
-		_font_ids[font_full_name] = new_font_id;
-
-		font_info new_font = {0};
-		new_font.hfont = hfont;
-		new_font.owned = false;
-		new_font.stream.size = get_font_size(hfont, &new_font.table_header);
-		new_font.stream.descriptor.value = new_font_id;
-		new_font.stream.read = stream_IoFunc;
-		new_font.stream.close = stream_CloseFunc;
-
-		_loaded_fonts[new_font_id] = new_font;
-		//use_mapping(font_full_name);
-		return new_font_id;
+		_loaded_fonts[iter->second].hfont = new_hfont;
+		return iter->second;
 	}
 	else
 	{
-		_loaded_fonts[iter->second].hfont = hfont;
-		return iter->second;
+		const long new_font_id = _loaded_fonts.size();
+		_font_ids[font_face] = new_font_id;
+
+		font_info new_font_info = {0};
+		new_font_info.hfont = new_hfont;
+		new_font_info.owned = false;
+		new_font_info.stream.size = get_font_size(new_hfont, new_font_info.table_header);
+		new_font_info.stream.descriptor.value = new_font_id;
+		new_font_info.stream.read = stream_IoFunc;
+		new_font_info.stream.close = stream_CloseFunc;
+
+		_loaded_fonts[new_font_id] = new_font_info;
+		//use_mapping(font_face);
+		return new_font_id;
 	}
 }
 
-long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *font_style)
+long _gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *&font_face)
 {
-	const wstring font_full_name = wstring(font_family) + L" " + font_style;
-	const map<wstring, long>::const_iterator iter = _font_ids.find(font_full_name.c_str());
+	const HFONT linked_font = create_linked_font(font_attr, font_family);
+	if (linked_font == NULL)
+		return -1;
 
-	if (iter == _font_ids.end())
+	// check if the linked font is registered
+	font_face = metric_face_name(&_metric_buf[0]);
+	bool font_exist;
+	const long font_id = register_font(linked_font, font_face, &font_exist);
+	_loaded_fonts[font_id].owned = true;
+
+	// if registered, use the existing hfont, and delete the new one
+	if (font_exist)
 	{
-		LOGFONTW linked_font_attr = font_attr;
-
-		/*
-		this reset is essential to make GetGlyphIndices work correctly
-		for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
-		if create HFONT of Microsoft YaHei with such lfOutPrecision, GetGlyphIndices always fails
-		*/
-		linked_font_attr.lfOutPrecision = OUT_DEFAULT_PRECIS;
-		wcsncpy_s(linked_font_attr.lfFaceName, font_family, LF_FACESIZE);
-		HFONT new_hfont = CreateFontIndirectW(&linked_font_attr);
-
-		long font_id = register_font(new_hfont, font_family, font_style);
-		_loaded_fonts[font_id].owned = true;
-
-		return font_id;
-	}
-	else
-	{
-		long font_id = iter->second;
 		SelectObject(_font_holder, _loaded_fonts[font_id].hfont);
-
-		return font_id;
+		DeleteObject(linked_font);
 	}
+
+	return font_id;
 }
 
 WORD _gdimm_font_man::get_glyph_index(WCHAR ch)

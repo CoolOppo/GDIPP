@@ -1,57 +1,23 @@
 #include "stdafx.h"
-#include "setting.h"
-#include <shlwapi.h>
-#include <fstream>
-#include <sstream>
-using namespace std;
+using namespace std::tr1;
 
-gdimm_setting_items::gamma_setting::gamma_setting()
+bool mb_to_wc(const char *mb_str, wstring &wc_str)
 {
-	// default setting
-	gray = 1.0;
-	red = 1.0;
-	green = 1.0;
-	blue = 1.0;
-}
+	// convert multibyte string to widechar string
 
-gdimm_setting_items::shadow_setting::shadow_setting()
-{
-	// default setting
-	offset_x = 1;
-	offset_y = 1;
-	alpha = 32;
-}
+	int wcs_len = MultiByteToWideChar(CP_UTF8, 0, mb_str, -1, NULL, 0);
+	if (wcs_len == 0)
+		return false;
 
-gdimm_setting_items::gdimm_setting_items()
-{
-	// default setting
-	auto_hinting = true;
-	embedded_bitmap = false;
-	embolden = 0.0;
-	freetype_loader = true;
-	gamma = gamma_setting();
-	hinting = true;
-	lcd_filter = 1;
-	light_mode = true;
-	max_height = 72;
-	render_mono = false;
-	render_non_aa = false;
-	shadow = shadow_setting();
-	subpixel_render = true;
-	zero_alpha = false;
-}
-
-service_setting_items::service_setting_items()
-{
-	poll_interval = L"0.5";
+	wc_str.resize(wcs_len);
+	wcs_len = MultiByteToWideChar(CP_UTF8, 0, mb_str, -1, &wc_str[0], wcs_len);
+	
+	return (wcs_len != 0);
 }
 
 _gdipp_setting::_gdipp_setting()
 {
 	DWORD dw_ret;
-
-	_gdimm_branches[TEXT(GDIMM_COMMON_NAME)] = gdimm_setting_items();
-	_service_setting = service_setting_items();
 
 	dw_ret = GetModuleFileNameW(NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
@@ -59,84 +25,96 @@ _gdipp_setting::_gdipp_setting()
 	PathStripPathW(_process_name);
 }
 
-void _gdipp_setting::load_settings(const xml_node &context_node, const gdimm_setting_items &default_items, gdimm_setting_items &settings)
+void _gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, setting_map &setting_store)
 {
-	evaluate_to_number(context_node, "auto_hinting", default_items.auto_hinting, settings.auto_hinting);
-	evaluate_to_number(context_node, "embedded_bitmap", default_items.embedded_bitmap, settings.embedded_bitmap);
-	evaluate_to_number(context_node, "embolden", default_items.embolden, settings.embolden);
-	evaluate_to_number(context_node, "freetype_loader", default_items.freetype_loader, settings.freetype_loader);
-	evaluate_to_number(context_node, "hinting", default_items.hinting, settings.hinting);
-	evaluate_to_number(context_node, "lcd_filter", default_items.lcd_filter, settings.lcd_filter);
-	evaluate_to_number(context_node, "light_mode", default_items.light_mode, settings.light_mode);
-	evaluate_to_number(context_node, "max_height", default_items.max_height, settings.max_height);
-	evaluate_to_number(context_node, "render_mono", default_items.render_mono, settings.render_mono);
-	evaluate_to_number(context_node, "render_non_aa", default_items.render_non_aa, settings.render_non_aa);
-	evaluate_to_number(context_node, "subpixel_render", default_items.subpixel_render, settings.subpixel_render);
-	evaluate_to_number(context_node, "zero_alpha", default_items.zero_alpha, settings.zero_alpha);
+	const string name = setting_node.name();
 
-	evaluate_to_number(context_node, "gamma/gray", default_items.gamma.gray, settings.gamma.gray);
-	evaluate_to_number(context_node, "gamma/red", default_items.gamma.red, settings.gamma.red);
-	evaluate_to_number(context_node, "gamma/green", default_items.gamma.green, settings.gamma.green);
-	evaluate_to_number(context_node, "gamma/blue", default_items.gamma.blue, settings.gamma.blue);
-
-	evaluate_to_number(context_node, "shadow/offset_x", default_items.shadow.offset_x, settings.shadow.offset_x);
-	evaluate_to_number(context_node, "shadow/offset_y", default_items.shadow.offset_y, settings.shadow.offset_y);
-	evaluate_to_number(context_node, "shadow/alpha", default_items.shadow.alpha, settings.shadow.alpha);
-}
-
-void _gdipp_setting::load_common(const xml_node &context_node)
-{
-	const xml_node common_node = context_node.select_single_node(GDIMM_COMMON_NAME).node();
-
-	// the default items should never be used
-	load_settings(common_node, _gdimm_branches[TEXT(GDIMM_COMMON_NAME)], _gdimm_branches[TEXT(GDIMM_COMMON_NAME)]);
-}
-
-void _gdipp_setting::load_branchs(const xml_node &context_node, const gdimm_setting_items &default_items, const char *xpath)
-{
-	xpath_node_set target_node_set = context_node.select_nodes(xpath);
-	for (xpath_node_set::const_iterator set_iter = target_node_set.begin(); set_iter != target_node_set.end(); set_iter++)
+	if (name == "gamma" || name == "shadow")
 	{
-		const xml_node curr_node = set_iter->node();
-		const xml_attribute name_attr = curr_node.attribute("name");
+		// these settings have nested items
 
-		const char *mb_name;
-		if (name_attr.empty())
-			mb_name = curr_node.name();
-		else
-			mb_name = name_attr.value();
+		for (xml_node::iterator iter = setting_node.begin(); iter != setting_node.end(); iter++)
+		{
+			wstring curr_value;
+			mb_to_wc(iter->first_child().value(), curr_value);
 
-		wstring branch_name;
-		int name_len = MultiByteToWideChar(CP_UTF8, 0, mb_name, -1, NULL, 0);
-		branch_name.resize(name_len);
-		name_len = MultiByteToWideChar(CP_UTF8, 0, mb_name, -1, &branch_name[0], name_len);
-		assert(name_len != 0);
+			setting_store[name + "/" + iter->name()] = curr_value;
+		}
+	}
+	else
+	{
+		wstring value;
+		mb_to_wc(setting_node.first_child().value(), value);
 
-		// create new setting branch if necessary, otherwise use the existing
-		gdimm_map::const_iterator branch_iter = _gdimm_branches.find(branch_name);
+		setting_store[name] = value;
+	}	
+}
 
-		if (branch_iter == _gdimm_branches.end())
-			_gdimm_branches[branch_name] = gdimm_setting_items();
+void _gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
+{
+	// backward iterate so that first-coming specified process settings overwrites last-coming ones
 
-		load_settings(curr_node, default_items, _gdimm_branches[branch_name]);
+	xpath_node_set::const_iterator node_iter = process_nodes.end();
+	node_iter--;
+
+	for (size_t i = 0; i < process_nodes.size(); i++, node_iter--)
+	{
+		// only store the setting items which match the current process name
+
+		const xml_node curr_proc = node_iter->node();
+		const xml_attribute name_attr = curr_proc.attribute("name");
+		wstring proc_name;
+		mb_to_wc(name_attr.value(), proc_name);
+
+		const wregex name_ex(proc_name.data());
+		if (regex_match(_process_name, name_ex))
+		{
+			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+				parse_gdimm_setting_node(*set_iter, _process_setting);
+		}
 	}
 }
 
-void _gdipp_setting::load_exclude(const xml_node &context_node)
+void _gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 {
-	int name_len;
-
-	xpath_node_set target_node_set = context_node.select_nodes("/gdipp/exclude/*");
-	for (xpath_node_set::const_iterator iter = target_node_set.begin(); iter != target_node_set.end(); iter++)
+	for (xpath_node_set::const_iterator node_iter = font_node.begin(); node_iter != font_node.end(); node_iter++)
 	{
-		name_len = MultiByteToWideChar(CP_UTF8, 0, iter->node().first_child().value(), -1, NULL, 0);
-		WCHAR *name = new WCHAR[name_len];
-		name_len = MultiByteToWideChar(CP_UTF8, 0, iter->node().first_child().value(), -1, name, name_len);
-		assert(name_len != 0);
+		setting_map curr_settings;
 
-		_exclude_names.insert(name);
+		for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+			parse_gdimm_setting_node(*set_iter, curr_settings);
 
-		delete[] name;
+		const xml_node curr_proc = node_iter->node();
+		const xml_attribute name_attr = curr_proc.attribute("name");
+		wstring proc_name;
+		mb_to_wc(name_attr.value(), proc_name);
+
+		_gdimm_font.push_back(pair<const wstring, setting_map>(proc_name, curr_settings));
+	}
+}
+
+void _gdipp_setting::load_service(const xml_node &service_node)
+{
+	for (xml_node::iterator iter = service_node.begin(); iter != service_node.end(); iter++)
+	{
+		wstring curr_value;
+		mb_to_wc(iter->first_child().value(), curr_value);
+
+		_service_setting[iter->name()] = curr_value;
+	}
+}
+
+void _gdipp_setting::load_exclude(const xml_node &exclude_node)
+{
+	for (xml_node::iterator iter = exclude_node.begin(); iter != exclude_node.end(); iter++)
+	{
+		wstring curr_value;
+		mb_to_wc(iter->first_child().value(), curr_value);
+
+		if (strcmp(iter->name(), "font") == 0)
+			_exclude_font.push_back(curr_value);
+		else
+			_exclude_process.push_back(curr_value);
 	}
 }
 
@@ -157,53 +135,86 @@ bool _gdipp_setting::init(HMODULE h_module)
 	if (h_module == NULL)
 	{
 		// the setting is requested by service
-
+		
+		const xml_node service_node = xml_doc.select_single_node("/gdipp/service").node();
+		load_service(service_node);
 	}
 	else
 	{
 		// the setting is requested by gdimm
 
-		const xml_node gdimm_node = xml_doc.select_single_node("/gdipp/gdimm").node();
-		load_common(gdimm_node);
-
-		const gdimm_setting_items &common_items = _gdimm_branches[TEXT(GDIMM_COMMON_NAME)];
-		load_branchs(gdimm_node, common_items, "process");
-
-		if (_gdimm_branches.find(_process_name) == _gdimm_branches.end())
-			load_branchs(gdimm_node, common_items, "font");
-		else
-			load_branchs(gdimm_node, _gdimm_branches[_process_name], "font");
+		load_gdimm_process(xml_doc.select_nodes("/gdipp/gdimm/process"));
+		load_gdimm_font(xml_doc.select_nodes("gdipp/gdimm/font"));
 	}
 
-	load_exclude(xml_doc);
+	const xml_node exclude_node = xml_doc.select_single_node("/gdipp/exclude").node();
+	load_exclude(exclude_node);
 
 	f.close();
 	return true;
 }
 
-bool _gdipp_setting::is_name_excluded(const WCHAR *name) const
+const WCHAR *_gdipp_setting::get_gdimm_setting(const char *setting_name, const WCHAR *font_name) const
 {
-	set<const wstring, string_ci_less>::const_iterator iter;
+	// check setting for the current process
+	setting_map::const_iterator setting_iter = _process_setting.find(setting_name);
+	if (setting_iter != _process_setting.end())
+		return setting_iter->second.c_str();
 
-	if (name == NULL)
-		iter = _exclude_names.find(_process_name);
-	else
-		iter = _exclude_names.find(name);
-	
-	return (iter != _exclude_names.end());
-}
-
-const gdimm_setting_items &_gdipp_setting::get_gdimm_items(const WCHAR *font_family) const
-{
-	gdimm_map::const_iterator branch_iter = _gdimm_branches.find(_process_name);
-
-	// if not exist the specified branch, fallback to current process name branch and finally the common branch
-	if (branch_iter == _gdimm_branches.end())
+	// check setting for the specified font
+	for (gdimm_list::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
 	{
-		branch_iter = _gdimm_branches.find(font_family);
-		if (branch_iter == _gdimm_branches.end())
-			branch_iter = _gdimm_branches.find(TEXT(GDIMM_COMMON_NAME));
+		const wregex name_ex(list_iter->first.data());
+		if (regex_match(font_name, name_ex))
+		{
+			setting_iter = list_iter->second.find(setting_name);
+			if (setting_iter != list_iter->second.end())
+				return setting_iter->second.c_str();
+		}
 	}
 
-	return branch_iter->second;
+	return NULL;
+}
+
+const WCHAR *_gdipp_setting::get_service_setting(const char *setting_name) const
+{
+	setting_map::const_iterator iter = _service_setting.find(setting_name);
+
+	if (iter == _service_setting.end())
+		return NULL;
+	else
+		return iter->second.c_str();
+}
+
+bool _gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
+{
+	// if no process name is specified, return true if the current process is excluded
+	// otherwise, return true if the specified process is excluded
+
+	const WCHAR *final_name;
+	if (proc_name == NULL)
+		final_name = _process_name;
+	else
+		final_name = proc_name;
+
+	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); iter++)
+	{
+		const wregex name_ex(iter->data());
+		if (regex_match(final_name, name_ex))
+			return true;
+	}
+
+	return false;
+}
+
+bool _gdipp_setting::is_font_excluded(const WCHAR *font_name) const
+{
+	for (list<const wstring>::const_iterator iter = _exclude_font.begin(); iter != _exclude_font.end(); iter++)
+	{
+		const wregex name_ex(iter->data());
+		if (regex_match(font_name, name_ex))
+			return true;
+	}
+
+	return false;
 }

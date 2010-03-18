@@ -2,11 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "global.h"
-#include "hook.h"
 #include "ft.h"
-#include "setting.h"
-#include <shlwapi.h>
+#include "hook.h"
 
 BOOL APIENTRY DllMain(
 	HMODULE hModule,
@@ -17,7 +14,7 @@ BOOL APIENTRY DllMain(
 	{
 	case DLL_PROCESS_ATTACH:
 		gdipp_setting::instance().init(hModule);
-		if (gdipp_setting::instance().is_name_excluded(NULL))
+		if (gdipp_setting::instance().is_process_excluded(NULL))
 			return FALSE;
 
 		h_self = hModule;

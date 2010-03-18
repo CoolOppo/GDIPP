@@ -1,6 +1,4 @@
 #pragma once
-#include <map>
-using namespace std;
 
 class _gdimm_gamma
 {
