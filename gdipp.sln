@@ -27,8 +27,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_loader", "gdipp_loade
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\src\pugixml.vcproj", "{D8742C31-15F3-4452-AF09-79F97277003A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_pre", "gdipp_pre\gdipp_pre.vcproj", "{027C7639-548D-41A4-BB45-D85EA8B7FED8}"
-EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_32_en-us", "installer\installer_32_en-us.wixproj", "{C777953B-F65D-44AD-9226-0DFA5306D0F9}"
 	ProjectSection(ProjectDependencies) = postProject
 		{00ABAE01-5040-4BB0-A3E5-03EACF768F6D} = {00ABAE01-5040-4BB0-A3E5-03EACF768F6D}
@@ -111,14 +109,6 @@ Global
 		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|Win32.Build.0 = Release|Win32
 		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.ActiveCfg = Release|x64
 		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.Build.0 = Release|x64
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Debug|Win32.ActiveCfg = Debug|Win32
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Debug|Win32.Build.0 = Debug|Win32
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Debug|x64.ActiveCfg = Debug|x64
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Debug|x64.Build.0 = Debug|x64
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Release|Win32.ActiveCfg = Release|Win32
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Release|Win32.Build.0 = Release|Win32
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Release|x64.ActiveCfg = Release|x64
-		{027C7639-548D-41A4-BB45-D85EA8B7FED8}.Release|x64.Build.0 = Release|x64
 		{C777953B-F65D-44AD-9226-0DFA5306D0F9}.Debug|Win32.ActiveCfg = Release|x86
 		{C777953B-F65D-44AD-9226-0DFA5306D0F9}.Debug|x64.ActiveCfg = Release|x86
 		{C777953B-F65D-44AD-9226-0DFA5306D0F9}.Release|Win32.ActiveCfg = Release|x86

@@ -9,6 +9,7 @@ Fix bug that crash gdimm when setting.xml is missing or in bad structure.
 Installer:
 Install service with "demand" start type.
 Fix wrong path in installer for registry load mode.
+Fix bug that the new setting.xml does not overwrite the old one.
 
 0.6.0 (Rev 44e2865980):
 Global:
