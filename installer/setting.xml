@@ -1,7 +1,19 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
 	<gdimm>
-		<common>
+		<process name="sample\.exe">
+			<gamma>
+				<gray>1.2</gray>
+				<red>1.2</red>
+				<green>1.1</green>
+			</gamma>
+		</process>
+		
+		<font name="sample_font">
+			<freetype_loader>0</freetype_loader>
+		</font>
+		
+		<font name=".*">
 			<auto_hinting>0</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>
 			<embolden>0.0</embolden>
@@ -21,23 +33,19 @@
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>
-				<alpha>32</alpha>
+				<alpha>24</alpha>
 			</shadow>
 			<subpixel_render>1</subpixel_render>
 			<zero_alpha>0</zero_alpha>
 		</common>
-		
-		<process name="sample.exe">
-			<bold_strength>1.0</bold_strength>
-		</process>
-
-		<font name="sample_font">
-			<freetype_loader>0</freetype_loader>
-		</font>
 	</gdimm>
+	
+	<service>
+		<poll_interval>0.5</poll_interval>
+	</service>
 
 	<exclude>
-		<process>excluded.exe</process>
-		<font>excluded_font</font>
+		<process>excluded\.exe</process>
+		<font>excluded_font.*</font>
 	</exclude>
 </gdipp>
