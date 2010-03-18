@@ -41,7 +41,7 @@
 										Name="gdipp_svc_32"
 										DisplayName="gdipp Service (32 bit)"
 										Description="!(loc.gdippSvcDesc32)"
-										Start="auto"
+										Start="demand"
 										Type="ownProcess"
 										ErrorControl="normal">
 							<ServiceDependency Id="winmgmt" />
@@ -68,9 +68,8 @@
 										Name="gdipp_svc_64"
 										DisplayName="gdipp Service (64 bit)"
 										Description="!(loc.gdippSvcDesc64)"
-										Start="auto"
+										Start="demand"
 										Type="ownProcess"
-										LoadOrderGroup="UIGroup"
 										ErrorControl="normal">
 							<ServiceDependency Id="winmgmt" />
 						</ServiceInstall>
@@ -88,7 +87,8 @@
 						<!-- backup setting file -->
 						<CopyFile Id="backup_setting"
 											SourceProperty="INSTALLDIR" SourceName="setting.xml"
-											DestinationProperty="INSTALLDIR" DestinationName="setting.xml.bak" />
+											DestinationProperty="INSTALLDIR" DestinationName="setting.xml.bak"
+											Delete="yes" />
 						<File Name="setting.xml" Source="setting.xml" Vital="yes" KeyPath="yes" />
 					</Component>
 
@@ -132,7 +132,7 @@
 
 			<!-- set registry if registry load mode -->
 			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes" Win64="no">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_dll]1" KeyPath="yes" />
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_dll]" KeyPath="yes" />
 				<Condition>LOADMODE = 1</Condition>
 			</Component>
 
@@ -143,7 +143,7 @@
 
 <?if $(var.Platform) = x64 ?>
 			<Component Id="set_appinit_dlls_64" Guid="0AE1E07B-10E8-4A72-BB1F-71DF3DF1DBAC" Permanent="yes" Win64="yes">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_64.dll]1" KeyPath="yes" />
+				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="string" Name="AppInit_DLLs" Value="[!gdimm_64.dll]" KeyPath="yes" />
 				<Condition>LOADMODE = 1</Condition>
 			</Component>
 
@@ -258,11 +258,11 @@
 				<ComponentRef Id="loader_shortcut_64" />
 			</Feature>
 <?endif ?>
-			
+
+			<ComponentRef Id="gdipp_setting" />
 			<ComponentRef Id="gdipp_doc" />
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />
-			<ComponentRef Id="gdipp_setting" />
 			<ComponentRef Id="set_load_mode" />
 		</Feature>
 

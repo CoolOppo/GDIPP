@@ -125,7 +125,7 @@ bool _gdipp_setting::init(HMODULE h_module)
 	get_dir_file_path(h_module, L"setting.xml", setting_path);
 
 	ifstream f(setting_path);
-	if (f.bad())
+	if (f.fail())
 		return false;
 
 	xml_document xml_doc;
@@ -173,7 +173,7 @@ const WCHAR *_gdipp_setting::get_gdimm_setting(const char *setting_name, const W
 		}
 	}
 
-	return NULL;
+	return L"";
 }
 
 const WCHAR *_gdipp_setting::get_service_setting(const char *setting_name) const

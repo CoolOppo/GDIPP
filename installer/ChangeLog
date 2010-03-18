@@ -6,8 +6,9 @@ Global:
 Match font and process settings with regular expression.
 
 gdimm:
-Fix a bug that causes font linking fails.
-Fix a bug that crashes gdimm if freetype_loader=0.
+Fix bug that causes font linking fails.
+Fix bug that crashes gdimm if freetype_loader=0.
+Fix bug that gdimm does not render in when not in Aero.
 Start a monitor thread in gdimm for active unloading.
 Monitor service termination via event.
 Add setting cache.
@@ -33,7 +34,7 @@ gdimm:
   * Add option of zeroing the alpha channel.
 
 Installer:
-  * Fix a bug of service installing in the installer script.
+  * Fix bug of service installing in the installer script.
 
 
 0.5.2 (Rev b20e48eea2):
@@ -53,11 +54,11 @@ gdimm:
   * Draw shadow.
   * Process individual setting.
   * Optimize setting algorithms.
-  * Fix a bug that fonts with embedded bitmap cannot be rendered when hinting is disabled.
+  * Fix bug that fonts with embedded bitmap cannot be rendered when hinting is disabled.
   * gdimm checks process exclusion.
 
 gdipp Loader:
-  * Fix a bug in 0.5 that it loads itself infinitely if no argument is fed.
+  * Fix bug in 0.5 that it loads itself infinitely if no argument is fed.
 
 Installer:
   * Install EasyHook to System folder for better compatiblity.
@@ -71,8 +72,8 @@ gdimm:
   * Chrome inside sandbox can be rendered now.
   * More stable algorithm for loading font linking registry values.
   * Font link match direction is changed back to "first -> last".
-  * Fix a bug which causes memory leaking.
-  * Fix a bug about font stream.
+  * Fix bug which causes memory leaking.
+  * Fix bug about font stream.
   * Force redrawing host process after being injected by gdipp Service.
   * Correct calculation of character width, thus the text in the Aero theme Window titlebars can be rendered.
   * Get glyph index by calling GetGlyphIndices, better compatibility.

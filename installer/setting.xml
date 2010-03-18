@@ -9,7 +9,7 @@
 			</gamma>
 		</process>
 		
-		<font name="sample_font">
+		<font name="sample_font.*">
 			<freetype_loader>0</freetype_loader>
 		</font>
 		

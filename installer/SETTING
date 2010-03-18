@@ -7,7 +7,7 @@ The root node is <gdipp>. Its child nodes are <gdimm>, <service> and <exclude>. 
 
 ===============
 
-Two types of child nodes can be included in <gdimm>. <process> nodes indicate separate settings for specified process name. <font> nodes indicate separate settings for specified font face name. The specified name of the processes and fonts comes from the "name" attribute of each node. This attribute support C++ TR1 Regular Expressions. For more information about regular expression, see http://msdn.microsoft.com/en-us/library/bb982727.aspx and http://en.wikipedia.org/wiki/Regular_expression. The name for either type is matched top-down (the first available setting value is used). If one setting is not available in the first node, the subsequent nodes are queried, until all nodes are visited. If the setting is still not available, the default value is used. <process> nodes have higher priority than <font> nodes.
+Two types of child nodes can be included in <gdimm>. <process> nodes indicate separate settings for specified processes. <font> nodes indicate separate settings for specified font faces. The specified name of the processes and fonts comes from the "name" attribute of each node. This attribute support C++ TR1 Regular Expressions. For more information about regular expression, see http://msdn.microsoft.com/en-us/library/bb982727.aspx and http://en.wikipedia.org/wiki/Regular_expression. The name for either type is matched top-down (the first available setting value is used). If one setting is not available in the first node, the subsequent nodes are queried, until all nodes are visited. If the setting is still not available, the default value is used. <process> nodes have higher priority than <font> nodes.
 
 Font face name usually consists of two parts: font family name and font style name, connecting with a space. Font family name is what you see in the "Font" column of the font dialog. Font style name is what you see in the "Font Style" column of the font dialog. One font family may contain multiple styles, and may map to different physical font files. Typically, there are four font styles: (empty for Regular style), Bold, Italic, Bold Italic. Therefore, a bold italic Segoe UI font face name is "Segoe UI Bold Italic". For more information about font, see http://en.wikipedia.org/wiki/Font.
 
@@ -32,7 +32,7 @@ For example, suppose the gdimm requests auto_hinting, embedded_bitmap and embold
   <embolden>2.0</embolden>
 </font>
 
-In this example, if the process is notepad.exe, and font face name is "Segoe UI Bold", the final value of both "auto_hinting" and "embedded_bitmap" are 0, since the first <process> node matches the process name. The final value of "embolden" is 1.0, since the first <font> node matches the font face name. If the process name is changed to "textpad.exe", "embedded_bitmap" becomes 1, because only the second <process> node matches the process name. "auto_hinting" becomes 1, which comes from the last <font> node.
+In this example, if the current process is notepad.exe, and font face name is "Segoe UI Bold", the final value of both "auto_hinting" and "embedded_bitmap" are 0, since the first <process> node matches the process name. The final value of "embolden" is 1.0, since the first <font> node matches the font face name. If the current process name is changed to "textpad.exe", "embedded_bitmap" becomes 1, because only the second <process> node matches the process name. "auto_hinting" becomes 1, which comes from the last fail-safe <font> node.
 
 Below is a list of the descriptions of each <gdimm> setting item. The values in the parentheses are the default. For yes/no values, 0 means no and 1 means yes.
 
@@ -55,7 +55,7 @@ Below is a list of the descriptions of each <gdimm> setting item. The values in 
 
 Below is a list of the descriptions of each <service> setting item.
 
-  * poll_interval (0.5): interval to query Windows if there is new process created. Smaller values increase responsiveness. Note that Windows may consider too small values invalid, and renders gdipp Service malfunctioning.
+  * poll_interval (0.5): interval to query Windows if there is new process created, in seconds. Smaller values increase responsiveness. Note that Windows may consider too small values invalid, and renders gdipp Service malfunctioning.
 
 ===============
 
