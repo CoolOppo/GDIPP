@@ -567,7 +567,7 @@
 	<String Id="UITextVolumeCostVolume" Overridable="yes">目录</String>
 
 	<String Id="LANGID" Overridable="yes">2052</String>
-	<String Id="VersionFailMsg" Overridable="yes">版本不兼容。[ProductName] 无法安装在比 Windows XP 更早的系统上。</String>
+	<String Id="VersionFailMsg" Overridable="yes">版本不兼容。[ProductName] 的最小系统需求是 Windows XP。</String>
 	
 	<String Id="LoadModeDlg_Title" Overridable="yes">gdipp 加载模式</String>
 	<String Id="LoadModeDlg_Description" Overridable="yes">请选择 gdipp 的加载模式。</String>
