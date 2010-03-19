@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _gdimm_text
 {
 	// device context attributes

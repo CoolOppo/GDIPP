@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "sink.h"
 #include "inject.h"
+#include <setting.h>
 
 ULONG sink_inject::Release()
 {

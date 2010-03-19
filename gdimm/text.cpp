@@ -792,7 +792,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 
 	bool hinting = true;
 	gdimm_setting_cache::instance().lookup("hinting", font_face, hinting);
-	if (hinting)
+	if (!hinting)
 		ggo_format |= GGO_UNHINTED;
 
 	double embolden = 0.0;

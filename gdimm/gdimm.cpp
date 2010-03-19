@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ft.h"
 #include "hook.h"
+#include <setting.h>
 
 BOOL APIENTRY DllMain(
 	HMODULE hModule,

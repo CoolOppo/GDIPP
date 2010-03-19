@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _gdimm_gamma
 {
 	map<double, BYTE*> _gamma_ramps;

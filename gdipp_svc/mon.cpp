@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "mon.h"
 #include "sink.h"
+#include <setting.h>
 
 void _svc_mon::release_all()
 {

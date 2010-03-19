@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdimm", "gdimm\gdimm.vcproj", "{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
 	ProjectSection(ProjectDependencies) = postProject
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139} = {87BD2B0A-2C53-443C-B1BA-01AA73DB3139}
 		{D8742C31-15F3-4452-AF09-79F97277003A} = {D8742C31-15F3-4452-AF09-79F97277003A}
 		{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B} = {78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}
 	EndProjectSection
@@ -11,6 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "freetype\builds
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_svc", "gdipp_svc\gdipp_svc.vcproj", "{D8F37991-4EE8-43F0-BFC7-3FCD7393D3BF}"
 	ProjectSection(ProjectDependencies) = postProject
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139} = {87BD2B0A-2C53-443C-B1BA-01AA73DB3139}
 		{D8742C31-15F3-4452-AF09-79F97277003A} = {D8742C31-15F3-4452-AF09-79F97277003A}
 		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
 	EndProjectSection
@@ -22,6 +24,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_demo", "gdipp_demo\gd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_loader", "gdipp_loader\gdipp_loader.vcproj", "{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}"
 	ProjectSection(ProjectDependencies) = postProject
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139} = {87BD2B0A-2C53-443C-B1BA-01AA73DB3139}
 		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
 	EndProjectSection
 EndProject
@@ -52,6 +55,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_64_zh-cn", "insta
 	ProjectSection(ProjectDependencies) = postProject
 		{BBF93EFB-7B85-4445-AD11-DC81840329DE} = {BBF93EFB-7B85-4445-AD11-DC81840329DE}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "common\common.vcproj", "{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -129,6 +134,14 @@ Global
 		{9E398FBD-7468-4BAE-B00A-FB3F380F28EC}.Release|Win32.ActiveCfg = Release|x64
 		{9E398FBD-7468-4BAE-B00A-FB3F380F28EC}.Release|x64.ActiveCfg = Release|x64
 		{9E398FBD-7468-4BAE-B00A-FB3F380F28EC}.Release|x64.Build.0 = Release|x64
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Debug|Win32.ActiveCfg = Debug|Win32
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Debug|Win32.Build.0 = Debug|Win32
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Debug|x64.ActiveCfg = Debug|x64
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Debug|x64.Build.0 = Debug|x64
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Release|Win32.ActiveCfg = Release|Win32
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Release|Win32.Build.0 = Release|Win32
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Release|x64.ActiveCfg = Release|x64
+		{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

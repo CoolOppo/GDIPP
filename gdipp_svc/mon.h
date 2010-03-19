@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _svc_mon
 {
 	IWbemLocator *_loc;

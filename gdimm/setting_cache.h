@@ -1,5 +1,8 @@
 #pragma once
 
+#include <global.h>
+#include <setting.h>
+
 class _gdimm_setting_cache
 {
 	typedef map<const string, void*> setting_cache;
@@ -45,6 +48,5 @@ bool _gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_na
 
 	return true;
 }
-
 
 typedef singleton<_gdimm_setting_cache> gdimm_setting_cache;

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "setting.h"
 using namespace std::tr1;
 
 bool mb_to_wc(const char *mb_str, wstring &wc_str)

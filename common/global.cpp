@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "global.h"
 
 CRITICAL_SECTION critical_section::_cs;
 

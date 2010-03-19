@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _gdimm_font_link
 {
 	typedef map<const wstring, vector<wstring>, wstring_ci_less> link_map;

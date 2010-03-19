@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "gdipp_demo.h"
-#include <stdlib.h>
-#include <time.h>
 
 #define MAX_LOADSTRING 100
 

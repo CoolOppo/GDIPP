@@ -360,15 +360,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\global.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\hook.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\common\setting.cpp"
 				>
 			</File>
 			<File
@@ -438,19 +430,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\common\global.h"
-				>
-			</File>
-			<File
 				RelativePath=".\hook.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\setting.h"
 				>
 			</File>
 			<File

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _gdimm_font_man
 {
 	struct font_info

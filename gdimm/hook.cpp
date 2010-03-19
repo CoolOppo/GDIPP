@@ -3,30 +3,9 @@
 #include "text.h"
 
 HMODULE h_self = NULL;
-HANDLE h_svc_event = NULL;
-
-DWORD WINAPI unload_self(LPVOID lpThreadParameter)
-{
-	critical_section lock;
-	FreeLibraryAndExitThread(h_self, 0);
-}
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
-	// if injected by service, check if the service event is set (service process terminates)
-	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) == WAIT_OBJECT_0)
-	{
-		CloseHandle(h_svc_event);
-		gdimm_hook::instance().disable_hook();
-
-		// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
-		critical_section lock;
-		HANDLE h_thread = CreateThread(NULL, 0, unload_self, NULL, 0, NULL);
-		assert(h_thread);
-
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	}
-
 	//if ((options & ETO_GLYPH_INDEX))
 	//if (c <= 7)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -220,6 +199,19 @@ CreateProcessAsUserW_hook(
 	return TRUE;
 }
 
+DWORD WINAPI unload_monitor(LPVOID lpThreadParameter)
+{
+	// wait until the service stops
+	HANDLE h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, SVC_EVENT_NAME);
+	assert(h_svc_event != NULL);
+	DWORD wait_ret = WaitForSingleObject(h_svc_event, INFINITE);
+	assert(wait_ret == WAIT_OBJECT_0);
+	CloseHandle(h_svc_event);
+
+	critical_section lock;
+	FreeLibraryAndExitThread(h_self, 0);
+}
+
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
 	BOOL b_ret;
@@ -235,7 +227,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
 
-		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, SVC_EVENT_NAME);
+		CreateThread(NULL, 0, unload_monitor, NULL, 0, NULL);
 
 		break;
 	case GDIPP_LOADER:
@@ -271,18 +263,6 @@ bool _gdimm_hook::hook()
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 
 	return !(_hooks.empty());
-}
-
-void _gdimm_hook::disable_hook()
-{
-	NTSTATUS eh_error;
-
-	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
-	{
-		ULONG thread_id_list = 0;
-		eh_error = LhSetInclusiveACL(&thread_id_list, 0, *iter);
-		assert(eh_error == 0);
-	}
 }
 
 void _gdimm_hook::unhook()

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pugixml.hpp>
+#include "global.h"
 using namespace pugi;
 
 class _gdipp_setting

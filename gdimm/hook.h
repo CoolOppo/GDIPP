@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _gdimm_hook
 {
 	vector<TRACED_HOOK_HANDLE> _hooks;
@@ -7,7 +9,6 @@ class _gdimm_hook
 public:
 	void install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 	bool hook();
-	void disable_hook();
 	void unhook();
 };
 

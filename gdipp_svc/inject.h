@@ -1,5 +1,7 @@
 #pragma once
 
+#include <global.h>
+
 class _svc_injector
 {
 	WCHAR _gdimm_path_64[MAX_PATH];
