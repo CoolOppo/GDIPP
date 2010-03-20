@@ -17,6 +17,7 @@
 #include <cmath>
 #include <list>
 #include <map>
+#include <process.h>
 #include <sstream>
 #include <string>
 #include <vector>

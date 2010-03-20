@@ -360,8 +360,9 @@ FT_BitmapGlyph _gdimm_text::outline_to_bitmap(
 
 void _gdimm_text::set_bmp_bits_mono(
 	const FT_Bitmap &src_bitmap,
-	int x_in_dest, int y_in_dest,
+	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
+	int x_in_dest, int y_in_dest,
 	int dest_width, int dest_height,
 	WORD dest_bpp) const
 {
@@ -370,7 +371,7 @@ void _gdimm_text::set_bmp_bits_mono(
 	// the source bitmap is not blended with the destination bitmap
 
 	const LONG src_width = src_bitmap.width;
-	const LONG src_height = src_bitmap.rows;
+	const LONG src_height = min(src_bitmap.rows, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
 	const bool use_zero_color = (*(DWORD*) &_fg_rgb == 0);
@@ -379,8 +380,8 @@ void _gdimm_text::set_bmp_bits_mono(
 	{
 		for (int i = 0; i < src_width; i++)
 		{
-			const int src_ptr = j * src_pitch + i / 8;
-			const BYTE src_bit_pos = 7 - i % 8;
+			const int src_ptr = (y_in_src + j) * src_pitch + (x_in_src + i) / 8;
+			const BYTE src_bit_pos = 7 - (x_in_src + i) % 8;
 			const bool is_bit_set = ((src_bitmap.buffer[src_ptr] & (1 << src_bit_pos)) != 0);
 
 			if (is_bit_set)
@@ -410,11 +411,12 @@ void _gdimm_text::set_bmp_bits_mono(
 
 void _gdimm_text::set_bmp_bits_gray(
 	const FT_Bitmap &src_bitmap,
-	int x_in_dest, int y_in_dest,
+	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
+	int x_in_dest, int y_in_dest,
 	int dest_width, int dest_height,
 	WORD dest_bpp,
-	WORD alpha) const
+	WORD bmp_alpha) const
 {
 	// the source bitmap is 8-bit with 256 gray levels
 	// the destination bitmaps has 8, 24 or 32 bpp
@@ -424,7 +426,7 @@ void _gdimm_text::set_bmp_bits_gray(
 	assert(dest_bpp >= 8);
 
 	const LONG src_width = src_bitmap.width;
-	const LONG src_height = src_bitmap.rows;
+	const LONG src_height = min(src_bitmap.rows, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
@@ -433,7 +435,7 @@ void _gdimm_text::set_bmp_bits_gray(
 	{
 		for (int i = 0; i < src_width; i++)
 		{
-			const int src_ptr = j * src_pitch + i;
+			const int src_ptr = (y_in_src + j) * src_pitch + (x_in_src + i);
 
 			int dest_ptr = (x_in_dest + i) * dest_byte_per_px;
 			if (src_bitmap.pitch > 0)
@@ -449,7 +451,7 @@ void _gdimm_text::set_bmp_bits_gray(
 				const BYTE fg_gray = (_fg_rgb.rgbRed + _fg_rgb.rgbGreen + _fg_rgb.rgbBlue) / 765;
 				const BYTE dest_gray = (src_gray * fg_gray + (255 - src_gray) * dest_bits[dest_ptr]) / 255;
 
-				dest_bits[dest_ptr] = (alpha * dest_gray + (255 - alpha) * dest_bits[dest_ptr]) / 255;
+				dest_bits[dest_ptr] = (bmp_alpha * dest_gray + (255 - bmp_alpha) * dest_bits[dest_ptr]) / 255;
 			}
 			else
 			{
@@ -457,9 +459,9 @@ void _gdimm_text::set_bmp_bits_gray(
 				const BYTE dest_g = (src_gray * _fg_rgb.rgbGreen + (255 - src_gray) * dest_bits[dest_ptr+1]) / 255;
 				const BYTE dest_b = (src_gray * _fg_rgb.rgbBlue + (255 - src_gray) * dest_bits[dest_ptr]) / 255;
 
-				dest_bits[dest_ptr] = (alpha * dest_b + (255 - alpha) * dest_bits[dest_ptr]) / 255;
-				dest_bits[dest_ptr+1] = (alpha * dest_g + (255 - alpha) * dest_bits[dest_ptr+1]) / 255;
-				dest_bits[dest_ptr+2] = (alpha * dest_r + (255 - alpha) * dest_bits[dest_ptr+2]) / 255;
+				dest_bits[dest_ptr] = (bmp_alpha * dest_b + (255 - bmp_alpha) * dest_bits[dest_ptr]) / 255;
+				dest_bits[dest_ptr+1] = (bmp_alpha * dest_g + (255 - bmp_alpha) * dest_bits[dest_ptr+1]) / 255;
+				dest_bits[dest_ptr+2] = (bmp_alpha * dest_r + (255 - bmp_alpha) * dest_bits[dest_ptr+2]) / 255;
 			}
 
 			//if (dest_bpp == 32)
@@ -470,11 +472,12 @@ void _gdimm_text::set_bmp_bits_gray(
 
 void _gdimm_text::set_bmp_bits_lcd(
 	const FT_Bitmap &src_bitmap,
-	int x_in_dest, int y_in_dest,
+	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
+	int x_in_dest, int y_in_dest,
 	int dest_width, int dest_height,
 	WORD dest_bpp,
-	WORD alpha,
+	WORD bmp_alpha,
 	bool zero_alpha) const
 {
 	// the source bitmap is 24-bit, in order of R, G, B channels
@@ -485,7 +488,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 
 	const WORD src_byte_per_px = 3;
 	const LONG src_width = src_bitmap.width / src_byte_per_px;
-	const LONG src_height = src_bitmap.rows;
+	const LONG src_height = min(src_bitmap.rows, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
@@ -497,7 +500,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 		for (int i = 0; i < src_width; i++)
 		{
 			// source byte, always treat as down flow
-			const int src_ptr = j * src_pitch + i * src_byte_per_px;
+			const int src_ptr = (y_in_src + j) * src_pitch + (x_in_src + i) * src_byte_per_px;
 
 			// destination byte, compute according to two flow directions
 			int dest_ptr = (x_in_dest + i) * dest_byte_per_px;
@@ -515,9 +518,9 @@ void _gdimm_text::set_bmp_bits_lcd(
 			const BYTE dest_b = (src_b * _fg_rgb.rgbBlue + (255 - src_b) * dest_bits[dest_ptr]) / 255;
 
 			// same algorithm as the AlphaBlend API
-			dest_bits[dest_ptr] = (alpha * dest_b + (255 - alpha) * dest_bits[dest_ptr]) / 255;
-			dest_bits[dest_ptr+1] = (alpha * dest_g + (255 - alpha) * dest_bits[dest_ptr+1]) / 255;
-			dest_bits[dest_ptr+2] = (alpha * dest_r + (255 - alpha) * dest_bits[dest_ptr+2]) / 255;
+			dest_bits[dest_ptr] = (bmp_alpha * dest_b + (255 - bmp_alpha) * dest_bits[dest_ptr]) / 255;
+			dest_bits[dest_ptr+1] = (bmp_alpha * dest_g + (255 - bmp_alpha) * dest_bits[dest_ptr+1]) / 255;
+			dest_bits[dest_ptr+2] = (bmp_alpha * dest_r + (255 - bmp_alpha) * dest_bits[dest_ptr+2]) / 255;
 
 			if (dest_bpp == 32 && zero_alpha)
 				dest_bits[dest_ptr+3] = 0;
@@ -535,7 +538,6 @@ return true if successfully draw the bitmap, otherwise return false
 bool _gdimm_text::draw_glyphs(
 	const vector<FT_BitmapGlyph> &glyphs,
 	const vector<POINT> &glyph_pos,
-	int max_glyph_height,
 	CONST RECT *lprect,
 	const BITMAPINFO &dc_bmp_info) const
 {
@@ -546,27 +548,17 @@ bool _gdimm_text::draw_glyphs(
 	// origin of the source glyphs
 	const POINT src_origin = glyph_pos[0];
 
-	// height of the text from GDI. the source bitmap's height should be close to it
-	const int cell_height = _outline_metrics->otmTextMetrics.tmHeight;
-
 	// actual width of the source bitmap
 	const size_t last_glyph = glyphs.size() - 1;
 	const int text_width = glyph_pos[last_glyph].x + get_ft_bmp_width(glyphs[last_glyph]->bitmap) - src_origin.x;
 	const int bmp_width = max(text_width, _cursor.x - glyph_pos[0].x);
 
-	// height of the bitmap that will be drawn
-	const int bmp_height = max(max_glyph_height, cell_height);
-
-	const int bmp_extra_height = max(bmp_height - cell_height, 0);
-
-	// ascent that will be applied when drawing the bitmap
-	const int bmp_ascent = _outline_metrics->otmTextMetrics.tmAscent + bmp_extra_height;
+	// respect the height and ascent returned from GDI
+	const int cell_height = _outline_metrics->otmTextMetrics.tmHeight;
+	const int cell_ascent = _outline_metrics->otmTextMetrics.tmAscent;
 
 	// position where the bitmap will be finally drawn if no clipping is needed
 	POINT dest_origin = src_origin;
-
-	// make sure the bottom of the bitmap is within the cell
-	dest_origin.y -= bmp_extra_height;
 
 	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & _text_alignment)
 	{
@@ -584,10 +576,10 @@ bool _gdimm_text::draw_glyphs(
 	case TA_TOP:
 		break;
 	case TA_BOTTOM:
-		dest_origin.y -= bmp_height;
+		dest_origin.y -= cell_height;
 		break;
 	case TA_BASELINE:
-		dest_origin.y -= bmp_ascent;
+		dest_origin.y -= cell_ascent;
 		break;
 	}
 
@@ -602,7 +594,7 @@ bool _gdimm_text::draw_glyphs(
 	BITMAPINFO bmi = {0};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = bmp_width;
-	bmi.bmiHeader.biHeight = bmp_height;
+	bmi.bmiHeader.biHeight = cell_height;
 	bmi.bmiHeader.biPlanes = dc_bmp_info.bmiHeader.biPlanes;
 	bmi.bmiHeader.biBitCount = dc_bmp_info.bmiHeader.biBitCount;
 	bmi.bmiHeader.biCompression = BI_RGB;
@@ -627,14 +619,14 @@ bool _gdimm_text::draw_glyphs(
 	const int bk_mode = GetBkMode(_hdc_text);
 	if (bk_mode == OPAQUE)
 	{
-		RECT bk_rect = {0, 0, bmp_width, bmp_height};
+		RECT bk_rect = {0, 0, bmp_width, cell_height};
 		draw_background(hdc_canvas, &bk_rect, _bg_color);
 		b_ret = TRUE;
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, bmp_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY | NOMIRRORBITMAP);
+		b_ret = BitBlt(hdc_canvas, 0, 0, bmp_width, cell_height, _hdc_text, dest_origin.x, dest_origin.y, SRCCOPY | NOMIRRORBITMAP);
 	}
 	else
 		b_ret = FALSE;
@@ -668,49 +660,58 @@ bool _gdimm_text::draw_glyphs(
 		pitch > 0 means the FreeType bitmap is up flow
 		*/
 
-		const int x_in_dest = glyph_pos[i].x - src_origin.x;
-		const int y_in_dest = max(bmp_ascent - glyphs[i]->top, 0);
+		const int bmp_x_in_src = 0;
+		const int bmp_y_in_src = max(glyphs[i]->top - cell_ascent, 0);
+		const int bmp_x_in_dest = glyph_pos[i].x - src_origin.x;
+		const int bmp_y_in_dest = max(cell_ascent - glyphs[i]->top, 0);
 
-		const int shadow_x = max(x_in_dest + shadow_off_y, 0);
-		const int shadow_y = max(y_in_dest + shadow_off_y, 0);
+		const int shadow_x_in_src = max(bmp_x_in_src - shadow_off_x, 0);
+		const int shadow_y_in_src = max(bmp_y_in_src - shadow_off_y, 0);
+		const int shadow_x_in_dest = max(bmp_x_in_dest + shadow_off_x, 0);
+		const int shadow_y_in_dest = max(bmp_y_in_dest + shadow_off_y, 0);
 
 		switch (glyphs[i]->bitmap.pixel_mode)
 		{
 		case FT_PIXEL_MODE_MONO:
 			set_bmp_bits_mono(glyphs[i]->bitmap,
-				x_in_dest, y_in_dest,
+				bmp_x_in_src, bmp_y_in_src,
 				dest_bits,
-				bmp_width, bmp_height,
+				bmp_x_in_dest, bmp_y_in_dest,
+				bmp_width, cell_height,
 				dc_bmp_info.bmiHeader.biBitCount);
 			break;
 		case FT_PIXEL_MODE_GRAY:
-			if (shadow_alpha > 0 && (shadow_x != 0 || shadow_y != 0))
+			if (shadow_alpha > 0)
 				set_bmp_bits_gray(glyphs[i]->bitmap,
-					shadow_x, shadow_y,
+					shadow_x_in_src, shadow_y_in_src,
 					dest_bits,
-					bmp_width, bmp_height,
+					shadow_x_in_dest, shadow_y_in_dest,
+					bmp_width, cell_height,
 					dc_bmp_info.bmiHeader.biBitCount,
 					shadow_alpha);
 			set_bmp_bits_gray(glyphs[i]->bitmap,
-				x_in_dest, y_in_dest,
+				bmp_x_in_src, bmp_y_in_src,
 				dest_bits,
-				bmp_width, bmp_height,
+				bmp_x_in_dest, bmp_y_in_dest,
+				bmp_width, cell_height,
 				dc_bmp_info.bmiHeader.biBitCount,
 				255);
 			break;
 		case FT_PIXEL_MODE_LCD:
-			if (shadow_alpha > 0 && (shadow_x != 0 || shadow_y != 0))
+			if (shadow_alpha > 0)
 				set_bmp_bits_lcd(glyphs[i]->bitmap,
-					shadow_x, shadow_y,
+					shadow_x_in_src, shadow_y_in_src,
 					dest_bits,
-					bmp_width, bmp_height,
+					shadow_x_in_dest, shadow_y_in_dest,
+					bmp_width, cell_height,
 					dc_bmp_info.bmiHeader.biBitCount,
 					shadow_alpha,
 					zero_alpha);
 			set_bmp_bits_lcd(glyphs[i]->bitmap,
-				x_in_dest, y_in_dest,
+				bmp_x_in_src, bmp_y_in_src,
 				dest_bits,
-				bmp_width, bmp_height,
+				bmp_x_in_dest, bmp_y_in_dest,
+				bmp_width, cell_height,
 				dc_bmp_info.bmiHeader.biBitCount,
 				255,
 				zero_alpha);
@@ -722,7 +723,7 @@ bool _gdimm_text::draw_glyphs(
 
 	if (_eto_options & ETO_CLIPPED)
 	{
-		RECT dest_rect = {dest_origin.x, dest_origin.y, dest_origin.x + bmp_width, dest_origin.y + bmp_height};
+		RECT dest_rect = {dest_origin.x, dest_origin.y, dest_origin.x + bmp_width, dest_origin.y + cell_height};
 		IntersectRect(&dest_rect, &dest_rect, lprect);
 		const LONG dest_width = dest_rect.right - dest_rect.left;
 		const LONG dest_height = dest_rect.bottom - dest_rect.top;
@@ -742,7 +743,7 @@ bool _gdimm_text::draw_glyphs(
 	}
 	else
 	{
-		b_ret = BitBlt(_hdc_text, dest_origin.x, dest_origin.y, bmp_width, bmp_height, hdc_canvas, 0, 0, SRCCOPY | NOMIRRORBITMAP);
+		b_ret = BitBlt(_hdc_text, dest_origin.x, dest_origin.y, bmp_width, cell_height, hdc_canvas, 0, 0, SRCCOPY | NOMIRRORBITMAP);
 		assert(b_ret);
 	}
 
@@ -800,7 +801,6 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 
 	vector<FT_BitmapGlyph> glyphs;
 	vector<POINT> glyph_pos;
-	int max_glyph_height = 0;
 
 	for (unsigned int i = 0; i < c; i++)
 	{
@@ -825,7 +825,6 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 
 			glyphs.push_back(bmp_glyph);
 			glyph_pos.push_back(adjusted_pos);
-			max_glyph_height = max(max_glyph_height, bmp_glyph->bitmap.rows);
 		}
 
 		POINT glyph_advance = {0, glyph_metrics.gmCellIncY};
@@ -859,7 +858,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 	{
 		get_gamma_ramps(metric_face_name(_outline_metrics), ((render_mode & FT_RENDER_MODE_LCD) != 0));
 
-		draw_success = draw_glyphs(glyphs, glyph_pos, max_glyph_height, lprect, dc_bmp_info);
+		draw_success = draw_glyphs(glyphs, glyph_pos, lprect, dc_bmp_info);
 		
 		for (size_t i = 0; i < glyphs.size(); i++)
 		{
@@ -947,7 +946,6 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 
 	vector<FT_BitmapGlyph> glyphs;
 	vector<POINT> glyph_pos;
-	int max_glyph_height = 0;
 	
 	for (unsigned int i = 0; i < c; i++)
 	{
@@ -958,9 +956,8 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 			glyph_index = lpString[i];
 		else
 		{
-			// we do not care about non-printable characters
-			// solution for Windows Vista/7 Date
-			if (!iswprint(lpString[i]))
+			// do not draw control characters
+			if (iswcntrl(lpString[i]))
 				continue;
 
 			int link_times = 0;
@@ -1035,7 +1032,6 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 
 		FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, TRUE);
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
-		max_glyph_height = max(max_glyph_height, bmp_glyph->bitmap.rows);
 
 		if (bmp_glyph != NULL)
 		{
@@ -1077,7 +1073,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	{
 		get_gamma_ramps(final_font_face, ((render_mode & FT_RENDER_MODE_LCD) != 0));
 
-		draw_success = draw_glyphs(glyphs, glyph_pos, max_glyph_height, lprect, dc_bmp_info);
+		draw_success = draw_glyphs(glyphs, glyph_pos, lprect, dc_bmp_info);
 
 		for (size_t i = 0; i < glyphs.size(); i++)
 			FT_Done_Glyph((FT_Glyph) glyphs[i]);

@@ -44,29 +44,31 @@ class _gdimm_text
 		GLYPHMETRICS &glyph_metrics) const;
 	void set_bmp_bits_mono(
 		const FT_Bitmap &src_bitmap,
-		int x_in_dest, int y_in_dest,
+		int x_in_src, int y_in_src,
 		BYTE *dest_bits,
+		int x_in_dest, int y_in_dest,
 		int dest_width, int dest_height,
 		WORD dest_bpp) const;
 	void set_bmp_bits_gray(
 		const FT_Bitmap &src_bitmap,
-		int x_in_dest, int y_in_dest,
+		int x_in_src, int y_in_src,
 		BYTE *dest_bits,
+		int x_in_dest, int y_in_dest,
 		int dest_width, int dest_height,
 		WORD dest_bpp,
-		WORD alpha) const;
+		WORD bmp_alpha) const;
 	void set_bmp_bits_lcd(
 		const FT_Bitmap &src_bitmap,
-		int x_in_dest, int y_in_dest,
+		int x_in_src, int y_in_src,
 		BYTE *dest_bits,
+		int x_in_dest, int y_in_dest,
 		int dest_width, int dest_height,
 		WORD dest_bpp,
-		WORD alpha,
+		WORD bmp_alpha,
 		bool zero_alpha) const;
 	bool draw_glyphs(
 		const vector<FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,
-		int max_glyph_height,
 		CONST RECT *lprect,
 		const BITMAPINFO &dc_bmp_info) const;
 

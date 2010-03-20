@@ -74,7 +74,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
-	//svc_injector::instance().init_inject();
+	svc_injector::instance().init_inject();
 
 	// monitor future processes
 	if (svc_mon::instance().start_monitor())
