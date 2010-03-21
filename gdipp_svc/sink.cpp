@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "sink.h"
-#include "inject.h"
-#include <setting.h>
+#include "gdipp_svc.h"
 
 ULONG sink_inject::Release()
 {
@@ -46,7 +45,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		if (gdipp_setting::instance().is_process_excluded(V_BSTR(&var_exe_name)))
+		if (setting_instance.is_process_excluded(V_BSTR(&var_exe_name)))
 		{
 			VariantClear(&var_exe_name);
 			proc_obj->Release();
@@ -58,7 +57,7 @@ HRESULT sink_inject::Indicate(LONG lObjectCount, IWbemClassObject **apObjArray)
 		hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 		assert(SUCCEEDED(hr));
 
-		svc_injector::instance().inject_proc(V_I4(&var_proc_id));
+		injector_instance.inject_proc(V_I4(&var_proc_id));
 
 		VariantClear(&var_proc_id);
 		proc_obj->Release();

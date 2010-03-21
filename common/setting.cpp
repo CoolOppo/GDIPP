@@ -16,7 +16,7 @@ bool mb_to_wc(const char *mb_str, wstring &wc_str)
 	return (wcs_len != 0);
 }
 
-_gdipp_setting::_gdipp_setting()
+gdipp_setting::gdipp_setting()
 {
 	DWORD dw_ret;
 
@@ -26,7 +26,7 @@ _gdipp_setting::_gdipp_setting()
 	PathStripPathW(_process_name);
 }
 
-void _gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, setting_map &setting_store)
+void gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, setting_map &setting_store)
 {
 	const string name = setting_node.name();
 
@@ -51,7 +51,7 @@ void _gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, setti
 	}	
 }
 
-void _gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
+void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 {
 	// backward iterate so that first-coming specified process settings overwrites last-coming ones
 
@@ -76,7 +76,7 @@ void _gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 	}
 }
 
-void _gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
+void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 {
 	for (xpath_node_set::const_iterator node_iter = font_node.begin(); node_iter != font_node.end(); node_iter++)
 	{
@@ -94,7 +94,7 @@ void _gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 	}
 }
 
-void _gdipp_setting::load_service(const xml_node &service_node)
+void gdipp_setting::load_service(const xml_node &service_node)
 {
 	for (xml_node::iterator iter = service_node.begin(); iter != service_node.end(); iter++)
 	{
@@ -105,7 +105,7 @@ void _gdipp_setting::load_service(const xml_node &service_node)
 	}
 }
 
-void _gdipp_setting::load_exclude(const xml_node &exclude_node)
+void gdipp_setting::load_exclude(const xml_node &exclude_node)
 {
 	for (xml_node::iterator iter = exclude_node.begin(); iter != exclude_node.end(); iter++)
 	{
@@ -119,7 +119,7 @@ void _gdipp_setting::load_exclude(const xml_node &exclude_node)
 	}
 }
 
-bool _gdipp_setting::init(HMODULE h_module)
+bool gdipp_setting::init(HMODULE h_module)
 {
 	// get setting file path
 	WCHAR setting_path[MAX_PATH];
@@ -155,7 +155,7 @@ bool _gdipp_setting::init(HMODULE h_module)
 	return true;
 }
 
-const WCHAR *_gdipp_setting::get_gdimm_setting(const char *setting_name, const WCHAR *font_name) const
+const WCHAR *gdipp_setting::get_gdimm_setting(const char *setting_name, const WCHAR *font_name) const
 {
 	// check setting for the current process
 	setting_map::const_iterator setting_iter = _process_setting.find(setting_name);
@@ -177,7 +177,7 @@ const WCHAR *_gdipp_setting::get_gdimm_setting(const char *setting_name, const W
 	return L"";
 }
 
-const WCHAR *_gdipp_setting::get_service_setting(const char *setting_name) const
+const WCHAR *gdipp_setting::get_service_setting(const char *setting_name) const
 {
 	setting_map::const_iterator iter = _service_setting.find(setting_name);
 
@@ -187,7 +187,7 @@ const WCHAR *_gdipp_setting::get_service_setting(const char *setting_name) const
 		return iter->second.c_str();
 }
 
-bool _gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
+bool gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
 {
 	// if no process name is specified, return true if the current process is excluded
 	// otherwise, return true if the specified process is excluded
@@ -208,7 +208,7 @@ bool _gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
 	return false;
 }
 
-bool _gdipp_setting::is_font_excluded(const WCHAR *font_name) const
+bool gdipp_setting::is_font_excluded(const WCHAR *font_name) const
 {
 	for (list<const wstring>::const_iterator iter = _exclude_font.begin(); iter != _exclude_font.end(); iter++)
 	{

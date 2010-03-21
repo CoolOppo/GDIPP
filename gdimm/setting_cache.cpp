@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "setting_cache.h"
 
-_gdimm_setting_cache::~_gdimm_setting_cache()
+gdimm_setting_cache::~gdimm_setting_cache()
 {
 	for (font_cache::const_iterator font_iter = _cache.begin(); font_iter != _cache.end(); font_iter++)
 	{

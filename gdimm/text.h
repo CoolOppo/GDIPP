@@ -1,8 +1,9 @@
 #pragma once
 
-#include <global.h>
+#include "font_man.h"
+using namespace std;
 
-class _gdimm_text
+class gdimm_text
 {
 	// device context attributes
 	HDC _hdc_text;
@@ -13,16 +14,16 @@ class _gdimm_text
 	RGBQUAD _fg_rgb;
 	COLORREF _bg_color;
 
-	// metrics
+	// font attributes
 	vector<BYTE> _metric_buf;
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 
-	//misc
-	UINT _eto_options;
-
 	// gamma ramps for gray, red, green, blue
 	const BYTE *_gamma_ramps[4];
+
+	//misc
+	UINT _eto_options;
 
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
@@ -79,5 +80,3 @@ public:
 	bool init(HDC hdc, int x, int y, UINT options);
 	bool text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 };
-
-typedef singleton<_gdimm_text> gdimm_text;

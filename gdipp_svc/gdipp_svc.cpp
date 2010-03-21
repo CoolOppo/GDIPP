@@ -1,7 +1,5 @@
 #include "stdafx.h"
-#include "mon.h"
-#include "inject.h"
-#include <setting.h>
+#include "gdipp_svc.h"
 
 #ifdef _M_X64
 #define SVC_NAME TEXT("gdipp_svc_64")
@@ -9,9 +7,19 @@
 #define SVC_NAME TEXT("gdipp_svc_32")
 #endif
 
+#ifdef _M_X64
+#define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_64"
+#else
+#define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_32"
+#endif
+
 SERVICE_STATUS			svc_status = {0};
 SERVICE_STATUS_HANDLE	svc_status_handle = NULL;
 HANDLE					svc_stop_event = NULL;
+
+svc_injector injector_instance;
+svc_mon mon_instance;
+gdipp_setting setting_instance;
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
@@ -50,6 +58,24 @@ VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
 	}
 }
 
+bool create_svc_event()
+{
+	// create named event to synchronize between service and gdimm
+
+	// service event name = event name prefix + non-duplicable number (tick count)
+	// use this dynamic event name to avoid existing same-named event, opened by lingering gdimm.dll
+	wstringstream ss;
+	ss << SVC_EVENT_PREFIX;
+	ss << GetTickCount();
+
+	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, ss.str().c_str());
+	if (svc_stop_event == NULL)
+		return false;
+
+	injector_instance.init_payload(ss.str().data());
+	return true;
+}
+
 VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 {
 	// register the handler function for the service
@@ -62,22 +88,20 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	svc_status.dwWin32ExitCode = NO_ERROR;
 
 	// report initial status to the SCM
-	set_svc_status(SERVICE_START_PENDING, NO_ERROR, 3000);
+	set_svc_status(SERVICE_START_PENDING, NO_ERROR, INFINITE);
 
-	gdipp_setting::instance().init(NULL);
-
-	// create named event to synchronize between service and gdimm
-	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, SVC_EVENT_NAME);
-	if (svc_stop_event == NULL)
+	if (!create_svc_event())
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
 
-	svc_injector::instance().init_inject();
+	setting_instance.init(NULL);
+
+	injector_instance.initial_inject();
 
 	// monitor future processes
-	if (svc_mon::instance().start_monitor())
+	if (mon_instance.start_monitor())
 	{
 		// report running status when initialization is complete
 		set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
@@ -87,7 +111,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 		set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
 
-		svc_mon::instance().stop_monitor();
+		mon_instance.stop_monitor();
 	}
 
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
@@ -108,14 +132,22 @@ int APIENTRY _tWinMain(
 
 	StartServiceCtrlDispatcher(dispatch_table);
 #else
-	gdipp_setting::instance().init(NULL);
+	if (!create_svc_event())
+	{
+		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
+		return 0;
+	}
 
-	svc_injector::instance().init_inject();
+	setting_instance.init(NULL);
 
-	if (svc_mon::instance().start_monitor())
+	//injector_instance.initial_inject();
+
+	if (mon_instance.start_monitor())
 	{
 		Sleep(3000);
-		svc_mon::instance().stop_monitor();
+		mon_instance.stop_monitor();
 	}
 #endif
+
+	return 0;
 }

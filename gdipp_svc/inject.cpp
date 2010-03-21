@@ -1,13 +1,20 @@
 #include "stdafx.h"
 #include "inject.h"
+#include <global.h>
 
-_svc_injector::_svc_injector()
+svc_injector::svc_injector()
 {
 	get_dir_file_path(NULL, L"gdimm_64.dll", _gdimm_path_64);
 	get_dir_file_path(NULL, L"gdimm_32.dll", _gdimm_path_32);
 }
 
-bool _svc_injector::inject_proc(LONG proc_id)
+void svc_injector::init_payload(const WCHAR *svc_event_name)
+{
+	_payload.inject_type = GDIPP_SERVICE;
+	wcsncpy_s(_payload.svc_event_name, svc_event_name, MAX_PATH);
+}
+
+bool svc_injector::inject_proc(LONG proc_id)
 {
 	NTSTATUS eh_error;
 
@@ -35,18 +42,16 @@ bool _svc_injector::inject_proc(LONG proc_id)
 
 	CloseHandle(h_snapshot);
 
-	const INJECTOR_TYPE injector_type = GDIPP_SERVICE;
-
 #ifdef _M_X64
-	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(inject_payload));
 #else
-	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &_payload, sizeof(inject_payload));
 #endif
 
 	return (eh_error == 0);
 }
 
-void _svc_injector::init_inject()
+void svc_injector::initial_inject()
 {
 	list<const WCHAR*> init_proc;
 	init_proc.push_back(L"explorer.exe");

@@ -1,13 +1,12 @@
 #include "stdafx.h"
-#include "hook.h"
+#include "gdimm.h"
 #include "text.h"
 
-HMODULE h_self = NULL;
 HANDLE h_svc_event = NULL;
 
 void unload_self(void *arglist)
 {
-	critical_section lock;
+	critical_section interlock(CS_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
 }
 
@@ -19,9 +18,8 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		CloseHandle(h_svc_event);
 
 		// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
-		critical_section lock;
-		uintptr_t h_thread = _beginthread(unload_self, 0, NULL);
-		assert(h_thread != 0);
+		critical_section interlock(CS_HOOK);
+		_beginthread(unload_self, 0, NULL);
 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
@@ -90,13 +88,12 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 #endif
+	gdimm_text text_instance;
 
-	critical_section lock;
-
-	if (!gdimm_text::instance().init(hdc, x, y, options))
+	if (!text_instance.init(hdc, x, y, options))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!gdimm_text::instance().text_out(lpString, c, lprect, lpDx))
+	if (!text_instance.text_out(lpString, c, lprect, lpDx))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	return TRUE;
@@ -228,18 +225,18 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 {
 	BOOL b_ret;
 
-	if (remote_info->UserDataSize != sizeof(INJECTOR_TYPE))
+	if (remote_info->UserDataSize != sizeof(inject_payload))
 		return;
 
-	const INJECTOR_TYPE injector_type = *(INJECTOR_TYPE*) remote_info->UserData;
-	switch (injector_type)
+	const inject_payload payload = *(inject_payload*) remote_info->UserData;
+	switch (payload.inject_type)
 	{
 	case GDIPP_SERVICE:
 		// force the foreground window of the injected process to redraw
 		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
 
-		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, SVC_EVENT_NAME);
+		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
 
 		break;
 	case GDIPP_LOADER:
@@ -249,7 +246,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	}
 }
 
-void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
+void gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	NTSTATUS eh_error;
 
@@ -269,7 +266,7 @@ void _gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pr
 	_hooks.push_back(h_hook);
 }
 
-bool _gdimm_hook::hook()
+bool gdimm_hook::hook()
 {
 	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
@@ -277,7 +274,7 @@ bool _gdimm_hook::hook()
 	return !(_hooks.empty());
 }
 
-void _gdimm_hook::unhook()
+void gdimm_hook::unhook()
 {
 	NTSTATUS eh_error;
 	

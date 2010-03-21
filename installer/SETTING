@@ -60,19 +60,3 @@ Below is a list of the descriptions of each <service> setting item.
 ===============
 
 Similar as the <gdimm> node, there are two types of child nodes can be specified in the <exclude> node. <process> node indicates the excluded process name, and <font> node indicates the excluded font face name. Both names are matched against regular expression.
-
-The folliwing system process names are recommended to exclude for the sack of system stability:
-
-<process>conhost\.exe</process>
-<process>csrss\.exe</process>
-<process>dllhost\.exe</process>
-<process>dwm\.exe</process>
-<process>lsass\.exe</process>
-<process>lsm\.exe</process>
-<process>services\.exe</process>
-<process>smss\.exe</process>
-<process>svchost\.exe</process>
-<process>taskhost\.exe</process>
-<process>userinit\.exe</process>
-<process>wininit\.exe</process>
-<process>winlogon\.exe</process>

@@ -1,24 +1,24 @@
 #pragma once
 
-#include <global.h>
 #include <setting.h>
+using namespace std;
 
-class _gdimm_setting_cache
+class gdimm_setting_cache
 {
-	typedef map<const string, void*> setting_cache;
-	typedef map<const wstring, setting_cache> font_cache;
+	typedef map<string, void*> setting_cache;
+	typedef map<wstring, setting_cache> font_cache;
 
 	font_cache _cache;
 
 public:
-	~_gdimm_setting_cache();
+	~gdimm_setting_cache();
 
 	template <typename T>
 	bool lookup(const char *setting_name, const WCHAR *font_name, T &setting_value);
 };
 
 template <typename T>
-bool _gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_name, T &setting_value)
+bool gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_name, T &setting_value)
 {
 	// if the setting for the specified font is found in the cache, use it
 	font_cache::const_iterator font_iter = _cache.find(font_name);
@@ -35,7 +35,7 @@ bool _gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_na
 	}
 
 	// otherwise, use the value from the setting file
-	const WCHAR *raw_value = gdipp_setting::instance().get_gdimm_setting(setting_name, font_name);
+	const WCHAR *raw_value = setting_instance.get_gdimm_setting(setting_name, font_name);
 	if (raw_value == NULL)
 		return false;
 
@@ -48,5 +48,3 @@ bool _gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_na
 
 	return true;
 }
-
-typedef singleton<_gdimm_setting_cache> gdimm_setting_cache;

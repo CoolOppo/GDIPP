@@ -1,9 +1,10 @@
 #pragma once
 
 #include "global.h"
+using namespace std;
 using namespace pugi;
 
-class _gdipp_setting
+class gdipp_setting
 {
 	// setting names are case-insensitive
 	typedef map<const string, wstring, string_ci_less> setting_map;
@@ -24,7 +25,7 @@ class _gdipp_setting
 	void load_exclude(const xml_node &exclude_node);
 
 public:
-	_gdipp_setting();
+	gdipp_setting();
 	bool init(HMODULE h_module);
 
 	const WCHAR *get_gdimm_setting(const char *setting_name, const WCHAR *font_name) const;
@@ -32,5 +33,3 @@ public:
 	bool is_process_excluded(const WCHAR *proc_name) const;
 	bool is_font_excluded(const WCHAR *font_name) const;
 };
-
-typedef singleton<_gdipp_setting> gdipp_setting;

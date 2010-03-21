@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <list>
 #include <map>
+#include <sstream>
 #include <string>
 #include <tchar.h>
 

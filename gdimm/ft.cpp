@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ft.h"
 #include "font_man.h"
-#include <setting.h>
+#include "gdimm.h"
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
@@ -15,7 +15,7 @@ void initialize_freetype()
 	assert(ft_error == 0);
 
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(gdipp_setting::instance().get_gdimm_setting("lcd_filter", L""), *((int*) &lcd_filter));
+	wcs_convert(setting_instance.get_gdimm_setting("lcd_filter", L""), *((int*) &lcd_filter));
 	ft_error = FT_Library_SetLcdFilter(ft_lib, lcd_filter);
 
 	ft_error = FTC_Manager_New(ft_lib, 0, 0, 0, face_requester, NULL, &ft_cache_man);
@@ -39,7 +39,7 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 {
 	FT_Open_Args args;
 	args.flags = FT_OPEN_STREAM;
-	args.stream = gdimm_font_man::instance().get_font_stream((long) face_id);
+	args.stream = font_man_instance.get_font_stream((long) face_id);
 	
 	return FT_Open_Face(library, &args, 0, aface);
 }

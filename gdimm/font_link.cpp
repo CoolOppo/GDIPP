@@ -3,7 +3,7 @@
 
 #define MAX_VALUE_NAME 16383
 
-void _gdimm_font_link::get_font_link_info()
+gdimm_font_link::gdimm_font_link()
 {
 	// read font linking information from registry, and store in map
 
@@ -31,7 +31,7 @@ void _gdimm_font_link::get_font_link_info()
 	BYTE *value_data;
 
 	// font file name -> font face name mapping
-	map<const wstring, wstring, wstring_ci_less> fonts_table;
+	map<wstring, wstring, wstring_ci_less> fonts_table;
 
 	// get font_file_name -> font_face mapping from the "Fonts" registry key
 
@@ -106,7 +106,7 @@ void _gdimm_font_link::get_font_link_info()
 				}
 				else
 				{
-					map<const wstring, wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
+					map<wstring, wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
 					if (iter != fonts_table.end())
 						font_name = iter->second;
 				}
@@ -126,7 +126,7 @@ void _gdimm_font_link::get_font_link_info()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const WCHAR *_gdimm_font_link::lookup(const WCHAR *font_name, size_t index) const
+const WCHAR *gdimm_font_link::lookup(const WCHAR *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 
@@ -141,7 +141,7 @@ const WCHAR *_gdimm_font_link::lookup(const WCHAR *font_name, size_t index) cons
 	}
 }
 
-size_t _gdimm_font_link::get_link_count(const WCHAR *font_name) const
+size_t gdimm_font_link::get_link_count(const WCHAR *font_name) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

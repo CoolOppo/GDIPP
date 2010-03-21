@@ -45,7 +45,20 @@
 	</service>
 
 	<exclude>
-		<process>excluded\.exe</process>
+		<process>conhost\.exe</process>
+		<process>csrss\.exe</process>
+		<process>dllhost\.exe</process>
+		<process>dwm\.exe</process>
+		<process>lsass\.exe</process>
+		<process>lsm\.exe</process>
+		<process>services\.exe</process>
+		<process>smss\.exe</process>
+		<process>svchost\.exe</process>
+		<process>taskhost\.exe</process>
+		<process>userinit\.exe</process>
+		<process>wininit\.exe</process>
+		<process>winlogon\.exe</process>
+		
 		<font>excluded_font.*</font>
 	</exclude>
 </gdipp>

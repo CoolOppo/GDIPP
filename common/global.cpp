@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "global.h"
 
-CRITICAL_SECTION critical_section::_cs;
-
 void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_path[MAX_PATH])
 {
 	DWORD dw_ret;

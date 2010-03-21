@@ -1,9 +1,8 @@
 #include "stdafx.h"
-#include "mon.h"
+#include "gdipp_svc.h"
 #include "sink.h"
-#include <setting.h>
 
-void _svc_mon::release_all()
+void svc_mon::release_all()
 {
 	_svc->Release();
 	_loc->Release();
@@ -13,7 +12,7 @@ void _svc_mon::release_all()
 	_stub_sink->Release();
 }
 
-bool _svc_mon::start_monitor()
+bool svc_mon::start_monitor()
 {
 	HRESULT hr;
 
@@ -66,7 +65,7 @@ bool _svc_mon::start_monitor()
 	hr = _stub_unk->QueryInterface(IID_IWbemObjectSink, (void**) &_stub_sink);
 	assert(SUCCEEDED(hr));
 
-	const WCHAR *interval_str = gdipp_setting::instance().get_service_setting("poll_interval");
+	const WCHAR *interval_str = setting_instance.get_service_setting("poll_interval");
 	if (interval_str == NULL)
 		interval_str = L"0.5";
 
@@ -93,7 +92,7 @@ bool _svc_mon::start_monitor()
 	return true;
 }
 
-void _svc_mon::stop_monitor()
+void svc_mon::stop_monitor()
 {
 	HRESULT hr;
 

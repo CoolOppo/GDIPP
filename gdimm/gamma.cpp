@@ -1,13 +1,14 @@
 #include "stdafx.h"
 #include "gamma.h"
+#include "gdimm.h"
 
-_gdimm_gamma::~_gdimm_gamma()
+gdimm_gamma::~gdimm_gamma()
 {
 	for (map<double, BYTE*>::const_iterator iter = _gamma_ramps.begin(); iter != _gamma_ramps.end(); iter++)
 		delete[] iter->second;
 }
 
-void _gdimm_gamma::init_ramp(double gamma)
+void gdimm_gamma::init_ramp(double gamma)
 {
 	BYTE *new_ramp = new BYTE[256];
 
@@ -17,12 +18,19 @@ void _gdimm_gamma::init_ramp(double gamma)
 	_gamma_ramps[gamma] = new_ramp;
 }
 
-const BYTE *_gdimm_gamma::get_ramp(double gamma)
+const BYTE *gdimm_gamma::get_ramp(double gamma)
 {
 	map<double, BYTE*>::const_iterator iter = _gamma_ramps.find(gamma);
 
+	// double-check interlock
 	if (iter == _gamma_ramps.end())
-		init_ramp(gamma);
+	{
+		critical_section interlock(CS_GAMMA);
+
+		iter = _gamma_ramps.find(gamma);
+		if (iter == _gamma_ramps.end())
+			init_ramp(gamma);
+	}
 
 	return _gamma_ramps[gamma];
 }

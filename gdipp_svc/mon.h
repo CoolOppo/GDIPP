@@ -1,8 +1,6 @@
 #pragma once
 
-#include <global.h>
-
-class _svc_mon
+class svc_mon
 {
 	IWbemLocator *_loc;
 	IWbemServices *_svc;
@@ -17,5 +15,3 @@ public:
 	bool start_monitor();
 	void stop_monitor();
 };
-
-typedef singleton<_svc_mon> svc_mon;

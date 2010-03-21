@@ -1,8 +1,9 @@
 #pragma once
 
 #include <global.h>
+using namespace std;
 
-class _gdimm_hook
+class gdimm_hook
 {
 	vector<TRACED_HOOK_HANDLE> _hooks;
 
@@ -11,7 +12,3 @@ public:
 	bool hook();
 	void unhook();
 };
-
-typedef singleton<_gdimm_hook> gdimm_hook;
-
-extern HMODULE h_self;

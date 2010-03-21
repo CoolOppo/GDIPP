@@ -1,10 +1,7 @@
 #include "stdafx.h"
 #include "text.h"
-#include "font_link.h"
-#include "font_man.h"
+#include "gdimm.h"
 #include "ft.h"
-#include "gamma.h"
-#include "setting_cache.h"
 
 const double pi = acos(-1.0);
 const FT_Glyph_Class *glyph_clazz = NULL;
@@ -39,7 +36,7 @@ int get_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
-int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
+int gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 {
 	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
 		return bitmap.width / 3;
@@ -47,7 +44,7 @@ int _gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 	return bitmap.width;
 }
 
-void _gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
+void gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 {
 	assert(bg_color != CLR_INVALID);
 
@@ -62,7 +59,7 @@ void _gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_colo
 	DeleteObject(bg_brush);
 }
 
-void _gdimm_text::oblique_outline(const FT_Outline *outline, double angle)
+void gdimm_text::oblique_outline(const FT_Outline *outline, double angle)
 {
 	// the advancement of slant on X-axis direction
 	const double slant_adv = tan(pi * angle / 180);
@@ -72,10 +69,10 @@ void _gdimm_text::oblique_outline(const FT_Outline *outline, double angle)
 }
 
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
-bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_name, FT_Render_Mode &render_mode) const
+bool gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_name, FT_Render_Mode &render_mode) const
 {
 	bool render_non_aa = false;
-	gdimm_setting_cache::instance().lookup("render_non_aa", font_name, render_non_aa);
+	setting_cache_instance.lookup("render_non_aa", font_name, render_non_aa);
 
 	// non-antialiased font
 	// draw with monochrome mode
@@ -86,7 +83,7 @@ bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_name, FT_Render
 	}
 
 	bool subpixel_render = true;
-	gdimm_setting_cache::instance().lookup("subpixel_render", font_name, subpixel_render);
+	setting_cache_instance.lookup("subpixel_render", font_name, subpixel_render);
 
 	switch (dc_bpp)
 	{
@@ -108,16 +105,16 @@ bool _gdimm_text::get_render_mode(WORD dc_bpp, const WCHAR *font_name, FT_Render
 	return true;
 }
 
-FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_name) const
+FT_UInt32 gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *font_name) const
 {
 	bool auto_hinting = false;
-	gdimm_setting_cache::instance().lookup("auto_hinting", font_name, auto_hinting);
+	setting_cache_instance.lookup("auto_hinting", font_name, auto_hinting);
 	bool embedded_bitmap = false;
-	gdimm_setting_cache::instance().lookup("embedded_bitmap", font_name, embedded_bitmap);
+	setting_cache_instance.lookup("embedded_bitmap", font_name, embedded_bitmap);
 	bool hinting = true;
-	gdimm_setting_cache::instance().lookup("hinting", font_name, hinting);
+	setting_cache_instance.lookup("hinting", font_name, hinting);
 	bool light_mode = true;
-	gdimm_setting_cache::instance().lookup("light_mode", font_name, light_mode);
+	setting_cache_instance.lookup("light_mode", font_name, light_mode);
 
 	FT_UInt32 load_flag = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
 		(embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
@@ -142,7 +139,7 @@ FT_UInt32 _gdimm_text::get_load_mode(FT_Render_Mode render_mode, const WCHAR *fo
 	return load_flag;
 }
 
-BITMAPINFO _gdimm_text::get_dc_bmp_info() const
+BITMAPINFO gdimm_text::get_dc_bmp_info() const
 {
 	int i_ret;
 
@@ -158,7 +155,7 @@ BITMAPINFO _gdimm_text::get_dc_bmp_info() const
 }
 
 // get various metrics of the DC
-bool _gdimm_text::get_dc_metrics()
+bool gdimm_text::get_dc_metrics()
 {
 	// get outline metrics of the DC, which also include the text metrics
 	UINT metric_size = GetOutlineTextMetricsW(_hdc_text, 0, NULL);
@@ -177,7 +174,7 @@ bool _gdimm_text::get_dc_metrics()
 	return true;
 }
 
-void _gdimm_text::get_glyph_clazz()
+void gdimm_text::get_glyph_clazz()
 {
 	/*
 	glyph clazz is a private field, cannot be constructed through FreeType API
@@ -187,8 +184,9 @@ void _gdimm_text::get_glyph_clazz()
 
 	FT_Error ft_error;
 
-	const HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
-	const long font_id = gdimm_font_man::instance().register_font(curr_hfont, L"");
+	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
+	HDC font_holder = CreateCompatibleDC(_hdc_text);
+	const long font_id = font_man_instance.register_font(font_holder, curr_hfont, metric_face_name(_outline_metrics));
 
 	const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
@@ -208,33 +206,35 @@ void _gdimm_text::get_glyph_clazz()
 	FT_Get_Glyph(font_face->glyph, &useless);
 	glyph_clazz = useless->clazz;
 	FT_Done_Glyph(useless);
+
+	DeleteDC(font_holder);
 }
 
-void _gdimm_text::get_gamma_ramps(const WCHAR *font_name, bool is_lcd)
+void gdimm_text::get_gamma_ramps(const WCHAR *font_name, bool is_lcd)
 {
 	if (is_lcd)
 	{
 		double gamma_red = 1.0;
-		gdimm_setting_cache::instance().lookup("gamma/red", font_name, gamma_red);
+		setting_cache_instance.lookup("gamma/red", font_name, gamma_red);
 		double gamma_green = 1.0;
-		gdimm_setting_cache::instance().lookup("gamma/green", font_name, gamma_green);
+		setting_cache_instance.lookup("gamma/green", font_name, gamma_green);
 		double gamma_blue = 1.0;
-		gdimm_setting_cache::instance().lookup("gamma/blue", font_name, gamma_blue);
+		setting_cache_instance.lookup("gamma/blue", font_name, gamma_blue);
 
-		_gamma_ramps[1] = gdimm_gamma::instance().get_ramp(gamma_red);
-		_gamma_ramps[2] = gdimm_gamma::instance().get_ramp(gamma_green);
-		_gamma_ramps[3] = gdimm_gamma::instance().get_ramp(gamma_blue);
+		_gamma_ramps[1] = gamma_instance.get_ramp(gamma_red);
+		_gamma_ramps[2] = gamma_instance.get_ramp(gamma_green);
+		_gamma_ramps[3] = gamma_instance.get_ramp(gamma_blue);
 	}
 	else
 	{
 		double gamma_gray = 1.0;
-		gdimm_setting_cache::instance().lookup("gamma/gray", font_name, gamma_gray);
+		setting_cache_instance.lookup("gamma/gray", font_name, gamma_gray);
 
-		_gamma_ramps[0] = gdimm_gamma::instance().get_ramp(gamma_gray);
+		_gamma_ramps[0] = gamma_instance.get_ramp(gamma_gray);
 	}
 }
 
-FT_BitmapGlyph _gdimm_text::outline_to_bitmap(
+FT_BitmapGlyph gdimm_text::outline_to_bitmap(
 	WCHAR ch,
 	UINT ggo_format,
 	const MAT2 &matrix,
@@ -352,13 +352,18 @@ FT_BitmapGlyph _gdimm_text::outline_to_bitmap(
 
 	// convert outline to bitmap
 	FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
-	ft_error = FT_Glyph_To_Bitmap(&generic_glyph, render_mode, NULL, FALSE);
-	assert(ft_error == 0);
+	
+	// FT_Glyph_To_Bitmap is not thread-safe
+	{
+		critical_section interlock(CS_TEXT);
+		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, render_mode, NULL, FALSE);
+		assert(ft_error == 0);
+	}
 
 	return (FT_BitmapGlyph) generic_glyph;
 }
 
-void _gdimm_text::set_bmp_bits_mono(
+void gdimm_text::set_bmp_bits_mono(
 	const FT_Bitmap &src_bitmap,
 	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
@@ -409,7 +414,7 @@ void _gdimm_text::set_bmp_bits_mono(
 	}
 }
 
-void _gdimm_text::set_bmp_bits_gray(
+void gdimm_text::set_bmp_bits_gray(
 	const FT_Bitmap &src_bitmap,
 	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
@@ -470,7 +475,7 @@ void _gdimm_text::set_bmp_bits_gray(
 	}
 }
 
-void _gdimm_text::set_bmp_bits_lcd(
+void gdimm_text::set_bmp_bits_lcd(
 	const FT_Bitmap &src_bitmap,
 	int x_in_src, int y_in_src,
 	BYTE *dest_bits,
@@ -535,7 +540,7 @@ void _gdimm_text::set_bmp_bits_lcd(
 4. copy the canvas bitmap back to DC, apply clipping if necessary
 return true if successfully draw the bitmap, otherwise return false
 */
-bool _gdimm_text::draw_glyphs(
+bool gdimm_text::draw_glyphs(
 	const vector<FT_BitmapGlyph> &glyphs,
 	const vector<POINT> &glyph_pos,
 	CONST RECT *lprect,
@@ -603,7 +608,7 @@ bool _gdimm_text::draw_glyphs(
 	const HBITMAP dest_bitmap = CreateDIBSection(_hdc_text, &bmi, DIB_RGB_COLORS, (VOID**) &dest_bits, NULL, 0);
 	assert(dest_bitmap != NULL);
 
-	const HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
+	HDC hdc_canvas = CreateCompatibleDC(_hdc_text);
 	assert(hdc_canvas != NULL);
 	SelectObject(hdc_canvas, dest_bitmap);
 
@@ -642,13 +647,13 @@ bool _gdimm_text::draw_glyphs(
 
 	const WCHAR *font_face = metric_face_name(&_metric_buf[0]);
 	LONG shadow_off_x = 1;
-	gdimm_setting_cache::instance().lookup("shadow/offset_x", font_face, shadow_off_x);
+	setting_cache_instance.lookup("shadow/offset_x", font_face, shadow_off_x);
 	LONG shadow_off_y = 1;
-	gdimm_setting_cache::instance().lookup("shadow/offset_y", font_face, shadow_off_y);
+	setting_cache_instance.lookup("shadow/offset_y", font_face, shadow_off_y);
 	WORD shadow_alpha = 32;
-	gdimm_setting_cache::instance().lookup("shadow/alpha", font_face, shadow_alpha);
+	setting_cache_instance.lookup("shadow/alpha", font_face, shadow_alpha);
 	bool zero_alpha = false;
-	gdimm_setting_cache::instance().lookup("zero_alpha", font_face, zero_alpha);
+	setting_cache_instance.lookup("zero_alpha", font_face, zero_alpha);
 
 	for (size_t i = 0; i < glyphs.size(); i++)
 	{
@@ -757,7 +762,7 @@ as its name
 return true it processed the text 
 return false if it cannot deal with the text (let original ExtTextOutW handle)
 */
-bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
+bool gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
 {
 	BOOL b_ret;
 
@@ -770,7 +775,7 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 
 	// Windows renders monochrome bitmap better than FreeType
 	bool render_mono = false;
-	gdimm_setting_cache::instance().lookup("render_mono", font_face, render_mono);
+	setting_cache_instance.lookup("render_mono", font_face, render_mono);
 	if (render_mode == FT_RENDER_MODE_MONO && !render_mono)
 		return false;
 	
@@ -792,12 +797,12 @@ bool _gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect
 		ggo_format |= GGO_GLYPH_INDEX;
 
 	bool hinting = true;
-	gdimm_setting_cache::instance().lookup("hinting", font_face, hinting);
+	setting_cache_instance.lookup("hinting", font_face, hinting);
 	if (!hinting)
 		ggo_format |= GGO_UNHINTED;
 
 	double embolden = 0.0;
-	gdimm_setting_cache::instance().lookup("embolden", font_face, embolden);
+	setting_cache_instance.lookup("embolden", font_face, embolden);
 
 	vector<FT_BitmapGlyph> glyphs;
 	vector<POINT> glyph_pos;
@@ -875,7 +880,7 @@ as its name
 return true it processed the text 
 return false if it cannot deal with the text (let original ExtTextOutW handle)
 */
-bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
+bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
 {
 	BOOL b_ret;
 	FT_Error ft_error;
@@ -893,7 +898,7 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 
 	// Windows renders monochrome bitmap better than FreeType
 	bool render_mono = false;
-	gdimm_setting_cache::instance().lookup("render_mono", font_face, render_mono);
+	setting_cache_instance.lookup("render_mono", font_face, render_mono);
 	if (render_mode == FT_RENDER_MODE_MONO && !render_mono)
 		return false;
 
@@ -907,13 +912,14 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	const WCHAR *final_font_family = dc_font_family;
 	FT_UInt32 load_flags = get_load_mode(render_mode, dc_font_face);
 
-	const HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
+	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
 	assert(curr_hfont != NULL);
 
-	long font_id = gdimm_font_man::instance().register_font(curr_hfont, dc_font_face);
+	HDC font_holder = CreateCompatibleDC(_hdc_text);
+	long font_id = font_man_instance.register_font(font_holder, curr_hfont, dc_font_face);
 	FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
-	const size_t link_count = gdimm_font_link::instance().get_link_count(dc_font_family);
+	const size_t link_count = font_link_instance.get_link_count(dc_font_family);
 	int link_index = 0;
 
 	/*
@@ -926,7 +932,6 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 	simple calculation yields new_freetype_width = logfont_width * em_square / xAvgCharWidth
 	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, never be 0
 	*/
-
 	const LONG glyph_height = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
 	LONG glyph_width;
 
@@ -964,14 +969,14 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 			while (true)
 			{
 				// character code -> glyph index lookup
-				glyph_index = gdimm_font_man::instance().get_glyph_index(lpString[i]);
+				glyph_index = font_man_instance.get_glyph_index(font_holder, lpString[i]);
 
 				// break if either find the glyph index, or exhaust the font link count
 				if (glyph_index != 0xffff || link_times == link_count)
 					break;
 
 				// do font linking
-				final_font_family = gdimm_font_link::instance().lookup(dc_font_family, link_index);
+				final_font_family = font_link_instance.lookup(dc_font_family, link_index);
 				link_index++;
 				link_times++;
 				font_linked = true;
@@ -983,9 +988,12 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 					final_font_family = dc_font_family;
 				}
 
-				font_id = gdimm_font_man::instance().lookup_font(_font_attr, final_font_family, final_font_face);
+				font_id = font_man_instance.lookup_font(font_holder, _font_attr, final_font_family, final_font_face);
 				if (font_id < 0)
+				{
+					DeleteObject(font_holder);
 					return false;
+				}
 
 				ft_face_id = (FTC_FaceID) font_id;
 			}
@@ -1006,12 +1014,18 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 		FT_Glyph glyph, cached_glyph;
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &ft_scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
+		{
+			DeleteObject(font_holder);
 			return false;
+		}
 
 		// some fonts are embedded with pre-rendered glyph bitmap
 		// in that case, use original ExtTextOutW
 		if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
+		{
+			DeleteObject(font_holder);
 			return false;
+		}
 
 		FT_Glyph_Copy(cached_glyph, &glyph);
 		FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
@@ -1023,14 +1037,20 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 
 		// glyph outline -> glyph bitmap conversion
 		double embolden = 0.0;
-		gdimm_setting_cache::instance().lookup("embolden", final_font_face, embolden);
+		setting_cache_instance.lookup("embolden", final_font_face, embolden);
 		if (embolden != 0.0)
 		{
 			ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(embolden));
 			assert(ft_error == 0);
 		}
 
-		FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, TRUE);
+		// FT_Glyph_To_Bitmap is not thread-safe
+		{
+			critical_section interlock(CS_TEXT);
+			ft_error = FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, TRUE);
+			assert(ft_error == 0);
+		}
+
 		FT_BitmapGlyph bmp_glyph = (FT_BitmapGlyph) glyph;
 
 		if (bmp_glyph != NULL)
@@ -1078,19 +1098,22 @@ bool _gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONS
 		for (size_t i = 0; i < glyphs.size(); i++)
 			FT_Done_Glyph((FT_Glyph) glyphs[i]);
 	}
-	
+
+	DeleteObject(font_holder);
 	return draw_success;
 }
 
-bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
+bool gdimm_text::init(HDC hdc, int x, int y, UINT options)
 {
+	critical_section interlock(CS_TEXT);
+
 	_hdc_text = hdc;
 
 	if (!get_dc_metrics())
 		return false;
 
 	const WCHAR *font_face = metric_face_name(_outline_metrics);
-	if (gdipp_setting::instance().is_font_excluded(font_face))
+	if (setting_instance.is_font_excluded(font_face))
 		return false;
 
 	// ignore rotated DC
@@ -1098,7 +1121,7 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 		return false;
 
 	LONG max_height = 72;
-	gdimm_setting_cache::instance().lookup("max_height", font_face, max_height);
+	setting_cache_instance.lookup("max_height", font_face, max_height);
 	if (max_height != 0 && max_height < _outline_metrics->otmTextMetrics.tmHeight)
 		return false;
 
@@ -1138,10 +1161,10 @@ bool _gdimm_text::init(HDC hdc, int x, int y, UINT options)
 	return true;
 }
 
-bool _gdimm_text::text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
+bool gdimm_text::text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx)
 {
 	bool freetype_loader = true;
-	gdimm_setting_cache::instance().lookup("freetype_loader", metric_face_name(_outline_metrics), freetype_loader);
+	setting_cache_instance.lookup("freetype_loader", metric_face_name(_outline_metrics), freetype_loader);
 
 	if (freetype_loader)
 		return text_out_ft(lpString, c, lprect, lpDx);
