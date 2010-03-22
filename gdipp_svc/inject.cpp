@@ -11,7 +11,7 @@ svc_injector::svc_injector()
 void svc_injector::init_payload(const WCHAR *svc_event_name)
 {
 	_payload.inject_type = GDIPP_SERVICE;
-	wcsncpy_s(_payload.svc_event_name, svc_event_name, MAX_PATH);
+	wcscpy_s(_payload.svc_event_name, svc_event_name);
 }
 
 bool svc_injector::inject_proc(LONG proc_id)

@@ -61,7 +61,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	// debug_text = L"File";
+	// debug_text = L"";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -99,6 +99,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	return TRUE;
 }
 
+#ifndef _M_X64
 void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 {
 	BOOL b_ret;
@@ -117,17 +118,10 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 	assert(dw_ret != 0);
 
 	// get eip of the spawned thread
-#ifdef _M_X64
-	WOW64_CONTEXT ctx = {0};
-	ctx.ContextFlags = CONTEXT_CONTROL;
-	b_ret = Wow64GetThreadContext(lpProcessInformation->hThread, &ctx);
-	assert(b_ret);
-#else
 	CONTEXT ctx = {0};
 	ctx.ContextFlags = CONTEXT_CONTROL;
 	b_ret = GetThreadContext(lpProcessInformation->hThread, &ctx);
 	assert(b_ret);
-#endif
 
 	LPVOID inject_base = VirtualAllocEx(lpProcessInformation->hProcess, NULL, sys_info.dwPageSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	assert(inject_base != NULL);
@@ -141,7 +135,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	emit_db(0x50);		// push eax
 
-	emit_db(0x68);		// push gdimm path
+	emit_db(0x68);		// push gdimm_path
 	emit_dd((DWORD) inject_base + path_offset);
 	emit_db(0xB8);		// mov eax, LoadLibraryW
 	emit_dd(LoadLibraryW);
@@ -149,9 +143,9 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	emit_db(0x58);		// pop eax -> LoadLibraryW has return value
 
-	emit_db(0x68);		// push original eip
+	emit_db(0x68);		// push original_eip
 	emit_dd(ctx.Eip);
-	emit_db(0xC3);		// ret -> serve as an absolute jmp
+	emit_db(0xC3);		// retn -> serve as an absolute jmp
 
 	// write injection data to target process space
 	b_ret = WriteProcessMemory(lpProcessInformation->hProcess, inject_base, inject_buffer, sys_info.dwPageSize, NULL);
@@ -165,13 +159,8 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	// set eip to the entry point of the injection code
 	ctx.Eip = (DWORD) inject_base;
-#ifdef _M_X64
-	b_ret = Wow64SetThreadContext(lpProcessInformation->hThread, &ctx);
-	assert(b_ret);
-#else
 	b_ret = SetThreadContext(lpProcessInformation->hThread, &ctx);
 	assert(b_ret);
-#endif
 }
 
 BOOL
@@ -189,6 +178,24 @@ CreateProcessAsUserW_hook(
 	__in        LPSTARTUPINFOW lpStartupInfo,
 	__out       LPPROCESS_INFORMATION lpProcessInformation)
 {
+	// if the token is not restricted, redirect the call to original API
+	// service can inject
+	if (!IsTokenRestricted(hToken))
+		return CreateProcessAsUserW(
+			hToken,
+			lpApplicationName,
+			lpCommandLine,
+			lpProcessAttributes,
+			lpThreadAttributes,
+			bInheritHandles,
+			dwCreationFlags,
+			lpEnvironment,
+			lpCurrentDirectory,
+			lpStartupInfo,
+			lpProcessInformation);
+
+	// otherwise, the spawned process is restricted, and service cannot inject
+
 	bool init_suspended = false;
 	if (dwCreationFlags & CREATE_SUSPENDED)
 		init_suspended = true;
@@ -220,6 +227,7 @@ CreateProcessAsUserW_hook(
 
 	return TRUE;
 }
+#endif
 
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
@@ -259,9 +267,9 @@ void gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 	eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
-	ULONG thread_id_list = 0;
-	eh_error = LhSetExclusiveACL(&thread_id_list, 0, h_hook);
-	assert(eh_error == 0);
+	ULONG thread_id_list[1] = {0};
+ 	eh_error = LhSetExclusiveACL(thread_id_list, 0, h_hook);
+ 	assert(eh_error == 0);
 
 	_hooks.push_back(h_hook);
 }
@@ -269,7 +277,11 @@ void gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 bool gdimm_hook::hook()
 {
 	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
+
+#ifndef _M_X64
+	// currently not support inject at EIP for 64-bit processes
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
+#endif
 
 	return !(_hooks.empty());
 }

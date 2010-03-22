@@ -36,6 +36,17 @@ int get_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
+gdimm_text::gdimm_text()
+{
+	_font_holder = NULL;
+}
+
+gdimm_text::~gdimm_text()
+{
+	if (_font_holder != NULL)
+		DeleteDC(_font_holder);
+}
+
 int gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 {
 	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
@@ -184,9 +195,14 @@ void gdimm_text::get_glyph_clazz()
 
 	FT_Error ft_error;
 
+	if (_font_holder == NULL)
+	{
+		_font_holder = CreateCompatibleDC(_hdc_text);
+		assert(_font_holder != NULL);
+	}
+
 	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
-	HDC font_holder = CreateCompatibleDC(_hdc_text);
-	const long font_id = font_man_instance.register_font(font_holder, curr_hfont, metric_face_name(_outline_metrics));
+	const long font_id = font_man_instance.register_font(_font_holder, curr_hfont, metric_face_name(_outline_metrics));
 
 	const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
@@ -206,8 +222,6 @@ void gdimm_text::get_glyph_clazz()
 	FT_Get_Glyph(font_face->glyph, &useless);
 	glyph_clazz = useless->clazz;
 	FT_Done_Glyph(useless);
-
-	DeleteDC(font_holder);
 }
 
 void gdimm_text::get_gamma_ramps(const WCHAR *font_name, bool is_lcd)
@@ -376,7 +390,7 @@ void gdimm_text::set_bmp_bits_mono(
 	// the source bitmap is not blended with the destination bitmap
 
 	const LONG src_width = src_bitmap.width;
-	const LONG src_height = min(src_bitmap.rows, dest_height);
+	const LONG src_height = min(src_bitmap.rows - y_in_src, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
 	const bool use_zero_color = (*(DWORD*) &_fg_rgb == 0);
@@ -431,7 +445,7 @@ void gdimm_text::set_bmp_bits_gray(
 	assert(dest_bpp >= 8);
 
 	const LONG src_width = src_bitmap.width;
-	const LONG src_height = min(src_bitmap.rows, dest_height);
+	const LONG src_height = min(src_bitmap.rows - y_in_src, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
@@ -493,7 +507,7 @@ void gdimm_text::set_bmp_bits_lcd(
 
 	const WORD src_byte_per_px = 3;
 	const LONG src_width = src_bitmap.width / src_byte_per_px;
-	const LONG src_height = min(src_bitmap.rows, dest_height);
+	const LONG src_height = min(src_bitmap.rows - y_in_src, dest_height);
 	const int src_pitch = abs(src_bitmap.pitch);
 	const WORD dest_byte_per_px = dest_bpp / 8;
 	const int dest_pitch = get_pitch(dest_width, dest_bpp);
@@ -915,8 +929,13 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
 	assert(curr_hfont != NULL);
 
-	HDC font_holder = CreateCompatibleDC(_hdc_text);
-	long font_id = font_man_instance.register_font(font_holder, curr_hfont, dc_font_face);
+	if (_font_holder == NULL)
+	{
+		_font_holder = CreateCompatibleDC(_hdc_text);
+		assert(_font_holder != NULL);
+	}
+
+	long font_id = font_man_instance.register_font(_font_holder, curr_hfont, dc_font_face);
 	FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
 	const size_t link_count = font_link_instance.get_link_count(dc_font_family);
@@ -969,7 +988,7 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 			while (true)
 			{
 				// character code -> glyph index lookup
-				glyph_index = font_man_instance.get_glyph_index(font_holder, lpString[i]);
+				glyph_index = font_man_instance.get_glyph_index(_font_holder, lpString[i]);
 
 				// break if either find the glyph index, or exhaust the font link count
 				if (glyph_index != 0xffff || link_times == link_count)
@@ -988,12 +1007,9 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 					final_font_family = dc_font_family;
 				}
 
-				font_id = font_man_instance.lookup_font(font_holder, _font_attr, final_font_family, final_font_face);
+				font_id = font_man_instance.lookup_font(_font_holder, _font_attr, final_font_family, final_font_face);
 				if (font_id < 0)
-				{
-					DeleteObject(font_holder);
 					return false;
-				}
 
 				ft_face_id = (FTC_FaceID) font_id;
 			}
@@ -1014,18 +1030,12 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 		FT_Glyph glyph, cached_glyph;
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &ft_scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
-		{
-			DeleteObject(font_holder);
 			return false;
-		}
 
 		// some fonts are embedded with pre-rendered glyph bitmap
 		// in that case, use original ExtTextOutW
 		if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
-		{
-			DeleteObject(font_holder);
 			return false;
-		}
 
 		FT_Glyph_Copy(cached_glyph, &glyph);
 		FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
@@ -1099,7 +1109,6 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 			FT_Done_Glyph((FT_Glyph) glyphs[i]);
 	}
 
-	DeleteObject(font_holder);
 	return draw_success;
 }
 

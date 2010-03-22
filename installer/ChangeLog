@@ -1,100 +1,101 @@
 gdipp ChangeLog
 ====================
 
-0.6.1 (Rev 7c76469cb0):
-gdimm:
-Change back to monitor service termination in ExtTextOutW.
-Fix bug that crash gdimm when setting.xml is missing or in bad structure.
+*0.6.1 (Rev 7c76469cb0)*
+  * gdimm:
+    * Change back to monitor service termination in ExtTextOutW.
+    * Fix bug that crash gdimm when setting.xml is missing or in bad structure.
 
-Installer:
-Install service with "demand" start type.
-Fix wrong path in installer for registry load mode.
-Fix bug that the new setting.xml does not overwrite the old one.
-
-0.6.0 (Rev 44e2865980):
-Global:
-Match font and process settings with regular expression.
-
-gdimm:
-Fix bug that causes font linking fails.
-Fix bug that crashes gdimm if freetype_loader=0.
-Fix bug that gdimm does not render in when not in Aero.
-Start a monitor thread in gdimm for active unloading.
-Monitor service termination via event.
-Add setting cache.
-Use the face name instead of family name to match font settings.
-Use the face name instead of family name to identify font in font manager.
-Support oblique style (with default slant angle of 20 degrees).
-
-gdipp Service:
-Add poll interval option.
-Initial injection (with internal process name list).
-gdipp Service no loader belongs to UIGroup.
-
-Installer:
-Fix bugs related to 64-bit platforms in installer.
-Backup setting file when installing.
-Quiet uninstall when the registry load mode is selected.
+  * Installer:
+    * Install service with "demand" start type.
+    * Fix wrong path in installer for registry load mode.
+    * Fix bug that the new setting.xml does not overwrite the old one.
 
 
-0.5.3 (Rev 74a4184f9d):
-gdimm:
-  * Add option of gamma correction.
-  * Add option of rendering non-AA font.
-  * Add option of zeroing the alpha channel.
+*0.6.0 (Rev 44e2865980)*
+  * Global:
+    * Match font and process settings with regular expression.
 
-Installer:
-  * Fix bug of service installing in the installer script.
+  * gdimm:
+    * Fix bug that causes font linking fails.
+    * Fix bug that crashes gdimm if freetype_loader=0.
+    * Fix bug that gdimm does not render in when not in Aero.
+    * Start a monitor thread in gdimm for active unloading.
+    * Monitor service termination via event.
+    * Add setting cache.
+    * Use the face name instead of family name to match font settings.
+    * Use the face name instead of family name to identify font in font manager.
+    * Support oblique style (with default slant angle of 20 degrees).
 
+  * gdipp Service:
+    * Add poll interval option.
+    * Initial injection (with internal process name list).
+    * gdipp Service no loader belongs to UIGroup.
 
-0.5.2 (Rev b20e48eea2):
-gdimm:
-  * Exclude bitmap with 16 bpp.
-
-gdipp Loader and Service:
-  * Inject 32-bit and 64-bit process separately.
-
-Installer:
-  * Install 32-bit and 64-bit services separately.
-  * Merge all languages into one msi.
-
-
-0.5.1 (Rev 04a6f9e10a):
-gdimm:
-  * Draw shadow.
-  * Process individual setting.
-  * Optimize setting algorithms.
-  * Fix bug that fonts with embedded bitmap cannot be rendered when hinting is disabled.
-  * gdimm checks process exclusion.
-
-gdipp Loader:
-  * Fix bug in 0.5 that it loads itself infinitely if no argument is fed.
-
-Installer:
-  * Install EasyHook to System folder for better compatiblity.
-  * Start gdipp Service earlier so that explorer can be rendered after Windows starts.
-  * setting.xml will not be overwritten when installing, and will not be delete after uninstallation.
-  * Remove prompt to user to reboot after installation, if the Registry load mode was chosen.
+  * Installer:
+    * Fix bugs related to 64-bit platforms in installer.
+    * Backup setting file when installing.
+    * Quiet uninstall when the registry load mode is selected.
 
 
-0.5 (Rev 232a51a224):
-gdimm:
-  * Chrome inside sandbox can be rendered now.
-  * More stable algorithm for loading font linking registry values.
-  * Font link match direction is changed back to "first -> last".
-  * Fix bug which causes memory leaking.
-  * Fix bug about font stream.
-  * Force redrawing host process after being injected by gdipp Service.
-  * Correct calculation of character width, thus the text in the Aero theme Window titlebars can be rendered.
-  * Get glyph index by calling GetGlyphIndices, better compatibility.
-  * Add setting for embedded bitmap.
-  * Compile FreeType into gdimm.dll.
+*0.5.3 (Rev 74a4184f9d)*
+  * gdimm:
+    * Add option of gamma correction.
+    * Add option of rendering non-AA font.
+    * Add option of zeroing the alpha channel.
 
-gdipp Service:
-  * Checks if the target process has already loaded gdimm.dll.
+  * Installer:
+    * Fix bug of service installing in the installer script.
 
-gdipp Demo and gdipp Loader:
-  * Remove dependency for Visual C++ 2008 Runtime.
 
-Installer:
-  * Distribute gdipp with installer, made by Windows Install XML.
+*0.5.2 (Rev b20e48eea2)*
+  * gdimm:
+    * Exclude bitmap with 16 bpp.
+
+  * gdipp Loader and Service:
+    * Inject 32-bit and 64-bit process separately.
+
+  * Installer:
+    * Install 32-bit and 64-bit services separately.
+    * Merge all languages into one msi.
+
+
+*0.5.1 (Rev 04a6f9e10a)*
+  * gdimm:
+    * Draw shadow.
+    * Process individual setting.
+    * Optimize setting algorithms.
+    * Fix bug that fonts with embedded bitmap cannot be rendered when hinting is disabled.
+    * gdimm checks process exclusion.
+
+  * gdipp Loader:
+    * Fix bug in 0.5 that it loads itself infinitely if no argument is fed.
+
+  * Installer:
+    * Install EasyHook to System folder for better compatiblity.
+    * Start gdipp Service earlier so that explorer can be rendered after Windows starts.
+    * setting.xml will not be overwritten when installing, and will not be delete after uninstallation.
+    * Remove prompt to user to reboot after installation, if the Registry load mode was chosen.
+
+
+*0.5 (Rev 232a51a224)*
+  * gdimm:
+    * Chrome inside sandbox can be rendered now.
+    * More stable algorithm for loading font linking registry values.
+    * Font link match direction is changed back to "first -> last".
+    * Fix bug which causes memory leaking.
+    * Fix bug about font stream.
+    * Force redrawing host process after being injected by gdipp Service.
+    * Correct calculation of character width, thus the text in the Aero theme Window titlebars can be rendered.
+    * Get glyph index by calling GetGlyphIndices, better compatibility.
+    * Add setting for embedded bitmap.
+    * Compile FreeType into gdimm.dll.
+
+  * gdipp Service:
+    * Checks if the target process has already loaded gdimm.dll.
+
+  * gdipp Demo and gdipp Loader:
+    * Remove dependency for Visual C++ 2008 Runtime.
+
+  * Installer:
+    * Distribute gdipp with installer, made by Windows Install XML.

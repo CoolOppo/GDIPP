@@ -19,6 +19,10 @@ class gdimm_text
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 
+	// one font holder for FreeType per instance
+	// better alternative might be TLS HDC 
+	HDC _font_holder;
+
 	// gamma ramps for gray, red, green, blue
 	const BYTE *_gamma_ramps[4];
 
@@ -77,6 +81,8 @@ class gdimm_text
 	bool text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 
 public:
+	gdimm_text();
+	~gdimm_text();
 	bool init(HDC hdc, int x, int y, UINT options);
 	bool text_out(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST INT *lpDx);
 };

@@ -90,7 +90,7 @@ void gdimm_font_man::use_mapping(HDC font_holder, const WCHAR *font_face)
 	const unsigned int font_id = _font_ids[font_face];
 	font_info &info = _loaded_fonts[font_id];
 
-	const wstring mapping_prefix = L"Global\\gdimm_";
+	const wstring mapping_prefix = L"Global\\gdimm_font_";
 	const wstring mapping_name = mapping_prefix + font_face;
 	const HANDLE h_mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, info.stream.size, mapping_name.c_str());
 	assert(h_mapping != NULL);

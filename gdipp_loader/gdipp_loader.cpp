@@ -32,43 +32,36 @@ int APIENTRY wWinMain(
 	b_ret = CreateProcessW(argv[0], lpCmdLine, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, working_dir, &si, &pi);
 	if (!b_ret)
 	{
-		MessageBox(NULL, TEXT("Unable to create the target process."), TEXT("gdipp Loader"), MB_OK | MB_ICONERROR);
+		MessageBoxW(NULL, L"Unable to create the target process.", L"gdipp Loader", MB_OK | MB_ICONERROR);
 		LocalFree(argv);
 		return EXIT_FAILURE;
 	}
 
-	const INJECTOR_TYPE injector_type = GDIPP_LOADER;
+	const inject_payload payload = {GDIPP_LOADER, NULL};
 
 #ifdef _M_X64
 	WCHAR gdimm_path_64[MAX_PATH];
 	get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path_64);
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path_64, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path_64, (PVOID) &payload, sizeof(inject_payload));
 #else
 	WCHAR gdimm_path_32[MAX_PATH];
 	get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path_32);
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path_32, NULL, (PVOID) &injector_type, sizeof(INJECTOR_TYPE));
+	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path_32, NULL, (PVOID) &payload, sizeof(inject_payload));
 #endif
 
 	if (eh_error != 0)
 	{
-#ifdef _M_X64
-		BOOL is_wow64;
-		b_ret = IsWow64Process(pi.hProcess, &is_wow64);
-		assert(b_ret);
-#endif
-
 		b_ret = TerminateProcess(pi.hProcess, 0);
 		assert(b_ret);
 
-		wstring error_msg = L"Unable to inject gdimm.dll to the new process.";
+		wstring error_msg = L"Unable to inject gdimm.dll to the new process";
 
-#ifdef _M_X64
-		error_msg += L" The new process is ";
-		if (!is_wow64)
-			error_msg += L"NOT ";
-		error_msg += L"64-bit. Try the other gdipp Loader.";
-#endif
-		
+		// STATUS_WOW_ASSERTION
+		if (eh_error == (NTSTATUS)0xC0009898L)
+			error_msg += L" due to different bitness. Try the other gdipp Loader";
+
+		error_msg += L".";
+
 		MessageBoxW(NULL, error_msg.c_str(), L"gdipp Loader", MB_OK | MB_ICONERROR);
 	}
 
