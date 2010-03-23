@@ -1,6 +1,23 @@
 gdipp ChangeLog
 ====================
 
+*0.7.0 (Rev 6656b7d800)*
+  * Global:
+    * Enable SSE for 32-bit build.
+    * Windows XP should render much better now.
+
+  * gdimm:
+    * Multi-threaded rendering.
+    * Fix bug that inverts the hinting setting when freetype_loader=0.
+    * Fix bug that renders text on different baseline in certain processes (e.g. IE8).
+    * Fix bug which causes Windows Installer fail to start the second time.
+
+  * Loader:
+    * Fix a bug that causes it fail to work.
+
+  * Service:
+    * Fix bug that service cannot restart if there is lingering gdimm.dll in living processes.
+
 *0.6.1 (Rev 7c76469cb0)*
   * gdimm:
     * Change back to monitor service termination in ExtTextOutW.

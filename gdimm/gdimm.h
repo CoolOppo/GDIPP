@@ -21,6 +21,7 @@ enum CS_TYPE
 	CS_GAMMA,
 	CS_HOOK,
 	CS_TEXT,
+	CS_DEBUG,
 
 	// count of critical types
 	// never use this type

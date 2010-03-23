@@ -825,7 +825,7 @@ bool gdimm_text::text_out_ggo(const WCHAR *lpString, UINT c, CONST RECT *lprect,
 	{
 		// we do not care about non-printable characters
 		// solution for Windows Vista/7 Date
-		if (!(_eto_options & ETO_GLYPH_INDEX) && !iswprint(lpString[i]))
+		if (!(_eto_options & ETO_GLYPH_INDEX) && iswcntrl(lpString[i]))
 			continue;
 
 		GLYPHMETRICS glyph_metrics;
@@ -1028,9 +1028,14 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 		}
 		
 		FT_Glyph glyph, cached_glyph;
-		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &ft_scaler, load_flags, glyph_index, &cached_glyph, NULL);
-		if (ft_error != 0)
-			return false;
+
+		// FTC_ImageCache_LookupScaler is not thread-safe
+		{
+			critical_section interlock(CS_TEXT);
+			ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &ft_scaler, load_flags, glyph_index, &cached_glyph, NULL);
+			if (ft_error != 0)
+				return false;
+		}
 
 		// some fonts are embedded with pre-rendered glyph bitmap
 		// in that case, use original ExtTextOutW
