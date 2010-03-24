@@ -4,33 +4,70 @@ using namespace std;
 
 class gdimm_font_man
 {
+	/*
+	there are two kinds of fonts: registered fonts and linked fonts
+
+	registered fonts are created outside the font manager
+	they are considered temporary, not managed by font manager
+	there is only one registered font for each thread
+	registered fonts are stored in TLS
+	registered fonts have non-negative font id
+
+	linked fonts are created by font manager, for font linking
+	every linked font are kept alive until the font manager is destructed
+	linked fonts are shared by all threads
+	linked fonts have negative font id
+	*/
+
 	struct font_info
 	{
-		HDC font_holder;
+		// handle of the linked font for destructor
+		// NULL if registered font
 		HFONT hfont;
-		bool owned;
 		DWORD table_header;
 		FT_StreamRec stream;
-		LPVOID mapping_start;
 	};
 
+	// for registered fonts
 	// face name -> font id
-	map<wstring, long> _font_ids;
-	// font id -> face info
-	map<long, font_info> _loaded_fonts;
+	// we use this map because FreeType callback only have face id
+	map<wstring, long> _reg_ids;
+	// font id -> font info
+	// we use this map because vector internally free and re-allocate existing entries
+	// pointers become invalid
+	map<long, font_info> _reg_fonts;
+
+	// for linked fonts
+	map<wstring, long> _linked_ids;
+	map<long, font_info> _linked_fonts;
+
+	/*
+	HDC that holds font per thread
+
+	registered font holder is created outside the font manager
+	font manager simply use the passed HDC to get font data
+
+	linked font holder is created by font manager
+	linked fonts are selected into linked font holder before retrieving font data
+	*/
+	__declspec(thread) static HDC _reg_font_holder;
+	__declspec(thread) static HDC _linked_font_holder;
 
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
-	static void stream_CloseFunc(FT_Stream stream) {};
-	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *&font_face);
-	DWORD get_font_size(HDC font_holder, HFONT hfont, DWORD &table_header);
-	void use_mapping(HDC font_holder, const WCHAR *font_face);
+	static void stream_CloseFunc(FT_Stream stream) {}
+
+	DWORD get_font_size(HDC font_holder, DWORD &table_header) const;
+	HFONT create_linked_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const;
 
 public:
 	~gdimm_font_man();
 
-	long register_font(HDC font_holder, HFONT new_font, const WCHAR *font_face);
-	long lookup_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, const WCHAR *&font_face);
-	WORD get_glyph_index(HDC font_holder, WCHAR ch);
-	FT_Stream get_font_stream(long font_id)
-	{ return &_loaded_fonts[font_id].stream; }
+	static void create_linked_font_holder();
+	static void delete_linked_font_holder();
+
+	long register_font(HDC font_holder, const WCHAR *font_face);
+	long lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face);
+	WORD get_glyph_index(long font_id, WCHAR ch);
+
+	FT_Stream get_font_stream(long font_id);
 };

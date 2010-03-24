@@ -33,9 +33,20 @@ BOOL APIENTRY DllMain(
 		critical_section::initialize();
 		initialize_freetype();
 
+		font_man_instance.create_linked_font_holder();
+
 		return hook_instance.hook();
+	case DLL_THREAD_ATTACH:
+		font_man_instance.create_linked_font_holder();
+		break;
+	case DLL_THREAD_DETACH:
+		font_man_instance.delete_linked_font_holder();
+		break;
 	case DLL_PROCESS_DETACH:
 		hook_instance.unhook();
+
+		font_man_instance.delete_linked_font_holder();
+
 		destroy_freetype();
 		critical_section::release();
 

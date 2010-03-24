@@ -22,9 +22,9 @@ const BYTE *gdimm_gamma::get_ramp(double gamma)
 {
 	map<double, BYTE*>::const_iterator iter = _gamma_ramps.find(gamma);
 
-	// double-check interlock
 	if (iter == _gamma_ramps.end())
 	{
+		// double-check interlock
 		critical_section interlock(CS_GAMMA);
 
 		iter = _gamma_ramps.find(gamma);

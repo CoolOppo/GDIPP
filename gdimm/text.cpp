@@ -36,17 +36,6 @@ int get_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
-gdimm_text::gdimm_text()
-{
-	_font_holder = NULL;
-}
-
-gdimm_text::~gdimm_text()
-{
-	if (_font_holder != NULL)
-		DeleteDC(_font_holder);
-}
-
 int gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 {
 	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
@@ -195,14 +184,7 @@ void gdimm_text::get_glyph_clazz()
 
 	FT_Error ft_error;
 
-	if (_font_holder == NULL)
-	{
-		_font_holder = CreateCompatibleDC(_hdc_text);
-		assert(_font_holder != NULL);
-	}
-
-	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
-	const long font_id = font_man_instance.register_font(_font_holder, curr_hfont, metric_face_name(_outline_metrics));
+	const long font_id = font_man_instance.register_font(_hdc_text, metric_face_name(_outline_metrics));
 
 	const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
@@ -922,20 +904,11 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 	// font face setup
 	const WCHAR *dc_font_face = metric_face_name(_outline_metrics);
 	const WCHAR *dc_font_family = metric_family_name(_outline_metrics);
-	const WCHAR *final_font_face = dc_font_face;
+	wstring final_font_face = dc_font_face;
 	const WCHAR *final_font_family = dc_font_family;
 	FT_UInt32 load_flags = get_load_mode(render_mode, dc_font_face);
 
-	HFONT curr_hfont = (HFONT) GetCurrentObject(_hdc_text, OBJ_FONT);
-	assert(curr_hfont != NULL);
-
-	if (_font_holder == NULL)
-	{
-		_font_holder = CreateCompatibleDC(_hdc_text);
-		assert(_font_holder != NULL);
-	}
-
-	long font_id = font_man_instance.register_font(_font_holder, curr_hfont, dc_font_face);
+	long font_id = font_man_instance.register_font(_hdc_text, dc_font_face);
 	FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
 	const size_t link_count = font_link_instance.get_link_count(dc_font_family);
@@ -960,7 +933,8 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 	{
 		// get the OS/2 table of the current font
 		FT_Face ft_face;
-		FTC_Manager_LookupFace(ft_cache_man, ft_face_id, &ft_face);
+		ft_error = FTC_Manager_LookupFace(ft_cache_man, ft_face_id, &ft_face);
+		assert(ft_error == 0);
 		TT_OS2 *os2_table = (TT_OS2*) FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
 
 		// compare the xAvgCharWidth against the current average char width
@@ -988,7 +962,7 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 			while (true)
 			{
 				// character code -> glyph index lookup
-				glyph_index = font_man_instance.get_glyph_index(_font_holder, lpString[i]);
+				glyph_index = font_man_instance.get_glyph_index(font_id, lpString[i]);
 
 				// break if either find the glyph index, or exhaust the font link count
 				if (glyph_index != 0xffff || link_times == link_count)
@@ -1007,8 +981,8 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 					final_font_family = dc_font_family;
 				}
 
-				font_id = font_man_instance.lookup_font(_font_holder, _font_attr, final_font_family, final_font_face);
-				if (font_id < 0)
+				font_id = font_man_instance.lookup_font(_font_attr, final_font_family, final_font_face);
+				if (font_id == 0)
 					return false;
 
 				ft_face_id = (FTC_FaceID) font_id;
@@ -1023,8 +997,8 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 		// if font linked, get the new render mode and load mode for the linked font family
 		if (font_linked)
 		{
-			get_render_mode(dc_bmp_info.bmiHeader.biBitCount, final_font_face, render_mode);
-			load_flags = get_load_mode(render_mode, final_font_face);
+			get_render_mode(dc_bmp_info.bmiHeader.biBitCount, final_font_face.c_str(), render_mode);
+			load_flags = get_load_mode(render_mode, final_font_face.c_str());
 		}
 		
 		FT_Glyph glyph, cached_glyph;
@@ -1052,7 +1026,7 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 
 		// glyph outline -> glyph bitmap conversion
 		double embolden = 0.0;
-		setting_cache_instance.lookup("embolden", final_font_face, embolden);
+		setting_cache_instance.lookup("embolden", final_font_face.c_str(), embolden);
 		if (embolden != 0.0)
 		{
 			ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(embolden));
@@ -1106,7 +1080,7 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 	bool draw_success = false;
 	if (!glyphs.empty())
 	{
-		get_gamma_ramps(final_font_face, ((render_mode & FT_RENDER_MODE_LCD) != 0));
+		get_gamma_ramps(final_font_face.c_str(), ((render_mode & FT_RENDER_MODE_LCD) != 0));
 
 		draw_success = draw_glyphs(glyphs, glyph_pos, lprect, dc_bmp_info);
 
@@ -1119,8 +1093,6 @@ bool gdimm_text::text_out_ft(LPCWSTR lpString, UINT c, CONST RECT *lprect, CONST
 
 bool gdimm_text::init(HDC hdc, int x, int y, UINT options)
 {
-	critical_section interlock(CS_TEXT);
-
 	_hdc_text = hdc;
 
 	if (!get_dc_metrics())
