@@ -9,6 +9,15 @@
 			</gamma>
 		</process>
 		
+		<process name=".+\.exe">
+			<freetype>
+				<lcd_filter>1</lcd_filter>
+				<cache_max_faces>2</cache_max_faces>
+				<cache_max_sizes>4</cache_max_sizes>
+				<cache_max_bytes>200000</cache_max_bytes>
+			</freetype>
+		</process>
+		
 		<font name="sample_font.*">
 			<freetype_loader>0</freetype_loader>
 		</font>
@@ -25,7 +34,6 @@
 				<blue>1.0</blue>
 			</gamma>
 			<hinting>1</hinting>
-			<lcd_filter>1</lcd_filter>
 			<light_mode>1</light_mode>
 			<max_height>72</max_height>
 			<render_mono>0</render_mono>

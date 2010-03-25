@@ -30,7 +30,7 @@ void gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, settin
 {
 	const string name = setting_node.name();
 
-	if (name == "gamma" || name == "shadow")
+	if (name == "freetype" || name == "gamma" || name == "shadow")
 	{
 		// these settings have nested items
 

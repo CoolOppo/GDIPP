@@ -552,7 +552,7 @@ bool gdimm_text::draw_glyphs(
 	// actual width of the source bitmap
 	const size_t last_glyph = glyphs.size() - 1;
 	const int text_width = glyph_pos[last_glyph].x + get_ft_bmp_width(glyphs[last_glyph]->bitmap) - src_origin.x;
-	const int bmp_width = max(text_width, _cursor.x - glyph_pos[0].x);
+	const int bmp_width = abs(max(text_width, _cursor.x - glyph_pos[0].x));
 
 	// respect the height and ascent returned from GDI
 	const int cell_height = _outline_metrics->otmTextMetrics.tmHeight;

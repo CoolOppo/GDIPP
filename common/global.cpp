@@ -36,7 +36,7 @@ const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
 }
 
-#define debug_file_name "C:\\gdimm_debug.txt"
+#define debug_file_name "C:\\gdipp_debug.log"
 
 void debug_output_process_name()
 {

@@ -3,23 +3,33 @@
 #include "text.h"
 
 HANDLE h_svc_event = NULL;
+HANDLE h_unload = NULL;
 
-void unload_self(void *arglist)
+unsigned __stdcall unload_self(void *arglist)
 {
 	critical_section interlock(CS_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
+
+	_endthreadex(0);
+	return 0;
 }
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
 	// if injected by service, check if the service event is set (service process terminates)
-	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) == WAIT_OBJECT_0)
+	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) != WAIT_TIMEOUT)
 	{
-		CloseHandle(h_svc_event);
-
-		// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
+		// double-check interlock
 		critical_section interlock(CS_HOOK);
-		_beginthread(unload_self, 0, NULL);
+
+		if (h_svc_event != NULL)
+		{
+			CloseHandle(h_svc_event);
+			h_svc_event = NULL;
+
+			// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
+			h_unload = (HANDLE) _beginthreadex(NULL, 0, unload_self, NULL, 0, NULL);
+		}
 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
@@ -289,6 +299,9 @@ bool gdimm_hook::hook()
 void gdimm_hook::unhook()
 {
 	NTSTATUS eh_error;
+
+	if (h_unload != NULL)
+		CloseHandle(h_unload);
 	
 	eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);

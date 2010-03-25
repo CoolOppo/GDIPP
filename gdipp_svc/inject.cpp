@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "inject.h"
+#include "gdipp_svc.h"
 #include <global.h>
 
 svc_injector::svc_injector()
@@ -17,30 +18,6 @@ void svc_injector::init_payload(const WCHAR *svc_event_name)
 bool svc_injector::inject_proc(LONG proc_id)
 {
 	NTSTATUS eh_error;
-
-	// if the target process has loaded gdimm, do not inject
-
-	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, proc_id);
-	assert(h_snapshot != INVALID_HANDLE_VALUE);
-
-	MODULEENTRY32 me32 = {0};
-	me32.dwSize = sizeof(MODULEENTRY32);
-
-	if (Module32First(h_snapshot, &me32))
-	{
-		do
-		{
-			// full path without the trailing "32.dll" and "64.dll"
-			if (_wcsnicmp(me32.szExePath, _gdimm_path_32, wcslen(_gdimm_path_32) - 6) == 0)
-			{
-				// gdimm is loaded
-				CloseHandle(h_snapshot);
-				return false;
-			}
-		} while (Module32Next(h_snapshot, &me32));
-	}
-
-	CloseHandle(h_snapshot);
 
 #ifdef _M_X64
 	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(inject_payload));

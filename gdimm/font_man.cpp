@@ -90,13 +90,19 @@ HFONT gdimm_font_man::create_linked_font(const LOGFONTW &font_attr, const WCHAR 
 void gdimm_font_man::create_linked_font_holder()
 {
 	if (_linked_font_holder == NULL)
+	{
 		_linked_font_holder = CreateCompatibleDC(NULL);
+		assert(_linked_font_holder != NULL);
+	}
 }
 
 void gdimm_font_man::delete_linked_font_holder()
 {
 	if (_linked_font_holder != NULL)
+	{
 		DeleteDC(_linked_font_holder);
+		_linked_font_holder = NULL;
+	}
 }
 
 long gdimm_font_man::register_font(HDC font_holder, const WCHAR *font_face)

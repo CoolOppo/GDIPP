@@ -117,21 +117,15 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
+ // #define svc_debug
+
 int APIENTRY _tWinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPTSTR    lpCmdLine,
 	int       nCmdShow)
 {
-#ifdef NDEBUG
-	SERVICE_TABLE_ENTRY dispatch_table[] =
-	{
-		{ SVC_NAME, (LPSERVICE_MAIN_FUNCTION) svc_main },
-		{ NULL, NULL },
-	};
-
-	StartServiceCtrlDispatcher(dispatch_table);
-#else
+#ifdef svc_debug
 	if (!create_svc_event())
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
@@ -144,9 +138,17 @@ int APIENTRY _tWinMain(
 
 	if (mon_instance.start_monitor())
 	{
-		Sleep(3000);
+		Sleep(10000);
 		mon_instance.stop_monitor();
 	}
+#else
+	SERVICE_TABLE_ENTRY dispatch_table[] =
+	{
+		{ SVC_NAME, (LPSERVICE_MAIN_FUNCTION) svc_main },
+		{ NULL, NULL },
+	};
+
+	StartServiceCtrlDispatcher(dispatch_table);
 #endif
 
 	return 0;

@@ -17,13 +17,15 @@
 #include <wbemidl.h>
 
 // C RunTime Header Files
-#include <assert.h>
 #include <list>
 #include <map>
+#include <process.h>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <tchar.h>
 
 // TODO: reference additional headers your program requires here
+#include "fassert.h"
 #include <easyhook.h>
 #include <pugixml.hpp>
