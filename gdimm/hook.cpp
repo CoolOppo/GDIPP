@@ -71,7 +71,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//debug_text = L"使用下面";
+	//debug_text = L"Elpased";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -98,12 +98,14 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 #endif
+	//critical_section interlock(CS_DEBUG);
+
 	gdimm_text text_instance;
 
-	if (!text_instance.init(hdc, x, y, options))
+	if (!text_instance.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!text_instance.text_out(lpString, c, lprect, lpDx))
+	if (!text_instance.text_out(x, y, options, lprect, lpString, c, lpDx))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	return TRUE;

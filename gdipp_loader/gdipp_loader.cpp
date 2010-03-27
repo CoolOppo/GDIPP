@@ -57,7 +57,7 @@ int APIENTRY wWinMain(
 		wstring error_msg = L"Unable to inject gdimm.dll to the new process";
 
 		// STATUS_WOW_ASSERTION
-		if (eh_error == (NTSTATUS)0xC0009898L)
+		if (eh_error == (NTSTATUS) 0xC0009898L)
 			error_msg += L" due to different bitness. Try the other gdipp Loader";
 
 		error_msg += L".";

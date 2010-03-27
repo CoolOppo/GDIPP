@@ -34,7 +34,7 @@ bool svc_mon::start_monitor()
 		return false;
 	}
 
-	hr = _loc->ConnectServer(bstr_t("root\\cimv2"), NULL, NULL, NULL, WBEM_FLAG_CONNECT_USE_MAX_WAIT, NULL, NULL, &_svc);
+	hr = _loc->ConnectServer(bstr_t("\\\\.\\root\\CIMV2"), NULL, NULL, NULL, WBEM_FLAG_CONNECT_USE_MAX_WAIT, NULL, NULL, &_svc);
 	if (FAILED(hr))
 	{
 		_loc->Release();
@@ -67,7 +67,7 @@ bool svc_mon::start_monitor()
 
 	const WCHAR *interval_str = setting_instance.get_service_setting("poll_interval");
 	if (interval_str == NULL)
-		interval_str = L"0.5";
+		interval_str = L"1";
 
 	const int query_str_len = 100;
 	WCHAR query_str[query_str_len];

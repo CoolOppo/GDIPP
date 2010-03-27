@@ -33,6 +33,8 @@ BOOL APIENTRY DllMain(
 		critical_section::initialize();
 		initialize_freetype();
 
+		font_man_instance.tls_index = TlsAlloc();
+		assert(font_man_instance.tls_index != TLS_OUT_OF_INDEXES);
 		font_man_instance.create_linked_font_holder();
 
 		return hook_instance.hook();
@@ -46,6 +48,7 @@ BOOL APIENTRY DllMain(
 		hook_instance.unhook();
 
 		font_man_instance.delete_linked_font_holder();
+		TlsFree(font_man_instance.tls_index);
 
 		destroy_freetype();
 		critical_section::release();

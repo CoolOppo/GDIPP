@@ -28,6 +28,21 @@ class gdimm_font_man
 		FT_StreamRec stream;
 	};
 
+	/*
+	HDC that holds font per thread
+
+	registered font holder is created outside the font manager
+	font manager simply use the passed HDC to get font data
+
+	linked font holder is created by font manager
+	linked fonts are selected into linked font holder before retrieving font data
+	*/
+	struct tls_font_holder
+	{
+		HDC registered;
+		HDC linked;
+	};
+
 	// for registered fonts
 	// face name -> font id
 	// we use this map because FreeType callback only have face id
@@ -41,33 +56,23 @@ class gdimm_font_man
 	map<wstring, long> _linked_ids;
 	map<long, font_info> _linked_fonts;
 
-	/*
-	HDC that holds font per thread
-
-	registered font holder is created outside the font manager
-	font manager simply use the passed HDC to get font data
-
-	linked font holder is created by font manager
-	linked fonts are selected into linked font holder before retrieving font data
-	*/
-	__declspec(thread) static HDC _reg_font_holder;
-	__declspec(thread) static HDC _linked_font_holder;
-
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_CloseFunc(FT_Stream stream) {}
 
 	DWORD get_font_size(HDC font_holder, DWORD &table_header) const;
-	HFONT create_linked_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const;
+	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const;
 
 public:
+	static DWORD tls_index;
+
 	~gdimm_font_man();
 
-	static void create_linked_font_holder();
+	static void *create_linked_font_holder();
 	static void delete_linked_font_holder();
 
-	long register_font(HDC font_holder, const WCHAR *font_face);
+	long register_font(HDC hdc, const WCHAR *font_face);
 	long lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face);
-	WORD get_glyph_index(long font_id, WCHAR ch);
+	void get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi);
 
 	FT_Stream get_font_stream(long font_id);
 };

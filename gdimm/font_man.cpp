@@ -4,14 +4,18 @@
 // table name for GetFontData() to get whole ttc file data
 #define TTCF_FONT_TABLE mmioFOURCC('t', 't', 'c', 'f')
 
-HDC gdimm_font_man::_reg_font_holder = NULL;
-HDC gdimm_font_man::_linked_font_holder = NULL;
+DWORD gdimm_font_man::tls_index;
 
 gdimm_font_man::~gdimm_font_man()
 {
+	BOOL b_ret;
+
 	// delete linked fonts
 	for (map<long, font_info>::const_iterator iter = _linked_fonts.begin(); iter != _linked_fonts.end(); iter++)
-		DeleteObject(iter->second.hfont);
+	{
+		b_ret = DeleteObject(iter->second.hfont);
+		assert(b_ret);
+	}
 }
 
 unsigned long gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
@@ -25,15 +29,18 @@ unsigned long gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offs
 	const long font_id = stream->descriptor.value;
 	DWORD read_size;
 
+	const tls_font_holder *font_holder = (const tls_font_holder*) TlsGetValue(tls_index);
+	assert(font_holder != NULL);
+
 	if (font_id >= 0)
 	{
 		const DWORD table_header = font_man_instance._reg_fonts[font_id].table_header;
-		read_size = GetFontData(_reg_font_holder, table_header, offset, buffer, count);
+		read_size = GetFontData(font_holder->registered, table_header, offset, buffer, count);
 	}
 	else
 	{
 		const DWORD table_header = font_man_instance._linked_fonts[font_id].table_header;
-		read_size = GetFontData(_linked_font_holder, table_header, offset, buffer, count);
+		read_size = GetFontData(font_holder->linked, table_header, offset, buffer, count);
 	}
 	assert(read_size == count);
 
@@ -57,7 +64,7 @@ DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header) const
 	return font_size;
 }
 
-HFONT gdimm_font_man::create_linked_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const
+HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const
 {
 	LOGFONTW new_font_attr = font_attr;
 	
@@ -72,14 +79,14 @@ HFONT gdimm_font_man::create_linked_font(const LOGFONTW &font_attr, const WCHAR 
 	HFONT new_hfont = CreateFontIndirectW(&new_font_attr);
 	assert(new_hfont != NULL);
 	
-	SelectObject(_linked_font_holder, new_hfont);
-	UINT metric_size = GetOutlineTextMetricsW(_linked_font_holder, 0, NULL);
+	SelectObject(font_holder, new_hfont);
+	UINT metric_size = GetOutlineTextMetricsW(font_holder, 0, NULL);
 	if (metric_size == 0)
 		return NULL;
 
 	vector<BYTE> metric_buf;
 	metric_buf.resize(metric_size);
-	metric_size = GetOutlineTextMetricsW(_linked_font_holder, metric_size, (OUTLINETEXTMETRICW*) &metric_buf[0]);
+	metric_size = GetOutlineTextMetricsW(font_holder, metric_size, (OUTLINETEXTMETRICW*) &metric_buf[0]);
 	assert(metric_size != 0);
 
 	font_face = metric_face_name(&metric_buf[0]);
@@ -87,28 +94,50 @@ HFONT gdimm_font_man::create_linked_font(const LOGFONTW &font_attr, const WCHAR 
 	return new_hfont;
 }
 
-void gdimm_font_man::create_linked_font_holder()
+void *gdimm_font_man::create_linked_font_holder()
 {
-	if (_linked_font_holder == NULL)
+	BOOL b_ret;
+
+	tls_font_holder *font_holder = (tls_font_holder*) TlsGetValue(tls_index);
+	if (font_holder == NULL)
 	{
-		_linked_font_holder = CreateCompatibleDC(NULL);
-		assert(_linked_font_holder != NULL);
+		font_holder = (tls_font_holder*) LocalAlloc(LPTR, sizeof(tls_font_holder));
+		assert(font_holder != NULL);
+
+		font_holder->linked = CreateCompatibleDC(NULL);
+		assert(font_holder->linked != NULL);
+
+		b_ret = TlsSetValue(tls_index, font_holder);
+		assert(b_ret);
 	}
+
+	return font_holder;
 }
 
 void gdimm_font_man::delete_linked_font_holder()
 {
-	if (_linked_font_holder != NULL)
+	BOOL b_ret;
+
+	tls_font_holder *font_holder = (tls_font_holder*) TlsGetValue(tls_index);
+	if (font_holder == NULL)
+		assert(GetLastError() == ERROR_SUCCESS);
+	else
 	{
-		DeleteDC(_linked_font_holder);
-		_linked_font_holder = NULL;
+		b_ret = DeleteDC(font_holder->linked);
+		assert(b_ret);
 	}
+
+	font_holder = (tls_font_holder*) LocalFree((HLOCAL) font_holder);
+	assert(font_holder == NULL);
 }
 
-long gdimm_font_man::register_font(HDC font_holder, const WCHAR *font_face)
+long gdimm_font_man::register_font(HDC hdc, const WCHAR *font_face)
 {
+	tls_font_holder *font_holder = (tls_font_holder*) create_linked_font_holder();
+	assert(font_holder != NULL);
+
 	// use passed HDC as registered font holder
-	_reg_font_holder = font_holder;
+	font_holder->registered = hdc;
 
 	map<wstring, long>::const_iterator iter = _reg_ids.find(font_face);
 	if (iter == _reg_ids.end())
@@ -123,7 +152,7 @@ long gdimm_font_man::register_font(HDC font_holder, const WCHAR *font_face)
 			font_info new_font_data = {0};
 
 			new_font_data.hfont = NULL;
-			new_font_data.stream.size = get_font_size(font_holder, new_font_data.table_header);
+			new_font_data.stream.size = get_font_size(hdc, new_font_data.table_header);
 			new_font_data.stream.descriptor.value = new_font_id;
 			new_font_data.stream.read = stream_IoFunc;
 			new_font_data.stream.close = stream_CloseFunc;
@@ -143,9 +172,9 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 {
 	// gdimm may be attached to a process which already has multi threads
 	// always check if the current thread has linked font holder
-	create_linked_font_holder();
+	const tls_font_holder *font_holder = (const tls_font_holder*) create_linked_font_holder();
 
-	HFONT linked_font = create_linked_font(font_attr, font_family, font_face);
+	HFONT linked_font = create_linked_font(font_holder->linked, font_attr, font_family, font_face);
 	if (linked_font == NULL)
 		return 0;
 
@@ -163,7 +192,7 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 			font_info new_font_data = {0};
 
 			new_font_data.hfont = linked_font;
-			new_font_data.stream.size = get_font_size(_linked_font_holder, new_font_data.table_header);
+			new_font_data.stream.size = get_font_size(font_holder->linked, new_font_data.table_header);
 			new_font_data.stream.descriptor.value = new_font_id;
 			new_font_data.stream.read = stream_IoFunc;
 			new_font_data.stream.close = stream_CloseFunc;
@@ -177,23 +206,23 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 
 	// font existed, use old one
 	const long font_id = iter->second;
-	SelectObject(_linked_font_holder, _linked_fonts[font_id].hfont);
+	SelectObject(font_holder->linked, _linked_fonts[font_id].hfont);
 
 	return font_id;
 }
 
-WORD gdimm_font_man::get_glyph_index(long font_id, WCHAR ch)
+void gdimm_font_man::get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi)
 {
-	WORD glyph_index;
 	DWORD converted;
 
-	if (font_id >= 0)
-		converted = GetGlyphIndices(_reg_font_holder, &ch, 1, &glyph_index, GGI_MARK_NONEXISTING_GLYPHS);
-	else
-		converted = GetGlyphIndices(_linked_font_holder, &ch, 1, &glyph_index, GGI_MARK_NONEXISTING_GLYPHS);
-	assert(converted == 1);
+	const tls_font_holder *font_holder = (const tls_font_holder*) TlsGetValue(tls_index);
+	assert(font_holder != NULL);
 
-	return glyph_index;
+	if (font_id >= 0)
+		converted = GetGlyphIndices(font_holder->registered, str, count, (LPWORD) gi, GGI_MARK_NONEXISTING_GLYPHS);
+	else
+		converted = GetGlyphIndices(font_holder->linked, str, count, (LPWORD) gi, GGI_MARK_NONEXISTING_GLYPHS);
+	assert(converted == count);
 }
 
 FT_Stream gdimm_font_man::get_font_stream(long font_id)

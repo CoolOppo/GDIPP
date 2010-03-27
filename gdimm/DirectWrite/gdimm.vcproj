@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			CharacterSet="1"
@@ -45,12 +45,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)DirectX\Include&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -66,10 +65,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
+				AdditionalDependencies="dwrite.lib EasyHook32.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)DirectX\Lib&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -125,7 +124,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -177,8 +176,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -203,10 +202,9 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>
@@ -283,7 +281,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIMM_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -354,10 +352,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ft_renderer.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\gamma.cpp"
 				>
 			</File>
@@ -366,7 +360,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ggo_renderer.cpp"
+				RelativePath="..\common\global.cpp"
 				>
 			</File>
 			<File
@@ -378,7 +372,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\setting_cache.cpp"
+				RelativePath="..\common\setting.cpp"
 				>
 			</File>
 			<File
@@ -440,19 +434,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ft_renderer.h"
-				>
-			</File>
-			<File
 				RelativePath=".\gamma.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gdimm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ggo_renderer.h"
+				RelativePath="..\common\global.h"
 				>
 			</File>
 			<File
@@ -468,7 +454,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\setting_cache.h"
+				RelativePath="..\common\setting.h"
 				>
 			</File>
 			<File
