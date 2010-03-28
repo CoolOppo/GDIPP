@@ -93,8 +93,7 @@
 					</Component>
 
 					<Component Id="gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
-						<File Name="README" Source="README" />
-						<File Name="ChangeLog" Source="ChangeLog" />
+						<File Name="documentation.url" Source="documentation.url" />
 					</Component>
 
 					<Directory Id="freetype_dir" Name="FreeType">

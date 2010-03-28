@@ -11,10 +11,10 @@
 		
 		<process name=".+\.exe">
 			<freetype>
-				<lcd_filter>1</lcd_filter>
 				<cache_max_faces>2</cache_max_faces>
 				<cache_max_sizes>4</cache_max_sizes>
 				<cache_max_bytes>200000</cache_max_bytes>
+				<lcd_filter>1</lcd_filter>
 			</freetype>
 		</process>
 		
