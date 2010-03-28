@@ -3,6 +3,13 @@
 #include "ft.h"
 #include "gdimm.h"
 
+ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
+{
+	_ft_scaler.pixel = 1;
+	_ft_scaler.x_res = 0;
+	_ft_scaler.y_res = 0;
+}
+
 void ft_renderer::oblique_outline(const FT_Outline *outline, double angle)
 {
 	// the advancement of slant on X-axis direction
@@ -44,13 +51,6 @@ FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *fo
 		load_flags |= FT_LOAD_NO_HINTING;
 
 	return load_flags;
-}
-
-ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
-{
-	_ft_scaler.pixel = 1;
-	_ft_scaler.x_res = 0;
-	_ft_scaler.y_res = 0;
 }
 
 FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)

@@ -235,8 +235,6 @@ CreateProcessAsUserW_hook(
 		lpProcessInformation))
 		return FALSE;
 
-	debug_output(lpProcessInformation->dwProcessId);
-
 	// since the spawned process can be restricted, EasyHook may not work
 	// we inject LoadLibrary call at the entry point of the spawned thread
 	inject_at_eip(lpProcessInformation);

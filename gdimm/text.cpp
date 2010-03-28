@@ -590,7 +590,7 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 	}
 
 	bool freetype_loader = true;
-	setting_cache_instance.lookup("freetype_loader", metric_face_name(_outline_metrics), freetype_loader);
+	setting_cache_instance.lookup("freetype_loader", font_face, freetype_loader);
 	gdimm_renderer *renderer;
 
 	if (freetype_loader)
