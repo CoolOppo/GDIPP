@@ -138,7 +138,7 @@ int APIENTRY _tWinMain(
 
 	if (mon_instance.start_monitor())
 	{
-		Sleep(10000);
+		Sleep(5000);
 		mon_instance.stop_monitor();
 	}
 #else

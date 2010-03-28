@@ -7,42 +7,35 @@ unsigned __stdcall process_obj(void *arglist)
 	IWbemClassObject *obj = (IWbemClassObject*) arglist;
 	HRESULT hr;
 
-	VARIANT var_event;
+	CComVariant var_event;
 	VariantInit(&var_event);
 	hr = obj->Get(L"TargetInstance", 0, &var_event, NULL, NULL);
 	assert(SUCCEEDED(hr));
 
-	IWbemClassObject *proc_obj;
+	CComPtr<IWbemClassObject> proc_obj;
 	hr = V_UNKNOWN(&var_event)->QueryInterface(IID_IWbemClassObject, (void**) &proc_obj);
 	assert(SUCCEEDED(hr));
-	VariantClear(&var_event);
 
-	VARIANT var_exe_name;
+	CComVariant var_exe_name;
 	VariantInit(&var_exe_name);
 	hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
 	assert(SUCCEEDED(hr));
 
 	if (setting_instance.is_process_excluded(V_BSTR(&var_exe_name)))
 	{
-		VariantClear(&var_exe_name);
-		proc_obj->Release();
-
 		_endthreadex(1);
 		return 1;
 	}
 
-	VARIANT var_proc_id;
+	CComVariant var_proc_id;
 	VariantInit(&var_proc_id);
 	hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 	assert(SUCCEEDED(hr));
 
-	injector_instance.inject_proc(V_I4(&var_proc_id));
+	unsigned inject_ret = injector_instance.inject_proc(V_I4(&var_proc_id));
 
-	VariantClear(&var_proc_id);
-	proc_obj->Release();
-
-	_endthreadex(0);
-	return 0;
+	_endthreadex(inject_ret);
+	return inject_ret;
 }
 
 ULONG sink_inject::Release()

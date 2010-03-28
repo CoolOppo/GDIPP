@@ -8,7 +8,7 @@ class gdimm_hook
 	vector<TRACED_HOOK_HANDLE> _hooks;
 
 public:
-	void install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
+	bool install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc);
 	bool hook();
 	void unhook();
 };

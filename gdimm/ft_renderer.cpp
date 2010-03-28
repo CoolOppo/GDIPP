@@ -201,6 +201,9 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 				str.push_back(lpString[i]);
 		}
 
+		if (str.empty())
+			return false;
+
 		const size_t str_length = str.size();
 		_glyphs.resize(str_length);
 		glyph_indices.resize(str_length);

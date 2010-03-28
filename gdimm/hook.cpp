@@ -193,6 +193,7 @@ CreateProcessAsUserW_hook(
 	// if the token is not restricted, redirect the call to original API
 	// service can inject
 	if (!IsTokenRestricted(hToken))
+	{
 		return CreateProcessAsUserW(
 			hToken,
 			lpApplicationName,
@@ -205,14 +206,21 @@ CreateProcessAsUserW_hook(
 			lpCurrentDirectory,
 			lpStartupInfo,
 			lpProcessInformation);
+	}
 
 	// otherwise, the spawned process is restricted, and service cannot inject
 
-	bool init_suspended = false;
+	// injection at EIP requires the process be suspended
+	// if CREATE_SUSPENDED is not specified in the creation flag, remember to resume process after injection
+	bool is_suspended;
 	if (dwCreationFlags & CREATE_SUSPENDED)
-		init_suspended = true;
+		is_suspended = true;
+	else
+	{
+		is_suspended = false;
+		dwCreationFlags |= CREATE_SUSPENDED;
+	}
 
-	dwCreationFlags |= CREATE_SUSPENDED;
 	if (!CreateProcessAsUserW(
 		hToken,
 		lpApplicationName,
@@ -227,11 +235,13 @@ CreateProcessAsUserW_hook(
 		lpProcessInformation))
 		return FALSE;
 
+	debug_output(lpProcessInformation->dwProcessId);
+
 	// since the spawned process can be restricted, EasyHook may not work
 	// we inject LoadLibrary call at the entry point of the spawned thread
 	inject_at_eip(lpProcessInformation);
 
-	if (!init_suspended)
+	if (!is_suspended)
 	{
 		DWORD dw_ret = ResumeThread(lpProcessInformation->hThread);
 		assert(dw_ret != -1);
@@ -266,14 +276,14 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	}
 }
 
-void gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
+bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	NTSTATUS eh_error;
 
 	// the target library module must have been loaded in this process before hooking
 	const HMODULE h_lib = GetModuleHandle(lib_name);
 	if (h_lib == NULL)
-		return;
+		return false;
 
 	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
 	eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
@@ -284,6 +294,8 @@ void gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
  	assert(eh_error == 0);
 
 	_hooks.push_back(h_hook);
+
+	return true;
 }
 
 bool gdimm_hook::hook()

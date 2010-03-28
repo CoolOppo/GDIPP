@@ -38,16 +38,6 @@ const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 
 #define debug_file_name "C:\\gdipp_debug.log"
 
-void debug_output_process_name()
-{
-	HANDLE h_proc = GetCurrentProcess();
-	DWORD name_size = MAX_PATH;
-	WCHAR name_str[MAX_PATH];
-	QueryFullProcessImageNameW(h_proc, 0, name_str, &name_size);
-
-	debug_output(name_str, name_size);
-}
-
 void debug_output(const WCHAR *str)
 {
 	FILE *f;

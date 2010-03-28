@@ -46,7 +46,6 @@ inline void wcs_convert(const WCHAR *str, T &converted)
 	wistringstream(str) >> converted;
 }
 
-void debug_output_process_name();
 void debug_output(const WCHAR *str = L"");
 void debug_output(const WCHAR *str, unsigned int c);
 void debug_output(const void *ptr, unsigned int size);

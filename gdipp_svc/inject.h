@@ -11,6 +11,6 @@ class svc_injector
 public:
 	svc_injector();
 	void init_payload(const WCHAR *svc_event_name);
-	bool inject_proc(LONG proc_id);
+	NTSTATUS inject_proc(LONG proc_id);
 	void initial_inject();
 };

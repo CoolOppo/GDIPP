@@ -15,17 +15,13 @@ void svc_injector::init_payload(const WCHAR *svc_event_name)
 	wcscpy_s(_payload.svc_event_name, svc_event_name);
 }
 
-bool svc_injector::inject_proc(LONG proc_id)
+NTSTATUS svc_injector::inject_proc(LONG proc_id)
 {
-	NTSTATUS eh_error;
-
 #ifdef _M_X64
-	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(inject_payload));
+	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(inject_payload));
 #else
-	eh_error = RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &_payload, sizeof(inject_payload));
+	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &_payload, sizeof(inject_payload));
 #endif
-
-	return (eh_error == 0);
 }
 
 void svc_injector::initial_inject()
