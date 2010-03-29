@@ -203,12 +203,16 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 			return new_font_id;
 		}
 	}
+	else
+	{
+		// font existed, use old one
 
-	// font existed, use old one
-	const long font_id = iter->second;
-	SelectObject(font_holder->linked, _linked_fonts[font_id].hfont);
+		DeleteObject(linked_font);
+		const long font_id = iter->second;
+		SelectObject(font_holder->linked, _linked_fonts[font_id].hfont);
 
-	return font_id;
+		return font_id;
+	}
 }
 
 void gdimm_font_man::get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi)

@@ -67,7 +67,7 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 		wstring proc_name;
 		mb_to_wc(name_attr.value(), proc_name);
 
-		const wregex name_ex(proc_name.data());
+		const wregex name_ex(proc_name.data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
 		if (regex_match(_process_name, name_ex))
 		{
 			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
@@ -165,7 +165,7 @@ const WCHAR *gdipp_setting::get_gdimm_setting(const char *setting_name, const WC
 	// check setting for the specified font
 	for (gdimm_list::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
 	{
-		const wregex name_ex(list_iter->first.data());
+		const wregex name_ex(list_iter->first.data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
 		if (regex_match(font_name, name_ex))
 		{
 			setting_iter = list_iter->second.find(setting_name);
@@ -200,7 +200,7 @@ bool gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
 
 	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); iter++)
 	{
-		const wregex name_ex(iter->data());
+		const wregex name_ex(iter->data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
 		if (regex_match(final_name, name_ex))
 			return true;
 	}
@@ -212,7 +212,7 @@ bool gdipp_setting::is_font_excluded(const WCHAR *font_name) const
 {
 	for (list<const wstring>::const_iterator iter = _exclude_font.begin(); iter != _exclude_font.end(); iter++)
 	{
-		const wregex name_ex(iter->data());
+		const wregex name_ex(iter->data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
 		if (regex_match(font_name, name_ex))
 			return true;
 	}

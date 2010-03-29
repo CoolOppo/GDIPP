@@ -49,7 +49,7 @@
 	</gdimm>
 	
 	<service>
-		<poll_interval>1</poll_interval>
+		<poll_interval>1.0</poll_interval>
 	</service>
 
 	<exclude>
