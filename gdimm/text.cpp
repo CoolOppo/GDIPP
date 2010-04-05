@@ -18,6 +18,39 @@ int gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 	return bitmap.width;
 }
 
+RECT gdimm_text::get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
+{
+	RECT bmp_rect = {LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN};
+
+	const size_t last_pos = glyph_pos.size() - 1;
+
+	// condition checks because glyph might be place right-to-left
+
+	if (glyph_pos[last_pos].x >= glyph_pos[0].x)
+	{
+		bmp_rect.left = glyph_pos[0].x;
+		bmp_rect.right = glyph_pos[last_pos].x + get_ft_bmp_width(glyphs[last_pos]->bitmap);
+	}
+	else
+	{
+		bmp_rect.left = glyph_pos[last_pos].x;
+		bmp_rect.right = glyph_pos[0].x + get_ft_bmp_width(glyphs[0]->bitmap);
+	}
+
+	if (glyph_pos[last_pos].y >= glyph_pos[0].y)
+	{
+		bmp_rect.top = glyph_pos[0].y;
+		bmp_rect.bottom = glyph_pos[last_pos].y + glyphs[last_pos]->bitmap.rows;
+	}
+	else
+	{
+		bmp_rect.top = glyph_pos[last_pos].y;
+		bmp_rect.bottom = glyph_pos[0].y + glyphs[0]->bitmap.rows;
+	}
+
+	return bmp_rect;
+}
+
 BITMAPINFO gdimm_text::get_dc_bmp_info(HDC hdc)
 {
 	int i_ret;
@@ -311,7 +344,7 @@ void gdimm_text::set_bmp_bits_lcd(
 return true if successfully draw the bitmap, otherwise return false
 */
 bool gdimm_text::draw_glyphs(
-	const vector<FT_BitmapGlyph> &glyphs,
+	const vector<const FT_BitmapGlyph> &glyphs,
 	const vector<POINT> &glyph_pos,
 	UINT options,
 	CONST RECT *lprect) const
@@ -323,10 +356,8 @@ bool gdimm_text::draw_glyphs(
 	// origin of the source glyphs
 	const POINT src_origin = glyph_pos[0];
 
-	// actual width of the source bitmap
-	const size_t last_glyph = glyphs.size() - 1;
-	const int text_width = glyph_pos[last_glyph].x + get_ft_bmp_width(glyphs[last_glyph]->bitmap) - src_origin.x;
-	const int bmp_width = abs(max(text_width, _cursor.x - glyph_pos[0].x));
+	const RECT bmp_rect = get_glyph_bmp_rect(glyphs, glyph_pos);
+	const LONG bmp_width = bmp_rect.right - bmp_rect.left;
 
 	// respect the height and ascent returned from GDI
 	const int cell_height = _outline_metrics->otmTextMetrics.tmHeight;
@@ -441,7 +472,7 @@ bool gdimm_text::draw_glyphs(
 
 		const int bmp_x_in_src = 0;
 		const int bmp_y_in_src = max(glyphs[i]->top - cell_ascent, 0);
-		const int bmp_x_in_dest = glyph_pos[i].x - src_origin.x;
+		const int bmp_x_in_dest = glyph_pos[i].x - bmp_rect.left;
 		const int bmp_y_in_dest = max(cell_ascent - glyphs[i]->top, 0);
 
 		const int shadow_x_in_src = max(bmp_x_in_src - shadow_off_x, 0);
@@ -606,7 +637,7 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 	}
 
 	bool draw_success = false;
-	const vector<FT_BitmapGlyph> &glyphs = renderer->get_glyphs();
+	const vector<const FT_BitmapGlyph> &glyphs = renderer->get_glyphs();
 
 	if (!glyphs.empty())
 	{

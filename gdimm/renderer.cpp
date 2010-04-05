@@ -32,9 +32,12 @@ gdimm_renderer::gdimm_renderer(gdimm_text *text)
 
 gdimm_renderer::~gdimm_renderer()
 {
-	for (vector<FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
+	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
 	{
 		if (*iter != NULL)
-			FT_Done_Glyph((FT_Glyph) *iter);
+		{
+			if ((*iter)->root.library != NULL)
+				FT_Done_Glyph((FT_Glyph) *iter);
+		}
 	}
 }

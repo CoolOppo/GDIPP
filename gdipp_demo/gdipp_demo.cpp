@@ -18,7 +18,7 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
   #define test
 
 #ifdef _DEBUG
-int test_count = 1;
+int test_count = 0;
 #else
 int test_count = 2000;
 #endif
@@ -234,9 +234,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
 		SetTextColor(hdc, RGB(255, 0, 100));
 		
-		HFONT f = CreateFont(-20, 0, 0, 0, 700, 1, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("Microsoft YaHei"));
+		HFONT f = CreateFont(-20, 0, 0, 0, 700, 1, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("ITC Stone Sans Std Medium"));
 		SelectObject(hdc, f);
 		//ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
+		//INT dx[] = {-10, -10};
 		ExtTextOut(hdc, 400, 100, 0, &rect, elapse_str, lstrlen(elapse_str), NULL);
 		DeleteObject(f);
 #endif

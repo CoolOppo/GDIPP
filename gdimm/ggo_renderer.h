@@ -12,7 +12,7 @@ class ggo_renderer: public gdimm_renderer
 	MAT2 _matrix;
 	FT_Render_Mode _render_mode;
 
-	FT_BitmapGlyph outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const;
+	const FT_BitmapGlyph outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const;
 
 public:
 	ggo_renderer(gdimm_text *text);

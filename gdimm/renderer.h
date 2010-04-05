@@ -23,7 +23,7 @@ protected:
 	gdimm_text *_text;
 	int _char_extra;
 
-	vector<FT_BitmapGlyph> _glyphs;
+	vector<const FT_BitmapGlyph> _glyphs;
 	vector<POINT> _glyph_pos;
 
 public:
@@ -32,7 +32,7 @@ public:
 
 	virtual bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) = 0;
 
-	virtual const vector<FT_BitmapGlyph> &get_glyphs() const
+	virtual const vector<const FT_BitmapGlyph> &get_glyphs() const
 	{ return _glyphs; }
 
 	virtual const vector<POINT> &get_glyph_pos() const

@@ -3,6 +3,8 @@
 #include "ft.h"
 #include "gdimm.h"
 
+FT_BitmapGlyphRec empty_glyph = {0};
+
 ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
 {
 	_ft_scaler.pixel = 1;
@@ -53,7 +55,7 @@ FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *fo
 	return load_flags;
 }
 
-FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)
+const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)
 {
 	FT_Error ft_error;
 
@@ -96,7 +98,7 @@ FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_fac
 		assert(ft_error == 0);
 	}
 
-	return (FT_BitmapGlyph) glyph;
+	return (const FT_BitmapGlyph) glyph;
 }
 
 void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
@@ -180,6 +182,8 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 		// directly render glyph indices with the current DC font
 
 		_glyphs.resize(c);
+		_glyph_pos.resize(c);
+
 		for (UINT i = 0; i < c; i++)
 		{
 			_glyphs[i] = render_glyph(lpString[i], dc_font_face);
@@ -190,41 +194,35 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 	{
 		UINT rendered_count = 0;
 		int font_link_index = 0;
-		wstring str;
+		wstring final_string = lpString;
 		wstring glyph_indices;
 
-		str.reserve(c);
-		for (UINT i = 0; i < c; i++)
-		{
-			// filter out control characters
-			if (!iswcntrl(lpString[i]))
-				str.push_back(lpString[i]);
-		}
-
-		if (str.empty())
-			return false;
-
-		const size_t str_length = str.size();
-		_glyphs.resize(str_length);
-		glyph_indices.resize(str_length);
+		_glyphs.resize(c);
+		_glyph_pos.resize(c);
+		glyph_indices.resize(c);
 
 		while (true)
 		{
-			font_man_instance.get_glyph_indices((long) _ft_scaler.face_id, &str[0], str_length, &glyph_indices[0]);
+			font_man_instance.get_glyph_indices((long) _ft_scaler.face_id, &final_string[0], c, &glyph_indices[0]);
 
-			for (UINT i = 0; i < str_length; i++)
+			for (UINT i = 0; i < c; i++)
 			{
-				if (glyph_indices[i] == 0xffff || str[i] == 0)
+				if (glyph_indices[i] == 0xffff || final_string[i] == 0)
 					continue;
 
+				if (iswcntrl(final_string[i]))
+					_glyphs[i] = (const FT_BitmapGlyph) &empty_glyph;
+				else
+				{
 					_glyphs[i] = render_glyph(glyph_indices[i], curr_font_face.c_str());
 					assert(_glyphs[i] != NULL);
+				}
 
-				str[i] = 0;
+				final_string[i] = 0;
 				rendered_count += 1;
 			}
 
-			if (rendered_count == str_length)
+			if (rendered_count == c)
 				break;
 			
 			// font linking
@@ -245,7 +243,6 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 		}
 	}
 
-	_glyph_pos.resize(_glyphs.size());
 	update_glyph_pos(options, lpDx);
 
 	return true;

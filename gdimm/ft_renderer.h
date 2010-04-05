@@ -12,7 +12,7 @@ class ft_renderer: public gdimm_renderer
 	static FT_ULong get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name);
 	static void oblique_outline(const FT_Outline *outline, double angle);
 
-	FT_BitmapGlyph render_glyph(WORD glyph_index, const WCHAR *font_face);
+	const FT_BitmapGlyph render_glyph(WORD glyph_index, const WCHAR *font_face);
 	void update_glyph_pos(UINT options, CONST INT *lpDx);
 
 public:

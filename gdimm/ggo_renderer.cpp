@@ -41,7 +41,7 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 	}
 }
 
-FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const
+const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
 
@@ -161,7 +161,7 @@ FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_met
 		assert(ft_error == 0);
 	}
 
-	return (FT_BitmapGlyph) generic_glyph;
+	return (const FT_BitmapGlyph) generic_glyph;
 }
 
 bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
@@ -205,7 +205,7 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 			continue;
 
 		GLYPHMETRICS glyph_metrics;
-		FT_BitmapGlyph bmp_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+		const FT_BitmapGlyph bmp_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
 
 		if (bmp_glyph != NULL)
 		{
