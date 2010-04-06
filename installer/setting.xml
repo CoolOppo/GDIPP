@@ -44,6 +44,16 @@
 		</font>
 	</gdimm>
 	
+	<demo>
+		<count>1000</count>
+		<font>Arial</font>
+		<font>Consolas</font>
+		<font>Segoe UI</font>
+		<font>Tahoma</font>
+		<font>Verdana</font>
+		<random_text>0</random_text>
+	</demo>
+	
 	<service>
 		<poll_interval>1.0</poll_interval>
 	</service>

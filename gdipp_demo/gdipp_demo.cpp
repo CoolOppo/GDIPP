@@ -22,7 +22,7 @@ gdipp_setting setting_instance;
 
 int total_count = 1000;
 vector<const wstring> candidate_font;
-bool rand_text = false;
+bool random_text = false;
 
 DWORD start_time;
 WCHAR window_title[100];
@@ -63,7 +63,7 @@ int APIENTRY wWinMain(
 	candidate_font = setting_instance.get_demo_font();
 	if (candidate_font.empty())
 		candidate_font.push_back(L"Tahoma");
-	wcs_convert(setting_instance.get_demo_setting("rand_text"), rand_text);
+	wcs_convert(setting_instance.get_demo_setting("random_text"), random_text);
 
 	window_title[0] = L'\0';
 #endif
@@ -253,7 +253,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// if randomize text content, use random Unicode characters
 			// otherwise use the font name
-			if (rand_text)
+			if (random_text)
 			{
 				const int max_text_len = 10;
 				WCHAR render_str[max_text_len];
