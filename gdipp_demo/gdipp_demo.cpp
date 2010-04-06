@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "gdipp_demo.h"
+#include <setting.h>
 
 #define MAX_LOADSTRING 100
 
@@ -17,21 +18,19 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
   #define render
   #define test
 
-#ifdef _DEBUG
-int test_count = 0;
-#else
-int test_count = 2000;
-#endif
+gdipp_setting setting_instance;
 
-const LPCTSTR test_str = TEXT("≤‚ ‘Œƒ◊÷Hello GgJjQq");
-DWORD start = 0;
-DWORD end = 0;
-TCHAR elapse_str[128] = {0};
+int total_count = 1000;
+vector<const wstring> candidate_font;
+bool rand_text = false;
 
-int APIENTRY _tWinMain(
+DWORD start_time;
+WCHAR window_title[100];
+
+int APIENTRY wWinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
-	LPTSTR    lpCmdLine,
+	LPWSTR    lpCmdLine,
 	int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
@@ -58,8 +57,19 @@ int APIENTRY _tWinMain(
 
 #endif
 
+#ifdef test
+	setting_instance.init(NULL);
+	wcs_convert(setting_instance.get_demo_setting("count"), total_count);
+	candidate_font = setting_instance.get_demo_font();
+	if (candidate_font.empty())
+		candidate_font.push_back(L"Tahoma");
+	wcs_convert(setting_instance.get_demo_setting("rand_text"), rand_text);
+
+	window_title[0] = L'\0';
+#endif
+
 	// Perform application initialization:
-	if (!InitInstance (hInstance, nCmdShow))
+	if (!InitInstance(hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
@@ -148,6 +158,24 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
+void show_result(HWND hWnd, HDC hdc)
+{
+	RedrawWindow(hWnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW);
+
+	SetTextColor(hdc, RGB(0, 0, 0));
+	SetBkMode(hdc, TRANSPARENT);
+	SetTextAlign(hdc, TA_LEFT | TA_TOP);
+
+	const DWORD elapse_time = GetTickCount() - start_time;
+	WCHAR result_str[100];
+	swprintf(result_str, 100, L"%u milliseconds render time, %.2f ms per render", elapse_time, (double) elapse_time / total_count);
+
+	HFONT f = CreateFontW(-20, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Tahoma");
+	SelectObject(hdc, f);
+	ExtTextOutW(hdc, 10, 10, 0, NULL, result_str, wcslen(result_str), NULL);
+	DeleteObject(f);
+}
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -187,59 +215,79 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
 
-		/*HDC d = CreateCompatibleDC(hdc);
-
-		BITMAPINFO bmi = {0};
-		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bmi.bmiHeader.biWidth = 10;
-		bmi.bmiHeader.biHeight = 10;
-		bmi.bmiHeader.biPlanes = 1;
-		bmi.bmiHeader.biBitCount = 32;
-		BYTE *bits;
-		HBITMAP bmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (VOID**) &bits, NULL, 0);
-		SelectObject(d, bmp);
-		BitBlt(d, 0, 0, 100, 10, hdc, 0, 0, SRCCOPY);
-		BOOL b = ExtTextOut(d, 0, 0, 0, NULL, L"ABC", 3, NULL);*/
-
 #ifdef test
-		if (start == 0)
+		static int rendered = 0;
+
+		if (window_title[0] == L'\0')
+			GetWindowText(hWnd, window_title, 100);
+
+		if (rendered == 0)
 		{
 			srand((unsigned) time(NULL));
-			start = GetTickCount();
+			start_time = GetTickCount();
 		}
 
-		for (; test_count > 0; test_count--)
+		if (rendered <= total_count)
 		{
-			BYTE r = rand() % 255;
-			BYTE g = rand() % 255;
-			BYTE b = rand() % 255;
-			SetTextColor(hdc, RGB(r, g, b));
+			// randomize text color
+			SetTextColor(hdc, RGB(rand() % 256, rand() % 256, rand() % 256));
 
-			int x = rand() % (ps.rcPaint.right - ps.rcPaint.left);
-			int y = rand() % (ps.rcPaint.bottom - ps.rcPaint.top);
+			// randomize text background
+			int bk_mode = rand() % 2 + 1;
+			SetBkMode(hdc, bk_mode);
+			if (bk_mode == OPAQUE)
+				SetBkColor(hdc, RGB(rand() % 256, rand() % 256, rand() % 256));
 
-			ExtTextOut(hdc, x, y, 0, NULL, test_str, lstrlen(test_str), NULL);
+			// randomize text position
+			const int x = rand() % (ps.rcPaint.right - ps.rcPaint.left);
+			const int y = rand() % (ps.rcPaint.bottom - ps.rcPaint.top);
+
+			// randomize text metrics
+			const LONG height = (rand() % 10) + 10;
+			const LONG weight = (rand() % 10) * 100;
+			const BYTE italic = rand() % 2;
+			const wstring &font_name = candidate_font[rand() % candidate_font.size()];
+
+			HFONT f = CreateFontW(-height, 0, 0, 0, weight, italic, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, font_name.c_str());
+			SelectObject(hdc, f);
+
+			// if randomize text content, use random Unicode characters
+			// otherwise use the font name
+			if (rand_text)
+			{
+				const int max_text_len = 10;
+				WCHAR render_str[max_text_len];
+				const int render_len = rand() % max_text_len + 1;
+
+				for (int i = 0; i < render_len; i++)
+				{
+					unsigned short chr;
+					do 
+					{
+						chr = rand();
+					} while (iswcntrl(chr));
+					render_str[i] = chr;
+				}
+
+				ExtTextOutW(hdc, x, y, 0, NULL, render_str, render_len, NULL);
+			}
+			else
+				ExtTextOutW(hdc, x, y, 0, NULL, font_name.c_str(), font_name.size(), NULL);
+
+			DeleteObject(f);
+
+			// show the rendered text count in the window title
+			WCHAR new_title[100];
+			wsprintf(new_title, TEXT("%s - %u"), window_title, rendered);
+			SetWindowText(hWnd, new_title);
+
+			// force redraw the client rect
+			RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE);
 		}
+		else if (rendered == total_count + 1)
+			show_result(hWnd, hdc);
 
-		if (end == 0)
-		{
-			end = GetTickCount();
-			wsprintf(elapse_str, TEXT("Elapsed time: %u milliseconds"), end - start);
-			RedrawWindow(hWnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW);
-		}
-
-		RECT rect = {50, 100, 300, 200};
-		SetBkMode(hdc, OPAQUE);
-		SetBkColor(hdc, RGB(240, 240, 240));
-		SetTextAlign(hdc, TA_CENTER | TA_BASELINE);
-		SetTextColor(hdc, RGB(255, 0, 100));
-		
-		HFONT f = CreateFont(-20, 0, 0, 0, 700, 1, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, TEXT("ITC Stone Sans Std Medium"));
-		SelectObject(hdc, f);
-		//ExtTextOut(hdc, 50, 150, ETO_CLIPPED | ETO_OPAQUE, &rect, elapse_str, lstrlen(elapse_str), NULL);
-		//INT dx[] = {-10, -10};
-		ExtTextOut(hdc, 400, 100, 0, &rect, elapse_str, lstrlen(elapse_str), NULL);
-		DeleteObject(f);
+		rendered += 1;
 #endif
 
 		EndPaint(hWnd, &ps);

@@ -14,7 +14,12 @@
 // C RunTime Header Files
 #include <assert.h>
 #include <cstdlib>
-#include <tchar.h>
+#include <list>
+#include <map>
+#include <sstream>
+#include <string>
 #include <time.h>
+#include <vector>
 
 // TODO: reference additional headers your program requires here
+#include <pugixml.hpp>

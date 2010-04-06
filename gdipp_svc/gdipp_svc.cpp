@@ -64,7 +64,7 @@ bool create_svc_event()
 
 	// service event name = event name prefix + non-duplicable number (tick count)
 	// use this dynamic event name to avoid existing same-named event, opened by lingering gdimm.dll
-	wstringstream ss;
+	wostringstream ss;
 	ss << SVC_EVENT_PREFIX;
 	ss << GetTickCount();
 

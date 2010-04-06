@@ -5,7 +5,7 @@ using namespace std;
 
 void __cdecl _fassert(_In_z_ const wchar_t * _Message, _In_z_ const wchar_t *_File, _In_ unsigned _Line)
 {
-	wstringstream assert_msg;
+	wostringstream assert_msg;
 	assert_msg << _Message;
 	assert_msg << L" at ";
 	assert_msg << _File;

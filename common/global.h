@@ -43,7 +43,8 @@ const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
 template <typename T>
 inline void wcs_convert(const WCHAR *str, T &converted)
 {
-	wistringstream(str) >> converted;
+	if (str != NULL)
+		wistringstream(str) >> converted;
 }
 
 void debug_output(const WCHAR *str = L"");

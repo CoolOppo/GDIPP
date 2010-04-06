@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <regex>
+#include <vector>
 
 // 3rd-party dependency libraries
 #include <pugixml.hpp>

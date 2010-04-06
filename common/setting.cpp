@@ -6,7 +6,8 @@ bool mb_to_wc(const char *mb_str, wstring &wc_str)
 {
 	// convert multibyte string to widechar string
 
-	int wcs_len = MultiByteToWideChar(CP_UTF8, 0, mb_str, -1, NULL, 0);
+	// omit the trailing '\0'
+	int wcs_len = MultiByteToWideChar(CP_UTF8, 0, mb_str, -1, NULL, 0) - 1;
 	if (wcs_len == 0)
 		return false;
 
@@ -53,7 +54,7 @@ void gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, settin
 
 void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 {
-	// backward iterate so that first-coming specified process settings overwrites last-coming ones
+	// backward iterate so that first-coming process settings overwrites last-coming ones
 
 	xpath_node_set::const_iterator node_iter = process_nodes.end();
 	node_iter--;
@@ -94,9 +95,25 @@ void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 	}
 }
 
-void gdipp_setting::load_service(const xml_node &service_node)
+void gdipp_setting::load_demo(const xml_node &root_node)
 {
-	for (xml_node::iterator iter = service_node.begin(); iter != service_node.end(); iter++)
+	// it is OK if the root node is empty
+
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
+	{
+		wstring curr_value;
+		mb_to_wc(iter->first_child().value(), curr_value);
+
+		if (_stricmp(iter->name(), "font") == 0)
+			_demo_font.push_back(curr_value);
+		else
+			_demo_setting[iter->name()] = curr_value;
+	}
+}
+
+void gdipp_setting::load_service(const xml_node &root_node)
+{
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
 	{
 		wstring curr_value;
 		mb_to_wc(iter->first_child().value(), curr_value);
@@ -105,9 +122,9 @@ void gdipp_setting::load_service(const xml_node &service_node)
 	}
 }
 
-void gdipp_setting::load_exclude(const xml_node &exclude_node)
+void gdipp_setting::load_exclude(const xml_node &root_node)
 {
-	for (xml_node::iterator iter = exclude_node.begin(); iter != exclude_node.end(); iter++)
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
 	{
 		wstring curr_value;
 		mb_to_wc(iter->first_child().value(), curr_value);
@@ -135,10 +152,10 @@ bool gdipp_setting::init(HMODULE h_module)
 
 	if (h_module == NULL)
 	{
-		// the setting is requested by service
-		
-		const xml_node service_node = xml_doc.select_single_node("/gdipp/service").node();
-		load_service(service_node);
+		// the setting is not requested by gdimm
+
+		load_demo(xml_doc.select_single_node("/gdipp/demo").node());
+		load_service(xml_doc.select_single_node("/gdipp/service").node());
 	}
 	else
 	{
@@ -174,7 +191,22 @@ const WCHAR *gdipp_setting::get_gdimm_setting(const char *setting_name, const WC
 		}
 	}
 
-	return L"";
+	return NULL;
+}
+
+const WCHAR *gdipp_setting::get_demo_setting(const char *setting_name) const
+{
+	setting_map::const_iterator iter = _demo_setting.find(setting_name);
+
+	if (iter == _demo_setting.end())
+		return NULL;
+	else
+		return iter->second.c_str();
+}
+
+const vector<const wstring> &gdipp_setting::get_demo_font() const
+{
+	return _demo_font;
 }
 
 const WCHAR *gdipp_setting::get_service_setting(const char *setting_name) const

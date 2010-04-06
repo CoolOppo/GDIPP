@@ -2,11 +2,7 @@
 <gdipp>
 	<gdimm>
 		<process name="sample\.exe">
-			<gamma>
-				<gray>1.2</gray>
-				<red>1.2</red>
-				<green>1.1</green>
-			</gamma>
+			<zero_alpha>1</zero_alpha>
 		</process>
 		
 		<process name=".+\.exe">
