@@ -77,14 +77,19 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 	FT_Glyph_Copy(cached_glyph, &glyph);
 	FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
 
-	// if italic style is requested, and the font has no native italic glyphs,
-	// do oblique transformation
+	// if italic style is demanded, and the font has no native italic glyphs, do oblique transformation
 	if (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0)
 		oblique_outline(glyph_outline, 20);
 
 	// glyph outline -> glyph bitmap conversion
 	double embolden = 0.0;
 	setting_cache_instance.lookup("embolden", font_face, embolden);
+
+	// if non-regular weight is demanded, and the font has no native weighted glyphs, do embolden
+	// the embolden weight is based on the difference between demanded weight and the regular weight
+	if (_text->_font_attr.lfWeight != FW_DONTCARE)
+		embolden += (double)(_text->_font_attr.lfWeight - _os2_table.usWeightClass) / (FW_BOLD - FW_REGULAR);
+
 	if (embolden != 0.0)
 	{
 		ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(embolden));
@@ -133,8 +138,6 @@ void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
-	FT_Error ft_error;
-
 	const WCHAR *dc_font_face = metric_face_name(_text->_outline_metrics);
 	const WCHAR *dc_font_family = metric_family_name(_text->_outline_metrics);
 	wstring curr_font_face = dc_font_face;
@@ -162,19 +165,14 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 	_ft_scaler.face_id = (FTC_FaceID) font_man_instance.register_font(_text->_hdc_text, dc_font_face);
 	_ft_scaler.height = _text->_outline_metrics->otmTextMetrics.tmHeight - _text->_outline_metrics->otmTextMetrics.tmInternalLeading;
+	_os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
 
 	if (_text->_font_attr.lfWidth == 0)
 		_ft_scaler.width = _ft_scaler.height;
 	else
 	{
-		// get the OS/2 table of the current font
-		FT_Face ft_face;
-		ft_error = FTC_Manager_LookupFace(ft_cache_man, _ft_scaler.face_id, &ft_face);
-		assert(ft_error == 0);
-		TT_OS2 *os2_table = (TT_OS2*) FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
-
 		// compare the xAvgCharWidth against the current average char width
-		_ft_scaler.width = MulDiv(_text->_outline_metrics->otmTextMetrics.tmAveCharWidth, _text->_outline_metrics->otmEMSquare, os2_table->xAvgCharWidth);
+		_ft_scaler.width = MulDiv(_text->_outline_metrics->otmTextMetrics.tmAveCharWidth, _text->_outline_metrics->otmEMSquare, _os2_table.xAvgCharWidth);
 	}
 
 	if (options & ETO_GLYPH_INDEX)
@@ -194,6 +192,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 	{
 		UINT rendered_count = 0;
 		int font_link_index = 0;
+		bool glyph_all_empty = true;
 		wstring final_string = lpString;
 		wstring glyph_indices;
 
@@ -216,6 +215,9 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 				{
 					_glyphs[i] = render_glyph(glyph_indices[i], curr_font_face.c_str());
 					assert(_glyphs[i] != NULL);
+
+					if (_glyphs[i]->bitmap.buffer != NULL)
+						glyph_all_empty = false;
 				}
 
 				final_string[i] = 0;
@@ -241,6 +243,9 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 			_load_flags = get_load_flags(_render_mode, curr_font_face.c_str());
 		}
+
+		if (glyph_all_empty)
+			return false;
 	}
 
 	update_glyph_pos(options, lpDx);

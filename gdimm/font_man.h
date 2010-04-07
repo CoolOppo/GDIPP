@@ -56,6 +56,9 @@ class gdimm_font_man
 	map<wstring, long> _linked_ids;
 	map<long, font_info> _linked_fonts;
 
+	// font OS/2 table pointers
+	map<FTC_FaceID, TT_OS2> _os2_tables;
+
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_CloseFunc(FT_Stream stream) {}
 
@@ -75,4 +78,5 @@ public:
 	void get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi);
 
 	FT_Stream get_font_stream(long font_id);
+	const TT_OS2 &get_os2_table(FTC_FaceID face_id);
 };

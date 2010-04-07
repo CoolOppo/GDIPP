@@ -16,24 +16,19 @@ void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_pa
 	assert(b_ret);
 }
 
-const WCHAR *metric_family_name(const BYTE *metric_buf)
-{
-	return (const WCHAR*)(metric_buf + (UINT)((OUTLINETEXTMETRICW*) metric_buf)->otmpFamilyName);
-}
-
 const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
 {
 	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
 }
 
-const WCHAR *metric_face_name(const BYTE *metric_buf)
-{
-	return (const WCHAR*)(metric_buf + (UINT)((OUTLINETEXTMETRICW*) metric_buf)->otmpFaceName);
-}
-
 const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 {
 	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
+}
+
+const WCHAR *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
 }
 
 #define debug_file_name "C:\\gdipp_debug.log"

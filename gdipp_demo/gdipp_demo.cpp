@@ -66,6 +66,8 @@ int APIENTRY wWinMain(
 	wcs_convert(setting_instance.get_demo_setting("random_text"), random_text);
 
 	window_title[0] = L'\0';
+
+	//total_count = 0;
 #endif
 
 	// Perform application initialization:
@@ -170,7 +172,7 @@ void show_result(HWND hWnd, HDC hdc)
 	WCHAR result_str[100];
 	swprintf(result_str, 100, L"%u milliseconds render time, %.2f ms per render", elapse_time, (double) elapse_time / total_count);
 
-	HFONT f = CreateFontW(-20, 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Tahoma");
+	HFONT f = CreateFontW(-20, 0, 0, 0, FW_REGULAR, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Tahoma");
 	SelectObject(hdc, f);
 	ExtTextOutW(hdc, 10, 10, 0, NULL, result_str, wcslen(result_str), NULL);
 	DeleteObject(f);
@@ -244,7 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// randomize text metrics
 			const LONG height = (rand() % 10) + 10;
-			const LONG weight = (rand() % 10) * 100;
+			const LONG weight = (rand() % 9 + 1) * 100;
 			const BYTE italic = rand() % 2;
 			const wstring &font_name = candidate_font[rand() % candidate_font.size()];
 

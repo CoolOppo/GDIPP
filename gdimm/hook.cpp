@@ -35,7 +35,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if ((options & ETO_GLYPH_INDEX))
-	//if (c <= 7)
+	//if (c < 10)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -71,8 +71,8 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//debug_text = L"Thursday";
-	const int start_index = 1;
+	//debug_text = L"Edit";
+	const int start_index = 0;
 
 	if (debug_text != NULL)
 	{

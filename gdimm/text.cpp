@@ -450,7 +450,7 @@ bool gdimm_text::draw_glyphs(
 
 	// 3.
 
-	const WCHAR *font_face = metric_face_name(&_metric_buf[0]);
+	const WCHAR *font_face = metric_face_name((OUTLINETEXTMETRICW*) &_metric_buf[0]);
 	LONG shadow_off_x = 1;
 	setting_cache_instance.lookup("shadow/offset_x", font_face, shadow_off_x);
 	LONG shadow_off_y = 1;

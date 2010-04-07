@@ -35,10 +35,9 @@ struct wstring_ci_less
 };
 
 void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR source_path[MAX_PATH]);
-const WCHAR *metric_family_name(const BYTE *metric_buf);
 const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
-const WCHAR *metric_face_name(const BYTE *metric_buf);
 const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
+const WCHAR *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);
 
 template <typename T>
 inline void wcs_convert(const WCHAR *str, T &converted)

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "gdimm.h"
+#include "ft.h"
 
 // table name for GetFontData() to get whole ttc file data
 #define TTCF_FONT_TABLE mmioFOURCC('t', 't', 'c', 'f')
@@ -89,7 +90,7 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_a
 	metric_size = GetOutlineTextMetricsW(font_holder, metric_size, (OUTLINETEXTMETRICW*) &metric_buf[0]);
 	assert(metric_size != 0);
 
-	font_face = metric_face_name(&metric_buf[0]);
+	font_face = metric_face_name((OUTLINETEXTMETRICW*) &metric_buf[0]);
 
 	return new_hfont;
 }
@@ -233,4 +234,23 @@ FT_Stream gdimm_font_man::get_font_stream(long font_id)
 		return &_reg_fonts[font_id].stream;
 	else
 		return &_linked_fonts[font_id].stream;
+}
+
+const TT_OS2 &gdimm_font_man::get_os2_table(FTC_FaceID face_id)
+{
+	FT_Error ft_error;
+
+	map<FTC_FaceID, TT_OS2>::const_iterator iter = _os2_tables.find(face_id);
+
+	if (iter == _os2_tables.end())
+	{
+		// get the OS/2 table of the current font
+		FT_Face ft_face;
+		ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &ft_face);
+		assert(ft_error == 0);
+
+		_os2_tables[face_id] = *(const TT_OS2*) FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+	}
+
+	return _os2_tables[face_id];
 }
