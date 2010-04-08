@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "fassert.h"
-#include "global.h"
+#include "gdipp_common.h"
 using namespace std;
 
-void __cdecl _fassert(_In_z_ const wchar_t * _Message, _In_z_ const wchar_t *_File, _In_ unsigned _Line)
+GDIPP_API void __cdecl _fassert(_In_z_ const wchar_t * _Message, _In_z_ const wchar_t *_File, _In_ unsigned _Line)
 {
 	wostringstream assert_msg;
 	assert_msg << _Message;

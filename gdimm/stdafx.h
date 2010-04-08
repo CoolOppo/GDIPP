@@ -10,14 +10,12 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
-#include <dbghelp.h>
 #include <mmsystem.h>
 #include <psapi.h>
 
 // C standard header files
 #include <assert.h>
 #include <cmath>
-#include <list>
 #include <map>
 #include <process.h>
 #include <sstream>
@@ -35,4 +33,3 @@
 #include FT_TRUETYPE_TABLES_H
 
 #include <easyhook.h>
-#include <pugixml.hpp>

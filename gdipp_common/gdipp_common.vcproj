@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="common"
+	Name="gdipp_common"
 	ProjectGUID="{87BD2B0A-2C53-443C-B1BA-01AA73DB3139}"
 	RootNamespace="dll"
 	Keyword="Win32Proj"
@@ -23,7 +23,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			UseOfMFC="0"
 			CharacterSet="1"
 			>
@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -65,11 +65,19 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="psapi.lib"
+				Name="VCLinkerTool"
+				AdditionalDependencies="dbghelp.lib psapi.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				LinkIncremental="2"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -79,6 +87,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -88,7 +99,7 @@
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			UseOfMFC="0"
 			CharacterSet="1"
 			>
@@ -112,7 +123,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -130,11 +141,19 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="psapi.lib"
+				Name="VCLinkerTool"
+				AdditionalDependencies="dbghelp.lib psapi.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				LinkIncremental="2"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -146,6 +165,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -153,7 +175,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -177,12 +199,13 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -194,11 +217,21 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="psapi.lib"
+				Name="VCLinkerTool"
+				AdditionalDependencies="dbghelp.lib psapi.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -210,6 +243,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -217,7 +253,7 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -242,11 +278,12 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -258,11 +295,21 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="psapi.lib"
+				Name="VCLinkerTool"
+				AdditionalDependencies="dbghelp.lib psapi.lib shlwapi.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -272,6 +319,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -291,7 +341,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\global.cpp"
+				RelativePath=".\gdipp_common.cpp"
 				>
 			</File>
 			<File
@@ -345,7 +395,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\global.h"
+				RelativePath=".\gdipp_common.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
@@ -358,6 +412,14 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath=".\gdipp_common.rc"
 				>
 			</File>
 		</Filter>

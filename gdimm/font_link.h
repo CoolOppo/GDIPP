@@ -1,6 +1,6 @@
 #pragma once
 
-#include <global.h>
+#include <gdipp_common.h>
 using namespace std;
 
 /*

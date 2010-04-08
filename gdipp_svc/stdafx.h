@@ -24,9 +24,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <tchar.h>
 
 // TODO: reference additional headers your program requires here
 #include "fassert.h"
 #include <easyhook.h>
-#include <pugixml.hpp>

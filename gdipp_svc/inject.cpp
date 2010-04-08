@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "inject.h"
 #include "gdipp_svc.h"
-#include <global.h>
+#include <gdipp_common.h>
 
 svc_injector::svc_injector()
 {

@@ -30,9 +30,10 @@
 				<!-- install both 32-bit and 64-bit files in same directory -->
 				<Directory Id="INSTALLDIR" Name="gdipp">
 					<Component Id="gdipp_32" Guid="B94E958C-1843-4AEB-BB12-DEE8032CE0C8" Win64="no">
+						<File Id="gdimm_dll" Name="gdimm_32.dll" Source="$(var.SolutionDir)Win32\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
+						<File Name="gdipp_common_32.dll" Source="$(var.SolutionDir)Win32\Release\gdipp_common_32.dll" Vital="yes" />
 						<File Name="gdipp_demo_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_demo_32.exe" />
 						<File Name="gdipp_loader_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_loader_32.exe" />
-						<File Id="gdimm_dll" Name="gdimm_32.dll" Source="$(var.SolutionDir)Win32\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
 					</Component>
 
 					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
@@ -57,9 +58,10 @@
 
 <?if $(var.Platform) = x64 ?>
 					<Component Id="gdipp_64" Guid="A7D01189-D404-4E93-B080-8E1687D328A1" Win64="yes">
+						<File Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" Vital="yes" KeyPath="yes" />
+						<File Name="gdipp_common_64.dll" Source="$(var.SolutionDir)x64\Release\gdipp_common_64.dll" Vital="yes" />
 						<File Name="gdipp_demo_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_demo_64.exe" />
 						<File Name="gdipp_loader_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_loader_64.exe" />
-						<File Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" Vital="yes" KeyPath="yes" />
 					</Component>
 
 					<Component Id="install_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">

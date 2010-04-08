@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <global.h>
+#include <gdipp_common.h>
 
 int APIENTRY wWinMain(
 	HINSTANCE hInstance,
@@ -47,7 +47,7 @@ int APIENTRY wWinMain(
 	WCHAR gdimm_path_32[MAX_PATH];
 	get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path_32);
 	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path_32, NULL, (PVOID) &payload, sizeof(inject_payload));
-#endif
+#endif // _M_X64
 
 	if (eh_error != 0)
 	{

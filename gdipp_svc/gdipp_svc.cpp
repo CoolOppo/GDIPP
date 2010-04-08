@@ -3,15 +3,11 @@
 
 #ifdef _M_X64
 #define SVC_NAME TEXT("gdipp_svc_64")
-#else
-#define SVC_NAME TEXT("gdipp_svc_32")
-#endif
-
-#ifdef _M_X64
 #define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_64"
 #else
+#define SVC_NAME TEXT("gdipp_svc_32")
 #define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_32"
-#endif
+#endif // _M_X64
 
 SERVICE_STATUS			svc_status = {0};
 SERVICE_STATUS_HANDLE	svc_status_handle = NULL;
@@ -19,7 +15,6 @@ HANDLE					svc_stop_event = NULL;
 
 svc_injector injector_instance;
 svc_mon mon_instance;
-gdipp_setting setting_instance;
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
@@ -96,8 +91,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
-	setting_instance.init(NULL);
-
 	injector_instance.initial_inject();
 
 	// monitor future processes
@@ -132,7 +125,7 @@ int APIENTRY _tWinMain(
 		return 0;
 	}
 
-	setting_instance.init(NULL);
+	init(NULL);
 
 	//injector_instance.initial_inject();
 
@@ -149,7 +142,7 @@ int APIENTRY _tWinMain(
 	};
 
 	StartServiceCtrlDispatcher(dispatch_table);
-#endif
+#endif // svc_debug
 
 	return 0;
 }

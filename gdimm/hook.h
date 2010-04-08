@@ -1,6 +1,5 @@
 #pragma once
 
-#include <global.h>
 using namespace std;
 
 class gdimm_hook

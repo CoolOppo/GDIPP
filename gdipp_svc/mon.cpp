@@ -35,7 +35,7 @@ bool svc_mon::start_monitor()
 	_sink = new sink_inject;
 	_sink->AddRef();
 
-	const WCHAR *interval_str = setting_instance.get_service_setting("poll_interval");
+	const WCHAR *interval_str = get_service_setting("poll_interval");
 	if (interval_str == NULL)
 		interval_str = L"1";
 

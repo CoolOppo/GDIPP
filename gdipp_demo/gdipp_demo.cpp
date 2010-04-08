@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "gdipp_demo.h"
-#include <setting.h>
+#include <gdipp_common.h>
+
+using namespace std;
 
 #define MAX_LOADSTRING 100
 
@@ -17,8 +19,6 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
   #define render
   #define test
-
-gdipp_setting setting_instance;
 
 int total_count = 1000;
 vector<const wstring> candidate_font;
@@ -53,22 +53,21 @@ int APIENTRY wWinMain(
 	h_gdimm = LoadLibrary(TEXT("gdimm_64.dll"));
 #else
 	h_gdimm = LoadLibrary(TEXT("gdimm_32.dll"));
-#endif
+#endif // _M_X64
 
-#endif
+#endif // render
 
 #ifdef test
-	setting_instance.init(NULL);
-	wcs_convert(setting_instance.get_demo_setting("count"), total_count);
-	candidate_font = setting_instance.get_demo_font();
+	wcs_convert(get_demo_setting("count"), total_count);
+	candidate_font = get_demo_font();
 	if (candidate_font.empty())
 		candidate_font.push_back(L"Tahoma");
-	wcs_convert(setting_instance.get_demo_setting("random_text"), random_text);
+	wcs_convert(get_demo_setting("random_text"), random_text);
 
 	window_title[0] = L'\0';
 
 	//total_count = 0;
-#endif
+#endif // test
 
 	// Perform application initialization:
 	if (!InitInstance(hInstance, nCmdShow))
@@ -290,7 +289,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			show_result(hWnd, hdc);
 
 		rendered += 1;
-#endif
+#endif // test
 
 		EndPaint(hWnd, &ps);
 		}

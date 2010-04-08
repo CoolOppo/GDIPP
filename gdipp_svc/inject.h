@@ -1,6 +1,6 @@
 #pragma once
 
-#include <global.h>
+#include <gdipp_common.h>
 
 class svc_injector
 {

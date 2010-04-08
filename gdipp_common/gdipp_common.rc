@@ -70,11 +70,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "gdipp Project"
-            VALUE "FileDescription", "gdimm"
+            VALUE "FileDescription", "gdimm_common"
             VALUE "FileVersion", "0, 7, 4, 0"
-            VALUE "InternalName", "gdimm"
+            VALUE "InternalName", "gdipp_common"
             VALUE "LegalCopyright", "Copyright (C) gdipp Project 2010"
-            VALUE "OriginalFilename", "gdimm.dll"
+            VALUE "OriginalFilename", "gdipp_common.dll"
             VALUE "ProductName", "gdimm"
             VALUE "ProductVersion", "0, 7, 4, 0"
         END

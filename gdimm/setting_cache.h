@@ -1,6 +1,5 @@
 #pragma once
 
-#include <setting.h>
 using namespace std;
 
 class gdimm_setting_cache
@@ -35,7 +34,7 @@ bool gdimm_setting_cache::lookup(const char *setting_name, const WCHAR *font_nam
 	}
 
 	// otherwise, use the value from the setting file
-	const WCHAR *raw_value = setting_instance.get_gdimm_setting(setting_name, font_name);
+	const WCHAR *raw_value = get_gdimm_setting(setting_name, font_name);
 	if (raw_value == NULL)
 		return false;
 

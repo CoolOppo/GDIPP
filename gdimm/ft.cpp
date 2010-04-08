@@ -12,13 +12,13 @@ void initialize_freetype()
 	FT_Error ft_error;
 
 	FT_UInt cache_max_faces = 2;
-	wcs_convert(setting_instance.get_gdimm_setting("freetype/cache_max_faces", L""), cache_max_faces);
+	wcs_convert(get_gdimm_setting("freetype/cache_max_faces", L""), cache_max_faces);
 	FT_UInt cache_max_sizes = 4;
-	wcs_convert(setting_instance.get_gdimm_setting("freetype/cache_max_sizes", L""), cache_max_sizes);
+	wcs_convert(get_gdimm_setting("freetype/cache_max_sizes", L""), cache_max_sizes);
 	FT_ULong cache_max_bytes = 200000;
-	wcs_convert(setting_instance.get_gdimm_setting("freetype/cache_max_bytes", L""), cache_max_bytes);
+	wcs_convert(get_gdimm_setting("freetype/cache_max_bytes", L""), cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(setting_instance.get_gdimm_setting("freetype/lcd_filter", L""), *((int*) &lcd_filter));
+	wcs_convert(get_gdimm_setting("freetype/lcd_filter", L""), *((int*) &lcd_filter));
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);

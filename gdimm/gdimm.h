@@ -5,7 +5,6 @@
 #include "gamma.h"
 #include "hook.h"
 #include "setting_cache.h"
-#include <setting.h>
 
 extern HMODULE h_self;
 
@@ -14,7 +13,6 @@ extern gdimm_font_man font_man_instance;
 extern gdimm_gamma gamma_instance;
 extern gdimm_hook hook_instance;
 extern gdimm_setting_cache setting_cache_instance;
-extern gdipp_setting setting_instance;
 
 enum CS_TYPE
 {
@@ -59,3 +57,7 @@ public:
 			DeleteCriticalSection(&_cs[i]);
 	}
 };
+
+const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
+const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
+const WCHAR *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);

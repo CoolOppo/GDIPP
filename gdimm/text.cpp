@@ -574,7 +574,7 @@ bool gdimm_text::init(HDC hdc)
 		return false;
 
 	const WCHAR *font_face = metric_face_name(_outline_metrics);
-	if (setting_instance.is_font_excluded(font_face))
+	if (is_font_excluded(font_face))
 		return false;
 
 	// ignore rotated DC

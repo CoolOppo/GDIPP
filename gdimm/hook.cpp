@@ -97,7 +97,8 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		else
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
-#endif
+#endif // _DEBUG
+
 	//critical_section interlock(CS_DEBUG);
 
 	gdimm_text text_instance;
@@ -247,7 +248,7 @@ CreateProcessAsUserW_hook(
 
 	return TRUE;
 }
-#endif
+#endif // _M_X64
 
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
@@ -303,7 +304,7 @@ bool gdimm_hook::hook()
 #ifndef _M_X64
 	// currently not support inject at EIP for 64-bit processes
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
-#endif
+#endif // _M_X64
 
 	return !(_hooks.empty());
 }

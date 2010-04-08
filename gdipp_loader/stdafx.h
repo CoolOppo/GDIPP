@@ -15,9 +15,8 @@
 
 // C RunTime Header Files
 #include <assert.h>
-#include <cstdlib>
 #include <string>
-#include <tchar.h>
+#include <vector>
 
 // TODO: reference additional headers your program requires here
 #include <easyhook.h>
