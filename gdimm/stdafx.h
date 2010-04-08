@@ -10,7 +10,9 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
+#include <dbghelp.h>
 #include <mmsystem.h>
+#include <psapi.h>
 
 // C standard header files
 #include <assert.h>
@@ -20,6 +22,7 @@
 #include <process.h>
 #include <sstream>
 #include <string>
+#include <time.h>
 #include <vector>
 
 // 3rd-party dependency libraries

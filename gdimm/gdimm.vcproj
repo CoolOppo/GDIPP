@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,7 +66,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook32.lib dbghelp.lib psapi.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -124,7 +124,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -144,7 +144,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook64.lib dbghelp.lib psapi.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
@@ -202,13 +202,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -221,11 +222,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook32.lib dbghelp.lib psapi.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				DelayLoadDLLs=""
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -282,12 +284,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)common&quot;;&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -300,11 +303,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
+				AdditionalDependencies="EasyHook64.lib dbghelp.lib psapi.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
 				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

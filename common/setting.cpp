@@ -19,12 +19,8 @@ bool mb_to_wc(const char *mb_str, wstring &wc_str)
 
 gdipp_setting::gdipp_setting()
 {
-	DWORD dw_ret;
-
-	dw_ret = GetModuleFileNameW(NULL, _process_name, MAX_PATH);
+	DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
-
-	PathStripPathW(_process_name);
 }
 
 void gdipp_setting::parse_gdimm_setting_node(const xml_node setting_node, setting_map &setting_store)
