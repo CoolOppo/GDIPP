@@ -32,7 +32,7 @@ void svc_injector::initial_inject()
 	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	assert(h_snapshot != INVALID_HANDLE_VALUE);
 
-	PROCESSENTRY32W pe32 = {0};
+	PROCESSENTRY32W pe32 = {};
 	pe32.dwSize = sizeof(PROCESSENTRY32W);
 
 	if (Process32FirstW(h_snapshot, &pe32))

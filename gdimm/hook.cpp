@@ -7,8 +7,13 @@ HANDLE h_unload = NULL;
 
 unsigned __stdcall unload_self(void *arglist)
 {
+	BOOL b_ret;
+
 	critical_section interlock(CS_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
+
+	b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_INTERNALPAINT | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	assert(b_ret);
 
 	_endthreadex(0);
 	return 0;
@@ -131,7 +136,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 	assert(dw_ret != 0);
 
 	// get eip of the spawned thread
-	CONTEXT ctx = {0};
+	CONTEXT ctx = {};
 	ctx.ContextFlags = CONTEXT_CONTROL;
 	b_ret = GetThreadContext(lpProcessInformation->hThread, &ctx);
 	assert(b_ret);
@@ -261,11 +266,11 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	switch (payload.inject_type)
 	{
 	case GDIPP_SERVICE:
-		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-		assert(b_ret);
-
 		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
+
+		// force the foreground window of the injected process to redraw
+		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_INTERNALPAINT | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		assert(b_ret);
 
 		break;
 	case GDIPP_LOADER:
@@ -288,7 +293,7 @@ bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 	eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
-	ULONG thread_id_list[1] = {0};
+	ULONG thread_id_list[1] = {};
  	eh_error = LhSetExclusiveACL(thread_id_list, 0, h_hook);
  	assert(eh_error == 0);
 

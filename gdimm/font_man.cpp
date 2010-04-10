@@ -150,7 +150,7 @@ long gdimm_font_man::register_font(HDC hdc, const WCHAR *font_face)
 		if (iter == _reg_ids.end())
 		{
 			const long new_font_id = (long) _reg_ids.size();
-			font_info new_font_data = {0};
+			font_info new_font_data = {};
 
 			new_font_data.hfont = NULL;
 			new_font_data.stream.size = get_font_size(hdc, new_font_data.table_header);
@@ -190,7 +190,7 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 		{
 			// negative font id
 			const long new_font_id = -((long) _linked_ids.size()) - 1;
-			font_info new_font_data = {0};
+			font_info new_font_data = {};
 
 			new_font_data.hfont = linked_font;
 			new_font_data.stream.size = get_font_size(font_holder->linked, new_font_data.table_header);

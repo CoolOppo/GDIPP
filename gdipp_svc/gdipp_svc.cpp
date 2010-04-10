@@ -9,7 +9,7 @@
 #define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_32"
 #endif // _M_X64
 
-SERVICE_STATUS			svc_status = {0};
+SERVICE_STATUS			svc_status = {};
 SERVICE_STATUS_HANDLE	svc_status_handle = NULL;
 HANDLE					svc_stop_event = NULL;
 

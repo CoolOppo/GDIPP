@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
+	<version>0.7.4</version>
+	
 	<gdimm>
-		<process name="sample\.exe">
+		<process name="VirtualBox\.exe">
 			<zero_alpha>1</zero_alpha>
 		</process>
 		
@@ -22,7 +24,6 @@
 			<auto_hinting>0</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>
 			<embolden>0.0</embolden>
-			<freetype_loader>1</freetype_loader>
 			<gamma>
 				<gray>1.0</gray>
 				<red>1.0</red>
@@ -34,10 +35,11 @@
 			<max_height>72</max_height>
 			<render_mono>0</render_mono>
 			<render_non_aa>0</render_non_aa>
+			<renderer>2</renderer>
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>
-				<alpha>24</alpha>
+				<alpha>8</alpha>
 			</shadow>
 			<subpixel_render>1</subpixel_render>
 			<zero_alpha>0</zero_alpha>
@@ -45,7 +47,7 @@
 	</gdimm>
 	
 	<demo>
-		<count>1000</count>
+		<count>5000</count>
 		<font>Arial</font>
 		<font>Consolas</font>
 		<font>Segoe UI</font>
@@ -72,7 +74,5 @@
 		<process>userinit\.exe</process>
 		<process>wininit\.exe</process>
 		<process>winlogon\.exe</process>
-		
-		<font>excluded_font.*</font>
 	</exclude>
 </gdipp>

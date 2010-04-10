@@ -15,7 +15,7 @@
 #include <shlwapi.h>
 
 // C standard header files
-#include <assert.h>
+#include <cassert>
 #include <fstream>
 #include <list>
 #include <map>

@@ -146,23 +146,11 @@ bool gdipp_setting::init(HMODULE h_module)
 	xml_parse_result xml_ret = xml_doc.load(f);
 	assert(xml_ret);
 
-	if (h_module == NULL)
-	{
-		// the setting is not requested by gdimm
-
-		load_demo(xml_doc.select_single_node("/gdipp/demo").node());
-		load_service(xml_doc.select_single_node("/gdipp/service").node());
-	}
-	else
-	{
-		// the setting is requested by gdimm
-
-		load_gdimm_process(xml_doc.select_nodes("/gdipp/gdimm/process"));
-		load_gdimm_font(xml_doc.select_nodes("gdipp/gdimm/font"));
-	}
-
-	const xml_node exclude_node = xml_doc.select_single_node("/gdipp/exclude").node();
-	load_exclude(exclude_node);
+	load_gdimm_process(xml_doc.select_nodes("/gdipp/gdimm/process"));
+	load_gdimm_font(xml_doc.select_nodes("gdipp/gdimm/font"));
+	load_demo(xml_doc.select_single_node("/gdipp/demo").node());
+	load_service(xml_doc.select_single_node("/gdipp/service").node());
+	load_exclude(xml_doc.select_single_node("/gdipp/exclude").node());
 
 	f.close();
 	return true;
@@ -230,18 +218,6 @@ bool gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
 	{
 		const wregex name_ex(iter->data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
 		if (regex_match(final_name, name_ex))
-			return true;
-	}
-
-	return false;
-}
-
-bool gdipp_setting::is_font_excluded(const WCHAR *font_name) const
-{
-	for (list<const wstring>::const_iterator iter = _exclude_font.begin(); iter != _exclude_font.end(); iter++)
-	{
-		const wregex name_ex(iter->data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
-		if (regex_match(font_name, name_ex))
 			return true;
 	}
 

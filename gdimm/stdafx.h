@@ -14,13 +14,13 @@
 #include <psapi.h>
 
 // C standard header files
-#include <assert.h>
+#include <cassert>
 #include <cmath>
+#include <ctime>
 #include <map>
 #include <process.h>
 #include <sstream>
 #include <string>
-#include <time.h>
 #include <vector>
 
 // 3rd-party dependency libraries

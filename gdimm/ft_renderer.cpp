@@ -3,22 +3,13 @@
 #include "ft.h"
 #include "gdimm.h"
 
-FT_BitmapGlyphRec empty_glyph = {0};
+FT_BitmapGlyphRec empty_glyph = {};
 
 ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
 {
 	_ft_scaler.pixel = 1;
 	_ft_scaler.x_res = 0;
 	_ft_scaler.y_res = 0;
-}
-
-void ft_renderer::oblique_outline(const FT_Outline *outline, double angle)
-{
-	// the advancement of slant on X-axis direction
-	const double slant_adv = tan(pi * angle / 180);
-
-	FT_Matrix oblique_mat = {to_16dot16(1), to_16dot16(slant_adv), 0, to_16dot16(1)};
-	FT_Outline_Transform(outline, &oblique_mat);
 }
 
 FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name)
@@ -55,6 +46,26 @@ FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *fo
 	return load_flags;
 }
 
+void ft_renderer::oblique_outline(const FT_Outline *outline, double angle)
+{
+	// the advancement of slant on X-axis direction
+	const double slant_adv = tan(pi * angle / 180);
+
+	FT_Matrix oblique_mat = {to_16dot16(1), to_16dot16(slant_adv), 0, to_16dot16(1)};
+	FT_Outline_Transform(outline, &oblique_mat);
+}
+
+void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_name)
+{
+	_embolden = 0.0;
+	setting_cache_instance.lookup("embolden", font_name, _embolden);
+
+	// if non-regular weight is demanded, and the font has no native weighted glyphs, do embolden
+	// the embolden weight is based on the difference between demanded weight and the regular weight
+	if (_text->_font_attr.lfWeight != FW_DONTCARE)
+		_embolden += (double)(_text->_font_attr.lfWeight - os2_table.usWeightClass) / (FW_BOLD - FW_REGULAR);
+}
+
 const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)
 {
 	FT_Error ft_error;
@@ -74,32 +85,34 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 	if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
 		return NULL;
 
-	FT_Glyph_Copy(cached_glyph, &glyph);
-	FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
+	// it seems faster if oblique first, and then embolden
+	// if italic style is demanded, and the font is not natively italic, do oblique transformation
+	const bool need_oblique = (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0);
+	const bool need_embolden = (_embolden != 0.0);
+	const bool need_glyph_copy = (need_oblique || need_embolden);
 
-	// if italic style is demanded, and the font has no native italic glyphs, do oblique transformation
-	if (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0)
-		oblique_outline(glyph_outline, 20);
+	if (need_glyph_copy)
+	{
+		FT_Glyph_Copy(cached_glyph, &glyph);
+		FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
+
+		if (need_oblique)
+			oblique_outline(glyph_outline, 20);
+
+		if (need_embolden)
+		{
+			ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(_embolden));
+			assert(ft_error == 0);
+		}
+	}
+	else
+		glyph = cached_glyph;
 
 	// glyph outline -> glyph bitmap conversion
-	double embolden = 0.0;
-	setting_cache_instance.lookup("embolden", font_face, embolden);
-
-	// if non-regular weight is demanded, and the font has no native weighted glyphs, do embolden
-	// the embolden weight is based on the difference between demanded weight and the regular weight
-	if (_text->_font_attr.lfWeight != FW_DONTCARE)
-		embolden += (double)(_text->_font_attr.lfWeight - _os2_table.usWeightClass) / (FW_BOLD - FW_REGULAR);
-
-	if (embolden != 0.0)
-	{
-		ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(embolden));
-		assert(ft_error == 0);
-	}
-
 	// FT_Glyph_To_Bitmap is not thread-safe
 	{
 		critical_section interlock(CS_TEXT);
-		ft_error = FT_Glyph_To_Bitmap(&glyph, _render_mode, NULL, TRUE);
+		ft_error = FT_Glyph_To_Bitmap(&glyph, _render_mode, NULL, need_glyph_copy);
 		assert(ft_error == 0);
 	}
 
@@ -165,14 +178,15 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 	_ft_scaler.face_id = (FTC_FaceID) font_man_instance.register_font(_text->_hdc_text, dc_font_face);
 	_ft_scaler.height = _text->_outline_metrics->otmTextMetrics.tmHeight - _text->_outline_metrics->otmTextMetrics.tmInternalLeading;
-	_os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
+	TT_OS2 os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
+	update_embolden(os2_table, dc_font_face);
 
 	if (_text->_font_attr.lfWidth == 0)
 		_ft_scaler.width = _ft_scaler.height;
 	else
 	{
 		// compare the xAvgCharWidth against the current average char width
-		_ft_scaler.width = MulDiv(_text->_outline_metrics->otmTextMetrics.tmAveCharWidth, _text->_outline_metrics->otmEMSquare, _os2_table.xAvgCharWidth);
+		_ft_scaler.width = MulDiv(_text->_outline_metrics->otmTextMetrics.tmAveCharWidth, _text->_outline_metrics->otmEMSquare, os2_table.xAvgCharWidth);
 	}
 
 	if (options & ETO_GLYPH_INDEX)
@@ -226,7 +240,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 			if (rendered_count == c)
 				break;
-			
+
 			// font linking
 			curr_font_family = font_link_instance.lookup(dc_font_family, font_link_index);
 			font_link_index += 1;
@@ -242,6 +256,9 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 				return false;
 
 			_load_flags = get_load_flags(_render_mode, curr_font_face.c_str());
+
+			os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
+			update_embolden(os2_table, curr_font_face.c_str());
 		}
 
 		if (glyph_all_empty)

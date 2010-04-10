@@ -35,7 +35,5 @@ public:
 	const WCHAR *get_demo_setting(const char *setting_name) const;
 	const vector<const wstring> &get_demo_font() const;
 	const WCHAR *get_service_setting(const char *setting_name) const;
-
 	bool is_process_excluded(const WCHAR *proc_name) const;
-	bool is_font_excluded(const WCHAR *font_name) const;
 };

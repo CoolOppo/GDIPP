@@ -4,6 +4,13 @@
 #include "ggo_renderer.h"
 #include "gdimm.h"
 
+enum RENDERER
+{
+	CLEARTYPE,
+	GETGLYPHOUTLINE,
+	FREETYPE
+};
+
 // for given bitmap width and bit count, compute the bitmap pitch
 int get_pitch(int width, WORD bpp)
 {
@@ -58,7 +65,7 @@ BITMAPINFO gdimm_text::get_dc_bmp_info(HDC hdc)
 	const HBITMAP dc_bitmap = (HBITMAP) GetCurrentObject(hdc, OBJ_BITMAP);
 	assert(dc_bitmap != NULL);
 
-	BITMAPINFO bmi = {0};
+	BITMAPINFO bmi = {};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
 	assert(i_ret != 0);
@@ -397,7 +404,7 @@ bool gdimm_text::draw_glyphs(
 	therefore we just use bottom-up, as it is more compatible
 	*/
 
-	BITMAPINFO bmi = {0};
+	BITMAPINFO bmi = {};
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = bmp_width;
 	bmi.bmiHeader.biHeight = cell_height;
@@ -447,6 +454,9 @@ bool gdimm_text::draw_glyphs(
 
 		return false;
 	}
+
+	char *a = NULL;
+//	*a = 1;
 
 	// 3.
 
@@ -574,8 +584,6 @@ bool gdimm_text::init(HDC hdc)
 		return false;
 
 	const WCHAR *font_face = metric_face_name(_outline_metrics);
-	if (is_font_excluded(font_face))
-		return false;
 
 	// ignore rotated DC
 	if (_font_attr.lfEscapement % 3600 != 0)
@@ -586,8 +594,6 @@ bool gdimm_text::init(HDC hdc)
 	if (max_height != 0 && max_height < _outline_metrics->otmTextMetrics.tmHeight)
 		return false;
 
-	_bmp_info = get_dc_bmp_info(_hdc_text);
-
 	return true;
 }
 
@@ -596,6 +602,24 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 	BOOL b_ret;
 
 	const WCHAR *font_face = metric_face_name(_outline_metrics);
+
+	unsigned int renderer;
+	setting_cache_instance.lookup("renderer", font_face, renderer);
+	gdimm_renderer *font_renderer;
+
+	switch ((RENDERER) renderer)
+	{
+	case GETGLYPHOUTLINE:
+		font_renderer = new ggo_renderer(this);
+		break;
+	case FREETYPE:
+		font_renderer = new ft_renderer(this);
+		break;
+	default:
+		return false;
+	}
+
+	_bmp_info = get_dc_bmp_info(_hdc_text);
 
 	FT_Render_Mode render_mode;
 	if (!get_render_mode(font_face, render_mode))
@@ -620,24 +644,15 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 		update_cursor = false;
 	}
 
-	bool freetype_loader = true;
-	setting_cache_instance.lookup("freetype_loader", font_face, freetype_loader);
-	gdimm_renderer *renderer;
-
-	if (freetype_loader)
-		renderer = new ft_renderer(this);
-	else
-		renderer = new ggo_renderer(this);
-
-	bool render_success = renderer->render(options, lprect, lpString, c, lpDx, render_mode);
+	bool render_success = font_renderer->render(options, lprect, lpString, c, lpDx, render_mode);
 	if (!render_success)
 	{
-		delete renderer;
+		delete font_renderer;
 		return false;
 	}
 
 	bool draw_success = false;
-	const vector<const FT_BitmapGlyph> &glyphs = renderer->get_glyphs();
+	const vector<const FT_BitmapGlyph> &glyphs = font_renderer->get_glyphs();
 
 	if (!glyphs.empty())
 	{
@@ -653,7 +668,7 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 
 		get_gamma_ramps(font_face, ((render_mode & FT_RENDER_MODE_LCD) != 0));
 
-		draw_success = draw_glyphs(glyphs, renderer->get_glyph_pos(), options, lprect);
+		draw_success = draw_glyphs(glyphs, font_renderer->get_glyph_pos(), options, lprect);
 	}
 
 	// if TA_UPDATECP is set, update current position after text out
@@ -663,6 +678,6 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 		assert(b_ret);
 	}
 
-	delete renderer;
+	delete font_renderer;
 	return draw_success;
 }

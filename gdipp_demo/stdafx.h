@@ -12,11 +12,11 @@
 #include <windows.h>
 
 // C RunTime Header Files
-#include <assert.h>
+#include <cassert>
+#include <ctime>
 #include <map>
 #include <sstream>
 #include <string>
-#include <time.h>
 #include <vector>
 
 // TODO: reference additional headers your program requires here

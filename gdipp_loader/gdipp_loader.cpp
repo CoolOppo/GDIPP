@@ -25,7 +25,7 @@ int APIENTRY wWinMain(
 	b_ret = PathRemoveFileSpecW(working_dir);
 	assert(b_ret);
 
-	STARTUPINFO si = {0};
+	STARTUPINFO si = {};
 	si.cb = sizeof(STARTUPINFO);
 	PROCESS_INFORMATION pi;
 	

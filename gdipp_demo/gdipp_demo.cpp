@@ -20,12 +20,18 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
   #define render
   #define test
 
-int total_count = 1000;
+int total_count = 5000;
 vector<const wstring> candidate_font;
 bool random_text = false;
 
 DWORD start_time;
 WCHAR window_title[100];
+
+LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
+{
+	MessageBox(NULL, L"A", L"B", MB_OK);
+	return 0;
+}
 
 int APIENTRY wWinMain(
 	HINSTANCE hInstance,

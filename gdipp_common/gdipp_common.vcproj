@@ -145,6 +145,7 @@
 				AdditionalDependencies="dbghelp.lib psapi.lib shlwapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
