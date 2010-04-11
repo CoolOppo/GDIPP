@@ -4,7 +4,7 @@
 #include "ggo_renderer.h"
 #include "gdimm.h"
 
-enum RENDERER
+enum RENDERER_TYPE
 {
 	CLEARTYPE,
 	GETGLYPHOUTLINE,
@@ -455,20 +455,16 @@ bool gdimm_text::draw_glyphs(
 		return false;
 	}
 
-	char *a = NULL;
-//	*a = 1;
-
 	// 3.
 
-	const WCHAR *font_face = metric_face_name((OUTLINETEXTMETRICW*) &_metric_buf[0]);
 	LONG shadow_off_x = 1;
-	setting_cache_instance.lookup("shadow/offset_x", font_face, shadow_off_x);
+	setting_cache_instance.lookup("shadow/offset_x", _font_face, shadow_off_x);
 	LONG shadow_off_y = 1;
-	setting_cache_instance.lookup("shadow/offset_y", font_face, shadow_off_y);
+	setting_cache_instance.lookup("shadow/offset_y", _font_face, shadow_off_y);
 	WORD shadow_alpha = 32;
-	setting_cache_instance.lookup("shadow/alpha", font_face, shadow_alpha);
+	setting_cache_instance.lookup("shadow/alpha", _font_face, shadow_alpha);
 	bool zero_alpha = false;
-	setting_cache_instance.lookup("zero_alpha", font_face, zero_alpha);
+	setting_cache_instance.lookup("zero_alpha", _font_face, zero_alpha);
 
 	for (size_t i = 0; i < glyphs.size(); i++)
 	{
@@ -583,46 +579,29 @@ bool gdimm_text::init(HDC hdc)
 	if (!get_dc_metrics())
 		return false;
 
-	const WCHAR *font_face = metric_face_name(_outline_metrics);
-
 	// ignore rotated DC
 	if (_font_attr.lfEscapement % 3600 != 0)
 		return false;
 
+	_font_face = metric_face_name(_outline_metrics);
+
 	LONG max_height = 72;
-	setting_cache_instance.lookup("max_height", font_face, max_height);
+	setting_cache_instance.lookup("max_height", _font_face, max_height);
 	if (max_height != 0 && max_height < _outline_metrics->otmTextMetrics.tmHeight)
 		return false;
 
 	return true;
 }
 
-bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+template <typename RENDERER>
+bool gdimm_text::render_text(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret;
-
-	const WCHAR *font_face = metric_face_name(_outline_metrics);
-
-	unsigned int renderer;
-	setting_cache_instance.lookup("renderer", font_face, renderer);
-	gdimm_renderer *font_renderer;
-
-	switch ((RENDERER) renderer)
-	{
-	case GETGLYPHOUTLINE:
-		font_renderer = new ggo_renderer(this);
-		break;
-	case FREETYPE:
-		font_renderer = new ft_renderer(this);
-		break;
-	default:
-		return false;
-	}
 
 	_bmp_info = get_dc_bmp_info(_hdc_text);
 
 	FT_Render_Mode render_mode;
-	if (!get_render_mode(font_face, render_mode))
+	if (!get_render_mode(_font_face, render_mode))
 		return false;
 
 	_text_alignment = GetTextAlign(_hdc_text);
@@ -644,15 +623,13 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 		update_cursor = false;
 	}
 
-	bool render_success = font_renderer->render(options, lprect, lpString, c, lpDx, render_mode);
+	RENDERER font_renderer(this);
+	bool render_success = font_renderer.render(options, lprect, lpString, c, lpDx, render_mode);
 	if (!render_success)
-	{
-		delete font_renderer;
 		return false;
-	}
 
 	bool draw_success = false;
-	const vector<const FT_BitmapGlyph> &glyphs = font_renderer->get_glyphs();
+	const vector<const FT_BitmapGlyph> &glyphs = font_renderer.get_glyphs();
 
 	if (!glyphs.empty())
 	{
@@ -666,9 +643,9 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 		// not every DC has background color
 		_bg_color = GetBkColor(_hdc_text);
 
-		get_gamma_ramps(font_face, ((render_mode & FT_RENDER_MODE_LCD) != 0));
+		get_gamma_ramps(_font_face, ((render_mode & FT_RENDER_MODE_LCD) != 0));
 
-		draw_success = draw_glyphs(glyphs, font_renderer->get_glyph_pos(), options, lprect);
+		draw_success = draw_glyphs(glyphs, font_renderer.get_glyph_pos(), options, lprect);
 	}
 
 	// if TA_UPDATECP is set, update current position after text out
@@ -678,6 +655,21 @@ bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWST
 		assert(b_ret);
 	}
 
-	delete font_renderer;
 	return draw_success;
+}
+
+bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+{
+	unsigned int renderer;
+	setting_cache_instance.lookup("renderer", _font_face, renderer);
+
+	switch ((RENDERER_TYPE) renderer)
+	{
+	case GETGLYPHOUTLINE:
+		return render_text<ggo_renderer>(x, y, options, lprect, lpString, c, lpDx);
+	case FREETYPE:
+		return render_text<ft_renderer>(x, y, options, lprect, lpString, c, lpDx);
+	default:
+		return false;
+	}
 }

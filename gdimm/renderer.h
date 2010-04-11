@@ -26,15 +26,19 @@ protected:
 	vector<const FT_BitmapGlyph> _glyphs;
 	vector<POINT> _glyph_pos;
 
-public:
+	// gdimm_renderer cannot be instantiated directly
+	// also because it is abstract class
 	gdimm_renderer(gdimm_text *text);
+
+public:
 	~gdimm_renderer();
 
-	virtual bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) = 0;
+	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) const
+	{ return false; }
 
-	virtual const vector<const FT_BitmapGlyph> &get_glyphs() const
+	const vector<const FT_BitmapGlyph> &get_glyphs() const
 	{ return _glyphs; }
 
-	virtual const vector<POINT> &get_glyph_pos() const
+	const vector<POINT> &get_glyph_pos() const
 	{ return _glyph_pos; }
 };

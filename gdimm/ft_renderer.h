@@ -1,7 +1,6 @@
 #pragma once
 
 #include "renderer.h"
-using namespace std;
 
 class ft_renderer: public gdimm_renderer
 {

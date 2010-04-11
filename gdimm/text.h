@@ -5,8 +5,8 @@ using namespace std;
 class gdimm_text
 {
 	friend class gdimm_renderer;
-	friend class ft_renderer;
 	friend class ggo_renderer;
+	friend class ft_renderer;
 
 	// device context attributes
 	HDC _hdc_text;
@@ -20,6 +20,7 @@ class gdimm_text
 	vector<BYTE> _metric_buf;
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
+	const WCHAR *_font_face;
 
 	// gamma ramps for gray, red, green, blue
 	const BYTE *_gamma_ramps[4];
@@ -62,6 +63,9 @@ class gdimm_text
 		const vector<POINT> &glyph_pos,
 		UINT options,
 		CONST RECT *lprect) const;
+
+	template <typename RENDERER>
+	bool render_text(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:
 	bool init(HDC hdc);
