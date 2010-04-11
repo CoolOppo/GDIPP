@@ -51,7 +51,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdimm\freetype&quot;;..\..\..\include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				CompileAs="0"
 			/>
@@ -120,7 +119,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdimm\freetype&quot;;..\..\..\include"
 				PreprocessorDefinitions="NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;FT2_BUILD_LIBRARY"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				DebugInformationFormat="0"
 				CompileAs="0"
 			/>

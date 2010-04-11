@@ -205,7 +205,6 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -287,7 +286,6 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -465,10 +463,6 @@
 			</File>
 			<File
 				RelativePath=".\renderer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
 				>
 			</File>
 			<File

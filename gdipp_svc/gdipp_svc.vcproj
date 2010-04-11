@@ -201,7 +201,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -402,10 +401,6 @@
 			</File>
 			<File
 				RelativePath=".\mon.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
 				>
 			</File>
 			<File

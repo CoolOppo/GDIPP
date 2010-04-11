@@ -201,7 +201,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -279,7 +278,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)EasyHook&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>

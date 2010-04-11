@@ -202,7 +202,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -281,7 +280,6 @@
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -397,10 +395,6 @@
 			</File>
 			<File
 				RelativePath=".\gdipp_common.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
