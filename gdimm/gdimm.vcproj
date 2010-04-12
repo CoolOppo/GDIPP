@@ -372,6 +372,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\glyph_cache.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\hook.cpp"
 				>
 			</File>
@@ -455,6 +459,10 @@
 			</File>
 			<File
 				RelativePath=".\ggo_renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glyph_cache.h"
 				>
 			</File>
 			<File

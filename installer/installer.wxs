@@ -141,6 +141,12 @@
 				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="integer" Name="LoadAppInit_DLLs" Value="1" KeyPath="yes" />
 				<Condition>(VersionNT >= 600) AND (LOADMODE = 1)</Condition>
 			</Component>
+			
+			<!-- set PATH if registry load mode -->
+			<Component Id="set_path" Guid="0F90FCDC-E897-460C-919B-2C2993A216AE" Permanent="no" Win64="no">
+				<Environment Id="env_PATH" Name="PATH" Action="set" Value="[INSTALLDIR]" Part="last" System="yes" Permanent="no" />
+				<Condition>LOADMODE = 1</Condition>
+			</Component>
 
 <?if $(var.Platform) = x64 ?>
 			<Component Id="set_appinit_dlls_64" Guid="0AE1E07B-10E8-4A72-BB1F-71DF3DF1DBAC" Permanent="yes" Win64="yes">
@@ -265,6 +271,7 @@
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />
 			<ComponentRef Id="set_load_mode" />
+			<ComponentRef Id="set_path" />
 		</Feature>
 
 		<UIRef Id="gdipp_WixUI_FeatureTree" />

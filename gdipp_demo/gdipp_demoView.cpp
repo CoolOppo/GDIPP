@@ -74,7 +74,7 @@ LRESULT Cgdipp_demoView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 
 		// randomize text metrics
 		const LONG height = (rand() % 10) + 10;
-		const LONG weight = (rand() % 9 + 1) * 100;
+		const LONG weight = (rand() % 8 + 1) * 100;
 		const BYTE italic = rand() % 2;
 		const wstring &font_name = candidate_font[rand() % candidate_font.size()];
 

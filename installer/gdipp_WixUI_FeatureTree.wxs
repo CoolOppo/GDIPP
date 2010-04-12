@@ -46,7 +46,7 @@
 				<Control Id="LoadModeButtons" Type="RadioButtonGroup" X="10" Y="45" Width="350" Height="35" HasBorder="no" Property="LOADMODE">
 					<RadioButtonGroup Property="LOADMODE">
 						<RadioButton X="20" Y="14" Width="100" Height="12" Text="{\WixUI_Font_Bold}!(loc.LoadModeDlg_ServiceText)" Value="0" />
-						<RadioButton X="150" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_RegistryText)" Value="1" />
+						<RadioButton X="150" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_RegistryText)" Value="1"></RadioButton>
 						<RadioButton X="250" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_LoaderText)" Value="2" />
 					</RadioButtonGroup>
 				</Control>

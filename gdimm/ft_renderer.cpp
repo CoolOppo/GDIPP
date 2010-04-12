@@ -63,12 +63,43 @@ void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_nam
 	// if non-regular weight is demanded, and the font has no native weighted glyphs, do embolden
 	// the embolden weight is based on the difference between demanded weight and the regular weight
 	if (_text->_font_attr.lfWeight != FW_DONTCARE)
-		_embolden += (double)(_text->_font_attr.lfWeight - os2_table.usWeightClass) / (FW_BOLD - FW_REGULAR);
+	{
+		const static LONG weight_class_max[] = {550, 611};
+		const static double weight_embolden[] = {0, 0.5};
+		const static double max_embolden = 1;
+
+		double text_embolden = max_embolden, font_embolden = max_embolden;
+
+		for (int i = 0; i < sizeof(weight_class_max) / sizeof(LONG); i++)
+		{
+			if (_text->_font_attr.lfWeight <= weight_class_max[i])
+			{
+				text_embolden = weight_embolden[i];
+				break;
+			}
+		}
+
+		for (int i = 0; i < sizeof(weight_class_max) / sizeof(LONG); i++)
+		{
+			if (os2_table.usWeightClass <= weight_class_max[i])
+			{
+				font_embolden = weight_embolden[i];
+				break;
+			}
+		}
+
+		_embolden += text_embolden - font_embolden;
+	}
 }
 
 const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)
 {
 	FT_Error ft_error;
+
+	/*const gdimm_glyph_cache::cache_trait trait = {_ft_scaler, _render_mode, _load_flags};
+	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup(trait, glyph_index);
+	if (bmp_glyph != NULL)
+		return bmp_glyph;*/
 
 	FT_Glyph glyph, cached_glyph;
 
@@ -116,7 +147,10 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 		assert(ft_error == 0);
 	}
 
-	return (const FT_BitmapGlyph) glyph;
+	//bmp_glyph = (FT_BitmapGlyph) glyph;
+	//glyph_cache_instance.add(trait, glyph_index, bmp_glyph);
+
+	return (FT_BitmapGlyph) glyph;//bmp_glyph;
 }
 
 void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)

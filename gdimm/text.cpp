@@ -25,7 +25,7 @@ int gdimm_text::get_ft_bmp_width(const FT_Bitmap &bitmap)
 	return bitmap.width;
 }
 
-RECT gdimm_text::get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
+RECT gdimm_text::get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos, POINT cursor)
 {
 	RECT bmp_rect = {LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN};
 
@@ -35,14 +35,19 @@ RECT gdimm_text::get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, 
 
 	if (glyph_pos[last_pos].x >= glyph_pos[0].x)
 	{
+		// left to right
 		bmp_rect.left = glyph_pos[0].x;
-		bmp_rect.right = glyph_pos[last_pos].x + get_ft_bmp_width(glyphs[last_pos]->bitmap);
+		bmp_rect.right = max(glyph_pos[last_pos].x + get_ft_bmp_width(glyphs[last_pos]->bitmap), cursor.x);
 	}
 	else
 	{
-		bmp_rect.left = glyph_pos[last_pos].x;
+		// right to left
+		bmp_rect.left = min(glyph_pos[last_pos].x, cursor.x);
 		bmp_rect.right = glyph_pos[0].x + get_ft_bmp_width(glyphs[0]->bitmap);
 	}
+
+	/*
+	// vertical text is not supported yet
 
 	if (glyph_pos[last_pos].y >= glyph_pos[0].y)
 	{
@@ -54,6 +59,7 @@ RECT gdimm_text::get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, 
 		bmp_rect.top = glyph_pos[last_pos].y;
 		bmp_rect.bottom = glyph_pos[0].y + glyphs[0]->bitmap.rows;
 	}
+	*/
 
 	return bmp_rect;
 }
@@ -363,7 +369,7 @@ bool gdimm_text::draw_glyphs(
 	// origin of the source glyphs
 	const POINT src_origin = glyph_pos[0];
 
-	const RECT bmp_rect = get_glyph_bmp_rect(glyphs, glyph_pos);
+	const RECT bmp_rect = get_glyph_bmp_rect(glyphs, glyph_pos, _cursor);
 	const LONG bmp_width = bmp_rect.right - bmp_rect.left;
 
 	// respect the height and ascent returned from GDI
@@ -461,7 +467,7 @@ bool gdimm_text::draw_glyphs(
 	setting_cache_instance.lookup("shadow/offset_x", _font_face, shadow_off_x);
 	LONG shadow_off_y = 1;
 	setting_cache_instance.lookup("shadow/offset_y", _font_face, shadow_off_y);
-	WORD shadow_alpha = 32;
+	WORD shadow_alpha = 8;
 	setting_cache_instance.lookup("shadow/alpha", _font_face, shadow_alpha);
 	bool zero_alpha = false;
 	setting_cache_instance.lookup("zero_alpha", _font_face, zero_alpha);

@@ -13,6 +13,7 @@ gdimm_font_man font_man_instance;
 gdimm_gamma gamma_instance;
 gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
+gdimm_glyph_cache glyph_cache_instance;
 
 CRITICAL_SECTION critical_section::_cs[_CS_TYPE_COUNT_];
 

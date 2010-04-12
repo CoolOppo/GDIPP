@@ -26,7 +26,7 @@ class gdimm_text
 	const BYTE *_gamma_ramps[4];
 
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
-	static RECT get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos);
+	static RECT get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos, POINT cursor);
 	static BITMAPINFO get_dc_bmp_info(HDC hdc);
 	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 

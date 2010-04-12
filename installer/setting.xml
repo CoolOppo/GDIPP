@@ -16,10 +16,6 @@
 			</freetype>
 		</process>
 		
-		<font name="sample_font.*">
-			<freetype_loader>0</freetype_loader>
-		</font>
-		
 		<font name=".*">
 			<auto_hinting>0</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>

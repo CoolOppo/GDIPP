@@ -76,7 +76,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const WCHAR *debug_text = NULL;
-	//debug_text = L"Edit";
+	//debug_text = L"Monday";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
