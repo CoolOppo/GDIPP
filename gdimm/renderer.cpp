@@ -29,15 +29,3 @@ gdimm_renderer::gdimm_renderer(gdimm_text *text)
 	_char_extra = GetTextCharacterExtra(text->_hdc_text);
 	assert(_char_extra != 0x8000000);
 }
-
-gdimm_renderer::~gdimm_renderer()
-{
-	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
-	{
-		if (*iter != NULL)
-		{
-			if ((*iter)->root.library != NULL)
-				FT_Done_Glyph((FT_Glyph) *iter);
-		}
-	}
-}

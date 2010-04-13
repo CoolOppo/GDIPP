@@ -19,9 +19,11 @@ extern gdimm_glyph_cache glyph_cache_instance;
 enum CS_TYPE
 {
 	CS_GAMMA,
+	CS_GLYPH,
 	CS_HOOK,
 	CS_LINKED_FONT,
 	CS_REG_FONT,
+	CS_SETTING,
 	CS_TEXT,
 	CS_DEBUG,
 

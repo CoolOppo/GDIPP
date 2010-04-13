@@ -20,7 +20,7 @@ bool svc_mon::start_monitor()
 		return false;
 
 	CComPtr<IWbemLocator> loc;
-	hr = CoCreateInstance(__uuidof(WbemLocator), NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&loc));
+	hr = loc.CoCreateInstance(CLSID_WbemLocator);
 	if (FAILED(hr))
 		return false;
 
@@ -35,7 +35,7 @@ bool svc_mon::start_monitor()
 	_sink = new sink_inject;
 	_sink->AddRef();
 
-	const WCHAR *interval_str = get_service_setting("poll_interval");
+	const WCHAR *interval_str = get_service_setting(L"poll_interval");
 	if (interval_str == NULL)
 		interval_str = L"1";
 

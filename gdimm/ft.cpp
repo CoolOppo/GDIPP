@@ -7,18 +7,19 @@ FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_ImageCache ft_glyph_cache;
 
+FT_UInt ft_cache_max_faces = 2;
+FT_UInt ft_cache_max_sizes = 4;
+FT_ULong ft_cache_max_bytes = 200000;
+
 void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	FT_UInt cache_max_faces = 2;
-	wcs_convert(get_gdimm_setting("freetype/cache_max_faces", L""), cache_max_faces);
-	FT_UInt cache_max_sizes = 4;
-	wcs_convert(get_gdimm_setting("freetype/cache_max_sizes", L""), cache_max_sizes);
-	FT_ULong cache_max_bytes = 200000;
-	wcs_convert(get_gdimm_setting("freetype/cache_max_bytes", L""), cache_max_bytes);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_faces", L""), &ft_cache_max_faces);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_sizes", L""), &ft_cache_max_sizes);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_bytes", L""), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(get_gdimm_setting("freetype/lcd_filter", L""), *((int*) &lcd_filter));
+	wcs_convert(get_gdimm_setting(L"freetype/lcd_filter", L""), (int*) &lcd_filter);
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
@@ -26,7 +27,7 @@ void initialize_freetype()
 	ft_error = FT_Library_SetLcdFilter(ft_lib, lcd_filter);
 	assert(ft_error == 0);
 
-	ft_error = FTC_Manager_New(ft_lib, cache_max_faces, cache_max_sizes, cache_max_bytes, face_requester, NULL, &ft_cache_man);
+	ft_error = FTC_Manager_New(ft_lib, ft_cache_max_faces, ft_cache_max_sizes, ft_cache_max_bytes, face_requester, NULL, &ft_cache_man);
 	assert(ft_error == 0);
 
 	ft_error = FTC_ImageCache_New(ft_cache_man, &ft_glyph_cache);
@@ -36,6 +37,8 @@ void initialize_freetype()
 void destroy_freetype()
 {
 	FT_Error ft_error;
+
+	glyph_cache_instance.clear();
 
 	FTC_Manager_Done(ft_cache_man);
 	

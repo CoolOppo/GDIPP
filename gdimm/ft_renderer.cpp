@@ -10,34 +10,36 @@ ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
 	_ft_scaler.pixel = 1;
 	_ft_scaler.x_res = 0;
 	_ft_scaler.y_res = 0;
+	_using_cache_node = NULL;
+}
+
+ft_renderer::~ft_renderer()
+{
+	// the cache node associated with this renderer is not used any more
+	// the glyph cache can reclaim it safely
+	if (_using_cache_node != NULL)
+		*_using_cache_node = false;
 }
 
 FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name)
 {
-	bool auto_hinting = false;
-	setting_cache_instance.lookup("auto_hinting", font_name, auto_hinting);
-	bool embedded_bitmap = false;
-	setting_cache_instance.lookup("embedded_bitmap", font_name, embedded_bitmap);
-	bool hinting = true;
-	setting_cache_instance.lookup("hinting", font_name, hinting);
-	bool light_mode = true;
-	setting_cache_instance.lookup("light_mode", font_name, light_mode);
+	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
 
 	FT_ULong load_flags = FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
-		(embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
+		(setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
-	if (hinting)
+	if (setting_cache->hinting)
 	{
-		load_flags |= (auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT);
+		load_flags |= (setting_cache->auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT);
 
 		switch (render_mode)
 		{
 		case FT_RENDER_MODE_NORMAL:
-			load_flags |= (light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL);
+			load_flags |= (setting_cache->light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL);
 		case FT_RENDER_MODE_MONO:
 			load_flags |= FT_LOAD_TARGET_MONO;
 		case FT_RENDER_MODE_LCD:
-			load_flags |= (light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_LCD);
+			load_flags |= (setting_cache->light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_LCD);
 		}
 	}
 	else
@@ -57,8 +59,8 @@ void ft_renderer::oblique_outline(const FT_Outline *outline, double angle)
 
 void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_name)
 {
-	_embolden = 0.0;
-	setting_cache_instance.lookup("embolden", font_name, _embolden);
+	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
+	_embolden = setting_cache->embolden;
 
 	// if non-regular weight is demanded, and the font has no native weighted glyphs, do embolden
 	// the embolden weight is based on the difference between demanded weight and the regular weight
@@ -96,10 +98,18 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 {
 	FT_Error ft_error;
 
-	/*const gdimm_glyph_cache::cache_trait trait = {_ft_scaler, _render_mode, _load_flags};
-	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup(trait, glyph_index);
+	// lookup if there is already a cached glyph
+	const gdimm_glyph_cache::cache_trait trait = {_ft_scaler.face_id, _ft_scaler.width, _ft_scaler.height, _render_mode, _load_flags};
+	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup(trait, glyph_index, _using_cache_node);
 	if (bmp_glyph != NULL)
-		return bmp_glyph;*/
+	{
+		// this renderer is using the cache node
+		// the glyph cache should not reclaim it until the rendering is finished
+		*_using_cache_node = true;
+		return bmp_glyph;
+	}
+
+	// no cached glyph, lookup outline and rasterize
 
 	FT_Glyph glyph, cached_glyph;
 
@@ -147,10 +157,12 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 		assert(ft_error == 0);
 	}
 
-	//bmp_glyph = (FT_BitmapGlyph) glyph;
-	//glyph_cache_instance.add(trait, glyph_index, bmp_glyph);
+	// add glyph into cache
+	bmp_glyph = (const FT_BitmapGlyph) glyph;
+	glyph_cache_instance.add(trait, glyph_index, bmp_glyph, _using_cache_node);
+	*_using_cache_node = true;
 
-	return (FT_BitmapGlyph) glyph;//bmp_glyph;
+	return bmp_glyph;
 }
 
 void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
@@ -185,19 +197,16 @@ void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
-	const WCHAR *dc_font_face = metric_face_name(_text->_outline_metrics);
 	const WCHAR *dc_font_family = metric_family_name(_text->_outline_metrics);
-	wstring curr_font_face = dc_font_face;
+	wstring curr_font_face = _text->_font_face;
 	const WCHAR *curr_font_family = dc_font_family;
 
 	// Windows renders monochrome bitmap better than FreeType
-	bool render_mono = false;
-	setting_cache_instance.lookup("render_mono", dc_font_face, render_mono);
-	if (render_mode == FT_RENDER_MODE_MONO && !render_mono)
+	if (render_mode == FT_RENDER_MODE_MONO && !_text->_setting_cache->render_mono)
 		return false;
 
 	_render_mode = render_mode;
-	_load_flags = get_load_flags(render_mode, dc_font_face);
+	_load_flags = get_load_flags(render_mode, _text->_font_face);
 
 	/*
 	glyph metrics setup
@@ -210,10 +219,10 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, never be 0
 	*/
 
-	_ft_scaler.face_id = (FTC_FaceID) font_man_instance.register_font(_text->_hdc_text, dc_font_face);
+	_ft_scaler.face_id = (FTC_FaceID) font_man_instance.register_font(_text->_hdc_text, _text->_font_face);
 	_ft_scaler.height = _text->_outline_metrics->otmTextMetrics.tmHeight - _text->_outline_metrics->otmTextMetrics.tmInternalLeading;
 	TT_OS2 os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
-	update_embolden(os2_table, dc_font_face);
+	update_embolden(os2_table, _text->_font_face);
 
 	if (_text->_font_attr.lfWidth == 0)
 		_ft_scaler.width = _ft_scaler.height;
@@ -232,7 +241,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 		for (UINT i = 0; i < c; i++)
 		{
-			_glyphs[i] = render_glyph(lpString[i], dc_font_face);
+			_glyphs[i] = render_glyph(lpString[i], _text->_font_face);
 			assert(_glyphs[i] != NULL);
 		}
 	}

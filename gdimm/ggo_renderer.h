@@ -6,7 +6,6 @@ class ggo_renderer: public gdimm_renderer
 {
 	static const FT_Glyph_Class *_glyph_clazz;
 
-	double _embolden;
 	UINT _ggo_format;
 	MAT2 _matrix;
 	FT_Render_Mode _render_mode;
@@ -15,5 +14,7 @@ class ggo_renderer: public gdimm_renderer
 
 public:
 	ggo_renderer(gdimm_text *text);
+	~ggo_renderer();
+
 	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
 };

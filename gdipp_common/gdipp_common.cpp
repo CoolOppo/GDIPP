@@ -27,12 +27,12 @@ GDIPP_API void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR
 	assert(b_ret);
 }
 
-GDIPP_API inline const WCHAR *get_gdimm_setting(const char *setting_name, const WCHAR *font_name)
+GDIPP_API inline const WCHAR *get_gdimm_setting(const WCHAR *setting_name, const WCHAR *font_name)
 {
 	return setting_instance.get_gdimm_setting(setting_name, font_name);
 }
 
-GDIPP_API inline const WCHAR *get_demo_setting(const char *setting_name)
+GDIPP_API inline const WCHAR *get_demo_setting(const WCHAR *setting_name)
 {
 	return setting_instance.get_demo_setting(setting_name);
 }
@@ -42,7 +42,7 @@ GDIPP_API inline const vector<const wstring> &get_demo_font()
 	return setting_instance.get_demo_font();
 }
 
-GDIPP_API inline const WCHAR *get_service_setting(const char *setting_name)
+GDIPP_API inline const WCHAR *get_service_setting(const WCHAR *setting_name)
 {
 	return setting_instance.get_service_setting(setting_name);
 }

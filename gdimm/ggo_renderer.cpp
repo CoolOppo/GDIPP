@@ -41,6 +41,12 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 	}
 }
 
+ggo_renderer::~ggo_renderer()
+{
+	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
+		FT_Done_Glyph((FT_Glyph) *iter);
+}
+
 const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
@@ -148,8 +154,11 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 		}
 	};
 
-	ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(_embolden));
-	assert(ft_error == 0);
+	if (_text->_setting_cache->embolden != 0)
+	{
+		ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(_text->_setting_cache->embolden));
+		assert(ft_error == 0);
+	}
 
 	// convert outline to bitmap
 	FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
@@ -166,8 +175,6 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 
 bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
-	const WCHAR *font_face = metric_face_name(_text->_outline_metrics);
-
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int dx_factor = ((options & ETO_PDY) ? 2 : 1);
 
@@ -189,13 +196,8 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 	if (options & ETO_GLYPH_INDEX)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
-	bool hinting = true;
-	setting_cache_instance.lookup("hinting", font_face, hinting);
-	if (!hinting)
+	if (!_text->_setting_cache->hinting)
 		_ggo_format |= GGO_UNHINTED;
-
-	_embolden = 0.0;
-	setting_cache_instance.lookup("embolden", font_face, _embolden);
 
 	for (unsigned int i = 0; i < c; i++)
 	{

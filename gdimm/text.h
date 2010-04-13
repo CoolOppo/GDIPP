@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gdimm.h"
 using namespace std;
 
 class gdimm_text
@@ -21,6 +22,7 @@ class gdimm_text
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 	const WCHAR *_font_face;
+	const font_setting_cache *_setting_cache;
 
 	// gamma ramps for gray, red, green, blue
 	const BYTE *_gamma_ramps[4];

@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cmath>
 #include <ctime>
+#include <list>
 #include <map>
 #include <process.h>
 #include <sstream>

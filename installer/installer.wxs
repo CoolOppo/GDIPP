@@ -91,7 +91,7 @@
 											SourceProperty="INSTALLDIR" SourceName="setting.xml"
 											DestinationProperty="INSTALLDIR" DestinationName="setting.xml.bak"
 											Delete="yes" />
-						<File Name="setting.xml" Source="setting.xml" Vital="yes" KeyPath="yes" />
+						<File Name="gdipp_setting.xml" Source="gdipp_setting.xml" Vital="yes" KeyPath="yes" />
 					</Component>
 
 					<Component Id="gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">

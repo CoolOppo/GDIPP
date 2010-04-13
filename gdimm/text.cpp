@@ -2,14 +2,6 @@
 #include "text.h"
 #include "ft_renderer.h"
 #include "ggo_renderer.h"
-#include "gdimm.h"
-
-enum RENDERER_TYPE
-{
-	CLEARTYPE,
-	GETGLYPHOUTLINE,
-	FREETYPE
-};
 
 // for given bitmap width and bit count, compute the bitmap pitch
 int get_pitch(int width, WORD bpp)
@@ -121,19 +113,13 @@ bool gdimm_text::get_dc_metrics()
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
 bool gdimm_text::get_render_mode(const WCHAR *font_name, FT_Render_Mode &render_mode) const
 {
-	bool render_non_aa = false;
-	setting_cache_instance.lookup("render_non_aa", font_name, render_non_aa);
-
 	// non-antialiased font
 	// draw with monochrome mode
-	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY && !render_non_aa)
+	if (_font_attr.lfQuality == NONANTIALIASED_QUALITY && !_setting_cache->render_non_aa)
 	{
 		render_mode = FT_RENDER_MODE_MONO;
 		return true;
 	}
-
-	bool subpixel_render = true;
-	setting_cache_instance.lookup("subpixel_render", font_name, subpixel_render);
 
 	switch (_bmp_info.bmiHeader.biBitCount)
 	{
@@ -145,7 +131,7 @@ bool gdimm_text::get_render_mode(const WCHAR *font_name, FT_Render_Mode &render_
 		break;
 	case 24:
 	case 32:
-		render_mode = (subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
+		render_mode = (_setting_cache->subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
 		break;
 	default:
 		// we do not support 16 bpp currently
@@ -159,24 +145,12 @@ void gdimm_text::get_gamma_ramps(const WCHAR *font_name, bool is_lcd)
 {
 	if (is_lcd)
 	{
-		double gamma_red = 1.0;
-		setting_cache_instance.lookup("gamma/red", font_name, gamma_red);
-		double gamma_green = 1.0;
-		setting_cache_instance.lookup("gamma/green", font_name, gamma_green);
-		double gamma_blue = 1.0;
-		setting_cache_instance.lookup("gamma/blue", font_name, gamma_blue);
-
-		_gamma_ramps[1] = gamma_instance.get_ramp(gamma_red);
-		_gamma_ramps[2] = gamma_instance.get_ramp(gamma_green);
-		_gamma_ramps[3] = gamma_instance.get_ramp(gamma_blue);
+		_gamma_ramps[1] = gamma_instance.get_ramp(_setting_cache->gamma.red);
+		_gamma_ramps[2] = gamma_instance.get_ramp(_setting_cache->gamma.green);
+		_gamma_ramps[3] = gamma_instance.get_ramp(_setting_cache->gamma.blue);
 	}
 	else
-	{
-		double gamma_gray = 1.0;
-		setting_cache_instance.lookup("gamma/gray", font_name, gamma_gray);
-
-		_gamma_ramps[0] = gamma_instance.get_ramp(gamma_gray);
-	}
+		_gamma_ramps[0] = gamma_instance.get_ramp(_setting_cache->gamma.gray);
 }
 
 void gdimm_text::set_bmp_bits_mono(
@@ -463,15 +437,6 @@ bool gdimm_text::draw_glyphs(
 
 	// 3.
 
-	LONG shadow_off_x = 1;
-	setting_cache_instance.lookup("shadow/offset_x", _font_face, shadow_off_x);
-	LONG shadow_off_y = 1;
-	setting_cache_instance.lookup("shadow/offset_y", _font_face, shadow_off_y);
-	WORD shadow_alpha = 8;
-	setting_cache_instance.lookup("shadow/alpha", _font_face, shadow_alpha);
-	bool zero_alpha = false;
-	setting_cache_instance.lookup("zero_alpha", _font_face, zero_alpha);
-
 	for (size_t i = 0; i < glyphs.size(); i++)
 	{
 		/*
@@ -487,10 +452,10 @@ bool gdimm_text::draw_glyphs(
 		const int bmp_x_in_dest = glyph_pos[i].x - bmp_rect.left;
 		const int bmp_y_in_dest = max(cell_ascent - glyphs[i]->top, 0);
 
-		const int shadow_x_in_src = max(bmp_x_in_src - shadow_off_x, 0);
-		const int shadow_y_in_src = max(bmp_y_in_src - shadow_off_y, 0);
-		const int shadow_x_in_dest = max(bmp_x_in_dest + shadow_off_x, 0);
-		const int shadow_y_in_dest = max(bmp_y_in_dest + shadow_off_y, 0);
+		const int shadow_x_in_src = max(bmp_x_in_src - _setting_cache->shadow.offset_x, 0);
+		const int shadow_y_in_src = max(bmp_y_in_src - _setting_cache->shadow.offset_y, 0);
+		const int shadow_x_in_dest = max(bmp_x_in_dest + _setting_cache->shadow.offset_x, 0);
+		const int shadow_y_in_dest = max(bmp_y_in_dest + _setting_cache->shadow.offset_y, 0);
 
 		switch (glyphs[i]->bitmap.pixel_mode)
 		{
@@ -503,14 +468,14 @@ bool gdimm_text::draw_glyphs(
 				_bmp_info.bmiHeader.biBitCount);
 			break;
 		case FT_PIXEL_MODE_GRAY:
-			if (shadow_alpha > 0)
+			if (_setting_cache->shadow.alpha > 0)
 				set_bmp_bits_gray(glyphs[i]->bitmap,
 					shadow_x_in_src, shadow_y_in_src,
 					dest_bits,
 					shadow_x_in_dest, shadow_y_in_dest,
 					bmp_width, cell_height,
 					_bmp_info.bmiHeader.biBitCount,
-					shadow_alpha);
+					_setting_cache->shadow.alpha);
 			set_bmp_bits_gray(glyphs[i]->bitmap,
 				bmp_x_in_src, bmp_y_in_src,
 				dest_bits,
@@ -520,15 +485,15 @@ bool gdimm_text::draw_glyphs(
 				255);
 			break;
 		case FT_PIXEL_MODE_LCD:
-			if (shadow_alpha > 0)
+			if (_setting_cache->shadow.alpha > 0)
 				set_bmp_bits_lcd(glyphs[i]->bitmap,
 					shadow_x_in_src, shadow_y_in_src,
 					dest_bits,
 					shadow_x_in_dest, shadow_y_in_dest,
 					bmp_width, cell_height,
 					_bmp_info.bmiHeader.biBitCount,
-					shadow_alpha,
-					zero_alpha);
+					_setting_cache->shadow.alpha,
+					_setting_cache->zero_alpha);
 			set_bmp_bits_lcd(glyphs[i]->bitmap,
 				bmp_x_in_src, bmp_y_in_src,
 				dest_bits,
@@ -536,7 +501,7 @@ bool gdimm_text::draw_glyphs(
 				bmp_width, cell_height,
 				_bmp_info.bmiHeader.biBitCount,
 				255,
-				zero_alpha);
+				_setting_cache->zero_alpha);
 			break;
 		}
 	}
@@ -590,10 +555,9 @@ bool gdimm_text::init(HDC hdc)
 		return false;
 
 	_font_face = metric_face_name(_outline_metrics);
+	_setting_cache = setting_cache_instance.lookup(_font_face);
 
-	LONG max_height = 72;
-	setting_cache_instance.lookup("max_height", _font_face, max_height);
-	if (max_height != 0 && max_height < _outline_metrics->otmTextMetrics.tmHeight)
+	if (_setting_cache->max_height != 0 && _setting_cache->max_height < _outline_metrics->otmTextMetrics.tmHeight)
 		return false;
 
 	return true;
@@ -666,10 +630,7 @@ bool gdimm_text::render_text(int x, int y, UINT options, CONST RECT *lprect, LPC
 
 bool gdimm_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	unsigned int renderer;
-	setting_cache_instance.lookup("renderer", _font_face, renderer);
-
-	switch ((RENDERER_TYPE) renderer)
+	switch (_setting_cache->renderer)
 	{
 	case GETGLYPHOUTLINE:
 		return render_text<ggo_renderer>(x, y, options, lprect, lpString, c, lpDx);

@@ -31,8 +31,6 @@ protected:
 	gdimm_renderer(gdimm_text *text);
 
 public:
-	~gdimm_renderer();
-
 	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) const
 	{ return false; }
 

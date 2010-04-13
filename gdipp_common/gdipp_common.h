@@ -28,12 +28,6 @@ struct inject_payload
 	WCHAR svc_event_name[MAX_PATH]; 
 };
 
-struct string_ci_less
-{
-	bool operator()(const string &string1, const string &string2) const
-	{ return _stricmp(string1.c_str(), string2.c_str()) < 0; }
-};
-
 struct wstring_ci_less
 {
 	bool operator()(const wstring &string1, const wstring &string2) const
@@ -45,19 +39,19 @@ GDIPP_API inline void get_dir_file_path(HMODULE h_module, const WCHAR *file_name
 
 // setting wrapper APIs
 // gdipp_setting uses STL templates, which makes it frustrating to export
-GDIPP_API inline const WCHAR *get_gdimm_setting(const char *setting_name, const WCHAR *font_name);
-GDIPP_API inline const WCHAR *get_demo_setting(const char *setting_name);
+GDIPP_API inline const WCHAR *get_gdimm_setting(const WCHAR *setting_name, const WCHAR *font_name);
+GDIPP_API inline const WCHAR *get_demo_setting(const WCHAR *setting_name);
 GDIPP_API inline const vector<const wstring> &get_demo_font();
-GDIPP_API inline const WCHAR *get_service_setting(const char *setting_name);
+GDIPP_API inline const WCHAR *get_service_setting(const WCHAR *setting_name);
 GDIPP_API inline bool is_process_excluded(const WCHAR *proc_name);
 
 // convert a string to template value if possible
 // helper function to convert raw setting strings to values
 template <typename T>
-inline void wcs_convert(const WCHAR *str, T &converted)
+inline void wcs_convert(const WCHAR *str, T *converted)
 {
 	if (str != NULL)
-		wistringstream(str) >> converted;
+		wistringstream(str) >> *converted;
 }
 
 // debug APIs

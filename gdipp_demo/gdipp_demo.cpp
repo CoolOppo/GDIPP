@@ -56,11 +56,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 #endif // render
 
 #ifdef test
-	wcs_convert(get_demo_setting("count"), total_count);
+	wcs_convert(get_demo_setting(L"count"), &total_count);
 	candidate_font = get_demo_font();
 	if (candidate_font.empty())
 		candidate_font.push_back(L"Tahoma");
-	wcs_convert(get_demo_setting("random_text"), random_text);
+	wcs_convert(get_demo_setting(L"random_text"), &random_text);
 
 	window_title[0] = L'\0';
 

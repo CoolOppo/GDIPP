@@ -8,6 +8,7 @@ class ft_renderer: public gdimm_renderer
 	FT_ULong _load_flags;
 	double _embolden;
 	FTC_ScalerRec _ft_scaler;
+	bool *_using_cache_node;
 
 	static FT_ULong get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name);
 	static void oblique_outline(const FT_Outline *outline, double angle);
@@ -18,5 +19,7 @@ class ft_renderer: public gdimm_renderer
 
 public:
 	ft_renderer(gdimm_text *text);
+	~ft_renderer();
+
 	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
 };
