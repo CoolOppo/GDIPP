@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
-#include "gdimm.h"
 #include "ft.h"
+#include "lock.h"
 #include <gdipp_common.h>
 
 void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)
@@ -19,7 +19,7 @@ void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)
 
 const FT_BitmapGlyph gdimm_glyph_cache::lookup(const cache_trait &trait, FT_UInt glyph_index, bool *&using_cache_node)
 {
-	critical_section interlock(CS_GLYPH);
+	gdimm_lock lock(LOCK_GLYPH_CACHE);
 
 	for (list<cache_node>::iterator font_iter = _cache.begin(); font_iter != _cache.end(); font_iter++)
 	{
@@ -44,7 +44,7 @@ const FT_BitmapGlyph gdimm_glyph_cache::lookup(const cache_trait &trait, FT_UInt
 
 void gdimm_glyph_cache::add(const cache_trait &trait, FT_UInt glyph_index, const FT_BitmapGlyph glyph, bool *&using_cache_node)
 {
-	critical_section interlock(CS_GLYPH);
+	gdimm_lock lock(LOCK_GLYPH_CACHE);
 
 	// cached bytes exceeds limit, begin to reclaim least recently used glyphs
 	if ((_cached_bytes >= ft_cache_max_bytes) && !_cache.empty())

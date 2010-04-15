@@ -5,11 +5,16 @@
 
 svc_injector::svc_injector()
 {
-	get_dir_file_path(NULL, L"gdimm_64.dll", _gdimm_path_64);
-	get_dir_file_path(NULL, L"gdimm_32.dll", _gdimm_path_32);
+	BOOL b_ret;
+
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", _gdimm_path_64);
+	assert(b_ret);
+
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", _gdimm_path_32);
+	assert(b_ret);
 }
 
-void svc_injector::init_payload(const WCHAR *svc_event_name)
+void svc_injector::init_payload(const wchar_t *svc_event_name)
 {
 	_payload.inject_type = GDIPP_SERVICE;
 	wcscpy_s(_payload.svc_event_name, svc_event_name);
@@ -18,15 +23,15 @@ void svc_injector::init_payload(const WCHAR *svc_event_name)
 NTSTATUS svc_injector::inject_proc(LONG proc_id)
 {
 #ifdef _M_X64
-	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(inject_payload));
+	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path_64, (PVOID) &_payload, sizeof(gdipp_inject_payload));
 #else
-	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &_payload, sizeof(inject_payload));
+	return RhInjectLibrary(proc_id, 0, EASYHOOK_INJECT_DEFAULT, _gdimm_path_32, NULL, (PVOID) &_payload, sizeof(gdipp_inject_payload));
 #endif
 }
 
 void svc_injector::initial_inject()
 {
-	list<const WCHAR*> init_proc;
+	list<const wchar_t*> init_proc;
 	init_proc.push_back(L"explorer.exe");
 
 	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -39,7 +44,7 @@ void svc_injector::initial_inject()
 	{
 		do
 		{
-			for (list<const WCHAR*>::const_iterator iter = init_proc.begin(); iter != init_proc.end(); iter++)
+			for (list<const wchar_t*>::const_iterator iter = init_proc.begin(); iter != init_proc.end(); iter++)
 			{
 				if (_wcsicmp(pe32.szExeFile, *iter) == 0)
 					inject_proc(pe32.th32ProcessID);

@@ -22,7 +22,7 @@ unsigned __stdcall process_obj(void *arglist)
 	hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
 	assert(SUCCEEDED(hr));
 
-	if (is_process_excluded(V_BSTR(&var_exe_name)))
+	if (gdipp_is_process_excluded(V_BSTR(&var_exe_name)))
 		return 1;
 
 	CComVariant var_proc_id;

@@ -1,4 +1,4 @@
-// gdipp_demo.cpp : main source file for gdipp_demo.exe
+// gdipp_pre.cpp : main source file for gdipp_pre.exe
 //
 
 #include "stdafx.h"
@@ -7,17 +7,15 @@
 
 #include "aboutdlg.h"
 #include "MainDlg.h"
-
-#include "gdipp_demo.h"
+#include "gdipp_pre.h"
 #include <gdipp_common.h>
 
 CAppModule _Module;
 
-int total_count = 5000;
-vector<const wstring> candidate_font;
-bool random_text = false;
-
-wchar_t window_title[100];
+HINSTANCE h_instance;
+wchar_t curr_setting_path[MAX_PATH];
+wchar_t *preview_text = NULL;
+HFONT new_font = NULL;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
@@ -44,9 +42,31 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 {
 	BOOL b_ret;
 
-	HMODULE h_gdimm = NULL;
+	h_instance = hInstance;
 
-#ifdef render
+	b_ret = gdipp_get_dir_file_path(hInstance, L"gdipp_setting.xml", curr_setting_path);
+	assert(b_ret);
+
+	wchar_t preview_text_path[MAX_PATH];
+	b_ret = gdipp_get_dir_file_path(hInstance, L"gdipp_preview.txt", preview_text_path);
+	assert(b_ret);
+
+	FILE *f;
+	errno_t err = _wfopen_s(&f, preview_text_path, L"r, ccs=UNICODE");
+	if (err == 0)
+	{
+		fseek(f, 0, SEEK_END);
+ 		const long text_len = ftell(f);
+ 		rewind(f);
+
+		preview_text = new wchar_t[text_len + 1];
+		const size_t bytes_read = fread(preview_text, sizeof(wchar_t), text_len, f);
+		preview_text[bytes_read] = L'\0';
+
+		fclose(f);
+	}
+
+	HMODULE h_gdimm = NULL;
 	WCHAR gdimm_path[MAX_PATH];
 
 #ifdef _M_X64
@@ -56,19 +76,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 #endif // _M_X64
 
 	h_gdimm = LoadLibraryW(gdimm_path);
-#endif // render
-
-#ifdef test
-	wcs_convert(gdipp_get_demo_setting(L"count"), &total_count);
-	candidate_font = gdipp_get_demo_fonts();
-	if (candidate_font.empty())
-		candidate_font.push_back(L"Tahoma");
-	wcs_convert(gdipp_get_demo_setting(L"random_text"), &random_text);
-
-	window_title[0] = L'\0';
-
-	//total_count = 0;
-#endif // test
 
 	// If you are running on NT 4.0 or higher you can use the following call instead to 
 	// make the EXE free threaded. This means that calls come in on a random RPC thread.
@@ -90,6 +97,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	if (h_gdimm != NULL)
 		FreeLibrary(h_gdimm);
+
+	if (preview_text != NULL)
+		delete[] preview_text;
 
 	return nRet;
 }

@@ -16,52 +16,6 @@ extern gdimm_hook hook_instance;
 extern gdimm_setting_cache setting_cache_instance;
 extern gdimm_glyph_cache glyph_cache_instance;
 
-enum CS_TYPE
-{
-	CS_GAMMA,
-	CS_GLYPH,
-	CS_HOOK,
-	CS_LINKED_FONT,
-	CS_REG_FONT,
-	CS_SETTING,
-	CS_TEXT,
-	CS_DEBUG,
-
-	// count of critical types
-	// never use this type
-	_CS_TYPE_COUNT_
-};
-
-class critical_section
-{
-	static CRITICAL_SECTION _cs[_CS_TYPE_COUNT_];
-	CS_TYPE _type;
-
-public:
-	critical_section(CS_TYPE type)
-	{
-		_type = type;
-		EnterCriticalSection(&_cs[type]);
-	}
-
-	~critical_section()
-	{
-		LeaveCriticalSection(&_cs[_type]);
-	}
-
-	static void initialize()
-	{
-		for (int i = 0; i < _CS_TYPE_COUNT_; i++)
-			InitializeCriticalSection(&_cs[i]);
-	}
-
-	static void release()
-	{
-		for (int i = 0; i < _CS_TYPE_COUNT_; i++)
-			DeleteCriticalSection(&_cs[i]);
-	}
-};
-
-const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
-const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
-const WCHAR *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);
+const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
+const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
+const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);

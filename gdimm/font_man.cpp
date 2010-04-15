@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "gdimm.h"
 #include "ft.h"
+#include "lock.h"
 
 // table name for GetFontData() to get whole ttc file data
 #define TTCF_FONT_TABLE mmioFOURCC('t', 't', 'c', 'f')
@@ -65,7 +66,7 @@ DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header) const
 	return font_size;
 }
 
-HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const
+HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const
 {
 	LOGFONTW new_font_attr = font_attr;
 	
@@ -132,7 +133,7 @@ void gdimm_font_man::delete_linked_font_holder()
 	assert(font_holder == NULL);
 }
 
-long gdimm_font_man::register_font(HDC hdc, const WCHAR *font_face)
+long gdimm_font_man::register_font(HDC hdc, const wchar_t *font_face)
 {
 	tls_font_holder *font_holder = (tls_font_holder*) create_linked_font_holder();
 	assert(font_holder != NULL);
@@ -143,8 +144,8 @@ long gdimm_font_man::register_font(HDC hdc, const WCHAR *font_face)
 	map<wstring, long>::const_iterator iter = _reg_ids.find(font_face);
 	if (iter == _reg_ids.end())
 	{
-		// double-check interlock
-		critical_section interlock(CS_REG_FONT);
+		// double-check lock
+		gdimm_lock lock(LOCK_REG_FONT);
 
 		iter = _reg_ids.find(font_face);
 		if (iter == _reg_ids.end())
@@ -169,7 +170,7 @@ long gdimm_font_man::register_font(HDC hdc, const WCHAR *font_face)
 	return iter->second;
 }
 
-long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face)
+long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
 {
 	// gdimm may be attached to a process which already has multi threads
 	// always check if the current thread has linked font holder
@@ -182,8 +183,8 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 	map<wstring, long>::const_iterator iter = _linked_ids.find(font_face);
 	if (iter == _linked_ids.end())
 	{
-		// double-check interlock
-		critical_section interlock(CS_LINKED_FONT);
+		// double-check lock
+		gdimm_lock lock(LOCK_LINKED_FONT);
 
 		iter = _linked_ids.find(font_face);
 		if (iter == _linked_ids.end())
@@ -214,7 +215,7 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const WCHAR *font_fa
 	return font_id;
 }
 
-void gdimm_font_man::get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi)
+void gdimm_font_man::get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi)
 {
 	DWORD converted;
 

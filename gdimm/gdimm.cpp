@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "gdimm.h"
 #include "ft.h"
+#include "lock.h"
 #include <gdipp_common.h>
 
 HMODULE h_self = NULL;
@@ -15,21 +16,19 @@ gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
 gdimm_glyph_cache glyph_cache_instance;
 
-CRITICAL_SECTION critical_section::_cs[_CS_TYPE_COUNT_];
-
-const WCHAR *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
+const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
 }
 
-const WCHAR *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
+const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
 }
 
-const WCHAR *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
+const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const WCHAR*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
 }
 
 BOOL APIENTRY DllMain(
@@ -37,16 +36,31 @@ BOOL APIENTRY DllMain(
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved)
 {
+	BOOL b_ret;
+
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
 		h_self = hModule;
-		register_module(hModule);
+		gdipp_register_module(hModule);
 
-		if (is_process_excluded(NULL))
+		b_ret = gdipp_init_setting();
+		assert(b_ret);
+
+		// get setting file path
+		wchar_t setting_path[MAX_PATH];
+		b_ret = gdipp_get_dir_file_path(hModule, L"gdipp_setting.xml", setting_path);
+		assert(b_ret);
+
+		b_ret = gdipp_load_setting(setting_path);
+		assert(b_ret);
+
+		gdipp_uninit_setting();
+
+		if (gdipp_is_process_excluded(NULL))
 			return FALSE;
 
-		critical_section::initialize();
+		gdimm_lock::initialize();
 		initialize_freetype();
 
 		font_man_instance.tls_index = TlsAlloc();
@@ -69,7 +83,7 @@ BOOL APIENTRY DllMain(
 		TlsFree(font_man_instance.tls_index);
 
 		destroy_freetype();
-		critical_section::release();
+		gdimm_lock::release();
 
 		break;
 	}

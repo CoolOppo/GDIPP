@@ -6,11 +6,6 @@ FT_F26Dot6 to_26dot6(const FIXED &fixed)
 	return *((FT_F26Dot6*) &fixed) >> 10;
 }
 
-FT_F26Dot6 to_26dot6(double x)
-{
-	return (FT_F26Dot6)(x * 64);
-}
-
 LONG from_16dot16(FT_Pos fixed)
 {
 	return fixed >> 16;

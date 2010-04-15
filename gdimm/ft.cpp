@@ -15,11 +15,11 @@ void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	wcs_convert(get_gdimm_setting(L"freetype/cache_max_faces", L""), &ft_cache_max_faces);
-	wcs_convert(get_gdimm_setting(L"freetype/cache_max_sizes", L""), &ft_cache_max_sizes);
-	wcs_convert(get_gdimm_setting(L"freetype/cache_max_bytes", L""), &ft_cache_max_bytes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", L""), &ft_cache_max_faces);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", L""), &ft_cache_max_sizes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", L""), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(get_gdimm_setting(L"freetype/lcd_filter", L""), (int*) &lcd_filter);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L""), (int*) &lcd_filter);
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);

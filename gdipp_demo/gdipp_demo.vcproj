@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="gdipp_demo"
 	ProjectGUID="{0A18506F-1C1D-4A87-9AB9-BCBAE524CA14}"
+	RootNamespace="gdipp_demo"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -378,11 +379,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdipp_demoView.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MainFrm.cpp"
+				RelativePath=".\MainDlg.cpp"
 				>
 			</File>
 			<File
@@ -435,11 +432,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdipp_demoView.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MainFrm.h"
+				RelativePath=".\MainDlg.h"
 				>
 			</File>
 			<File

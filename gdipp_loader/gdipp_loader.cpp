@@ -20,7 +20,7 @@ int APIENTRY wWinMain(
 	LPWSTR *argv = CommandLineToArgvW(lpCmdLine, &argc);
 	assert(argv != NULL);
 
-	WCHAR working_dir[MAX_PATH];
+	wchar_t working_dir[MAX_PATH];
 	wcsncpy_s(working_dir, argv[0], MAX_PATH);
 	b_ret = PathRemoveFileSpecW(working_dir);
 	assert(b_ret);
@@ -37,16 +37,19 @@ int APIENTRY wWinMain(
 		return EXIT_FAILURE;
 	}
 
-	const inject_payload payload = {GDIPP_LOADER, NULL};
+	const gdipp_inject_payload payload = {GDIPP_LOADER, NULL};
+	wchar_t gdimm_path[MAX_PATH];
 
 #ifdef _M_X64
-	WCHAR gdimm_path_64[MAX_PATH];
-	get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path_64);
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path_64, (PVOID) &payload, sizeof(inject_payload));
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
+	assert(b_ret);
+
+	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path, (PVOID) &payload, sizeof(gdipp_inject_payload));
 #else
-	WCHAR gdimm_path_32[MAX_PATH];
-	get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path_32);
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path_32, NULL, (PVOID) &payload, sizeof(inject_payload));
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
+	assert(b_ret);
+
+	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path, NULL, (PVOID) &payload, sizeof(gdipp_inject_payload));
 #endif // _M_X64
 
 	if (eh_error != 0)

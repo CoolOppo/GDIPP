@@ -7,54 +7,90 @@ vector<HMODULE> h_modules;
 HMODULE h_self = NULL;
 gdipp_setting setting_instance;
 
-GDIPP_API inline void register_module(HMODULE h_module)
+GDIPP_API void gdipp_register_module(HMODULE h_module)
 {
 	h_modules.push_back(h_module);
 }
 
-GDIPP_API void get_dir_file_path(HMODULE h_module, const WCHAR *file_name, WCHAR *source_path)
+GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *source_path)
 {
 	DWORD dw_ret;
 	BOOL b_ret;
 
 	dw_ret = GetModuleFileNameW(h_module, source_path, MAX_PATH);
-	assert(dw_ret != 0);
+	if (dw_ret == 0)
+		return FALSE;
 
 	b_ret = PathRemoveFileSpecW(source_path);
-	assert(b_ret);
+	if (!b_ret)
+		return FALSE;
 
-	b_ret = PathAppendW(source_path, file_name);
-	assert(b_ret);
+	return PathAppendW(source_path, file_name);
 }
 
-GDIPP_API inline const WCHAR *get_gdimm_setting(const WCHAR *setting_name, const WCHAR *font_name)
+GDIPP_API BOOL gdipp_init_setting()
+{
+	return setting_instance.init_setting();
+}
+
+GDIPP_API void gdipp_uninit_setting()
+{
+	setting_instance.uninit_setting();
+}
+
+GDIPP_API BOOL gdipp_load_setting(const wchar_t *setting_path)
+{
+	return setting_instance.load_setting(setting_path);
+}
+
+GDIPP_API BOOL gdipp_save_setting(const wchar_t *setting_path)
+{
+	return setting_instance.save_setting(setting_path);
+}
+
+GDIPP_API BOOL gdipp_insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *ref_node_xpath)
+{
+	return setting_instance.insert_setting(node_name, node_value, ref_node_xpath);
+}
+
+GDIPP_API BOOL gdipp_set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value)
+{
+	return setting_instance.set_setting_attr(node_xpath, attr_name, attr_value);
+}
+
+GDIPP_API BOOL gdipp_remove_setting_item(const wchar_t *node_xpath)
+{
+	return setting_instance.remove_setting_item(node_xpath);
+}
+
+GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name)
 {
 	return setting_instance.get_gdimm_setting(setting_name, font_name);
 }
 
-GDIPP_API inline const WCHAR *get_demo_setting(const WCHAR *setting_name)
+GDIPP_API const wchar_t *gdipp_get_demo_setting(const wchar_t *setting_name)
 {
 	return setting_instance.get_demo_setting(setting_name);
 }
 
-GDIPP_API inline const vector<const wstring> &get_demo_font()
+GDIPP_API const vector<const wstring> &gdipp_get_demo_fonts()
 {
-	return setting_instance.get_demo_font();
+	return setting_instance.get_demo_fonts();
 }
 
-GDIPP_API inline const WCHAR *get_service_setting(const WCHAR *setting_name)
+GDIPP_API const wchar_t *gdipp_get_service_setting(const wchar_t *setting_name)
 {
 	return setting_instance.get_service_setting(setting_name);
 }
 
-GDIPP_API inline bool is_process_excluded(const WCHAR *proc_name)
+GDIPP_API bool gdipp_is_process_excluded(const wchar_t *proc_name)
 {
 	return setting_instance.is_process_excluded(proc_name);
 }
 
 #define debug_file_name "C:\\gdipp_debug.log"
 
-GDIPP_API void debug_output(const WCHAR *str)
+GDIPP_API void gdipp_debug_output(const wchar_t *str)
 {
 	FILE *f;
 	fopen_s(&f, debug_file_name, "a+");
@@ -62,16 +98,16 @@ GDIPP_API void debug_output(const WCHAR *str)
 	fclose(f);
 }
 
-GDIPP_API void debug_output(const WCHAR *str, unsigned int c)
+GDIPP_API void gdipp_debug_output(const wchar_t *str, unsigned int c)
 {
 	FILE *f;
 	fopen_s(&f, debug_file_name, "a+");
-	fwrite(str, sizeof(WCHAR), c, f);
+	fwrite(str, sizeof(wchar_t), c, f);
 	fwprintf(f, L"\n");
 	fclose(f);
 }
 
-GDIPP_API void debug_output(const void *ptr, unsigned int size)
+GDIPP_API void gdipp_debug_output(const void *ptr, unsigned int size)
 {
 	FILE *f;
 	fopen_s(&f, debug_file_name, "ab+");
@@ -79,7 +115,7 @@ GDIPP_API void debug_output(const void *ptr, unsigned int size)
 	fclose(f);
 }
 
-GDIPP_API void debug_output(long num)
+GDIPP_API void gdipp_debug_output(long num)
 {
 	FILE *f;
 	fopen_s(&f, debug_file_name, "a+");
@@ -87,7 +123,7 @@ GDIPP_API void debug_output(long num)
 	fclose(f);
 }
 
-GDIPP_API void debug_output(DWORD num)
+GDIPP_API void gdipp_debug_output(DWORD num)
 {
 	FILE *f;
 	fopen_s(&f, debug_file_name, "a+");
@@ -128,9 +164,10 @@ LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
 	if (er_ret != 0)
 		return EXCEPTION_CONTINUE_SEARCH;
 
-	const WCHAR *dmp_dir_name = L"crash_dump\\";
-	WCHAR dmp_file_path[MAX_PATH];
-	get_dir_file_path(h_self, dmp_dir_name, dmp_file_path);
+	const wchar_t *dmp_dir_name = L"crash_dump\\";
+	wchar_t dmp_file_path[MAX_PATH];
+	b_ret = gdipp_get_dir_file_path(h_self, dmp_dir_name, dmp_file_path);
+	assert(b_ret);
 	const size_t dmp_dir_len = wcslen(dmp_file_path);
 	assert(dmp_dir_len < MAX_PATH);
 
@@ -170,13 +207,11 @@ BOOL APIENTRY DllMain(
 	{
 	case DLL_PROCESS_ATTACH:
 		h_self = hModule;
-		register_module(hModule);
+		gdipp_register_module(hModule);
 
 		// add process-wide vectored exception handler to create minidump
 		h_ex_handler = AddVectoredExceptionHandler(0, create_minidump);
 		assert(h_ex_handler != NULL);
-
-		setting_instance.init(hModule);
 
 		break;
 	case DLL_THREAD_ATTACH:

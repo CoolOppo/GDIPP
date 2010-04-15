@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "gamma.h"
-#include "gdimm.h"
+#include "lock.h"
 
 gdimm_gamma::~gdimm_gamma()
 {
@@ -24,8 +24,8 @@ const BYTE *gdimm_gamma::get_ramp(double gamma)
 
 	if (iter == _gamma_ramps.end())
 	{
-		// double-check interlock
-		critical_section interlock(CS_GAMMA);
+		// double-check lock
+		gdimm_lock lock(LOCK_GAMMA);
 
 		iter = _gamma_ramps.find(gamma);
 		if (iter == _gamma_ramps.end())

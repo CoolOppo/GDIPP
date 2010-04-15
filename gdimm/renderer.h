@@ -8,9 +8,6 @@ const double pi = acos(-1.0);
 // convert 16.16 fixed point to 26.6 format
 FT_F26Dot6 to_26dot6(const FIXED &fixed);
 
-// convert floating point to 26.6 format
-FT_F26Dot6 to_26dot6(double x);
-
 // convert 16.16 fixed float type to integer
 LONG from_16dot16(FT_Pos fixed);
 

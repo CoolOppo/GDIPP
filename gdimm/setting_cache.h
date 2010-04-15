@@ -32,7 +32,7 @@ struct font_setting_cache
 
 	bool auto_hinting;
 	bool embedded_bitmap;
-	double embolden;
+	FT_F26Dot6 embolden;
 	font_gamma gamma;
 	bool hinting;
 	bool light_mode;
@@ -54,5 +54,5 @@ class gdimm_setting_cache
 	cache_map _cache;
 
 public:
-	const font_setting_cache *lookup(const WCHAR *font_name);
+	const font_setting_cache *lookup(const wchar_t *font_name);
 };

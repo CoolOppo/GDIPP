@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "gdimm.h"
 #include "text.h"
+#include "lock.h"
 
 HANDLE h_svc_event = NULL;
 HANDLE h_unload = NULL;
@@ -9,10 +9,10 @@ unsigned __stdcall unload_self(void *arglist)
 {
 	BOOL b_ret;
 
-	critical_section interlock(CS_HOOK);
+	gdimm_lock lock(LOCK_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
 
-	b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_INTERNALPAINT | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 	assert(b_ret);
 
 	_endthreadex(0);
@@ -24,8 +24,8 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	// if injected by service, check if the service event is set (service process terminates)
 	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) != WAIT_TIMEOUT)
 	{
-		// double-check interlock
-		critical_section interlock(CS_HOOK);
+		// double-check lock
+		gdimm_lock lock(LOCK_HOOK);
 
 		if (h_svc_event != NULL)
 		{
@@ -75,14 +75,14 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	
 #ifdef _DEBUG
-	const WCHAR *debug_text = NULL;
-	//debug_text = L"Monday";
+	const wchar_t *debug_text = NULL;
+	//debug_text = L"Oblique";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
 	{
 		bool is_target = false;
-		const size_t debug_len = wcslen(debug_text);
+		const int debug_len = (int) wcslen(debug_text);
 
 		if (options & ETO_GLYPH_INDEX)
 		{
@@ -104,7 +104,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 #endif // _DEBUG
 
-	//critical_section interlock(CS_DEBUG);
+	//gdimm_lock lock(LOCK_DEBUG);
 
 	gdimm_text text_instance;
 
@@ -131,8 +131,8 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 	memset(inject_buffer, 0xcc, sys_info.dwPageSize);
 
 	// put gdimm path at the end of the buffer, leave space at the beginning for code
-	const DWORD path_offset = sys_info.dwPageSize - MAX_PATH * sizeof(WCHAR);
-	dw_ret = GetModuleFileNameW(h_self, (WCHAR*)(inject_buffer + path_offset), MAX_PATH);
+	const DWORD path_offset = sys_info.dwPageSize - MAX_PATH * sizeof(wchar_t);
+	dw_ret = GetModuleFileNameW(h_self, (wchar_t*)(inject_buffer + path_offset), MAX_PATH);
 	assert(dw_ret != 0);
 
 	// get eip of the spawned thread
@@ -259,17 +259,17 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 {
 	BOOL b_ret;
 
-	if (remote_info->UserDataSize != sizeof(inject_payload))
+	if (remote_info->UserDataSize != sizeof(gdipp_inject_payload))
 		return;
 
-	const inject_payload payload = *(inject_payload*) remote_info->UserData;
+	const gdipp_inject_payload payload = *(gdipp_inject_payload*) remote_info->UserData;
 	switch (payload.inject_type)
 	{
 	case GDIPP_SERVICE:
 		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
 
 		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(GetForegroundWindow(), NULL, NULL, RDW_INTERNALPAINT | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
 
 		break;

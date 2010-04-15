@@ -10,6 +10,8 @@ public:
 		FTC_FaceID face_id;
 		FT_UInt width;
 		FT_UInt height;
+		FT_F26Dot6 embolden;
+		bool is_oblique;
 		FT_Render_Mode _render_mode;
 		FT_ULong _load_flags;
 

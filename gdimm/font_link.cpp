@@ -9,8 +9,8 @@ gdimm_font_link::gdimm_font_link()
 
 	LONG l_ret;
 
-	const WCHAR *Fonts = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
-	const WCHAR *FontLink = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink";
+	const wchar_t *Fonts = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+	const wchar_t *FontLink = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink";
 
 	HKEY key_ft;
 	l_ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, Fonts, 0, KEY_QUERY_VALUE, &key_ft);
@@ -27,7 +27,7 @@ gdimm_font_link::gdimm_font_link()
 
 	DWORD value_count;
 	DWORD max_data_len;
-	WCHAR value_name[MAX_VALUE_NAME];
+	wchar_t value_name[MAX_VALUE_NAME];
 	BYTE *value_data;
 
 	// font file name -> font face name mapping
@@ -55,7 +55,7 @@ gdimm_font_link::gdimm_font_link()
 		assert(l_ret == ERROR_SUCCESS);
 
 		wstring curr_face = value_name;
-		wstring font_file = (WCHAR*) value_data;
+		wstring font_file = (wchar_t*) value_data;
 		curr_face = curr_face.substr(0, curr_face.find('(') - 1);
 		fonts_table[font_file] = curr_face;
 	}
@@ -84,9 +84,9 @@ gdimm_font_link::gdimm_font_link()
 		_link_table[value_name] = vector<wstring>();
 		size_t line_start = 0;
 
-		while (line_start < data_len - sizeof(WCHAR))
+		while (line_start < data_len - sizeof(wchar_t))
 		{
-			wstring curr_font = (WCHAR*)(value_data + line_start);
+			wstring curr_font = (wchar_t*)(value_data + line_start);
 			const size_t first_comma = curr_font.find(L',');
 			const size_t second_comma = curr_font.find(L',', first_comma + 1);
 			wstring font_name;
@@ -116,7 +116,7 @@ gdimm_font_link::gdimm_font_link()
 				_link_table[value_name].push_back(font_name);
 
 			// including the trailing '\0'
-			line_start += (curr_font.length() + 1) * sizeof(WCHAR);
+			line_start += (curr_font.length() + 1) * sizeof(wchar_t);
 		}
 	}
 
@@ -126,7 +126,7 @@ gdimm_font_link::gdimm_font_link()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const WCHAR *gdimm_font_link::lookup(const WCHAR *font_name, size_t index) const
+const wchar_t *gdimm_font_link::lookup(const wchar_t *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 
@@ -141,7 +141,7 @@ const WCHAR *gdimm_font_link::lookup(const WCHAR *font_name, size_t index) const
 	}
 }
 
-size_t gdimm_font_link::get_link_count(const WCHAR *font_name) const
+size_t gdimm_font_link::get_link_count(const wchar_t *font_name) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="gb2312"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="gdimm"
-	ProjectGUID="{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
-	RootNamespace="dll"
-	Keyword="Win32Proj"
+	Name="gdipp_pre"
+	ProjectGUID="{52C1A6A6-115B-4C08-B606-CABCC2975013}"
+	RootNamespace="gdipp_pre"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -23,8 +22,8 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			UseOfMFC="0"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
 			>
 			<Tool
@@ -41,12 +40,21 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="false"
+				TargetEnvironment="1"
+				GenerateStublessProxies="true"
+				TypeLibraryName="$(IntDir)/gdipp_pre.tlb"
+				HeaderFileName="gdipp_pre.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="gdipp_demo_i.c"
+				ProxyFileName="gdipp_demo_p.c"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;STRICT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -60,17 +68,17 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib psapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -101,8 +109,8 @@
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			UseOfMFC="0"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
 			>
 			<Tool
@@ -119,13 +127,21 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="false"
 				TargetEnvironment="3"
+				GenerateStublessProxies="true"
+				TypeLibraryName="$(IntDir)/gdipp_pre.tlb"
+				HeaderFileName="gdipp_pre.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="gdipp_demo_i.c"
+				ProxyFileName="gdipp_demo_p.c"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;STRICT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -138,17 +154,17 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib psapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -179,9 +195,9 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="true"
 			CharacterSet="1"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -197,40 +213,46 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+				TargetEnvironment="1"
+				GenerateStublessProxies="true"
+				TypeLibraryName="$(IntDir)/gdipp_pre.tlb"
+				HeaderFileName="gdipp_pre.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="gdipp_demo_i.c"
+				ProxyFileName="gdipp_demo_p.c"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;STRICT"
 				RuntimeLibrary="0"
 				EnableEnhancedInstructionSet="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib psapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				DelayLoadDLLs=""
-				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				BaseAddress=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -259,9 +281,9 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
+			ATLMinimizesCRunTimeLibraryUsage="true"
 			CharacterSet="1"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -277,36 +299,42 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
 				TargetEnvironment="3"
+				GenerateStublessProxies="true"
+				TypeLibraryName="$(IntDir)/gdipp_pre.tlb"
+				HeaderFileName="gdipp_pre.h"
+				DLLDataFileName=""
+				InterfaceIdentifierFileName="gdipp_demo_i.c"
+				ProxyFileName="gdipp_demo_p.c"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_common&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;STRICT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib psapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
-				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -340,55 +368,18 @@
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 			>
 			<File
-				RelativePath=".\font_link.cpp"
+				RelativePath=".\AboutDlg.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\font_man.cpp"
+				RelativePath=".\gdipp_pre.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ft.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ft_renderer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\gamma.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\gdimm.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ggo_renderer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\glyph_cache.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\hook.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\lock.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\renderer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\setting_cache.cpp"
+				RelativePath=".\MainDlg.cpp"
 				>
 			</File>
 			<File
@@ -427,62 +418,25 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\text.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			Filter="h;hpp;hxx;hm;inl;inc"
 			>
 			<File
-				RelativePath=".\font_link.h"
+				RelativePath=".\AboutDlg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\font_man.h"
+				RelativePath=".\gdipp_pre.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ft.h"
+				RelativePath=".\MainDlg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ft_renderer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\gamma.h"
-				>
-			</File>
-			<File
-				RelativePath=".\gdimm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ggo_renderer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\glyph_cache.h"
-				>
-			</File>
-			<File
-				RelativePath=".\hook.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lock.h"
-				>
-			</File>
-			<File
-				RelativePath=".\renderer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\setting_cache.h"
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
@@ -493,20 +447,25 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
-			<File
-				RelativePath=".\text.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest"
 			>
 			<File
-				RelativePath=".\gdimm.rc"
+				RelativePath=".\res\gdipp_pre.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\gdipp_pre.rc"
 				>
 			</File>
 		</Filter>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="gdipp_pre.rc"
+		/>
 	</Globals>
 </VisualStudioProject>

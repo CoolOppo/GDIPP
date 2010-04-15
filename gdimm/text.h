@@ -21,7 +21,7 @@ class gdimm_text
 	vector<BYTE> _metric_buf;
 	OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
-	const WCHAR *_font_face;
+	const wchar_t *_font_face;
 	const font_setting_cache *_setting_cache;
 
 	// gamma ramps for gray, red, green, blue
@@ -30,11 +30,11 @@ class gdimm_text
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static RECT get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos, POINT cursor);
 	static BITMAPINFO get_dc_bmp_info(HDC hdc);
-	static void draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
+	static BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 
 	bool get_dc_metrics();
-	bool get_render_mode(const WCHAR *font_name, FT_Render_Mode &render_mode) const;
-	void get_gamma_ramps(const WCHAR *font_name, bool is_lcd);
+	bool get_render_mode(const wchar_t *font_name, FT_Render_Mode &render_mode) const;
+	void get_gamma_ramps(const wchar_t *font_name, bool is_lcd);
 
 	void set_bmp_bits_mono(
 		const FT_Bitmap &src_bitmap,

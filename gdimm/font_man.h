@@ -63,7 +63,7 @@ class gdimm_font_man
 	static void stream_CloseFunc(FT_Stream stream) {}
 
 	DWORD get_font_size(HDC font_holder, DWORD &table_header) const;
-	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face) const;
+	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const;
 
 public:
 	static DWORD tls_index;
@@ -73,9 +73,9 @@ public:
 	static void *create_linked_font_holder();
 	static void delete_linked_font_holder();
 
-	long register_font(HDC hdc, const WCHAR *font_face);
-	long lookup_font(const LOGFONTW &font_attr, const WCHAR *font_family, wstring &font_face);
-	void get_glyph_indices(long font_id, const WCHAR *str, int count, WCHAR *gi);
+	long register_font(HDC hdc, const wchar_t *font_face);
+	long lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
+	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
 
 	FT_Stream get_font_stream(long font_id);
 	const TT_OS2 &get_os2_table(FTC_FaceID face_id);

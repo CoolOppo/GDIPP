@@ -9,6 +9,7 @@ svc_mon::svc_mon()
 
 bool svc_mon::start_monitor()
 {
+	BOOL b_ret;
 	HRESULT hr;
 
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -35,12 +36,25 @@ bool svc_mon::start_monitor()
 	_sink = new sink_inject;
 	_sink->AddRef();
 
-	const WCHAR *interval_str = get_service_setting(L"poll_interval");
+	b_ret = gdipp_init_setting();
+	assert(b_ret);
+
+	// get setting file path
+	wchar_t setting_path[MAX_PATH];
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
+	assert(b_ret);
+
+	b_ret = gdipp_load_setting(setting_path);
+	assert(b_ret);
+
+	gdipp_uninit_setting();
+
+	const wchar_t *interval_str = gdipp_get_service_setting(L"poll_interval");
 	if (interval_str == NULL)
 		interval_str = L"1";
 
 	const int query_str_len = 100;
-	WCHAR query_str[query_str_len];
+	wchar_t query_str[query_str_len];
 	swprintf(
 		query_str,
 		query_str_len,

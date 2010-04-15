@@ -19,7 +19,7 @@
 		<font name=".*">
 			<auto_hinting>0</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>
-			<embolden>0.0</embolden>
+			<embolden>0</embolden>
 			<gamma>
 				<gray>1.0</gray>
 				<red>1.0</red>

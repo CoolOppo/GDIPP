@@ -72,7 +72,7 @@ BITMAPINFO gdimm_text::get_dc_bmp_info(HDC hdc)
 	return bmi;
 }
 
-void gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
+BOOL gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 {
 	assert(bg_color != CLR_INVALID);
 
@@ -80,13 +80,15 @@ void gdimm_text::draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color
 	int i_ret;
 
 	const HBRUSH bg_brush = CreateSolidBrush(bg_color);
-	assert(bg_brush != NULL);
+	if (bg_brush == NULL)
+		return FALSE;
 
 	i_ret = FillRect(hdc, bg_rect, bg_brush);
-	assert(i_ret != 0);
+	if (i_ret == 0)
+		return FALSE;
 
 	b_ret = DeleteObject(bg_brush);
-	assert(b_ret);
+	return b_ret;
 }
 
 // get various metrics of the DC
@@ -111,7 +113,7 @@ bool gdimm_text::get_dc_metrics()
 }
 
 // for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
-bool gdimm_text::get_render_mode(const WCHAR *font_name, FT_Render_Mode &render_mode) const
+bool gdimm_text::get_render_mode(const wchar_t *font_name, FT_Render_Mode &render_mode) const
 {
 	// non-antialiased font
 	// draw with monochrome mode
@@ -141,7 +143,7 @@ bool gdimm_text::get_render_mode(const WCHAR *font_name, FT_Render_Mode &render_
 	return true;
 }
 
-void gdimm_text::get_gamma_ramps(const WCHAR *font_name, bool is_lcd)
+void gdimm_text::get_gamma_ramps(const wchar_t *font_name, bool is_lcd)
 {
 	if (is_lcd)
 	{
@@ -412,9 +414,8 @@ bool gdimm_text::draw_glyphs(
 	const int bk_mode = GetBkMode(_hdc_text);
 	if (bk_mode == OPAQUE)
 	{
-		RECT bk_rect = {0, 0, bmp_width, cell_height};
-		draw_background(hdc_canvas, &bk_rect, _bg_color);
-		b_ret = TRUE;
+		const RECT bk_rect = {0, 0, bmp_width, cell_height};
+		b_ret = draw_background(hdc_canvas, &bk_rect, _bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
 	{

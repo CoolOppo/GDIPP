@@ -53,7 +53,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\gdipp_demo.ico"
+IDR_MAINFRAME           ICON                    "res\\gdipp_pre.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -66,16 +66,17 @@ CAPTION "About"
 FONT 8, "Tahoma", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,81,50,14
-    CTEXT           "gdipp Demo\n[Current Version]\n\n(c) Copyright 2010",IDC_STATIC,25,57,78,32
+    CTEXT           "gdipp Preview\n[Current Version]\n\n(c) Copyright 2010",IDC_STATIC,25,57,78,32
     ICON            IDR_MAINFRAME,IDC_STATIC,55,26,20,20
     GROUPBOX        "",IDC_STATIC,7,7,115,88
 END
 
-IDD_MAINDLG DIALOGEX 0, 0, 500, 250
+IDD_MAINDLG DIALOGEX 0, 0, 400, 250
 STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU
-CAPTION "gdipp Demo"
+CAPTION "gdipp Preview"
 FONT 10, "Segoe UI", 400, 0, 0x0
 BEGIN
+    LTEXT           "",IDC_STATIC,7,7,386,236
 END
 
 
@@ -98,7 +99,7 @@ BEGIN
     IDD_MAINDLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 493
+        RIGHTMARGIN, 393
         TOPMARGIN, 7
         BOTTOMMARGIN, 243
     END
@@ -113,6 +114,9 @@ END
 
 IDR_MAINFRAME ACCELERATORS 
 BEGIN
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
     VK_F6,          ID_NEXT_PANE,           VIRTKEY 
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
 END
@@ -141,12 +145,12 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "gdipp Project"
-            VALUE "FileDescription", "gdipp Demo"
+            VALUE "FileDescription", "gdipp Preview"
             VALUE "FileVersion", "0, 7, 5, 0"
-            VALUE "InternalName", "gdipp_demo"
+            VALUE "InternalName", "gdipp_pre"
             VALUE "LegalCopyright", "Copyright (C) gdipp Project 2010"
-            VALUE "OriginalFilename", "gdipp_demo.exe"
-            VALUE "ProductName", "gdipp Demo"
+            VALUE "OriginalFilename", "gdipp_pre.exe"
+            VALUE "ProductName", "gdipp Preview"
             VALUE "ProductVersion", "0, 7, 5, 0"
         END
     END
@@ -166,11 +170,20 @@ IDR_MAINFRAME MENU
 BEGIN
     POPUP "&File"
     BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "Tools"
+    BEGIN
+        MENUITEM "Change Font",                 ID_TOOLS_CHANGEFONT
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About gdipp Demo...",        ID_APP_ABOUT
+        MENUITEM "&About gdipp Preview...",     ID_APP_ABOUT
     END
 END
 
@@ -182,7 +195,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDR_MAINFRAME           "gdipp_demo"
+    IDR_MAINFRAME           "gdipp_pre"
 END
 
 STRINGTABLE 

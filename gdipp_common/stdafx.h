@@ -19,7 +19,6 @@
 
 // C standard header files
 #include <cassert>
-#include <fstream>
 #include <list>
 #include <map>
 #include <sstream>

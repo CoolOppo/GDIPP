@@ -6,15 +6,15 @@ class ft_renderer: public gdimm_renderer
 {
 	FT_Render_Mode _render_mode;
 	FT_ULong _load_flags;
-	double _embolden;
+	FT_F26Dot6 _embolden;
 	FTC_ScalerRec _ft_scaler;
 	bool *_using_cache_node;
 
-	static FT_ULong get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name);
+	static FT_ULong get_load_flags(FT_Render_Mode render_mode, const wchar_t *font_name);
 	static void oblique_outline(const FT_Outline *outline, double angle);
 
-	void update_embolden(const TT_OS2 &os2_table, const WCHAR *font_name);
-	const FT_BitmapGlyph render_glyph(WORD glyph_index, const WCHAR *font_face);
+	void update_embolden(const TT_OS2 &os2_table, const wchar_t *font_name);
+	const FT_BitmapGlyph render_glyph(WORD glyph_index, const wchar_t *font_face);
 	void update_glyph_pos(UINT options, CONST INT *lpDx);
 
 public:

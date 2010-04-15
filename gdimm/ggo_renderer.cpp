@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
 #include "ft.h"
-#include "gdimm.h"
+#include "lock.h"
 
 const FT_Glyph_Class *ggo_renderer::_glyph_clazz = NULL;
 
@@ -15,6 +15,7 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 	we only deal with fonts in outlines, the glyph clazz must be ft_outline_glyph_class
 	glyph class is initialized only once
 	*/
+
 	FT_Error ft_error;
 
 	if (_glyph_clazz == NULL)
@@ -47,7 +48,7 @@ ggo_renderer::~ggo_renderer()
 		FT_Done_Glyph((FT_Glyph) *iter);
 }
 
-const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &glyph_metrics) const
+const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
 
@@ -114,7 +115,7 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 			curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
 		}
 
-		contour_indices.push_back(curve_points.size() - 1);
+		contour_indices.push_back((short) curve_points.size() - 1);
 		header_off += header->cb;
 	} while (header_off < outline_buf_len);
 
@@ -145,8 +146,8 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 			0
 		},
 		{
-			contour_indices.size(),
-			curve_points.size(),
+			(short) contour_indices.size(),
+			(short) curve_points.size(),
 			&curve_points[0],
 			&curve_tags[0],
 			&contour_indices[0],
@@ -156,7 +157,7 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 
 	if (_text->_setting_cache->embolden != 0)
 	{
-		ft_error = FT_Outline_Embolden(&outline_glyph.outline, to_26dot6(_text->_setting_cache->embolden));
+		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _text->_setting_cache->embolden);
 		assert(ft_error == 0);
 	}
 
@@ -165,7 +166,7 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(WCHAR ch, GLYPHMETRICS &gly
 	
 	// FT_Glyph_To_Bitmap is not thread-safe
 	{
-		critical_section interlock(CS_TEXT);
+		gdimm_lock lock(LOCK_TEXT);
 		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _render_mode, NULL, FALSE);
 		assert(ft_error == 0);
 	}

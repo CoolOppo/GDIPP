@@ -12,5 +12,5 @@ GDIPP_API void __cdecl _fassert(_In_z_ const wchar_t * _Message, _In_z_ const wc
 	assert_msg << L" line ";
 	assert_msg << _Line;
 
-	debug_output(assert_msg.str().c_str());
+	gdipp_debug_output(assert_msg.str().c_str());
 }

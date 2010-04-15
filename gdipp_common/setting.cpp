@@ -6,6 +6,8 @@ gdipp_setting::gdipp_setting()
 {
 	DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
+
+	_xml_doc = NULL;
 }
 
 void gdipp_setting::parse_gdimm_setting_node(const CComPtr<IXMLDOMNode> setting_node, setting_map &setting_store)
@@ -135,14 +137,12 @@ void gdipp_setting::load_gdimm_font(const CComPtr<IXMLDOMNodeList> font_node)
 		setting_map curr_settings;
 		for (long j = 0; j < setting_count; j++)
 		{
-			CComPtr<IXMLDOMNode> curr_setting;
-			hr = setting_nodes->get_item(j, &curr_setting);
+			CComPtr<IXMLDOMNode> curr_setting_node;
+			hr = setting_nodes->get_item(j, &curr_setting_node);
 			assert(SUCCEEDED(hr));
 
-			parse_gdimm_setting_node(curr_setting, curr_settings);
+			parse_gdimm_setting_node(curr_setting_node, curr_settings);
 		}
-
-		// only store the setting items which match the current process name
 
 		CComPtr<IXMLDOMNamedNodeMap> font_attr;
 		hr = curr_font->get_attributes(&font_attr);
@@ -189,7 +189,7 @@ void gdipp_setting::load_demo(const CComPtr<IXMLDOMNode> root_node)
 		assert(SUCCEEDED(hr));
 
 		if (setting_name == L"font")
-			_demo_font.push_back((const wstring) setting_value);
+			_demo_fonts.push_back((const wstring) setting_value);
 		else
 			_demo_setting[(const wstring) setting_name] = setting_value;
 	}
@@ -255,70 +255,7 @@ void gdipp_setting::load_exclude(const CComPtr<IXMLDOMNode> root_node)
 	}
 }
 
-bool gdipp_setting::init(HMODULE h_module)
-{
-	HRESULT hr;
-
-	// get setting file path
-	WCHAR setting_path[MAX_PATH];
-	get_dir_file_path(h_module, L"gdipp_setting.xml", setting_path);
-
-	hr = CoInitializeEx(NULL,COINIT_MULTITHREADED);
-	assert(SUCCEEDED(hr));
-
-	IXMLDOMDocument *xml_doc;
-	hr = CoCreateInstance(CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&xml_doc));
-	assert(SUCCEEDED(hr));
-
-	// these methods should not fail so don't inspect result
-	xml_doc->put_async(VARIANT_FALSE);  
-	xml_doc->put_validateOnParse(VARIANT_FALSE);
-	xml_doc->put_resolveExternals(VARIANT_FALSE);
-
-	VARIANT_BOOL var_b_ret;
-	hr = xml_doc->load(CComVariant(setting_path), &var_b_ret);
-
-	if (var_b_ret == VARIANT_TRUE)
-	{
-		CComPtr<IXMLDOMNodeList> proc_list;
-		hr = xml_doc->selectNodes(L"/gdipp/gdimm/process", &proc_list);
-		assert(SUCCEEDED(hr));
-		load_gdimm_process(proc_list);
-
-		CComPtr<IXMLDOMNodeList> font_list;
-		hr = xml_doc->selectNodes(L"/gdipp/gdimm/font", &font_list);
-		assert(SUCCEEDED(hr));
-		load_gdimm_font(font_list);
-
-		CComPtr<IXMLDOMNode> demo_node;
-		hr = xml_doc->selectSingleNode(L"/gdipp/demo", &demo_node);
-		assert(SUCCEEDED(hr));
-		load_demo(demo_node);
-
-		CComPtr<IXMLDOMNode> service_node;
-		hr = xml_doc->selectSingleNode(L"/gdipp/service", &service_node);
-		assert(SUCCEEDED(hr));
-		load_demo(service_node);
-
-		CComPtr<IXMLDOMNode> exclude_node;
-		hr = xml_doc->selectSingleNode(L"/gdipp/exclude", &exclude_node);
-		assert(SUCCEEDED(hr));
-		load_demo(exclude_node);
-	}
-
-	BSTR a = L"Abc";
-	qqq[a] = 1;
-
-	BSTR b = L"Abc";
-	int c = qqq[b];
-
-	xml_doc->Release();
-	CoUninitialize();
-
-	return true;
-}
-
-const WCHAR *gdipp_setting::get_gdimm_setting(const WCHAR *setting_name, const WCHAR *font_name) const
+const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name) const
 {
 	// check setting for the current process
 	setting_map::const_iterator setting_iter = _process_setting.find(setting_name);
@@ -340,7 +277,7 @@ const WCHAR *gdipp_setting::get_gdimm_setting(const WCHAR *setting_name, const W
 	return NULL;
 }
 
-const WCHAR *gdipp_setting::get_demo_setting(const WCHAR *setting_name) const
+const wchar_t *gdipp_setting::get_demo_setting(const wchar_t *setting_name) const
 {
 	setting_map::const_iterator iter = _demo_setting.find(setting_name);
 
@@ -350,12 +287,12 @@ const WCHAR *gdipp_setting::get_demo_setting(const WCHAR *setting_name) const
 		return iter->second.c_str();
 }
 
-const vector<const wstring> &gdipp_setting::get_demo_font() const
+const vector<const wstring> &gdipp_setting::get_demo_fonts() const
 {
-	return _demo_font;
+	return _demo_fonts;
 }
 
-const WCHAR *gdipp_setting::get_service_setting(const WCHAR *setting_name) const
+const wchar_t *gdipp_setting::get_service_setting(const wchar_t *setting_name) const
 {
 	setting_map::const_iterator iter = _service_setting.find(setting_name);
 
@@ -365,12 +302,12 @@ const WCHAR *gdipp_setting::get_service_setting(const WCHAR *setting_name) const
 		return iter->second.c_str();
 }
 
-bool gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
+bool gdipp_setting::is_process_excluded(const wchar_t *proc_name) const
 {
 	// if no process name is specified, return true if the current process is excluded
 	// otherwise, return true if the specified process is excluded
 
-	const WCHAR *final_name;
+	const wchar_t *final_name;
 	if (proc_name == NULL)
 		final_name = _process_name;
 	else
@@ -384,4 +321,155 @@ bool gdipp_setting::is_process_excluded(const WCHAR *proc_name) const
 	}
 
 	return false;
+}
+
+BOOL gdipp_setting::init_setting()
+{
+	HRESULT hr;
+
+	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	assert(SUCCEEDED(hr));
+
+	if (_xml_doc != NULL)
+	{
+		_xml_doc->Release();
+		_xml_doc = NULL;
+	}
+
+	hr = CoCreateInstance(CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_xml_doc));
+	if (FAILED(hr))
+		return FALSE;
+
+	// these methods should not fail so don't inspect result
+	_xml_doc->put_async(VARIANT_FALSE);
+	_xml_doc->put_resolveExternals(VARIANT_FALSE);
+	_xml_doc->put_validateOnParse(VARIANT_FALSE);
+
+	// clear existing settings
+	_process_setting.clear();
+	_gdimm_font.clear();
+	_demo_setting.clear();
+	_service_setting.clear();
+	_demo_fonts.clear();
+	_exclude_process.clear();
+
+	return TRUE;
+}
+
+void gdipp_setting::uninit_setting()
+{
+	if (_xml_doc != NULL)
+		_xml_doc->Release();
+
+	CoUninitialize();
+}
+
+BOOL gdipp_setting::load_setting(const wchar_t *setting_path)
+{
+	HRESULT hr;
+
+	VARIANT_BOOL var_b_ret;
+	_xml_doc->load(CComVariant(setting_path), &var_b_ret);
+	if (var_b_ret == VARIANT_FALSE)
+		return FALSE;
+
+	CComPtr<IXMLDOMNodeList> proc_list;
+	hr = _xml_doc->selectNodes(L"/gdipp/gdimm/process", &proc_list);
+	if (SUCCEEDED(hr))
+		load_gdimm_process(proc_list);
+
+	CComPtr<IXMLDOMNodeList> font_list;
+	hr = _xml_doc->selectNodes(L"/gdipp/gdimm/font", &font_list);
+	if (SUCCEEDED(hr))
+		load_gdimm_font(font_list);
+
+	CComPtr<IXMLDOMNode> demo_node;
+	hr = _xml_doc->selectSingleNode(L"/gdipp/demo", &demo_node);
+	if (SUCCEEDED(hr))
+		load_demo(demo_node);
+
+	CComPtr<IXMLDOMNode> service_node;
+	hr = _xml_doc->selectSingleNode(L"/gdipp/service", &service_node);
+	if (SUCCEEDED(hr))
+		load_service(service_node);
+
+	CComPtr<IXMLDOMNode> exclude_node;
+	hr = _xml_doc->selectSingleNode(L"/gdipp/exclude", &exclude_node);
+	if (SUCCEEDED(hr))
+		load_exclude(exclude_node);
+
+	return TRUE;
+}
+
+BOOL gdipp_setting::save_setting(const wchar_t *setting_path)
+{
+	HRESULT hr = _xml_doc->save(CComVariant(setting_path));
+	return SUCCEEDED(hr);
+}
+
+BOOL gdipp_setting::insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *ref_node_xpath)
+{
+	HRESULT hr;
+
+	CComPtr<IXMLDOMElement> new_node;
+	hr = _xml_doc->createElement(CComBSTR(node_name), &new_node);
+	if (FAILED(hr))
+		return FALSE;
+
+	hr = new_node->put_nodeValue(CComVariant(node_value));
+	if (FAILED(hr))
+		return FALSE;
+
+	/*CComPtr<IXMLDOMNode> ref_node;
+	hr = _xml_doc->selectSingleNode(ref_node_xpath, &ref_node);
+	if (FAILED(hr))
+		return FALSE(hr);*/
+
+	hr = _xml_doc->insertBefore(new_node, CComVariant(ref_node_xpath), NULL);
+	return SUCCEEDED(hr);
+}
+
+BOOL gdipp_setting::set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value)
+{
+	HRESULT hr;
+
+	CComPtr<IXMLDOMAttribute> new_attr;
+	hr = _xml_doc->createAttribute(CComBSTR(attr_name), &new_attr);
+	if (FAILED(hr))
+		return FALSE;
+
+	hr = new_attr->put_nodeValue(CComVariant(attr_value));
+	if (FAILED(hr))
+		return FALSE;
+
+	CComPtr<IXMLDOMNode> node;
+	hr = _xml_doc->selectSingleNode(CComBSTR(node_xpath), &node);
+	if (FAILED(hr))
+		return FALSE;
+
+	CComPtr<IXMLDOMNamedNodeMap> attr_map;
+	hr = node->get_attributes(&attr_map);
+	if (FAILED(hr))
+		return FALSE;
+
+	hr = attr_map->setNamedItem(new_attr, NULL);
+	return SUCCEEDED(hr);
+}
+
+BOOL gdipp_setting::remove_setting_item(const wchar_t *node_xpath)
+{
+	HRESULT hr;
+
+	CComPtr<IXMLDOMNode> node;
+	hr = _xml_doc->selectSingleNode(CComBSTR(node_xpath), &node);
+	if (FAILED(hr))
+		return FALSE;
+
+	CComPtr<IXMLDOMNode> parent;
+	hr = node->get_parentNode(&parent);
+	if (FAILED(hr))
+		return FALSE;
+
+	hr = parent->removeChild(node, NULL);
+	return SUCCEEDED(hr);
 }

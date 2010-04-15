@@ -16,6 +16,6 @@ class gdimm_font_link
 
 public:
 	gdimm_font_link();
-	const WCHAR *lookup(const WCHAR *font_name, size_t index) const;
-	size_t get_link_count(const WCHAR *font_name) const;
+	const wchar_t *lookup(const wchar_t *font_name, size_t index) const;
+	size_t get_link_count(const wchar_t *font_name) const;
 };

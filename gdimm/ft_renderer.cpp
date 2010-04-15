@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ft_renderer.h"
 #include "ft.h"
-#include "gdimm.h"
+#include "lock.h"
 
 FT_BitmapGlyphRec empty_glyph = {};
 
@@ -21,7 +21,7 @@ ft_renderer::~ft_renderer()
 		*_using_cache_node = false;
 }
 
-FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const WCHAR *font_name)
+FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const wchar_t *font_name)
 {
 	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
 
@@ -57,7 +57,7 @@ void ft_renderer::oblique_outline(const FT_Outline *outline, double angle)
 	FT_Outline_Transform(outline, &oblique_mat);
 }
 
-void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_name)
+void ft_renderer::update_embolden(const TT_OS2 &os2_table, const wchar_t *font_name)
 {
 	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
 	_embolden = setting_cache->embolden;
@@ -66,11 +66,18 @@ void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_nam
 	// the embolden weight is based on the difference between demanded weight and the regular weight
 	if (_text->_font_attr.lfWeight != FW_DONTCARE)
 	{
+		/*
+		emulate GDI behavior:
+		weight 1 - 550 are rendered as Regular
+		551 - 611 are Semibold
+		612 - infinity are Bold
+		*/
 		const static LONG weight_class_max[] = {550, 611};
-		const static double weight_embolden[] = {0, 0.5};
-		const static double max_embolden = 1;
+		const static FT_F26Dot6 weight_embolden[] = {0, 32};
+		const static FT_F26Dot6 max_embolden = 64;
 
-		double text_embolden = max_embolden, font_embolden = max_embolden;
+		FT_F26Dot6 text_embolden = max_embolden;
+		FT_F26Dot6 font_embolden = max_embolden;
 
 		for (int i = 0; i < sizeof(weight_class_max) / sizeof(LONG); i++)
 		{
@@ -94,12 +101,15 @@ void ft_renderer::update_embolden(const TT_OS2 &os2_table, const WCHAR *font_nam
 	}
 }
 
-const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *font_face)
+const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const wchar_t *font_face)
 {
 	FT_Error ft_error;
 
+	// if italic style is demanded, and the font is not natively italic, do oblique transformation
+	const bool is_oblique = (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0);
+
 	// lookup if there is already a cached glyph
-	const gdimm_glyph_cache::cache_trait trait = {_ft_scaler.face_id, _ft_scaler.width, _ft_scaler.height, _render_mode, _load_flags};
+	const gdimm_glyph_cache::cache_trait trait = {_ft_scaler.face_id, _ft_scaler.width, _ft_scaler.height, _embolden, is_oblique, _render_mode, _load_flags};
 	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup(trait, glyph_index, _using_cache_node);
 	if (bmp_glyph != NULL)
 	{
@@ -115,7 +125,7 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 
 	// FTC_ImageCache_LookupScaler is not thread-safe
 	{
-		critical_section interlock(CS_TEXT);
+		gdimm_lock lock(LOCK_TEXT);
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, &_ft_scaler, _load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
 			return NULL;
@@ -126,23 +136,21 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 	if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
 		return NULL;
 
-	// it seems faster if oblique first, and then embolden
-	// if italic style is demanded, and the font is not natively italic, do oblique transformation
-	const bool need_oblique = (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0);
-	const bool need_embolden = (_embolden != 0.0);
-	const bool need_glyph_copy = (need_oblique || need_embolden);
+	const bool need_embolden = (_embolden != 0);
+	const bool need_glyph_copy = (is_oblique || need_embolden);
 
 	if (need_glyph_copy)
 	{
 		FT_Glyph_Copy(cached_glyph, &glyph);
 		FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
 
-		if (need_oblique)
+		// it seems faster if oblique first, and then embolden
+		if (is_oblique)
 			oblique_outline(glyph_outline, 20);
 
 		if (need_embolden)
 		{
-			ft_error = FT_Outline_Embolden(glyph_outline, to_26dot6(_embolden));
+			ft_error = FT_Outline_Embolden(glyph_outline, _embolden);
 			assert(ft_error == 0);
 		}
 	}
@@ -152,7 +160,7 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const WCHAR *fo
 	// glyph outline -> glyph bitmap conversion
 	// FT_Glyph_To_Bitmap is not thread-safe
 	{
-		critical_section interlock(CS_TEXT);
+		gdimm_lock lock(LOCK_TEXT);
 		ft_error = FT_Glyph_To_Bitmap(&glyph, _render_mode, NULL, need_glyph_copy);
 		assert(ft_error == 0);
 	}
@@ -197,9 +205,9 @@ void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
-	const WCHAR *dc_font_family = metric_family_name(_text->_outline_metrics);
+	const wchar_t *dc_font_family = metric_family_name(_text->_outline_metrics);
 	wstring curr_font_face = _text->_font_face;
-	const WCHAR *curr_font_family = dc_font_family;
+	const wchar_t *curr_font_family = dc_font_family;
 
 	// Windows renders monochrome bitmap better than FreeType
 	if (render_mode == FT_RENDER_MODE_MONO && !_text->_setting_cache->render_mono)
