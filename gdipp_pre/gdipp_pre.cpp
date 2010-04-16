@@ -15,7 +15,6 @@ CAppModule _Module;
 HINSTANCE h_instance;
 wchar_t curr_setting_path[MAX_PATH];
 wchar_t *preview_text = NULL;
-HFONT new_font = NULL;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {

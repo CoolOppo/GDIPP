@@ -66,7 +66,7 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 LRESULT CMainDlg::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	BOOL b_ret = gdipp_init_setting();
+	gdipp_init_setting();
 	return 0;
 }
 
@@ -139,8 +139,12 @@ LRESULT CMainDlg::OnChangeFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 {
 	BOOL b_ret;
 
+	const HFONT old_font = (HFONT) SendMessage(GetDlgItem(IDC_STATIC), WM_GETFONT, 0, 0);
+	assert(old_font != NULL);
+
 	LOGFONTW lf;
-	GetObject(GetFont(), sizeof(LOGFONTW), &lf);
+	const int i_ret = GetObject(old_font, sizeof(LOGFONTW), &lf);
+	assert(i_ret != 0);
 
 	CHOOSEFONTW cf = {};
 	cf.lStructSize = sizeof(CHOOSEFONTW);
@@ -151,13 +155,12 @@ LRESULT CMainDlg::OnChangeFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 	b_ret = ChooseFontW(&cf);
 	if (b_ret)
 	{
-		if (new_font != NULL)
-			DeleteObject(new_font);
-
-		new_font = CreateFontIndirect(&lf);
+		HFONT new_font = CreateFontIndirect(&lf);
 		assert(new_font != NULL);
 
 		SendMessage(GetDlgItem(IDC_STATIC), WM_SETFONT, (WPARAM) new_font, MAKELPARAM(TRUE, 0));
+
+		DeleteObject(old_font);
 	}
 
 	return 0;

@@ -12,23 +12,26 @@ GDIPP_API void gdipp_register_module(HMODULE h_module)
 	h_modules.push_back(h_module);
 }
 
-GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *source_path)
+GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path)
 {
+	// append the file name after the module's resident directory name
+	// if the module handle is NULL, use the current exe as the module
+
 	DWORD dw_ret;
 	BOOL b_ret;
 
-	dw_ret = GetModuleFileNameW(h_module, source_path, MAX_PATH);
+	dw_ret = GetModuleFileNameW(h_module, out_path, MAX_PATH);
 	if (dw_ret == 0)
 		return FALSE;
 
-	b_ret = PathRemoveFileSpecW(source_path);
+	b_ret = PathRemoveFileSpecW(out_path);
 	if (!b_ret)
 		return FALSE;
 
-	return PathAppendW(source_path, file_name);
+	return PathAppendW(out_path, file_name);
 }
 
-GDIPP_API BOOL gdipp_init_setting()
+GDIPP_API void gdipp_init_setting()
 {
 	return setting_instance.init_setting();
 }
@@ -48,14 +51,14 @@ GDIPP_API BOOL gdipp_save_setting(const wchar_t *setting_path)
 	return setting_instance.save_setting(setting_path);
 }
 
-GDIPP_API BOOL gdipp_insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *ref_node_xpath)
+GDIPP_API void *gdipp_insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath)
 {
-	return setting_instance.insert_setting(node_name, node_value, ref_node_xpath);
+	return setting_instance.insert_setting(node_name, node_value, parent_xpath, ref_node_xpath);
 }
 
-GDIPP_API BOOL gdipp_set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value)
+GDIPP_API BOOL gdipp_set_setting_attr(const void *node_ptr, const wchar_t *attr_name, const wchar_t *attr_value)
 {
-	return setting_instance.set_setting_attr(node_xpath, attr_name, attr_value);
+	return setting_instance.set_setting_attr(node_ptr, attr_name, attr_value);
 }
 
 GDIPP_API BOOL gdipp_remove_setting_item(const wchar_t *node_xpath)
@@ -189,7 +192,16 @@ LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
 	const HANDLE dmp_file = CreateFileW(dmp_file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (dmp_file != INVALID_HANDLE_VALUE)
 	{
-		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dmp_file, MiniDumpWithIndirectlyReferencedMemory, &ex_info, NULL, NULL);
+		MINIDUMP_TYPE dump_type = (MINIDUMP_TYPE)
+			(
+			MiniDumpWithDataSegs |
+			MiniDumpWithHandleData |
+			MiniDumpScanMemory |
+			MiniDumpWithIndirectlyReferencedMemory |
+			MiniDumpWithFullMemoryInfo |
+			MiniDumpWithThreadInfo
+			);
+		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dmp_file, dump_type, &ex_info, NULL, NULL);
 		CloseHandle(dmp_file);
 	}
 

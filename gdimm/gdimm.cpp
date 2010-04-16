@@ -44,13 +44,12 @@ BOOL APIENTRY DllMain(
 		h_self = hModule;
 		gdipp_register_module(hModule);
 
-		b_ret = gdipp_init_setting();
-		assert(b_ret);
-
 		// get setting file path
 		wchar_t setting_path[MAX_PATH];
 		b_ret = gdipp_get_dir_file_path(hModule, L"gdipp_setting.xml", setting_path);
 		assert(b_ret);
+
+		gdipp_init_setting();
 
 		b_ret = gdipp_load_setting(setting_path);
 		assert(b_ret);

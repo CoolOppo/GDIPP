@@ -125,8 +125,6 @@ int APIENTRY _tWinMain(
 		return 0;
 	}
 
-	init(NULL);
-
 	//injector_instance.initial_inject();
 
 	if (mon_instance.start_monitor())

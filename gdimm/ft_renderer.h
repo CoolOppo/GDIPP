@@ -4,10 +4,11 @@
 
 class ft_renderer: public gdimm_renderer
 {
+	FTC_ScalerRec _ft_scaler;
 	FT_Render_Mode _render_mode;
 	FT_ULong _load_flags;
 	FT_F26Dot6 _embolden;
-	FTC_ScalerRec _ft_scaler;
+	bool _has_italic;
 	bool *_using_cache_node;
 
 	static FT_ULong get_load_flags(FT_Render_Mode render_mode, const wchar_t *font_name);

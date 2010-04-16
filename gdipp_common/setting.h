@@ -19,6 +19,7 @@ class gdipp_setting
 	list<const wstring> _exclude_process;
 
 	wchar_t _process_name[MAX_PATH];
+	list<IXMLDOMNode*> _not_released_nodes;
 
 	void parse_gdimm_setting_node(const CComPtr<IXMLDOMNode> setting_node, setting_map &setting_store);
 	void load_gdimm_process(const CComPtr<IXMLDOMNodeList> process_nodes);
@@ -36,11 +37,11 @@ public:
 	const wchar_t *get_service_setting(const wchar_t *setting_name) const;
 	bool is_process_excluded(const wchar_t *proc_name) const;
 
-	BOOL init_setting();
+	void init_setting();
 	void uninit_setting();
 	BOOL load_setting(const wchar_t *setting_path);
 	BOOL save_setting(const wchar_t *setting_path);
-	BOOL insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *ref_node_xpath);
-	BOOL set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value);
+	void *insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath);
+	BOOL set_setting_attr(const void *node_ptr, const wchar_t *attr_name, const wchar_t *attr_value);
 	BOOL remove_setting_item(const wchar_t *node_xpath);
 };

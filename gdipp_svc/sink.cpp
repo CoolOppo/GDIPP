@@ -11,16 +11,16 @@ unsigned __stdcall process_obj(void *arglist)
 	CComVariant var_event;
 	VariantInit(&var_event);
 	hr = obj->Get(L"TargetInstance", 0, &var_event, NULL, NULL);
-	assert(SUCCEEDED(hr));
+	assert(hr == S_OK);
 
 	CComPtr<IWbemClassObject> proc_obj;
 	hr = V_UNKNOWN(&var_event)->QueryInterface(IID_IWbemClassObject, (void**) &proc_obj);
-	assert(SUCCEEDED(hr));
+	assert(hr == S_OK);
 
 	CComVariant var_exe_name;
 	VariantInit(&var_exe_name);
 	hr = proc_obj->Get(L"Name", 0, &var_exe_name, NULL, NULL);
-	assert(SUCCEEDED(hr));
+	assert(hr == S_OK);
 
 	if (gdipp_is_process_excluded(V_BSTR(&var_exe_name)))
 		return 1;
@@ -28,7 +28,7 @@ unsigned __stdcall process_obj(void *arglist)
 	CComVariant var_proc_id;
 	VariantInit(&var_proc_id);
 	hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
-	assert(SUCCEEDED(hr));
+	assert(hr == S_OK);
 
 	return injector_instance.inject_proc(V_I4(&var_proc_id));
 }

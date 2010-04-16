@@ -105,8 +105,8 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const wchar_t *
 {
 	FT_Error ft_error;
 
-	// if italic style is demanded, and the font is not natively italic, do oblique transformation
-	const bool is_oblique = (_text->_font_attr.lfItalic && _text->_outline_metrics->otmItalicAngle == 0);
+	// if italic style is demanded, and the font has italic glyph, do oblique transformation
+	const bool is_oblique = (_text->_font_attr.lfItalic && !_has_italic);
 
 	// lookup if there is already a cached glyph
 	const gdimm_glyph_cache::cache_trait trait = {_ft_scaler.face_id, _ft_scaler.width, _ft_scaler.height, _embolden, is_oblique, _render_mode, _load_flags};
@@ -231,6 +231,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 	_ft_scaler.height = _text->_outline_metrics->otmTextMetrics.tmHeight - _text->_outline_metrics->otmTextMetrics.tmInternalLeading;
 	TT_OS2 os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
 	update_embolden(os2_table, _text->_font_face);
+	_has_italic = (os2_table.fsSelection & 1);
 
 	if (_text->_font_attr.lfWidth == 0)
 		_ft_scaler.width = _ft_scaler.height;
@@ -310,6 +311,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 
 			os2_table = font_man_instance.get_os2_table(_ft_scaler.face_id);
 			update_embolden(os2_table, curr_font_face.c_str());
+			_has_italic = (os2_table.fsSelection & 1);
 		}
 
 		if (glyph_all_empty)

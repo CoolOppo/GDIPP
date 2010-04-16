@@ -17,32 +17,31 @@ bool svc_mon::start_monitor()
 		return false;
 
 	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
-	if (FAILED(hr))
+	if (hr != S_OK)
 		return false;
 
 	CComPtr<IWbemLocator> loc;
 	hr = loc.CoCreateInstance(CLSID_WbemLocator);
-	if (FAILED(hr))
+	if (hr != S_OK)
 		return false;
 
 	hr = loc->ConnectServer(bstr_t("\\\\.\\root\\CIMV2"), NULL, NULL, NULL, WBEM_FLAG_CONNECT_USE_MAX_WAIT, NULL, NULL, &_svc);
-	if (FAILED(hr))
+	if (hr != S_OK)
 		return false;
 
 	hr = CoSetProxyBlanket(_svc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
-	if (FAILED(hr))
+	if (hr != S_OK)
 		return false;
 
 	_sink = new sink_inject;
 	_sink->AddRef();
 
-	b_ret = gdipp_init_setting();
-	assert(b_ret);
-
 	// get setting file path
 	wchar_t setting_path[MAX_PATH];
 	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
 	assert(b_ret);
+
+	gdipp_init_setting();
 
 	b_ret = gdipp_load_setting(setting_path);
 	assert(b_ret);
@@ -66,7 +65,7 @@ bool svc_mon::start_monitor()
 		0,
 		NULL,
 		_sink);
-	if (FAILED(hr))
+	if (hr != S_OK)
 		return false;
 
 	return true;
@@ -77,7 +76,7 @@ void svc_mon::stop_monitor()
 	HRESULT hr;
 
 	hr = _svc->CancelAsyncCall(_sink);
-	assert(SUCCEEDED(hr));
+	assert(hr == S_OK);
 
 	if (_svc != NULL)
 		_svc->Release();

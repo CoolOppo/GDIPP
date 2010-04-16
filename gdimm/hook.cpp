@@ -76,7 +76,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const wchar_t *debug_text = NULL;
-	//debug_text = L"Oblique";
+	//debug_text = L"";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
