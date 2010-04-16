@@ -2,6 +2,7 @@
 
 #include "gdipp_common.h"
 using namespace std;
+using namespace pugi;
 
 class gdipp_setting
 {
@@ -9,7 +10,7 @@ class gdipp_setting
 	typedef map<const wstring, wstring, wstring_ci_less> setting_map;
 	typedef list<pair<const wstring, setting_map>> gdimm_list;
 
-	IXMLDOMDocument *_xml_doc;
+	xml_document *_xml_doc;
 
 	setting_map _process_setting;
 	gdimm_list _gdimm_font;
@@ -19,17 +20,17 @@ class gdipp_setting
 	list<const wstring> _exclude_process;
 
 	wchar_t _process_name[MAX_PATH];
-	list<IXMLDOMNode*> _not_released_nodes;
 
-	void parse_gdimm_setting_node(const CComPtr<IXMLDOMNode> setting_node, setting_map &setting_store);
-	void load_gdimm_process(const CComPtr<IXMLDOMNodeList> process_nodes);
-	void load_gdimm_font(const CComPtr<IXMLDOMNodeList> font_nodes);
-	void load_demo(const CComPtr<IXMLDOMNode> root_node);
-	void load_service(const CComPtr<IXMLDOMNode> root_node);
-	void load_exclude(const CComPtr<IXMLDOMNode> root_node);
+	void parse_gdimm_setting_node(const xml_node &setting_node, setting_map &setting_store);
+	void load_gdimm_process(const xpath_node_set &process_nodes);
+	void load_gdimm_font(const xpath_node_set &font_nodes);
+	void load_demo(const xml_node &root_node);
+	void load_service(const xml_node &root_node);
+	void load_exclude(const xml_node &root_node);
 
 public:
 	gdipp_setting();
+	~gdipp_setting();
 
 	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name) const;
 	const wchar_t *get_demo_setting(const wchar_t *setting_name) const;
@@ -41,7 +42,7 @@ public:
 	void uninit_setting();
 	BOOL load_setting(const wchar_t *setting_path);
 	BOOL save_setting(const wchar_t *setting_path);
-	void *insert_setting(const wchar_t *node_name, const wchar_t *node_value, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath);
-	BOOL set_setting_attr(const void *node_ptr, const wchar_t *attr_name, const wchar_t *attr_value);
-	BOOL remove_setting_item(const wchar_t *node_xpath);
+	BOOL insert_setting(const wchar_t *node_name, const wchar_t *node_text, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath, wstring &new_node_xpath);
+	BOOL set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value);
+	BOOL remove_setting(const wchar_t *node_xpath);
 };

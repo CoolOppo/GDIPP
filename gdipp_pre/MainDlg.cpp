@@ -74,25 +74,18 @@ LRESULT CMainDlg::OnFileOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*
 {
 	BOOL b_ret;
 
-	wchar_t new_setting_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(h_instance, L"gdipp_setting.xml", new_setting_path);
-	assert(b_ret);
-
 	OPENFILENAMEW ofn = {};
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = m_hWnd;
 	ofn.lpstrFilter = L"XML Files\0*.xml\0\0";
-	ofn.lpstrFile = new_setting_path;
+	ofn.lpstrFile = curr_setting_path;
 	ofn.nMaxFile = MAX_PATH;
 
 	b_ret = GetOpenFileNameW(&ofn);
 	if (b_ret)
 	{
-		//b_ret = gdipp_load_setting(new_setting_path);
-		if (b_ret)
-		{
-			wcscpy_s(curr_setting_path, new_setting_path);
-		}
+		gdipp_init_setting();
+		b_ret = gdipp_load_setting(curr_setting_path);
 	}
 
 	return 0;
@@ -108,21 +101,17 @@ LRESULT CMainDlg::OnFileSaveAs(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 {
 	BOOL b_ret;
 
-	wchar_t new_setting_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(h_instance, L"gdipp_setting.xml", new_setting_path);
-	assert(b_ret);
-
 	OPENFILENAMEW ofn = {};
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = m_hWnd;
 	ofn.lpstrFilter = L"XML Files\0*.xml\0\0";
-	ofn.lpstrFile = new_setting_path;
+	ofn.lpstrFile = curr_setting_path;
 	ofn.nMaxFile = MAX_PATH;
 
 	b_ret = GetSaveFileNameW(&ofn);
 	if (b_ret)
 	{
-		b_ret = gdipp_save_setting(new_setting_path);
+		b_ret = gdipp_save_setting(curr_setting_path);
 	}
 
 	return 0;

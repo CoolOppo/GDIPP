@@ -10,10 +10,7 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
-#include <atlbase.h>
 #include <dbghelp.h>
-#include <objbase.h>
-#include <msxml.h>
 #include <psapi.h>
 #include <shlwapi.h>
 
@@ -25,3 +22,6 @@
 #include <string>
 #include <regex>
 #include <vector>
+
+ // 3rd-party dependency libraries
+#include <pugixml.hpp>

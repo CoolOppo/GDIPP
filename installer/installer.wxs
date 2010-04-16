@@ -94,10 +94,10 @@
 											DestinationProperty="INSTALLDIR" DestinationName="setting.xml.bak"
 											Delete="yes" />
 						<File Name="gdipp_setting.xml" Source="gdipp_setting.xml" Vital="yes" KeyPath="yes" />
-						<File Name="gdipp_preview.txt" Source="gdipp_preview.txt" />
 					</Component>
 
 					<Component Id="gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
+						<File Name="gdipp_preview.txt" Source="gdipp_preview.txt" />
 						<File Name="documentation.url" Source="documentation.url" />
 					</Component>
 

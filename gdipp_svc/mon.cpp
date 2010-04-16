@@ -42,11 +42,8 @@ bool svc_mon::start_monitor()
 	assert(b_ret);
 
 	gdipp_init_setting();
-
 	b_ret = gdipp_load_setting(setting_path);
 	assert(b_ret);
-
-	gdipp_uninit_setting();
 
 	const wchar_t *interval_str = gdipp_get_service_setting(L"poll_interval");
 	if (interval_str == NULL)

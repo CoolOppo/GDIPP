@@ -50,11 +50,8 @@ BOOL APIENTRY DllMain(
 		assert(b_ret);
 
 		gdipp_init_setting();
-
 		b_ret = gdipp_load_setting(setting_path);
 		assert(b_ret);
-
-		gdipp_uninit_setting();
 
 		if (gdipp_is_process_excluded(NULL))
 			return FALSE;
