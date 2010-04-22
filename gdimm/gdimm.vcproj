@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,10 +66,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib psapi.lib"
+				AdditionalDependencies="EasyHook32.lib dwrite.lib psapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Lib\x86&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -124,7 +124,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -144,10 +144,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib psapi.lib"
+				AdditionalDependencies="EasyHook64.lib dwrite.lib psapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Lib\x64&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -202,7 +202,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
 				EnableEnhancedInstructionSet="1"
@@ -221,10 +221,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib psapi.lib"
+				AdditionalDependencies="EasyHook32.lib dwrite.lib psapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Lib\x86&quot;"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -283,7 +283,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)freetype&quot;;&quot;$(SolutionDir)gdipp_common&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
@@ -301,10 +301,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib psapi.lib"
+				AdditionalDependencies="EasyHook64.lib dwrite.lib psapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Lib\x64&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -344,6 +344,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\dw_renderer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\dw_text.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\font_link.cpp"
 				>
 			</File>
@@ -364,7 +372,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gdi_text.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\gdimm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry_sink.cpp"
 				>
 			</File>
 			<File
@@ -381,10 +397,6 @@
 			</File>
 			<File
 				RelativePath=".\lock.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\renderer.cpp"
 				>
 			</File>
 			<File
@@ -431,12 +443,28 @@
 				RelativePath=".\text.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\text_helper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\text_helper.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\dw_renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\dw_text.h"
+				>
+			</File>
 			<File
 				RelativePath=".\font_link.h"
 				>
@@ -458,7 +486,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gdi_text.h"
+				>
+			</File>
+			<File
 				RelativePath=".\gdimm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry_sink.h"
 				>
 			</File>
 			<File

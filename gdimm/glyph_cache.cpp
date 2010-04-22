@@ -17,7 +17,17 @@ void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)
 	}
 }
 
-const FT_BitmapGlyph gdimm_glyph_cache::lookup(const cache_trait &trait, FT_UInt glyph_index, bool *&using_cache_node)
+void gdimm_glyph_cache::add_ref(const void *cache_node_ptr)
+{
+	((cache_node*)cache_node_ptr)->ref_count += 1;
+}
+
+void gdimm_glyph_cache::release(const void *cache_node_ptr)
+{
+	((cache_node*)cache_node_ptr)->ref_count -= 1;
+}
+
+const FT_BitmapGlyph gdimm_glyph_cache::lookup_glyph(const cache_trait &trait, FT_UInt glyph_index, const void *&cache_node_ptr)
 {
 	gdimm_lock lock(LOCK_GLYPH_CACHE);
 
@@ -33,7 +43,7 @@ const FT_BitmapGlyph gdimm_glyph_cache::lookup(const cache_trait &trait, FT_UInt
 				return NULL;
 			else
 			{
-				using_cache_node = &font_iter->using_cache_node;
+				cache_node_ptr = &(*font_iter);
 				return glyph_iter->second;
 			}
 		}
@@ -42,7 +52,7 @@ const FT_BitmapGlyph gdimm_glyph_cache::lookup(const cache_trait &trait, FT_UInt
 	return NULL;
 }
 
-void gdimm_glyph_cache::add(const cache_trait &trait, FT_UInt glyph_index, const FT_BitmapGlyph glyph, bool *&using_cache_node)
+void gdimm_glyph_cache::add_glyph(const cache_trait &trait, FT_UInt glyph_index, const FT_BitmapGlyph glyph, const void *&cache_node_ptr)
 {
 	gdimm_lock lock(LOCK_GLYPH_CACHE);
 
@@ -65,8 +75,10 @@ void gdimm_glyph_cache::add(const cache_trait &trait, FT_UInt glyph_index, const
 			at_begin = (iter == _cache.begin());
 
 			// erase only if the cache node is not used by any renderer
-			if (!iter->using_cache_node)
+			if (iter->ref_count <= 0)
 			{
+				assert(iter->ref_count == 0);
+
 				erase_glyph_cache(iter->glyph_cache);
 				const list<cache_node>::const_iterator erase_iter = iter;
 
@@ -91,7 +103,7 @@ void gdimm_glyph_cache::add(const cache_trait &trait, FT_UInt glyph_index, const
 			// if the font is accessed previously, add the glyph to it
 			iter->glyph_cache.insert(pair<FT_UInt, const FT_BitmapGlyph>(glyph_index, glyph));
 			// return cache node usage handle
-			using_cache_node = &iter->using_cache_node;
+			cache_node_ptr = &(*iter);
 
 			// _msize is non-standard function to get size of an allocated memory pointer
 			if (glyph->bitmap.buffer != NULL)
@@ -107,7 +119,7 @@ void gdimm_glyph_cache::add(const cache_trait &trait, FT_UInt glyph_index, const
 	new_node.glyph_cache.insert(pair<FT_UInt, const FT_BitmapGlyph>(glyph_index, glyph));
 
 	_cache.push_front(new_node);
-	using_cache_node = &_cache.front().using_cache_node;
+	cache_node_ptr = &(_cache.front());
 
 	if (glyph->bitmap.buffer != NULL)
 		_cached_bytes += _msize(glyph->bitmap.buffer);

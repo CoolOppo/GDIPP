@@ -10,6 +10,7 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
+#include <atlbase.h>
 #include <mmsystem.h>
 #include <psapi.h>
 
@@ -34,3 +35,6 @@
 #include FT_TRUETYPE_TABLES_H
 
 #include <easyhook.h>
+
+#include <d2d1.h>
+#include <dwrite.h>

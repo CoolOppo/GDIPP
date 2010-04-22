@@ -1,38 +1,43 @@
 #pragma once
 
-#include <dwrite.h>
-
-class gdimm_renderer : public IDWriteTextRenderer
+class dw_renderer : public IDWriteTextRenderer
 {
 	LONG _ref_count;
 	IDWriteBitmapRenderTarget* _render_target;
 	IDWriteRenderingParams* _render_params;
-	bool _is_glyph_index;
+	COLORREF _text_color;
 
 public:
-	gdimm_renderer(
+	dw_renderer(
 		IDWriteBitmapRenderTarget* render_target,
 		IDWriteRenderingParams* render_params,
-		bool is_glyph_index
+		COLORREF text_color
 		);
 
-	gdimm_renderer::~gdimm_renderer();
+	dw_renderer::~dw_renderer();
 
+public:
+	IFACEMETHOD(QueryInterface) (
+		/* [in] */ REFIID riid,
+		/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject);
+	IFACEMETHOD_(ULONG, AddRef) ();
+	IFACEMETHOD_(ULONG, Release) ();
+
+public:
 	IFACEMETHOD(IsPixelSnappingDisabled)(
 		__maybenull void* clientDrawingContext,
 		__out BOOL* isDisabled
 		);
-
 	IFACEMETHOD(GetCurrentTransform)(
 		__maybenull void* clientDrawingContext,
 		__out DWRITE_MATRIX* transform
 		);
-
 	IFACEMETHOD(GetPixelsPerDip)(
 		__maybenull void* clientDrawingContext,
 		__out FLOAT* pixelsPerDip
 		);
 
+public:
 	IFACEMETHOD(DrawGlyphRun)(
 		__maybenull void* clientDrawingContext,
 		FLOAT baselineOriginX,
@@ -40,25 +45,22 @@ public:
 		DWRITE_MEASURING_MODE measuringMode,
 		__in DWRITE_GLYPH_RUN const* glyphRun,
 		__in DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription,
-		IUnknown* clientDrawingEffect
+		__maybenull IUnknown* clientDrawingEffect
 		);
-
 	IFACEMETHOD(DrawUnderline)(
 		__maybenull void* clientDrawingContext,
 		FLOAT baselineOriginX,
 		FLOAT baselineOriginY,
 		__in DWRITE_UNDERLINE const* underline,
-		IUnknown* clientDrawingEffect
+		__maybenull IUnknown* clientDrawingEffect
 		);
-
 	IFACEMETHOD(DrawStrikethrough)(
 		__maybenull void* clientDrawingContext,
 		FLOAT baselineOriginX,
 		FLOAT baselineOriginY,
 		__in DWRITE_STRIKETHROUGH const* strikethrough,
-		IUnknown* clientDrawingEffect
+		__maybenull IUnknown* clientDrawingEffect
 		);
-
 	IFACEMETHOD(DrawInlineObject)(
 		__maybenull void* clientDrawingContext,
 		FLOAT originX,
@@ -66,13 +68,6 @@ public:
 		IDWriteInlineObject* inlineObject,
 		BOOL isSideways,
 		BOOL isRightToLeft,
-		IUnknown* clientDrawingEffect
+		__maybenull IUnknown* clientDrawingEffect
 		);
-
-	IFACEMETHOD_(unsigned long, AddRef) ();
-	IFACEMETHOD_(unsigned long, Release) ();
-	IFACEMETHOD(QueryInterface)(
-		IID const& riid,
-		void** ppvObject
-	);
 };

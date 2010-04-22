@@ -1,12 +1,22 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
+#include "text_helper.h"
 #include "ft.h"
 #include "lock.h"
 
 const FT_Glyph_Class *ggo_renderer::_glyph_clazz = NULL;
 
-ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
+ggo_renderer::~ggo_renderer()
 {
+	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
+		FT_Done_Glyph((FT_Glyph) *iter);
+}
+
+bool ggo_renderer::init(HDC hdc)
+{
+	if (!gdimm_gdi_text::init(hdc))
+		return false;
+
 	/*
 	glyph clazz is a private field, cannot be constructed through FreeType API
 	instead, we load the glyph of the default character from the current font
@@ -20,7 +30,7 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 
 	if (_glyph_clazz == NULL)
 	{
-		const long font_id = font_man_instance.register_font(_text->_hdc_text, metric_face_name(_text->_outline_metrics));
+		const long font_id = font_man_instance.register_font(_hdc_text, metric_face_name(_outline_metrics));
 		const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
 		FT_Face font_face;
@@ -32,7 +42,7 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 		ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 		assert(ft_error == 0);
 
-		ft_error = FT_Load_Char(font_face, _text->_outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
+		ft_error = FT_Load_Char(font_face, _outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
 		assert(ft_error == 0);
 
 		FT_Glyph useless;
@@ -40,19 +50,15 @@ ggo_renderer::ggo_renderer(gdimm_text *text): gdimm_renderer(text)
 		_glyph_clazz = useless->clazz;
 		FT_Done_Glyph(useless);
 	}
-}
 
-ggo_renderer::~ggo_renderer()
-{
-	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
-		FT_Done_Glyph((FT_Glyph) *iter);
+	return true;
 }
 
 const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
 
-	DWORD outline_buf_len = GetGlyphOutline(_text->_hdc_text, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
+	DWORD outline_buf_len = GetGlyphOutline(_hdc_text, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
 
 	// some character's glyph outline is empty (e.g. space), skip
@@ -64,7 +70,7 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	vector<short> contour_indices;
 
 	BYTE *outline_buf = new BYTE[outline_buf_len];
-	outline_buf_len = GetGlyphOutline(_text->_hdc_text, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
+	outline_buf_len = GetGlyphOutline(_hdc_text, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
 
 	// parse outline coutours
@@ -155,9 +161,9 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 		}
 	};
 
-	if (_text->_setting_cache->embolden != 0)
+	if (_setting_cache->embolden != 0)
 	{
-		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _text->_setting_cache->embolden);
+		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _setting_cache->embolden);
 		assert(ft_error == 0);
 	}
 
@@ -197,7 +203,7 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 	if (options & ETO_GLYPH_INDEX)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
-	if (!_text->_setting_cache->hinting)
+	if (!_setting_cache->hinting)
 		_ggo_format |= GGO_UNHINTED;
 
 	for (unsigned int i = 0; i < c; i++)
@@ -212,7 +218,7 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 
 		if (bmp_glyph != NULL)
 		{
-			POINT adjusted_pos = _text->_cursor;
+			POINT adjusted_pos = _cursor;
 			adjusted_pos.x += bmp_glyph->left;
 
 			_glyphs.push_back(bmp_glyph);
@@ -234,8 +240,8 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 				glyph_advance.x = char_advance;
 		}
 
-		_text->_cursor.x += glyph_advance.x;
-		_text->_cursor.y += glyph_advance.y;
+		_cursor.x += glyph_advance.x;
+		_cursor.y += glyph_advance.y;
 	}
 
 	return true;

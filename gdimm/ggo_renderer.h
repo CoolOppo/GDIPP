@@ -1,8 +1,8 @@
 #pragma once
 
-#include "renderer.h"
+#include "gdi_text.h"
 
-class ggo_renderer: public gdimm_renderer
+class ggo_renderer : public gdimm_gdi_text
 {
 	static const FT_Glyph_Class *_glyph_clazz;
 
@@ -12,9 +12,10 @@ class ggo_renderer: public gdimm_renderer
 
 	const FT_BitmapGlyph outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
 
+	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
+
 public:
-	ggo_renderer(gdimm_text *text);
 	~ggo_renderer();
 
-	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
+	virtual bool init(HDC hdc);
 };

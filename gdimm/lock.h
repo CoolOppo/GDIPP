@@ -23,8 +23,8 @@ class gdimm_lock
 
 public:
 	gdimm_lock(LOCK_TYPE type)
+	: _type(type)
 	{
-		_type = type;
 		EnterCriticalSection(&_cs[type]);
 	}
 

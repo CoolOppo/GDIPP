@@ -1,5 +1,9 @@
 #include "stdafx.h"
-#include "text.h"
+#include "hook.h"
+#include "ft_renderer.h"
+#include "ggo_renderer.h"
+#include "dw_text.h"
+#include "gdimm.h"
 #include "lock.h"
 
 HANDLE h_svc_event = NULL;
@@ -12,7 +16,7 @@ unsigned __stdcall unload_self(void *arglist)
 	gdimm_lock lock(LOCK_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
 
-	b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 	assert(b_ret);
 
 	_endthreadex(0);
@@ -40,7 +44,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if ((options & ETO_GLYPH_INDEX))
-	//if (c < 10)
+	//if (c != 3)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to render
@@ -106,7 +110,9 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 
 	//gdimm_lock lock(LOCK_DEBUG);
 
-	gdimm_text text_instance;
+	//ft_renderer text_instance;
+	//ggo_renderer text_instance;
+	gdimm_dw_text text_instance;
 
 	if (!text_instance.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -269,7 +275,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
 
 		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
 
 		break;

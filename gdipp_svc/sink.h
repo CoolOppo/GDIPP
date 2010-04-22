@@ -2,13 +2,12 @@
 
 class sink_inject: public IWbemObjectSink
 {
-	LONG _ref;
+	LONG _ref_count;
 
 public:
-	sink_inject()
-	{ _ref = 0; }
+	sink_inject() : _ref_count(0) {}
 	virtual ULONG STDMETHODCALLTYPE AddRef()
-	{ return InterlockedIncrement(&_ref); }
+	{ return InterlockedIncrement(&_ref_count); }
 
 	virtual ULONG STDMETHODCALLTYPE Release();
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppv);

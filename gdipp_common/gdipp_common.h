@@ -8,10 +8,6 @@ using namespace std;
 #define GDIPP_API __declspec(dllimport)
 #endif // GDIPP_EXPORTS
 
-#define FT_PAD_FLOOR( x, n )  ( (x) & ~((n)-1) )
-#define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
-#define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
-
 struct wstring_ci_less
 {
 	bool operator()(const wstring &string1, const wstring &string2) const

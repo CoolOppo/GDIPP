@@ -6,7 +6,8 @@ enum RENDERER_TYPE
 {
 	CLEARTYPE,
 	GETGLYPHOUTLINE,
-	FREETYPE
+	FREETYPE,
+	DIRECTWRITE
 };
 
 struct font_setting_cache
@@ -18,7 +19,13 @@ struct font_setting_cache
 		double green;
 		double blue;
 
-		font_gamma();
+		font_gamma()
+		:
+		gray(1.0),
+		red(1.0),
+		green(1.0),
+		blue(1.0)
+		{}
 	};
 
 	struct font_shadow
@@ -27,7 +34,12 @@ struct font_setting_cache
 		LONG offset_y;
 		WORD alpha;
 
-		font_shadow();
+		font_shadow()
+		:
+		offset_x(0),
+		offset_y(0),
+		alpha(8)
+		{}
 	};
 
 	bool auto_hinting;
@@ -44,7 +56,20 @@ struct font_setting_cache
 	bool subpixel_render;
 	bool zero_alpha;
 
-	font_setting_cache();
+	font_setting_cache()
+	:
+	auto_hinting(false),
+	embedded_bitmap(false),
+	embolden(0),
+	hinting(true),
+	light_mode(true),
+	max_height(72),
+	render_mono(false),
+	render_non_aa(false),
+	renderer(FREETYPE),
+	subpixel_render(true),
+	zero_alpha(false)
+	{}
 };
 
 class gdimm_setting_cache

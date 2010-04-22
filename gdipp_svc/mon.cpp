@@ -1,12 +1,6 @@
 #include "stdafx.h"
 #include "gdipp_svc.h"
 
-svc_mon::svc_mon()
-{
-	_svc = NULL;
-	_sink = NULL;
-}
-
 bool svc_mon::start_monitor()
 {
 	BOOL b_ret;

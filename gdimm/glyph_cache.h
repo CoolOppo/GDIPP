@@ -26,10 +26,10 @@ private:
 	{
 		cache_trait trait;
 		cache_map glyph_cache;
-		bool using_cache_node;
+		int ref_count;
 
 		cache_node()
-		{ using_cache_node = false; }
+		{ ref_count = 0; }
 	};
 
 	list<cache_node> _cache;
@@ -38,10 +38,13 @@ private:
 	void erase_glyph_cache(const cache_map &glyph_cache);
 
 public:
+	static void add_ref(const void *cache_node_ptr);
+	static void release(const void *cache_node_ptr);
+
 	gdimm_glyph_cache()
 	{ _cached_bytes = 0; }
 
-	const FT_BitmapGlyph lookup(const cache_trait &trait, FT_UInt glyph_index, bool *&using_cache_node);
-	void add(const cache_trait &trait, FT_UInt glyph_index, const FT_BitmapGlyph glyph, bool *&using_cache_node);
+	const FT_BitmapGlyph lookup_glyph(const cache_trait &trait, FT_UInt glyph_index, const void *&cache_node_ptr);
+	void add_glyph(const cache_trait &trait, FT_UInt glyph_index, const FT_BitmapGlyph glyph, const void *&cache_node_ptr);
 	void clear();
 };

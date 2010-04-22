@@ -35,7 +35,7 @@ unsigned __stdcall process_obj(void *arglist)
 
 ULONG sink_inject::Release()
 {
-	LONG _new_ref = InterlockedDecrement(&_ref);
+	LONG _new_ref = InterlockedDecrement(&_ref_count);
 	
 	if (_new_ref == 0)
 		delete this;
