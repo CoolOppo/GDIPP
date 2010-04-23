@@ -3,8 +3,8 @@
 	<version>0.7.6</version>
 	
 	<gdimm>
-		<process name="VirtualBox\.exe">
-			<zero_alpha>1</zero_alpha>
+		<process name="explorer\.exe">
+			<zero_alpha>0</zero_alpha>
 		</process>
 		
 		<process name=".+\.exe">
@@ -38,7 +38,7 @@
 				<alpha>8</alpha>
 			</shadow>
 			<subpixel_render>1</subpixel_render>
-			<zero_alpha>0</zero_alpha>
+			<zero_alpha>1</zero_alpha>
 		</font>
 	</gdimm>
 	

@@ -75,8 +75,8 @@ void ft_renderer::update_embolden(const TT_OS2 &os2_table, const wchar_t *font_n
 		612 - infinity are Bold
 		*/
 		const static LONG weight_class_max[] = {550, 611};
-		const static FT_F26Dot6 weight_embolden[] = {0, 32};
-		const static FT_F26Dot6 max_embolden = 64;
+		const static FT_F26Dot6 weight_embolden[] = {0, 16};
+		const static FT_F26Dot6 max_embolden = 32;
 
 		FT_F26Dot6 text_embolden = max_embolden;
 		FT_F26Dot6 font_embolden = max_embolden;
