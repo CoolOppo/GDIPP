@@ -60,7 +60,7 @@ class gdimm_font_man
 	map<FTC_FaceID, TT_OS2> _os2_tables;
 
 	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
-	static void stream_CloseFunc(FT_Stream stream) {}
+	static void stream_CloseFunc(FT_Stream stream);
 
 	DWORD get_font_size(HDC font_holder, DWORD &table_header) const;
 	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const;
@@ -70,8 +70,8 @@ public:
 
 	~gdimm_font_man();
 
-	static void *create_linked_font_holder();
-	static void delete_linked_font_holder();
+	static void *create_font_holder();
+	static void delete_font_holder();
 
 	long register_font(HDC hdc, const wchar_t *font_face);
 	long lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);

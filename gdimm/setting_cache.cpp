@@ -4,33 +4,36 @@
 #include "lock.h"
 
 font_setting_cache::font_gamma::font_gamma()
+:
+gray(1.0),
+red(1.0),
+green(1.0),
+blue(1.0)
 {
-	gray = 1.0;
-	red = 1.0;
-	green = 1.0;
-	blue = 1.0;
 }
 
 font_setting_cache::font_shadow::font_shadow()
+:
+offset_x(0),
+offset_y(0),
+alpha(8)
 {
-	offset_x = 0;
-	offset_y = 0;
-	alpha = 8;
 }
 
 font_setting_cache::font_setting_cache()
+:
+auto_hinting(false),
+embedded_bitmap(false),
+embolden(0),
+hinting(true),
+light_mode(true),
+max_height(72),
+render_mono(false),
+render_non_aa(false),
+renderer(FREETYPE),
+subpixel_render(true),
+zero_alpha(false)
 {
-	auto_hinting = false;
-	embedded_bitmap = false;
-	embolden = 0;
-	hinting = true;
-	light_mode = true;
-	max_height = 72;
-	render_mono = false;
-	render_non_aa = false;
-	renderer = FREETYPE;
-	subpixel_render = true;
-	zero_alpha = false;
 }
 
 const font_setting_cache *gdimm_setting_cache::lookup(const wchar_t *font_name)

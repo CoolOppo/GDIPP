@@ -5,20 +5,22 @@
 
 FT_BitmapGlyphRec empty_glyph = {};
 
-ft_renderer::ft_renderer(gdimm_text *text): gdimm_renderer(text)
+ft_renderer::ft_renderer(gdimm_text *text)
+:
+gdimm_renderer(text),
+_cache_node_ptr(NULL)
 {
 	_ft_scaler.pixel = 1;
 	_ft_scaler.x_res = 0;
 	_ft_scaler.y_res = 0;
-	_using_cache_node = NULL;
 }
 
 ft_renderer::~ft_renderer()
 {
 	// the cache node associated with this renderer is not used any more
 	// the glyph cache can reclaim it safely
-	if (_using_cache_node != NULL)
-		*_using_cache_node = false;
+	if (_cache_node_ptr != NULL)
+		gdimm_glyph_cache::release(_cache_node_ptr);
 }
 
 FT_ULong ft_renderer::get_load_flags(FT_Render_Mode render_mode, const wchar_t *font_name)
@@ -108,14 +110,20 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const wchar_t *
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
 	const bool is_oblique = (_text->_font_attr.lfItalic && !_has_italic);
 
+	// each renderer instance add the reference count to the glyph cache at most once
+	// only add reference count in the first time
+	const bool need_add_ref = (_cache_node_ptr == NULL);
+
 	// lookup if there is already a cached glyph
 	const gdimm_glyph_cache::cache_trait trait = {_ft_scaler.face_id, _ft_scaler.width, _ft_scaler.height, _embolden, is_oblique, _render_mode, _load_flags};
-	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup(trait, glyph_index, _using_cache_node);
+	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup_glyph(trait, glyph_index, _cache_node_ptr);
 	if (bmp_glyph != NULL)
 	{
 		// this renderer is using the cache node
 		// the glyph cache should not reclaim it until the rendering is finished
-		*_using_cache_node = true;
+		if (need_add_ref)
+			gdimm_glyph_cache::add_ref(_cache_node_ptr);
+
 		return bmp_glyph;
 	}
 
@@ -167,8 +175,10 @@ const FT_BitmapGlyph ft_renderer::render_glyph(WORD glyph_index, const wchar_t *
 
 	// add glyph into cache
 	bmp_glyph = (const FT_BitmapGlyph) glyph;
-	glyph_cache_instance.add(trait, glyph_index, bmp_glyph, _using_cache_node);
-	*_using_cache_node = true;
+	glyph_cache_instance.add_glyph(trait, glyph_index, bmp_glyph, _cache_node_ptr);
+
+	if (need_add_ref)
+		gdimm_glyph_cache::add_ref(_cache_node_ptr);
 
 	return bmp_glyph;
 }
@@ -294,7 +304,7 @@ bool ft_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UIN
 				break;
 
 			// font linking
-			curr_font_family = font_link_instance.lookup(dc_font_family, font_link_index);
+			curr_font_family = font_link_instance.lookup_link(dc_font_family, font_link_index);
 			font_link_index += 1;
 
 			if (curr_font_family == NULL)

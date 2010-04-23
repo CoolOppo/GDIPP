@@ -14,7 +14,6 @@ class gdimm_text
 	POINT _cursor;
 	UINT _text_alignment;
 	RGBQUAD _fg_rgb;
-	COLORREF _bg_color;
 	BITMAPINFO _bmp_info;
 
 	// font attributes
@@ -27,41 +26,33 @@ class gdimm_text
 	// gamma ramps for gray, red, green, blue
 	const BYTE *_gamma_ramps[4];
 
+	static BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
+	static BITMAPINFO get_dc_bmp_info(HDC hdc);
 	static int get_ft_bmp_width(const FT_Bitmap &bitmap);
 	static RECT get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos, POINT cursor);
-	static BITMAPINFO get_dc_bmp_info(HDC hdc);
-	static BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 
 	bool get_dc_metrics();
-	bool get_render_mode(const wchar_t *font_name, FT_Render_Mode &render_mode) const;
 	void get_gamma_ramps(const wchar_t *font_name, bool is_lcd);
+	bool get_render_mode(const wchar_t *font_name, FT_Render_Mode &render_mode) const;
 
-	void set_bmp_bits_mono(
-		const FT_Bitmap &src_bitmap,
-		int x_in_src, int y_in_src,
+	void set_bmp_bits_mono(const FT_Bitmap &src_bitmap,
+		const POINT &src_pos,
 		BYTE *dest_bits,
-		int x_in_dest, int y_in_dest,
-		int dest_width, int dest_height,
-		WORD dest_bpp) const;
-	void set_bmp_bits_gray(
-		const FT_Bitmap &src_bitmap,
-		int x_in_src, int y_in_src,
+		const POINT &dest_pos,
+		const SIZE &dest_size) const;
+	void set_bmp_bits_gray(const FT_Bitmap &src_bitmap,
+		const POINT &src_pos,
 		BYTE *dest_bits,
-		int x_in_dest, int y_in_dest,
-		int dest_width, int dest_height,
-		WORD dest_bpp,
+		const POINT &dest_pos,
+		const SIZE &dest_size,
 		WORD bmp_alpha) const;
-	void set_bmp_bits_lcd(
-		const FT_Bitmap &src_bitmap,
-		int x_in_src, int y_in_src,
+	void set_bmp_bits_lcd(const FT_Bitmap &src_bitmap,
+		const POINT &src_pos,
 		BYTE *dest_bits,
-		int x_in_dest, int y_in_dest,
-		int dest_width, int dest_height,
-		WORD dest_bpp,
-		WORD bmp_alpha,
-		bool zero_alpha) const;
-	bool draw_glyphs(
-		const vector<const FT_BitmapGlyph> &glyphs,
+		const POINT &dest_pos,
+		const SIZE &dest_size,
+		WORD bmp_alpha) const;
+	bool draw_glyphs(const vector<const FT_BitmapGlyph> &glyphs,
 		const vector<POINT> &glyph_pos,
 		UINT options,
 		CONST RECT *lprect) const;

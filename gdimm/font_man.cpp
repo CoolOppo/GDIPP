@@ -49,6 +49,10 @@ unsigned long gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offs
 	return read_size;
 }
 
+void gdimm_font_man::stream_CloseFunc(FT_Stream stream)
+{
+}
+
 DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header) const
 {
 	table_header = TTCF_FONT_TABLE;
@@ -96,7 +100,7 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_a
 	return new_hfont;
 }
 
-void *gdimm_font_man::create_linked_font_holder()
+void *gdimm_font_man::create_font_holder()
 {
 	BOOL b_ret;
 
@@ -116,7 +120,7 @@ void *gdimm_font_man::create_linked_font_holder()
 	return font_holder;
 }
 
-void gdimm_font_man::delete_linked_font_holder()
+void gdimm_font_man::delete_font_holder()
 {
 	BOOL b_ret;
 
@@ -135,7 +139,7 @@ void gdimm_font_man::delete_linked_font_holder()
 
 long gdimm_font_man::register_font(HDC hdc, const wchar_t *font_face)
 {
-	tls_font_holder *font_holder = (tls_font_holder*) create_linked_font_holder();
+	tls_font_holder *font_holder = (tls_font_holder*) create_font_holder();
 	assert(font_holder != NULL);
 
 	// use passed HDC as registered font holder
@@ -174,7 +178,7 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_
 {
 	// gdimm may be attached to a process which already has multi threads
 	// always check if the current thread has linked font holder
-	const tls_font_holder *font_holder = (const tls_font_holder*) create_linked_font_holder();
+	const tls_font_holder *font_holder = (const tls_font_holder*) create_font_holder();
 
 	HFONT linked_font = create_linked_font(font_holder->linked, font_attr, font_family, font_face);
 	if (linked_font == NULL)

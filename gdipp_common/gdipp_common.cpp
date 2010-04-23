@@ -7,6 +7,11 @@ vector<HMODULE> h_modules;
 HMODULE h_self = NULL;
 gdipp_setting setting_instance;
 
+GDIPP_API bool wstring_ci_less::operator()(const wstring &string1, const wstring &string2) const
+{
+	return (_wcsicmp(string1.c_str(), string2.c_str()) < 0);
+}
+
 GDIPP_API void gdipp_register_module(HMODULE h_module)
 {
 	h_modules.push_back(h_module);

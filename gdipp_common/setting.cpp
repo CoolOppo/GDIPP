@@ -3,11 +3,11 @@
 using namespace std::tr1;
 
 gdipp_setting::gdipp_setting()
+:
+_xml_doc(NULL)
 {
 	DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
-
-	_xml_doc = NULL;
 }
 
 gdipp_setting::~gdipp_setting()

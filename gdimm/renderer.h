@@ -28,12 +28,7 @@ protected:
 	gdimm_renderer(gdimm_text *text);
 
 public:
-	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) const
-	{ return false; }
-
-	const vector<const FT_BitmapGlyph> &get_glyphs() const
-	{ return _glyphs; }
-
-	const vector<POINT> &get_glyph_pos() const
-	{ return _glyph_pos; }
+	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) const;
+	const vector<const FT_BitmapGlyph> &get_glyphs() const;
+	const vector<POINT> &get_glyph_pos() const;
 };

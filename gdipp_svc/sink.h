@@ -1,24 +1,26 @@
 #pragma once
 
-class sink_inject: public IWbemObjectSink
+class inject_sink: public IWbemObjectSink
 {
-	LONG _ref;
+	LONG _ref_count;
 
 public:
-	sink_inject()
-	{ _ref = 0; }
-	virtual ULONG STDMETHODCALLTYPE AddRef()
-	{ return InterlockedIncrement(&_ref); }
+	inject_sink();
 
-	virtual ULONG STDMETHODCALLTYPE Release();
-	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppv);
-	virtual HRESULT STDMETHODCALLTYPE Indicate(
-		LONG lObjectCount,
-		IWbemClassObject __RPC_FAR *__RPC_FAR *apObjArray);
-	virtual HRESULT STDMETHODCALLTYPE SetStatus(
-		LONG lFlags,
-		HRESULT hResult,
-		BSTR strParam,
-		IWbemClassObject __RPC_FAR *pObjParam)
-	{ return WBEM_S_NO_ERROR; }
+public:
+	IFACEMETHOD(QueryInterface)(
+		/* [in] */ REFIID riid,
+		/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject);
+	IFACEMETHOD_(ULONG, AddRef)();
+	IFACEMETHOD_(ULONG, Release)();
+
+public:
+	IFACEMETHOD(Indicate)(
+		/* [in] */ long lObjectCount,
+		/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray);
+	IFACEMETHOD(SetStatus)(
+		/* [in] */ long lFlags,
+		/* [in] */ HRESULT hResult,
+		/* [in] */ __RPC__in BSTR strParam,
+		/* [in] */ __RPC__in_opt IWbemClassObject *pObjParam);
 };

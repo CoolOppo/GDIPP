@@ -12,7 +12,7 @@ unsigned __stdcall unload_self(void *arglist)
 	gdimm_lock lock(LOCK_HOOK);
 	FreeLibraryAndExitThread(h_self, 0);
 
-	b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 	assert(b_ret);
 
 	_endthreadex(0);
@@ -269,7 +269,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
 
 		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(NULL, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+		b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
 
 		break;
@@ -307,7 +307,7 @@ bool gdimm_hook::hook()
 	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
 
 #ifndef _M_X64
-	// currently not support inject at EIP for 64-bit processes
+	// currently only support inject at EIP for 32-bit processes
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 #endif // _M_X64
 

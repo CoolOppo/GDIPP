@@ -22,26 +22,9 @@ class gdimm_lock
 	LOCK_TYPE _type;
 
 public:
-	gdimm_lock(LOCK_TYPE type)
-	{
-		_type = type;
-		EnterCriticalSection(&_cs[type]);
-	}
+	gdimm_lock(LOCK_TYPE type);
+	~gdimm_lock();
 
-	~gdimm_lock()
-	{
-		LeaveCriticalSection(&_cs[_type]);
-	}
-
-	static void initialize()
-	{
-		for (int i = 0; i < _LOCK_TYPE_COUNT_; i++)
-			InitializeCriticalSection(&_cs[i]);
-	}
-
-	static void release()
-	{
-		for (int i = 0; i < _LOCK_TYPE_COUNT_; i++)
-			DeleteCriticalSection(&_cs[i]);
-	}
+	static void initialize();
+	static void release();
 };
