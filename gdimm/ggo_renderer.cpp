@@ -149,6 +149,8 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
 
+	POINT pen_pos = _cursor;
+
 	// identity matrix
 	memset(&_matrix, 0, sizeof(MAT2));
 	_matrix.eM11.value = 1;
@@ -182,11 +184,10 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 
 		if (bmp_glyph != NULL)
 		{
-			POINT adjusted_pos = _cursor;
-			adjusted_pos.x += bmp_glyph->left;
-
 			_glyphs.push_back(bmp_glyph);
-			_glyph_pos.push_back(adjusted_pos);
+
+			POINT curr_pos = {pen_pos.x - _cursor.x + bmp_glyph->left, pen_pos.y - _cursor.y};
+			_glyph_pos.push_back(curr_pos);
 		}
 
 		POINT glyph_advance = {0, glyph_metrics.gmCellIncY};
@@ -204,9 +205,11 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 				glyph_advance.x = char_advance;
 		}
 
-		_cursor.x += glyph_advance.x;
-		_cursor.y += glyph_advance.y;
+		pen_pos.x += glyph_advance.x;
+		pen_pos.y += glyph_advance.y;
 	}
+
+	_cursor = pen_pos;
 
 	return true;
 }

@@ -31,7 +31,7 @@
 			<max_height>72</max_height>
 			<render_mono>0</render_mono>
 			<render_non_aa>0</render_non_aa>
-			<renderer>1</renderer>
+			<renderer>2</renderer>
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>

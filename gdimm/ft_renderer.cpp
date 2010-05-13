@@ -195,7 +195,7 @@ void ft_renderer::update_glyph_pos(UINT options, CONST INT *lpDx)
 	for (size_t i = 0; i < _glyphs.size(); i++)
 	{
 		_glyph_pos[i].x = pen_pos.x - _cursor.x + _glyphs[i]->left;
-		_glyph_pos[i].y = pen_pos.y - pen_pos.y;
+		_glyph_pos[i].y = pen_pos.y - _cursor.y;
 
 		const LONG char_advance = from_16dot16(_glyphs[i]->root.advance.x) + _char_extra;
 		LONG advance_x;
