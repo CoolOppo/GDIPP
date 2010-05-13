@@ -56,6 +56,15 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 #endif // _M_X64
 
 	h_gdimm = LoadLibraryW(gdimm_path);
+#else
+	// get setting file path
+	wchar_t setting_path[MAX_PATH];
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
+	assert(b_ret);
+
+	gdipp_init_setting();
+	b_ret = gdipp_load_setting(setting_path);
+	assert(b_ret);
 #endif // render
 
 #ifdef test

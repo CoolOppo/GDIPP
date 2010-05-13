@@ -13,13 +13,9 @@
 #include <atlbase.h>
 #include <comutil.h>
 #include <objbase.h>
-#include <shlwapi.h>
-#include <tlhelp32.h>
 #include <wbemidl.h>
 
 // C RunTime Header Files
-#include <list>
-#include <map>
 #include <process.h>
 #include <sstream>
 #include <string>
@@ -27,4 +23,3 @@
 
 // TODO: reference additional headers your program requires here
 #include "fassert.h"
-#include <easyhook.h>

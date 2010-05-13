@@ -6,52 +6,16 @@
 
 const FT_Glyph_Class *ggo_renderer::_glyph_clazz = NULL;
 
+ggo_renderer::ggo_renderer(HDC hdc)
+:
+gdimm_gdi_text(hdc)
+{
+}
+
 ggo_renderer::~ggo_renderer()
 {
 	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
 		FT_Done_Glyph((FT_Glyph) *iter);
-}
-
-bool ggo_renderer::init(HDC hdc)
-{
-	if (!gdimm_gdi_text::init(hdc))
-		return false;
-
-	/*
-	glyph clazz is a private field, cannot be constructed through FreeType API
-	instead, we load the glyph of the default character from the current font
-	use the clazz for all subsequent FT_OutlineGlyph
-	
-	we only deal with fonts in outlines, the glyph clazz must be ft_outline_glyph_class
-	glyph class is initialized only once
-	*/
-
-	FT_Error ft_error;
-
-	if (_glyph_clazz == NULL)
-	{
-		const long font_id = font_man_instance.register_font(_hdc_text, metric_face_name(_outline_metrics));
-		const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
-
-		FT_Face font_face;
-		ft_error = FTC_Manager_LookupFace(ft_cache_man, ft_face_id, &font_face);
-		assert(ft_error == 0);
-
-		FTC_ScalerRec cache_scale = {ft_face_id, 0, 0, 1, 0, 0};
-		FT_Size font_size;
-		ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
-		assert(ft_error == 0);
-
-		ft_error = FT_Load_Char(font_face, _outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
-		assert(ft_error == 0);
-
-		FT_Glyph useless;
-		FT_Get_Glyph(font_face->glyph, &useless);
-		_glyph_clazz = useless->clazz;
-		FT_Done_Glyph(useless);
-	}
-
-	return true;
 }
 
 const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
@@ -183,7 +147,7 @@ const FT_BitmapGlyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
-	const int dx_factor = ((options & ETO_PDY) ? 2 : 1);
+	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
 
 	// identity matrix
 	memset(&_matrix, 0, sizeof(MAT2));
@@ -232,7 +196,7 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 			glyph_advance.x = char_advance;
 		else
 		{
-			glyph_advance.x = lpDx[i * dx_factor];
+			glyph_advance.x = lpDx[i * advance_factor];
 
 			// the last element in lpDx may be 0
 			// in that case, we use the character advancement
@@ -242,6 +206,48 @@ bool ggo_renderer::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UI
 
 		_cursor.x += glyph_advance.x;
 		_cursor.y += glyph_advance.y;
+	}
+
+	return true;
+}
+
+bool ggo_renderer::init()
+{
+	if (!gdimm_gdi_text::init())
+		return false;
+
+	/*
+	glyph clazz is a private field, cannot be constructed through FreeType API
+	instead, we load the glyph of the default character from the current font
+	use the clazz for all subsequent FT_OutlineGlyph
+	
+	we only deal with fonts in outlines, the glyph clazz must be ft_outline_glyph_class
+	glyph class is initialized only once
+	*/
+
+	FT_Error ft_error;
+
+	if (_glyph_clazz == NULL)
+	{
+		const long font_id = font_man_instance.register_font(_hdc_text, metric_face_name(_outline_metrics));
+		const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
+
+		FT_Face font_face;
+		ft_error = FTC_Manager_LookupFace(ft_cache_man, ft_face_id, &font_face);
+		assert(ft_error == 0);
+
+		FTC_ScalerRec cache_scale = {ft_face_id, 0, 0, 1, 0, 0};
+		FT_Size font_size;
+		ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
+		assert(ft_error == 0);
+
+		ft_error = FT_Load_Char(font_face, _outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
+		assert(ft_error == 0);
+
+		FT_Glyph useless;
+		FT_Get_Glyph(font_face->glyph, &useless);
+		_glyph_clazz = useless->clazz;
+		FT_Done_Glyph(useless);
 	}
 
 	return true;

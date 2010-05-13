@@ -42,7 +42,7 @@ BOOL APIENTRY DllMain(
 	{
 	case DLL_PROCESS_ATTACH:
 		h_self = hModule;
-		gdipp_register_module(hModule);
+		gdipp_register_minidump_module(hModule);
 
 		// get setting file path
 		wchar_t setting_path[MAX_PATH];
@@ -61,21 +61,21 @@ BOOL APIENTRY DllMain(
 
 		font_man_instance.tls_index = TlsAlloc();
 		assert(font_man_instance.tls_index != TLS_OUT_OF_INDEXES);
-		font_man_instance.create_linked_font_holder();
+		font_man_instance.create_font_holder();
 
 		return hook_instance.hook();
 	case DLL_THREAD_ATTACH:
-		font_man_instance.create_linked_font_holder();
+		font_man_instance.create_font_holder();
 
 		break;
 	case DLL_THREAD_DETACH:
-		font_man_instance.delete_linked_font_holder();
+		font_man_instance.delete_font_holder();
 
 		break;
 	case DLL_PROCESS_DETACH:
 		hook_instance.unhook();
 
-		font_man_instance.delete_linked_font_holder();
+		font_man_instance.delete_font_holder();
 		TlsFree(font_man_instance.tls_index);
 
 		destroy_freetype();

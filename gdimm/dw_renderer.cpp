@@ -1,45 +1,37 @@
 #include "stdafx.h"
 #include "dw_renderer.h"
 
-dw_renderer::dw_renderer(
-	IDWriteBitmapRenderTarget* render_target,
-	IDWriteRenderingParams* render_params,
-	COLORREF text_color
-	)
+gdimm_dw_renderer::gdimm_dw_renderer(IDWriteRenderingParams* render_params)
 :
 _ref_count(0), 
-_render_target(render_target),
-_render_params(render_params),
-_text_color(text_color)
+_render_params(render_params)
 {
-	render_target->AddRef();
 	render_params->AddRef();
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::~dw_renderer							   *
+*  gdimm_dw_renderer::~gdimm_dw_renderer							   *
 *																 *
 *  Destructor releases the interfaces passed when the class was   *
 *  created.													   *
 *																 *
 ******************************************************************/
 
-dw_renderer::~dw_renderer()
+gdimm_dw_renderer::~gdimm_dw_renderer()
 {
-	_render_target->Release();
 	_render_params->Release();
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::QueryInterface								*
+*  gdimm_dw_renderer::QueryInterface								*
 *																 *
 *  Query interface implementation								 *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::QueryInterface(
+IFACEMETHODIMP gdimm_dw_renderer::QueryInterface(
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject
 	)
@@ -67,27 +59,27 @@ IFACEMETHODIMP dw_renderer::QueryInterface(
 
 /******************************************************************
 *																 *
-*  dw_renderer::AddRef										*
+*  gdimm_dw_renderer::AddRef										*
 *																 *
 *  Increments the ref count									   *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP_(ULONG) dw_renderer::AddRef()
+IFACEMETHODIMP_(ULONG) gdimm_dw_renderer::AddRef()
 {
 	return InterlockedIncrement(&_ref_count);
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::Release									   *
+*  gdimm_dw_renderer::Release									   *
 *																 *
 *  Decrements the ref count and deletes the instance if the ref   *
 *  count becomes 0												*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP_(ULONG) dw_renderer::Release()
+IFACEMETHODIMP_(ULONG) gdimm_dw_renderer::Release()
 {
 	long newCount = InterlockedDecrement(&_ref_count);
 
@@ -101,7 +93,7 @@ IFACEMETHODIMP_(ULONG) dw_renderer::Release()
 
 /******************************************************************
 *																 *
-*  dw_renderer::IsPixelSnappingDisabled					   *
+*  gdimm_dw_renderer::IsPixelSnappingDisabled					   *
 *																 *
 *  Determines whether pixel snapping is disabled. The recommended *
 *  default is FALSE, unless doing animation that requires		 *
@@ -109,7 +101,7 @@ IFACEMETHODIMP_(ULONG) dw_renderer::Release()
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::IsPixelSnappingDisabled(
+IFACEMETHODIMP gdimm_dw_renderer::IsPixelSnappingDisabled(
 	__maybenull void* clientDrawingContext,
 	__out BOOL* isDisabled
 	)
@@ -120,49 +112,56 @@ IFACEMETHODIMP dw_renderer::IsPixelSnappingDisabled(
 
 /******************************************************************
 *																 *
-*  dw_renderer::GetCurrentTransform						   *
+*  gdimm_dw_renderer::GetCurrentTransform						   *
 *																 *
 *  Returns the current transform applied to the render target..   *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::GetCurrentTransform(
+IFACEMETHODIMP gdimm_dw_renderer::GetCurrentTransform(
 	__maybenull void* clientDrawingContext,
 	__out DWRITE_MATRIX* transform
 	)
 {
 	//forward the render target's transform
-	_render_target->GetCurrentTransform(transform);
+
+	assert(clientDrawingContext != NULL);
+	drawing_context *context = (drawing_context*) clientDrawingContext;
+
+	context->render_target->GetCurrentTransform(transform);
 	return S_OK;
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::GetPixelsPerDip							   *
+*  gdimm_dw_renderer::GetPixelsPerDip							   *
 *																 *
 *  This returns the number of pixels per DIP.					 *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::GetPixelsPerDip(
+IFACEMETHODIMP gdimm_dw_renderer::GetPixelsPerDip(
 	__maybenull void* clientDrawingContext,
 	__out FLOAT* pixelsPerDip
 	)
 {
-	*pixelsPerDip = _render_target->GetPixelsPerDip();
+	assert(clientDrawingContext != NULL);
+	drawing_context *context = (drawing_context*) clientDrawingContext;
+
+	*pixelsPerDip = context->render_target->GetPixelsPerDip();
 	return S_OK;
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::DrawGlyphRun								  *
+*  gdimm_dw_renderer::DrawGlyphRun								  *
 *																 *
 *  Gets GlyphRun outlines via IDWriteFontFace::GetGlyphRunOutline *
 *  and then draws and fills them using Direct2D path geometries   *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::DrawGlyphRun(
+IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -172,27 +171,42 @@ IFACEMETHODIMP dw_renderer::DrawGlyphRun(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
-	HRESULT hr = _render_target->DrawGlyphRun(
-		baselineOriginX,
-		baselineOriginY,
-		measuringMode,
-		glyphRun,
-		_render_params,
-		_text_color);
+	assert(clientDrawingContext != NULL);
+	drawing_context *context = (drawing_context*) clientDrawingContext;
 
-	return hr;
+	if (context->advances == NULL)
+	{
+		return context->render_target->DrawGlyphRun(baselineOriginX,
+			baselineOriginY,
+			measuringMode,
+			glyphRun,
+			_render_params,
+			context->text_color);
+	}
+	else
+	{
+		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
+		final_glyph_run.glyphAdvances = context->advances;
+
+		return context->render_target->DrawGlyphRun(baselineOriginX,
+			baselineOriginY,
+			measuringMode,
+			&final_glyph_run,
+			_render_params,
+			context->text_color);
+	}
 }
 
 /******************************************************************
 *																 *
-*  dw_renderer::DrawUnderline								 *
+*  gdimm_dw_renderer::DrawUnderline								 *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::DrawUnderline(
+IFACEMETHODIMP gdimm_dw_renderer::DrawUnderline(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -206,14 +220,14 @@ IFACEMETHODIMP dw_renderer::DrawUnderline(
 
 /******************************************************************
 *																 *
-*  dw_renderer::DrawStrikethrough							 *
+*  gdimm_dw_renderer::DrawStrikethrough							 *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::DrawStrikethrough(
+IFACEMETHODIMP gdimm_dw_renderer::DrawStrikethrough(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -227,14 +241,14 @@ IFACEMETHODIMP dw_renderer::DrawStrikethrough(
 
 /******************************************************************
 *																 *
-*  dw_renderer::DrawInlineObject							  *
+*  gdimm_dw_renderer::DrawInlineObject							  *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP dw_renderer::DrawInlineObject(
+IFACEMETHODIMP gdimm_dw_renderer::DrawInlineObject(
 	__maybenull void* clientDrawingContext,
 	FLOAT originX,
 	FLOAT originY,

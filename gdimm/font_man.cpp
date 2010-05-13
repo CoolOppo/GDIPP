@@ -3,8 +3,12 @@
 #include "ft.h"
 #include "lock.h"
 
-// table name for GetFontData() to get whole ttc file data
-#define TTCF_FONT_TABLE mmioFOURCC('t', 't', 'c', 'f')
+#define TTCF_TABLE_TAG mmioFOURCC('t', 't', 'c', 'f')
+#define OS2_TABLE_TAG mmioFOURCC('O', 'S', '/', '2')
+
+// little-endian <-> big-endian
+#define SWAPWORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
+#define SWAPLONG(x) MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
 
 DWORD gdimm_font_man::tls_index;
 
@@ -20,7 +24,7 @@ gdimm_font_man::~gdimm_font_man()
 	}
 }
 
-unsigned long gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
+unsigned long gdimm_font_man::stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
 {
 	// callback function, called when freetype requests font data
 
@@ -49,12 +53,20 @@ unsigned long gdimm_font_man::stream_IoFunc(FT_Stream stream, unsigned long offs
 	return read_size;
 }
 
-DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header) const
+void gdimm_font_man::stream_close(FT_Stream stream)
 {
-	table_header = TTCF_FONT_TABLE;
+	// GetFontData needs no close
+}
 
-	// specify 0 as table index to retrieve font data from ttf files
-	// specify ttcf to retrieve from ttc files
+DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header)
+{
+	table_header = TTCF_TABLE_TAG;
+
+	/*
+	try to get font file size with ttcf tag first
+	if succeeds, the font face is part of a TTC file
+	otherwise, the font face is a standalone TrueType font file
+	*/
 	DWORD font_size = GetFontData(font_holder, table_header, 0, NULL, 0);
 	if (font_size == GDI_ERROR)
 	{
@@ -66,10 +78,89 @@ DWORD gdimm_font_man::get_font_size(HDC font_holder, DWORD &table_header) const
 	return font_size;
 }
 
+DWORD gdimm_font_man::get_ttc_face_index(HDC font_holder, DWORD ttc_file_size)
+{
+	// get the index of the current face in its TTC file
+	// by comparing its start offset retrieved from GetFontData and from the TTC header
+
+	// pre-condition: the font file contains TTC header
+
+	DWORD read_size;
+
+	// start offset of the current face
+	DWORD face_start = GetFontData(font_holder, 0, 0, NULL, 0);
+	assert(face_start != GDI_ERROR);
+	face_start = ttc_file_size - face_start;
+
+	DWORD read_offset = sizeof(DWORD) + sizeof(FIXED);
+	DWORD face_count;
+	DWORD buffer_len = sizeof(face_count);
+
+	// number of face records in the TTC header
+	read_size = GetFontData(font_holder, TTCF_TABLE_TAG, read_offset, &face_count, buffer_len);
+	assert(read_size == buffer_len);
+
+	// TrueType font data uses big-endian, while mainstream Windows uses little-endian platforms
+	face_count = SWAPLONG(face_count);
+	read_offset += buffer_len;
+
+	for (DWORD i = 0; i < face_count; i++)
+	{
+		// start offset of the current record
+		DWORD curr_start;
+		buffer_len = sizeof(curr_start);
+		read_size = GetFontData(font_holder, TTCF_TABLE_TAG, read_offset, &curr_start, buffer_len);
+		assert(read_size == buffer_len);
+		curr_start = SWAPLONG(curr_start);
+
+		if (curr_start == face_start)
+			return i;
+
+		read_offset += buffer_len;
+	}
+
+	return -1;
+}
+
+bool gdimm_font_man::get_os2_info(HDC font_holder, font_info& info)
+{
+	DWORD font_data_size;
+
+	font_data_size = GetFontData(font_holder,
+		OS2_TABLE_TAG,
+		offsetof(TT_OS2, xAvgCharWidth),
+		&info.xAvgCharWidth,
+		sizeof(FT_Short));
+	if (font_data_size == GDI_ERROR)
+		return false;
+
+	font_data_size = GetFontData(font_holder,
+		OS2_TABLE_TAG,
+		offsetof(TT_OS2, usWeightClass),
+		&info.usWeightClass,
+		sizeof(FT_UShort));
+	if (font_data_size == GDI_ERROR)
+		return false;
+
+	font_data_size = GetFontData(font_holder,
+		OS2_TABLE_TAG,
+		offsetof(TT_OS2, fsSelection),
+		&info.fsSelection,
+		sizeof(FT_UShort));
+	if (font_data_size == GDI_ERROR)
+		return false;
+
+	info.xAvgCharWidth = SWAPWORD(info.xAvgCharWidth);
+	info.usWeightClass = SWAPWORD(info.usWeightClass);
+	info.fsSelection = SWAPWORD(info.fsSelection);
+
+	return true;
+}
+
 HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const
 {
 	LOGFONTW new_font_attr = font_attr;
-	
+
 	/*
 	this reset is essential to make GetGlyphIndices work correctly
 	for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
@@ -96,7 +187,7 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_a
 	return new_hfont;
 }
 
-void *gdimm_font_man::create_linked_font_holder()
+void *gdimm_font_man::create_font_holder()
 {
 	BOOL b_ret;
 
@@ -116,7 +207,7 @@ void *gdimm_font_man::create_linked_font_holder()
 	return font_holder;
 }
 
-void gdimm_font_man::delete_linked_font_holder()
+void gdimm_font_man::delete_font_holder()
 {
 	BOOL b_ret;
 
@@ -135,7 +226,9 @@ void gdimm_font_man::delete_linked_font_holder()
 
 long gdimm_font_man::register_font(HDC hdc, const wchar_t *font_face)
 {
-	tls_font_holder *font_holder = (tls_font_holder*) create_linked_font_holder();
+	bool b_ret;
+
+	tls_font_holder *font_holder = (tls_font_holder*) create_font_holder();
 	assert(font_holder != NULL);
 
 	// use passed HDC as registered font holder
@@ -154,10 +247,19 @@ long gdimm_font_man::register_font(HDC hdc, const wchar_t *font_face)
 			font_info new_font_data = {};
 
 			new_font_data.hfont = NULL;
-			new_font_data.stream.size = get_font_size(hdc, new_font_data.table_header);
+			new_font_data.stream.size = get_font_size(font_holder->registered, new_font_data.table_header);
 			new_font_data.stream.descriptor.value = new_font_id;
-			new_font_data.stream.read = stream_IoFunc;
-			new_font_data.stream.close = stream_CloseFunc;
+			new_font_data.stream.read = stream_io;
+			new_font_data.stream.close = stream_close;
+
+			if (new_font_data.table_header != 0)
+			{
+				new_font_data.face_index = get_ttc_face_index(font_holder->registered, new_font_data.stream.size);
+				assert(new_font_data.face_index != -1);
+			}
+
+			b_ret = get_os2_info(font_holder->registered, new_font_data);
+			assert(b_ret);
 
 			_reg_ids[font_face] = new_font_id;
 			_reg_fonts[new_font_id] = new_font_data;
@@ -172,9 +274,11 @@ long gdimm_font_man::register_font(HDC hdc, const wchar_t *font_face)
 
 long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
 {
+	bool b_ret;
+
 	// gdimm may be attached to a process which already has multi threads
 	// always check if the current thread has linked font holder
-	const tls_font_holder *font_holder = (const tls_font_holder*) create_linked_font_holder();
+	const tls_font_holder *font_holder = (const tls_font_holder*) create_font_holder();
 
 	HFONT linked_font = create_linked_font(font_holder->linked, font_attr, font_family, font_face);
 	if (linked_font == NULL)
@@ -196,8 +300,17 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_
 			new_font_data.hfont = linked_font;
 			new_font_data.stream.size = get_font_size(font_holder->linked, new_font_data.table_header);
 			new_font_data.stream.descriptor.value = new_font_id;
-			new_font_data.stream.read = stream_IoFunc;
-			new_font_data.stream.close = stream_CloseFunc;
+			new_font_data.stream.read = stream_io;
+			new_font_data.stream.close = stream_close;
+
+			if (new_font_data.table_header != 0)
+			{
+				new_font_data.face_index = get_ttc_face_index(font_holder->linked, new_font_data.stream.size);
+				assert(new_font_data.face_index != -1);
+			}
+
+			b_ret = get_os2_info(font_holder->linked, new_font_data);
+			assert(b_ret);
 
 			_linked_ids[font_face] = new_font_id;
 			_linked_fonts[new_font_id] = new_font_data;
@@ -229,7 +342,7 @@ void gdimm_font_man::get_glyph_indices(long font_id, const wchar_t *str, int cou
 	assert(converted == count);
 }
 
-FT_Stream gdimm_font_man::get_font_stream(long font_id)
+FT_Stream gdimm_font_man::get_stream(long font_id)
 {
 	if (font_id >= 0)
 		return &_reg_fonts[font_id].stream;
@@ -237,21 +350,34 @@ FT_Stream gdimm_font_man::get_font_stream(long font_id)
 		return &_linked_fonts[font_id].stream;
 }
 
-const TT_OS2 &gdimm_font_man::get_os2_table(FTC_FaceID face_id)
+ULONG gdimm_font_man::get_face_index(long font_id)
 {
-	FT_Error ft_error;
+	if (font_id >= 0)
+		return _reg_fonts[font_id].face_index;
+	else
+		return _linked_fonts[font_id].face_index;
+}
 
-	map<FTC_FaceID, TT_OS2>::const_iterator iter = _os2_tables.find(face_id);
+FT_Short gdimm_font_man::get_xAvgCharWidth(long font_id)
+{
+	if (font_id >= 0)
+		return _reg_fonts[font_id].xAvgCharWidth;
+	else
+		return _linked_fonts[font_id].xAvgCharWidth;
+}
 
-	if (iter == _os2_tables.end())
-	{
-		// get the OS/2 table of the current font
-		FT_Face ft_face;
-		ft_error = FTC_Manager_LookupFace(ft_cache_man, face_id, &ft_face);
-		assert(ft_error == 0);
+FT_UShort gdimm_font_man::get_usWeightClass(long font_id)
+{
+	if (font_id >= 0)
+		return _reg_fonts[font_id].usWeightClass;
+	else
+		return _linked_fonts[font_id].usWeightClass;
+}
 
-		_os2_tables[face_id] = *(const TT_OS2*) FT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
-	}
-
-	return _os2_tables[face_id];
+FT_UShort gdimm_font_man::get_fsSelection(long font_id)
+{
+	if (font_id >= 0)
+		return _reg_fonts[font_id].fsSelection;
+	else
+		return _linked_fonts[font_id].fsSelection;
 }

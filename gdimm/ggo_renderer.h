@@ -11,11 +11,11 @@ class ggo_renderer : public gdimm_gdi_text
 	FT_Render_Mode _render_mode;
 
 	const FT_BitmapGlyph outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
-
 	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
 
 public:
+	ggo_renderer(HDC hdc);
 	~ggo_renderer();
 
-	virtual bool init(HDC hdc);
+	virtual bool init();
 };

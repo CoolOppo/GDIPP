@@ -8,11 +8,7 @@ class svc_mon
 	IWbemObjectSink *_sink;
 
 public:
-	svc_mon()
-	: 
-	_svc(NULL),
-	_sink(NULL)
-	{};
+	svc_mon();
 
 	bool start_monitor();
 	void stop_monitor();

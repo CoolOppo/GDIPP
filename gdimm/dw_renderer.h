@@ -1,20 +1,20 @@
 #pragma once
 
-class dw_renderer : public IDWriteTextRenderer
+class gdimm_dw_renderer : public IDWriteTextRenderer
 {
 	LONG _ref_count;
-	IDWriteBitmapRenderTarget* _render_target;
 	IDWriteRenderingParams* _render_params;
-	COLORREF _text_color;
 
 public:
-	dw_renderer(
-		IDWriteBitmapRenderTarget* render_target,
-		IDWriteRenderingParams* render_params,
-		COLORREF text_color
-		);
+	struct drawing_context
+	{
+		IDWriteBitmapRenderTarget* render_target;
+		COLORREF text_color;
+		const FLOAT *advances;
+	};
 
-	dw_renderer::~dw_renderer();
+	gdimm_dw_renderer(IDWriteRenderingParams* render_params);
+	gdimm_dw_renderer::~gdimm_dw_renderer();
 
 public:
 	IFACEMETHOD(QueryInterface) (

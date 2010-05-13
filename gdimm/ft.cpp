@@ -48,9 +48,11 @@ void destroy_freetype()
 
 FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *aface)
 {
-	FT_Open_Args args;
+	const long font_id = (long) face_id;
+
+	FT_Open_Args args = {};
 	args.flags = FT_OPEN_STREAM;
-	args.stream = font_man_instance.get_font_stream((long) face_id);
+	args.stream = font_man_instance.get_stream(font_id);
 	
-	return FT_Open_Face(library, &args, 0, aface);
+	return FT_Open_Face(library, &args, font_man_instance.get_face_index(font_id), aface);
 }

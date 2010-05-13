@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "font_link.h"
 
-#define MAX_VALUE_NAME 16383
+#define MAX_VALUE_NAME 1024
 
 gdimm_font_link::gdimm_font_link()
 {
@@ -126,7 +126,7 @@ gdimm_font_link::gdimm_font_link()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const wchar_t *gdimm_font_link::lookup(const wchar_t *font_name, size_t index) const
+const wchar_t *gdimm_font_link::lookup_link(const wchar_t *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

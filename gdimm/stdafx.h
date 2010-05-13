@@ -21,17 +21,19 @@
 #include <list>
 #include <map>
 #include <process.h>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
 // 3rd-party dependency libraries
 #include "ft2build.h"
+#include FT_BBOX_H
 #include FT_CACHE_H
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-#include FT_OUTLINE_H
 #include FT_LCD_FILTER_H
+#include FT_OUTLINE_H
 #include FT_TRUETYPE_TABLES_H
 
 #include <easyhook.h>

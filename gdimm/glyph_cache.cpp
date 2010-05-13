@@ -4,6 +4,33 @@
 #include "lock.h"
 #include <gdipp_common.h>
 
+bool gdimm_glyph_cache::cache_trait::operator==(const gdimm_glyph_cache::cache_trait &trait) const
+{
+	return (memcmp(this, &trait, sizeof(gdimm_glyph_cache::cache_trait)) == 0);
+}
+
+gdimm_glyph_cache::cache_node::cache_node()
+:
+ref_count(0)
+{
+}
+
+gdimm_glyph_cache::gdimm_glyph_cache()
+:
+_cached_bytes(0)
+{
+}
+
+void gdimm_glyph_cache::add_ref(const void *cache_node_ptr)
+{
+	((cache_node*)cache_node_ptr)->ref_count += 1;
+}
+
+void gdimm_glyph_cache::release(const void *cache_node_ptr)
+{
+	((cache_node*)cache_node_ptr)->ref_count -= 1;
+}
+
 void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)
 {
 	for (cache_map::const_iterator iter = glyph_cache.begin(); iter != glyph_cache.end(); iter++)
@@ -15,16 +42,6 @@ void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)
 
 		FT_Done_Glyph((FT_Glyph) glyph);
 	}
-}
-
-void gdimm_glyph_cache::add_ref(const void *cache_node_ptr)
-{
-	((cache_node*)cache_node_ptr)->ref_count += 1;
-}
-
-void gdimm_glyph_cache::release(const void *cache_node_ptr)
-{
-	((cache_node*)cache_node_ptr)->ref_count -= 1;
 }
 
 const FT_BitmapGlyph gdimm_glyph_cache::lookup_glyph(const cache_trait &trait, FT_UInt glyph_index, const void *&cache_node_ptr)

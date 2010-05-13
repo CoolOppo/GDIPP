@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
-	<version>0.7.5</version>
+	<version>0.8.0</version>
 	
 	<gdimm>
-		<process name="VirtualBox\.exe">
-			<zero_alpha>1</zero_alpha>
+		<process name="explorer\.exe">
+			<zero_alpha>0</zero_alpha>
 		</process>
 		
 		<process name=".+\.exe">
@@ -31,14 +31,14 @@
 			<max_height>72</max_height>
 			<render_mono>0</render_mono>
 			<render_non_aa>0</render_non_aa>
-			<renderer>2</renderer>
+			<renderer>1</renderer>
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>
 				<alpha>8</alpha>
 			</shadow>
 			<subpixel_render>1</subpixel_render>
-			<zero_alpha>0</zero_alpha>
+			<zero_alpha>1</zero_alpha>
 		</font>
 	</gdimm>
 	

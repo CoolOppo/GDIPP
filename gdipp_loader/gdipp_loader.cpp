@@ -30,45 +30,39 @@ int APIENTRY wWinMain(
 	PROCESS_INFORMATION pi;
 	
 	b_ret = CreateProcessW(argv[0], lpCmdLine, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, working_dir, &si, &pi);
-	if (!b_ret)
-	{
-		MessageBoxW(NULL, L"Unable to create the target process.", L"gdipp Loader", MB_OK | MB_ICONERROR);
-		LocalFree(argv);
-		return EXIT_FAILURE;
-	}
-
-	const gdipp_inject_payload payload = {GDIPP_LOADER, NULL};
-	wchar_t gdimm_path[MAX_PATH];
-
-#ifdef _M_X64
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
-	assert(b_ret);
-
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, gdimm_path, (PVOID) &payload, sizeof(gdipp_inject_payload));
-#else
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
-	assert(b_ret);
-
-	eh_error = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, gdimm_path, NULL, (PVOID) &payload, sizeof(gdipp_inject_payload));
-#endif // _M_X64
-
-	if (eh_error != 0)
-	{
-		b_ret = TerminateProcess(pi.hProcess, 0);
-		assert(b_ret);
-
-		wstring error_msg = L"Unable to inject gdimm.dll to the new process";
-
-		// STATUS_WOW_ASSERTION
-		if (eh_error == (NTSTATUS) 0xC0009898L)
-			error_msg += L" due to different bitness. Try the other gdipp Loader";
-
-		error_msg += L".";
-
-		MessageBoxW(NULL, error_msg.c_str(), L"gdipp Loader", MB_OK | MB_ICONERROR);
-	}
-
 	LocalFree(argv);
 
-	return EXIT_SUCCESS;
+	if (b_ret)
+	{
+		gdipp_init_payload(GDIPP_LOADER, NULL);
+		eh_error = gdipp_inject_process(pi.dwProcessId, pi.dwThreadId);
+		if (eh_error == 0)
+		{
+			WaitForSingleObject(pi.hProcess, INFINITE);
+			CloseHandle(pi.hThread);
+			CloseHandle(pi.hProcess);
+			return EXIT_SUCCESS;
+		}
+		else
+		{
+			b_ret = TerminateProcess(pi.hProcess, 0);
+			assert(b_ret);
+
+			wstring error_msg = L"Unable to inject gdimm.dll to the new process";
+
+			// STATUS_WOW_ASSERTION
+			if (eh_error == (NTSTATUS) 0xC0009898L)
+				error_msg += L" due to different bitness. Try the other gdipp Loader";
+
+			error_msg += L".";
+
+			MessageBoxW(NULL, error_msg.c_str(), L"gdipp Loader", MB_OK | MB_ICONERROR);
+			return EXIT_FAILURE;
+		}
+	}
+	else
+	{
+		MessageBoxW(NULL, L"Unable to create the target process.", L"gdipp Loader", MB_OK | MB_ICONERROR);
+		return EXIT_FAILURE;
+	}
 }

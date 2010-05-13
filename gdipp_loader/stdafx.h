@@ -14,9 +14,6 @@
 #include <shlwapi.h>
 
 // C RunTime Header Files
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <vector>
-
-// TODO: reference additional headers your program requires here
-#include <easyhook.h>

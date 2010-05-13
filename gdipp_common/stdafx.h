@@ -25,3 +25,4 @@
 
  // 3rd-party dependency libraries
 #include <pugixml.hpp>
+#include <easyhook.h>

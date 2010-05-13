@@ -19,13 +19,7 @@ struct font_setting_cache
 		double green;
 		double blue;
 
-		font_gamma()
-		:
-		gray(1.0),
-		red(1.0),
-		green(1.0),
-		blue(1.0)
-		{}
+		font_gamma();
 	};
 
 	struct font_shadow
@@ -34,12 +28,7 @@ struct font_setting_cache
 		LONG offset_y;
 		WORD alpha;
 
-		font_shadow()
-		:
-		offset_x(0),
-		offset_y(0),
-		alpha(8)
-		{}
+		font_shadow();
 	};
 
 	bool auto_hinting;
@@ -56,20 +45,7 @@ struct font_setting_cache
 	bool subpixel_render;
 	bool zero_alpha;
 
-	font_setting_cache()
-	:
-	auto_hinting(false),
-	embedded_bitmap(false),
-	embolden(0),
-	hinting(true),
-	light_mode(true),
-	max_height(72),
-	render_mono(false),
-	render_non_aa(false),
-	renderer(FREETYPE),
-	subpixel_render(true),
-	zero_alpha(false)
-	{}
+	font_setting_cache();
 };
 
 class gdimm_setting_cache

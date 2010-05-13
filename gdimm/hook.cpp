@@ -3,11 +3,13 @@
 #include "ft_renderer.h"
 #include "ggo_renderer.h"
 #include "dw_text.h"
+#include "d2d_text.h"
 #include "gdimm.h"
 #include "lock.h"
 
 HANDLE h_svc_event = NULL;
 HANDLE h_unload = NULL;
+set<HDC> hdc_with_path;
 
 unsigned __stdcall unload_self(void *arglist)
 {
@@ -21,6 +23,33 @@ unsigned __stdcall unload_self(void *arglist)
 
 	_endthreadex(0);
 	return 0;
+}
+
+BOOL WINAPI AbortPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = AbortPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI BeginPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = BeginPath(hdc);
+	if (b_ret)
+		hdc_with_path.insert(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI EndPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = EndPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
 }
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
@@ -77,10 +106,18 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	*/
 	if (GetMapMode(hdc) != MM_TEXT)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	/*
+	if ExtTextOut is called within an open path bracket, different draw function is required
+	because GDI renders the path outline pretty good, and path is rarely used (one example is Google Earth)
+	gdipp does not render HDC with path
+	*/
+	if (hdc_with_path.find(hdc) != hdc_with_path.end())
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	
 #ifdef _DEBUG
 	const wchar_t *debug_text = NULL;
-	//debug_text = L"";
+	//debug_text = L"AaBb";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -110,11 +147,12 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 
 	//gdimm_lock lock(LOCK_DEBUG);
 
-	//ft_renderer text_instance;
-	//ggo_renderer text_instance;
-	gdimm_dw_text text_instance;
+	ft_renderer text_instance(hdc);
+	//ggo_renderer text_instance(hdc);
+	//gdimm_dw_text text_instance(hdc);
+	//gdimm_d2d_text text_instance(hdc);
 
-	if (!text_instance.init(hdc))
+	if (!text_instance.init())
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if (!text_instance.text_out(x, y, options, lprect, lpString, c, lpDx))
@@ -311,6 +349,9 @@ bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 bool gdimm_hook::hook()
 {
 	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
+	install_hook(TEXT("gdi32.dll"), "AbortPath", AbortPath_hook);
+	install_hook(TEXT("gdi32.dll"), "BeginPath", BeginPath_hook);
+	install_hook(TEXT("gdi32.dll"), "EndPath", EndPath_hook);
 
 #ifndef _M_X64
 	// currently not support inject at EIP for 64-bit processes

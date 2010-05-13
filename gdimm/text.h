@@ -21,6 +21,7 @@ protected:
 	const font_setting_cache *_setting_cache;
 
 public:
-	virtual bool init(HDC hdc);
+	gdimm_text(HDC hdc);
+	virtual bool init();
 	virtual bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx) = 0;
 };

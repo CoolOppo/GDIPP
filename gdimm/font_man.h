@@ -9,7 +9,7 @@ class gdimm_font_man
 
 	registered fonts are created outside the font manager
 	they are considered temporary, not managed by font manager
-	there is only one registered font for each thread
+	there is only one registered font in each thread
 	registered fonts are stored in TLS
 	registered fonts have non-negative font id
 
@@ -24,8 +24,17 @@ class gdimm_font_man
 		// handle of the linked font for destructor
 		// NULL if registered font
 		HFONT hfont;
+
+		// used to retrieve font data from GetFontData
 		DWORD table_header;
+		DWORD face_index;
+
 		FT_StreamRec stream;
+		
+		// from OS/2 table
+		FT_Short xAvgCharWidth;
+		FT_UShort usWeightClass;
+		FT_UShort fsSelection;
 	};
 
 	/*
@@ -56,13 +65,13 @@ class gdimm_font_man
 	map<wstring, long> _linked_ids;
 	map<long, font_info> _linked_fonts;
 
-	// font OS/2 table pointers
-	map<FTC_FaceID, TT_OS2> _os2_tables;
+	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
+	static void stream_close(FT_Stream stream);
 
-	static unsigned long stream_IoFunc(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
-	static void stream_CloseFunc(FT_Stream stream) {}
+	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
+	static DWORD get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
+	static bool get_os2_info(HDC font_holder, font_info& info);
 
-	DWORD get_font_size(HDC font_holder, DWORD &table_header) const;
 	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const;
 
 public:
@@ -70,13 +79,17 @@ public:
 
 	~gdimm_font_man();
 
-	static void *create_linked_font_holder();
-	static void delete_linked_font_holder();
+	static void *create_font_holder();
+	static void delete_font_holder();
 
 	long register_font(HDC hdc, const wchar_t *font_face);
 	long lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
-	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
 
-	FT_Stream get_font_stream(long font_id);
-	const TT_OS2 &get_os2_table(FTC_FaceID face_id);
+	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
+	
+	FT_Stream get_stream(long font_id);
+	DWORD get_face_index(long font_id);
+	FT_Short get_xAvgCharWidth(long font_id);
+	FT_UShort get_usWeightClass(long font_id);
+	FT_UShort get_fsSelection(long font_id);
 };

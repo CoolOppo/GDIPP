@@ -10,27 +10,9 @@ using namespace std;
 
 struct wstring_ci_less
 {
-	bool operator()(const wstring &string1, const wstring &string2) const
-	{ return _wcsicmp(string1.c_str(), string2.c_str()) < 0; }
+	GDIPP_API bool operator()(const wstring &string1, const wstring &string2) const;
 };
 
-/*
-GDIPP_SERVICE: gdimm.dll monitors the injector process, and unload itself once the injector process is terminated
-GDIPP_LOADER: gdimm.dll does not care about the injector
-*/
-enum GDIPP_INJECTOR_TYPE
-{
-	GDIPP_SERVICE,
-	GDIPP_LOADER
-};
-
-struct gdipp_inject_payload
-{
-	GDIPP_INJECTOR_TYPE inject_type;
-	wchar_t svc_event_name[MAX_PATH]; 
-};
-
-GDIPP_API void gdipp_register_module(HMODULE h_module);
 GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path);
 
 // setting wrapper APIs
@@ -57,7 +39,31 @@ void wcs_convert(const wchar_t *str, T *converted)
 		wistringstream(str) >> *converted;
 }
 
+// injector APIs
+
+/*
+GDIPP_SERVICE: gdimm.dll monitors the injector process, and unload itself once the injector process is terminated
+GDIPP_LOADER: gdimm.dll does not care about the injector
+*/
+enum GDIPP_INJECTOR_TYPE
+{
+	GDIPP_SERVICE,
+	GDIPP_LOADER
+};
+
+struct gdipp_inject_payload
+{
+	GDIPP_INJECTOR_TYPE inject_type;
+	wchar_t svc_event_name[MAX_PATH]; 
+};
+
+typedef LONG NTSTATUS;
+GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name);
+GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id = 0);
+
 // debug APIs
+GDIPP_API void gdipp_register_minidump_module(HMODULE h_module);
+
 GDIPP_API void gdipp_debug_output(const wchar_t *str = L"");
 GDIPP_API void gdipp_debug_output(const wchar_t *str, unsigned int c);
 GDIPP_API void gdipp_debug_output(const void *ptr, unsigned int size);

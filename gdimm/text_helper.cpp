@@ -2,18 +2,19 @@
 #include "text_helper.h"
 #include "gdimm.h"
 
-#define FT_PAD_FLOOR( x, n )  ( (x) & ~((n)-1) )
-#define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
-#define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
-
-FT_F26Dot6 to_26dot6(const FIXED &fixed)
+FT_F26Dot6 to_26dot6(const FIXED &x)
 {
-	return *((FT_F26Dot6*) &fixed) >> 10;
+	return *((FT_F26Dot6*) &x) >> 10;
 }
 
-LONG from_16dot16(FT_Pos fixed)
+FT_F26Dot6 to_26dot6(FLOAT x)
 {
-	return fixed >> 16;
+	return (FT_F26Dot6)(x * 32);
+}
+
+LONG from_16dot16(FT_Pos x)
+{
+	return x >> 16;
 }
 
 // convert floating point to 16.16 format
@@ -40,8 +41,43 @@ BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 	return TRUE;
 }
 
+POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)
+{
+	POINT baseline = {x, y};
+
+	switch ((TA_LEFT | TA_RIGHT | TA_CENTER) & alignment)
+	{
+	case TA_LEFT:
+		break;
+	case TA_RIGHT:
+		baseline.x -= width;
+		break;
+	case TA_CENTER:
+		baseline.x -= width / 2;
+		break;
+	}
+
+	switch ((TA_TOP | TA_BOTTOM | TA_BASELINE) & alignment)
+	{
+	case TA_TOP:
+		baseline.y += ascent;
+		break;
+	case TA_BOTTOM:
+		baseline.y -= descent;
+		break;
+	case TA_BASELINE:
+		break;
+	}
+
+	return baseline;
+}
+
 int get_bmp_pitch(int width, WORD bpp)
 {
+#define FT_PAD_FLOOR( x, n )  ( (x) & ~((n)-1) )
+#define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
+#define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
+
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
@@ -84,43 +120,41 @@ int get_ft_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
-RECT get_glyph_bmp_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos, POINT cursor)
+RECT get_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
 {
-	RECT bmp_rect = {LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN};
+	RECT glyph_run_rect;
 
-	const size_t last_pos = glyph_pos.size() - 1;
+	const size_t last_index = glyph_pos.size() - 1;
 
 	// condition checks because glyph might be place right-to-left
 
-	if (glyph_pos[last_pos].x >= glyph_pos[0].x)
+	if (glyph_pos[last_index].x >= glyph_pos[0].x)
 	{
 		// left to right
-		bmp_rect.left = glyph_pos[0].x;
-		bmp_rect.right = max(glyph_pos[last_pos].x + get_ft_bmp_width(glyphs[last_pos]->bitmap), cursor.x);
+		glyph_run_rect.left = min(glyph_pos[0].x, 0);
+		glyph_run_rect.right = glyph_pos[last_index].x + get_ft_bmp_width(glyphs[last_index]->bitmap);
 	}
 	else
 	{
 		// right to left
-		bmp_rect.left = min(glyph_pos[last_pos].x, cursor.x);
-		bmp_rect.right = glyph_pos[0].x + get_ft_bmp_width(glyphs[0]->bitmap);
+		glyph_run_rect.left = min(glyph_pos[last_index].x, 0);
+		glyph_run_rect.right = glyph_pos[0].x + get_ft_bmp_width(glyphs[0]->bitmap);
 	}
 
-	/*
-	vertical text is not supported yet
-
-	if (glyph_pos[last_pos].y >= glyph_pos[0].y)
+	if (glyph_pos[last_index].y >= glyph_pos[0].y)
 	{
-		bmp_rect.top = glyph_pos[0].y;
-		bmp_rect.bottom = glyph_pos[last_pos].y + glyphs[last_pos]->bitmap.rows;
+		// top to bottom
+		glyph_run_rect.top = glyph_pos[0].y;
+		glyph_run_rect.bottom = glyph_pos[last_index].y + glyphs[last_index]->bitmap.rows;
 	}
 	else
 	{
-		bmp_rect.top = glyph_pos[last_pos].y;
-		bmp_rect.bottom = glyph_pos[0].y + glyphs[0]->bitmap.rows;
+		// bottom to top
+		glyph_run_rect.top = glyph_pos[last_index].y;
+		glyph_run_rect.bottom = glyph_pos[0].y + glyphs[0]->bitmap.rows;
 	}
-	*/
 
-	return bmp_rect;
+	return glyph_run_rect;
 }
 
 LOGFONTW get_logfont(HDC hdc)

@@ -87,7 +87,6 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-#ifdef test
 	static int rendered = 0;
 	CPaintDC dc(m_hWnd);
 
@@ -102,6 +101,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 	if (rendered <= total_count)
 	{
+#ifdef test
 		// randomize text color
 		dc.SetTextColor(RGB(rand() % 256, rand() % 256, rand() % 256));
 
@@ -154,6 +154,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		wchar_t new_title[100];
 		wsprintf(new_title, TEXT("%s - %u"), window_title, rendered);
 		SetWindowText(new_title);
+#endif // test
 
 		// force redraw the client rect
 		RedrawWindow(NULL, NULL, RDW_INVALIDATE);
@@ -164,11 +165,11 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			prepare_result(dc);
 
 		dc.SelectFont(_curr_font);
+		RECT a = {0, 0, 30, 25};
 		dc.ExtTextOut(10, 10, 0, NULL, _result_str, (UINT) wcslen(_result_str), NULL);
 	}
 
 	rendered += 1;
-#endif // test
 
 	return 0;
 }

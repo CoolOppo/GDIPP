@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "gdipp_common.h"
 #include "setting.h"
+#include "injector.h"
+#include "minidump.h"
 
-vector<HMODULE> h_modules;
-
-HMODULE h_self = NULL;
 gdipp_setting setting_instance;
+gdipp_injector injector_instance;
 
-GDIPP_API void gdipp_register_module(HMODULE h_module)
+GDIPP_API bool wstring_ci_less::operator()(const wstring &string1, const wstring &string2) const
 {
-	h_modules.push_back(h_module);
+	return (_wcsicmp(string1.c_str(), string2.c_str()) < 0);
 }
 
 GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path)
@@ -86,6 +86,21 @@ GDIPP_API bool gdipp_is_process_excluded(const wchar_t *proc_name)
 	return setting_instance.is_process_excluded(proc_name);
 }
 
+GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name)
+{
+	injector_instance.init_payload(injector_type, svc_event_name);
+}
+
+GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id)
+{
+	return injector_instance.inject_process(process_id, thread_id);
+}
+
+GDIPP_API void gdipp_register_minidump_module(HMODULE h_module)
+{
+	h_minidump_modules.push_back(h_module);
+}
+
 #define debug_file_name "C:\\gdipp_debug.log"
 
 GDIPP_API void gdipp_debug_output(const wchar_t *str)
@@ -129,80 +144,6 @@ GDIPP_API void gdipp_debug_output(DWORD num)
 	fclose(f);
 }
 
-LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
-{
-	BOOL b_ret;
-
-	bool ex_in_module = false;
-	for (vector<HMODULE>::const_iterator iter = h_modules.begin(); iter != h_modules.end(); iter++)
-	{
-		MODULEINFO mod_info;
-		b_ret = GetModuleInformation(GetCurrentProcess(), *iter, &mod_info, sizeof(MODULEINFO));
-		if (!b_ret)
-			return EXCEPTION_CONTINUE_SEARCH;
-
-		// exception not from this module
-		if (ExceptionInfo->ExceptionRecord->ExceptionAddress >= mod_info.lpBaseOfDll &&
-			(DWORD) ExceptionInfo->ExceptionRecord->ExceptionAddress <= (DWORD) mod_info.lpBaseOfDll + mod_info.SizeOfImage)
-		{
-			ex_in_module = true;
-			break;
-		}
-	}
-
-	if (!ex_in_module)
-		return EXCEPTION_CONTINUE_SEARCH;
-
-	// path of the crash dump is
-	// [gdipp_directory]\[dmp_dir_name]\[crash_process_name]\[crash_time].dmp
-
-	const time_t curr_time = time(NULL);
-	struct tm curr_tm;
-	errno_t er_ret = localtime_s(&curr_tm, &curr_time);
-	if (er_ret != 0)
-		return EXCEPTION_CONTINUE_SEARCH;
-
-	const wchar_t *dmp_dir_name = L"crash_dump\\";
-	wchar_t dmp_file_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(h_self, dmp_dir_name, dmp_file_path);
-	assert(b_ret);
-	const size_t dmp_dir_len = wcslen(dmp_file_path);
-	assert(dmp_dir_len < MAX_PATH);
-
-	b_ret = CreateDirectoryW(dmp_file_path, NULL);
-	assert(b_ret || GetLastError() == ERROR_ALREADY_EXISTS);
-
-	const DWORD exe_name_len = GetModuleBaseNameW(GetCurrentProcess(), NULL, dmp_file_path + dmp_dir_len, MAX_PATH);
-	if (exe_name_len == 0)
-		return EXCEPTION_CONTINUE_SEARCH;
-
-	b_ret = CreateDirectoryW(dmp_file_path, NULL);
-	assert(b_ret || GetLastError() == ERROR_ALREADY_EXISTS);
-
-	wcsftime(dmp_file_path + dmp_dir_len + exe_name_len, MAX_PATH - dmp_dir_len - exe_name_len, L"\\%Y-%m-%d_%H-%M-%S.dmp", &curr_tm);
-
-	// exception information is necessary for stack trace in the minidump
-	MINIDUMP_EXCEPTION_INFORMATION ex_info = {GetCurrentThreadId(), ExceptionInfo, FALSE};
-
-	const HANDLE dmp_file = CreateFileW(dmp_file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (dmp_file != INVALID_HANDLE_VALUE)
-	{
-		MINIDUMP_TYPE dump_type = (MINIDUMP_TYPE)
-			(
-			MiniDumpWithDataSegs |
-			MiniDumpWithHandleData |
-			MiniDumpScanMemory |
-			MiniDumpWithIndirectlyReferencedMemory |
-			MiniDumpWithFullMemoryInfo |
-			MiniDumpWithThreadInfo
-			);
-		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dmp_file, dump_type, &ex_info, NULL, NULL);
-		CloseHandle(dmp_file);
-	}
-
-	return EXCEPTION_CONTINUE_SEARCH;
-}
-
 BOOL APIENTRY DllMain(
 	HMODULE hModule,
 	DWORD  ul_reason_for_call,
@@ -213,8 +154,7 @@ BOOL APIENTRY DllMain(
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		h_self = hModule;
-		gdipp_register_module(hModule);
+		gdipp_register_minidump_module(hModule);
 
 		// add process-wide vectored exception handler to create minidump
 		h_ex_handler = AddVectoredExceptionHandler(0, create_minidump);

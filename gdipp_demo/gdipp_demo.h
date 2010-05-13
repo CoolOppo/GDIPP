@@ -4,8 +4,8 @@
 
 using namespace std;
 
- #define render
- #define test
+  #define render
+  #define test
 
 extern int total_count;
 extern vector<const wstring> candidate_font;

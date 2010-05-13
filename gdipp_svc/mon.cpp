@@ -1,5 +1,13 @@
 #include "stdafx.h"
 #include "gdipp_svc.h"
+#include <gdipp_common.h>
+
+svc_mon::svc_mon()
+:
+_svc(NULL),
+_sink(NULL)
+{
+}
 
 bool svc_mon::start_monitor()
 {
@@ -27,7 +35,7 @@ bool svc_mon::start_monitor()
 	if (hr != S_OK)
 		return false;
 
-	_sink = new sink_inject;
+	_sink = new inject_sink;
 	_sink->AddRef();
 
 	// get setting file path
