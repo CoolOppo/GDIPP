@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gdimm.h"
+#include "setting_cache.h"
 using namespace std;
 
 class gdimm_text
@@ -13,15 +13,16 @@ protected:
 	COLORREF _text_color;
 
 	// font attributes
-	vector<BYTE> _metric_buf;
-	OUTLINETEXTMETRICW *_outline_metrics;
+	const OUTLINETEXTMETRICW *_outline_metrics;
 	LOGFONTW _font_attr;
 	const wchar_t *_font_face;
 
 	const font_setting_cache *_setting_cache;
 
 public:
-	gdimm_text(HDC hdc);
-	virtual bool init();
+	virtual ~gdimm_text();
+
+	virtual bool begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache);
 	virtual bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx) = 0;
+	virtual void end();
 };

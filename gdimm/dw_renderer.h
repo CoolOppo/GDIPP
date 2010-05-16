@@ -9,6 +9,7 @@ public:
 	struct drawing_context
 	{
 		IDWriteBitmapRenderTarget* render_target;
+		DWRITE_MEASURING_MODE measuring_mode;
 		COLORREF text_color;
 		const FLOAT *advances;
 	};

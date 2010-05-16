@@ -172,13 +172,13 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	)
 {
 	assert(clientDrawingContext != NULL);
-	drawing_context *context = (drawing_context*) clientDrawingContext;
+	const drawing_context *context = (const drawing_context*) clientDrawingContext;
 
 	if (context->advances == NULL)
 	{
 		return context->render_target->DrawGlyphRun(baselineOriginX,
 			baselineOriginY,
-			measuringMode,
+			context->measuring_mode,
 			glyphRun,
 			_render_params,
 			context->text_color);
@@ -190,7 +190,7 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 
 		return context->render_target->DrawGlyphRun(baselineOriginX,
 			baselineOriginY,
-			measuringMode,
+			context->measuring_mode,
 			&final_glyph_run,
 			_render_params,
 			context->text_color);

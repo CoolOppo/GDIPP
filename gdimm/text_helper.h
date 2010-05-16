@@ -1,5 +1,6 @@
 #pragma once
 
+#include "setting_cache.h"
 using namespace std;
 
 const double pi = acos(-1.0);
@@ -31,9 +32,15 @@ bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outl
 
 int get_ft_bmp_width(const FT_Bitmap &bitmap);
 
-RECT get_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos);
+RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos);
+
+// for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
+bool get_ft_render_mode(const wchar_t *font_name, WORD dc_bmp_bpp, FT_Render_Mode &render_mode);
 
 LOGFONTW get_logfont(HDC hdc);
 
-// for given DC bitmap bit count, return the corresponding FT_Glyph_To_Bitmap render mode
-bool get_render_mode(const wchar_t *font_name, BYTE font_quality, WORD dc_bmp_bpp, FT_Render_Mode &render_mode);
+bool is_non_aa(BYTE font_quality, const font_setting_cache *setting_cache);
+
+const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
+const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
+const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);

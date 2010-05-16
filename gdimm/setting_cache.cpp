@@ -33,6 +33,7 @@ subpixel_render(true),
 zero_alpha(false)
 {
 }
+
 const font_setting_cache *gdimm_setting_cache::lookup(const wchar_t *font_name)
 {
 	// if the setting for the specified font is not found

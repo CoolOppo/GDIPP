@@ -120,7 +120,7 @@ int get_ft_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
-RECT get_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
+RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
 {
 	RECT glyph_run_rect;
 
@@ -157,28 +157,9 @@ RECT get_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector
 	return glyph_run_rect;
 }
 
-LOGFONTW get_logfont(HDC hdc)
-{
-	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
-	assert(h_font != NULL);
-
-	LOGFONTW font_attr;
-	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
-
-	return font_attr;
-}
-
-bool get_render_mode(const wchar_t *font_name, BYTE font_quality, WORD dc_bmp_bpp, FT_Render_Mode &render_mode)
+bool get_ft_render_mode(const wchar_t *font_name, WORD dc_bmp_bpp, FT_Render_Mode &render_mode)
 {
 	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
-
-	// non-antialiased font
-	// draw with monochrome mode
-	if (font_quality == NONANTIALIASED_QUALITY && !setting_cache->render_non_aa)
-	{
-		render_mode = FT_RENDER_MODE_MONO;
-		return true;
-	}
 
 	switch (dc_bmp_bpp)
 	{
@@ -198,4 +179,36 @@ bool get_render_mode(const wchar_t *font_name, BYTE font_quality, WORD dc_bmp_bp
 	}
 
 	return true;
+}
+
+LOGFONTW get_logfont(HDC hdc)
+{
+	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
+	assert(h_font != NULL);
+
+	LOGFONTW font_attr;
+	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
+
+	return font_attr;
+}
+
+bool is_non_aa(BYTE font_quality, const font_setting_cache *setting_cache)
+{
+	// non-antialiased font
+	return (font_quality == NONANTIALIASED_QUALITY && !setting_cache->render_non_aa);
+}
+
+const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
+}
+
+const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
+}
+
+const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
+{
+	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
 }

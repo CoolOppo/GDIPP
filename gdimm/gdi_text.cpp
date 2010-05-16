@@ -1,12 +1,7 @@
 #include "stdafx.h"
 #include "gdi_text.h"
 #include "text_helper.h"
-
-gdimm_gdi_text::gdimm_gdi_text(HDC hdc)
-:
-gdimm_text(hdc)
-{
-}
+#include "gdimm.h"
 
 void gdimm_gdi_text::set_bmp_bits_mono(const FT_BitmapGlyph glyph,
 	BYTE *dest_bits,
@@ -32,7 +27,7 @@ void gdimm_gdi_text::set_bmp_bits_mono(const FT_BitmapGlyph glyph,
 	int src_row_ptr = 0;
 	int dest_row_ptr = -top_extra_rows * dest_pitch;
 
-	for (int j = 0; j < bmp_height; j++)
+	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch, dest_row_ptr += dest_pitch)
 	{
 		if (j < top_extra_rows)
 			continue;
@@ -239,7 +234,7 @@ bool gdimm_gdi_text::draw_glyphs(int x,
 	// 1.
 
 	// actual rect occupied by the glyphs
-	RECT glyph_run_rect = get_glyph_run_rect(_glyphs, _glyph_pos);
+	RECT glyph_run_rect = get_ft_glyph_run_rect(_glyphs, _glyph_pos);
 
 	LONG cell_width = glyph_run_rect.right - glyph_run_rect.left;
 	LONG cell_height = _outline_metrics->otmTextMetrics.tmHeight;
@@ -308,104 +303,97 @@ bool gdimm_gdi_text::draw_glyphs(int x,
 		draw_background(_hdc_text, lprect, bg_color);
 	
 	const int bk_mode = GetBkMode(_hdc_text);
+	BOOL success = FALSE;
 	if (bk_mode == OPAQUE)
 	{
 		const RECT bk_rect = {0, 0, cell_width, cell_height};
-		b_ret = draw_background(hdc_canvas, &bk_rect, bg_color);
+		success = draw_background(hdc_canvas, &bk_rect, bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		b_ret = BitBlt(hdc_canvas, 0, 0, cell_width, cell_height, _hdc_text, bmp_rect.left, bmp_rect.top, SRCCOPY);
-	}
-	else
-		b_ret = FALSE;
-
-	if (!b_ret)	
-	{
-		b_ret = DeleteObject(dest_bitmap);
-		assert(b_ret);
-
-		b_ret = DeleteDC(hdc_canvas);
-		assert(b_ret);
-
-		return false;
+		success = BitBlt(hdc_canvas, 0, 0, cell_width, cell_height, _hdc_text, bmp_rect.left, bmp_rect.top, SRCCOPY);
 	}
 
-	// 3.
-
-	for (size_t i = 0; i < _glyphs.size(); i++)
+	if (success)
 	{
-		/*
-		Windows DIB and FreeType Bitmap have different ways to indicate bitmap direction
-		biHeight > 0 means the Windows DIB is bottom-up
-		biHeight < 0 means the Windows DIB is top-down
-		pitch > 0 means the FreeType bitmap is down flow
-		pitch > 0 means the FreeType bitmap is up flow
-		*/
-		
-		const POINT solid_pos = {_glyph_pos[i].x + (baseline.x - bmp_rect.left), 0};
-		const POINT shadow_pos = {solid_pos.x + _setting_cache->shadow.offset_x, solid_pos.y + _setting_cache->shadow.offset_y};
+		// 3.
 
-		switch (_glyphs[i]->bitmap.pixel_mode)
+		for (size_t i = 0; i < _glyphs.size(); i++)
 		{
-		case FT_PIXEL_MODE_MONO:
-			set_bmp_bits_mono(_glyphs[i],
-				dest_bits,
-				solid_pos,
-				cell_width,
-				cell_ascent,
-				cell_descent);
-			break;
-		case FT_PIXEL_MODE_GRAY:
-			if (_setting_cache->shadow.alpha > 0)
-				set_bmp_bits_gray(_glyphs[i],
-				dest_bits,
-				shadow_pos,
-				cell_width,
-				cell_ascent,
-				cell_descent,
-				_setting_cache->shadow.alpha);
-			set_bmp_bits_gray(_glyphs[i],
-				dest_bits,
-				solid_pos,
-				cell_width,
-				cell_ascent,
-				cell_descent,
-				255);
-			break;
-		case FT_PIXEL_MODE_LCD:
-			if (_setting_cache->shadow.alpha > 0)
-				set_bmp_bits_lcd(_glyphs[i],
+			/*
+			Windows DIB and FreeType Bitmap have different ways to indicate bitmap direction
+			biHeight > 0 means the Windows DIB is bottom-up
+			biHeight < 0 means the Windows DIB is top-down
+			pitch > 0 means the FreeType bitmap is down flow
+			pitch > 0 means the FreeType bitmap is up flow
+			*/
+		
+			const POINT solid_pos = {_glyph_pos[i].x + (baseline.x - bmp_rect.left), 0};
+			const POINT shadow_pos = {solid_pos.x + _setting_cache->shadow.offset_x, solid_pos.y + _setting_cache->shadow.offset_y};
+			
+			assert(_glyphs[i]->bitmap.pitch >= 0);
+
+			switch (_glyphs[i]->bitmap.pixel_mode)
+			{
+			case FT_PIXEL_MODE_MONO:
+				set_bmp_bits_mono(_glyphs[i],
+					dest_bits,
+					solid_pos,
+					cell_width,
+					cell_ascent,
+					cell_descent);
+				break;
+			case FT_PIXEL_MODE_GRAY:
+				if (_setting_cache->shadow.alpha > 0)
+					set_bmp_bits_gray(_glyphs[i],
 					dest_bits,
 					shadow_pos,
 					cell_width,
 					cell_ascent,
 					cell_descent,
 					_setting_cache->shadow.alpha);
-			set_bmp_bits_lcd(_glyphs[i],
-				dest_bits,
-				solid_pos,
-				cell_width,
-				cell_ascent,
-				cell_descent,
-				255);
-			break;
+				set_bmp_bits_gray(_glyphs[i],
+					dest_bits,
+					solid_pos,
+					cell_width,
+					cell_ascent,
+					cell_descent,
+					255);
+				break;
+			case FT_PIXEL_MODE_LCD:
+				if (_setting_cache->shadow.alpha > 0)
+					set_bmp_bits_lcd(_glyphs[i],
+						dest_bits,
+						shadow_pos,
+						cell_width,
+						cell_ascent,
+						cell_descent,
+						_setting_cache->shadow.alpha);
+				set_bmp_bits_lcd(_glyphs[i],
+					dest_bits,
+					solid_pos,
+					cell_width,
+					cell_ascent,
+					cell_descent,
+					255);
+				break;
+			}
 		}
+
+		// 4.
+
+		b_ret = BitBlt(_hdc_text,
+			bmp_rect.left,
+			bmp_rect.top,
+			cell_width,
+			cell_height,
+			hdc_canvas,
+			0,
+			0,
+			SRCCOPY);
+		assert(b_ret);
 	}
-
-	// 4.
-
-	b_ret = BitBlt(_hdc_text,
-		bmp_rect.left,
-		bmp_rect.top,
-		cell_width,
-		cell_height,
-		hdc_canvas,
-		0,
-		0,
-		SRCCOPY);
-	assert(b_ret);
 
 	b_ret = DeleteObject(dest_bitmap);
 	assert(b_ret);
@@ -413,20 +401,23 @@ bool gdimm_gdi_text::draw_glyphs(int x,
 	b_ret = DeleteDC(hdc_canvas);
 	assert(b_ret);
 	
-	return true;
+	return !!success;
 }
 
-bool gdimm_gdi_text::init()
+bool gdimm_gdi_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
 {
-	if (!gdimm_text::init())
+	if (!gdimm_text::begin(hdc, outline_metrics, font_face, setting_cache))
 		return false;
 
 	// ignore rotated DC
 	if (_font_attr.lfEscapement % 3600 != 0)
 		return false;
 
-	if (_setting_cache->max_height != 0 && _setting_cache->max_height < _outline_metrics->otmTextMetrics.tmHeight)
-		return false;
+	_char_extra = GetTextCharacterExtra(_hdc_text);
+	assert(_char_extra != 0x8000000);
+
+	_glyphs.clear();
+	_glyph_pos.clear();
 
 	return true;
 }
@@ -436,7 +427,12 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 	BOOL b_ret;
 
 	FT_Render_Mode render_mode;
-	if (!get_render_mode(_font_face, _font_attr.lfQuality, _bmp_info.bmiHeader.biBitCount, render_mode))
+	if (is_non_aa(_font_attr.lfQuality, _setting_cache))
+		render_mode = FT_RENDER_MODE_MONO;
+	else if (!get_ft_render_mode(_font_face, _bmp_info.bmiHeader.biBitCount, render_mode))
+		return false;
+
+	if (render_mode == FT_RENDER_MODE_MONO && !_setting_cache->render_mono)
 		return false;
 
 	BOOL update_cursor;
@@ -454,9 +450,6 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		_cursor.y = y;
 		update_cursor = false;
 	}
-
-	_char_extra = GetTextCharacterExtra(_hdc_text);
-	assert(_char_extra != 0x8000000);
 
 	bool render_success = render(options, lprect, lpString, c, lpDx, render_mode);
 	if (!render_success)

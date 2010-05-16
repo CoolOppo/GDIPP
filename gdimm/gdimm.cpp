@@ -10,26 +10,10 @@
 HMODULE h_self = NULL;
 
 gdimm_font_link font_link_instance;
-gdimm_font_man font_man_instance;
 gdimm_gamma gamma_instance;
 gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
 gdimm_glyph_cache glyph_cache_instance;
-
-const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
-}
-
-const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
-}
-
-const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
-}
 
 BOOL APIENTRY DllMain(
 	HMODULE hModule,
@@ -59,24 +43,17 @@ BOOL APIENTRY DllMain(
 		gdimm_lock::initialize();
 		initialize_freetype();
 
-		font_man_instance.tls_index = TlsAlloc();
-		assert(font_man_instance.tls_index != TLS_OUT_OF_INDEXES);
-		font_man_instance.create_font_holder();
+		gdimm_hook::tls_index = TlsAlloc();
+		assert(gdimm_hook::tls_index != TLS_OUT_OF_INDEXES);
 
 		return hook_instance.hook();
-	case DLL_THREAD_ATTACH:
-		font_man_instance.create_font_holder();
-
-		break;
 	case DLL_THREAD_DETACH:
-		font_man_instance.delete_font_holder();
-
+		gdimm_hook::delete_tls_text();
 		break;
 	case DLL_PROCESS_DETACH:
 		hook_instance.unhook();
-
-		font_man_instance.delete_font_holder();
-		TlsFree(font_man_instance.tls_index);
+		gdimm_hook::delete_tls_text();
+		TlsFree(gdimm_hook::tls_index);
 
 		destroy_freetype();
 		gdimm_lock::release();

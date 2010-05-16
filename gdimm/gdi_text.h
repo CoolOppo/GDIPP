@@ -1,6 +1,7 @@
 #pragma once
 
 #include "text.h"
+#include "font_man.h"
 using namespace std;
 
 class gdimm_gdi_text : public gdimm_text
@@ -45,9 +46,9 @@ protected:
 	vector<const FT_BitmapGlyph> _glyphs;
 	vector<POINT> _glyph_pos;
 
-public:
-	gdimm_gdi_text(HDC hdc);
+	gdimm_font_man _font_man;
 
-	virtual bool init();
-	virtual bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
+public:
+	virtual bool begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache);
+	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

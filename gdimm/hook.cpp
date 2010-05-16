@@ -1,15 +1,18 @@
 #include "stdafx.h"
 #include "hook.h"
-#include "ft_renderer.h"
-#include "ggo_renderer.h"
 #include "dw_text.h"
-#include "d2d_text.h"
+#include "ft_text.h"
+#include "ggo_text.h"
 #include "gdimm.h"
 #include "lock.h"
+#include "text_helper.h"
 
 HANDLE h_svc_event = NULL;
 HANDLE h_unload = NULL;
 set<HDC> hdc_with_path;
+
+DWORD gdimm_hook::tls_index = 0;
+gdimm_text *_text_instances[_RENDERER_TYPE_COUNT_];
 
 unsigned __stdcall unload_self(void *arglist)
 {
@@ -117,7 +120,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const wchar_t *debug_text = NULL;
-	//debug_text = L"AaBb";
+	//debug_text = L"";
 	const int start_index = 0;
 
 	if (debug_text != NULL)
@@ -145,18 +148,46 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 #endif // _DEBUG
 
+	// uncomment this to make rendering single-threaded
 	//gdimm_lock lock(LOCK_DEBUG);
 
-	ft_renderer text_instance(hdc);
-	//ggo_renderer text_instance(hdc);
-	//gdimm_dw_text text_instance(hdc);
-	//gdimm_d2d_text text_instance(hdc);
-
-	if (!text_instance.init())
+	vector<BYTE> metric_buf;
+	OUTLINETEXTMETRICW *outline_metrics;
+	if (!get_dc_metrics(hdc, metric_buf, outline_metrics))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!text_instance.text_out(x, y, options, lprect, lpString, c, lpDx))
+	const wchar_t *font_face = metric_face_name(outline_metrics);
+	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_face);
+	if (setting_cache->renderer == CLEARTYPE)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	// gdimm may be attached to a process which already has multiple threads
+	// always check if the current thread has text instances
+	gdimm_text **text_instances = (gdimm_text**) gdimm_hook::create_tls_text();
+
+	if (text_instances[setting_cache->renderer] == NULL)
+	{
+		switch (setting_cache->renderer)
+		{
+		case DIRECTWRITE:
+			text_instances[setting_cache->renderer] = new gdimm_dw_text;
+			break;
+		case GETGLYPHOUTLINE:
+			text_instances[setting_cache->renderer] = new gdimm_ggo_text;
+			break;
+		default:
+			text_instances[setting_cache->renderer] = new gdimm_ft_text;
+			break;
+		}
+	}
+
+	if (!text_instances[setting_cache->renderer]->begin(hdc, outline_metrics, font_face, setting_cache))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	if (!text_instances[setting_cache->renderer]->text_out(x, y, options, lprect, lpString, c, lpDx))
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	text_instances[setting_cache->renderer]->end();
 
 	return TRUE;
 }
@@ -321,6 +352,39 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 		// wake up suspended process
 		RhWakeUpProcess();
 		break;
+	}
+}
+
+void *gdimm_hook::create_tls_text()
+{
+	BOOL b_ret;
+
+	const gdimm_text **text_instances = (const gdimm_text**) TlsGetValue(tls_index);
+	if (text_instances == NULL)
+	{
+		text_instances = (const gdimm_text**) LocalAlloc(LPTR, _RENDERER_TYPE_COUNT_ * sizeof(const gdimm_text*));
+		assert(text_instances != NULL);
+
+		b_ret = TlsSetValue(tls_index, text_instances);
+		assert(b_ret);
+	}
+
+	return text_instances;
+}
+
+void gdimm_hook::delete_tls_text()
+{
+	const gdimm_text **text_instances = (const gdimm_text**) TlsGetValue(tls_index);
+	if (text_instances != NULL)
+	{
+		for (size_t i = 0; i < _RENDERER_TYPE_COUNT_; i++)
+		{
+			if (text_instances[i] != NULL)
+				delete text_instances[i];
+		}
+
+		text_instances = (const gdimm_text**) LocalFree((HLOCAL) text_instances);
+		assert(text_instances == NULL);
 	}
 }
 

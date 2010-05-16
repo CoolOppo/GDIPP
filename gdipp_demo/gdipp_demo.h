@@ -11,4 +11,5 @@ extern int total_count;
 extern vector<const wstring> candidate_font;
 extern bool random_text;
 
-extern wchar_t window_title[100];
+#define GDIPP_DEMO_WINDOW_TITLE_LEN 100
+extern wchar_t window_title[GDIPP_DEMO_WINDOW_TITLE_LEN];

@@ -25,11 +25,11 @@
     <ClInclude Include="font_link.h" />
     <ClInclude Include="font_man.h" />
     <ClInclude Include="ft.h" />
-    <ClInclude Include="ft_renderer.h" />
+    <ClInclude Include="ft_text.h" />
     <ClInclude Include="gamma.h" />
     <ClInclude Include="gdimm.h" />
     <ClInclude Include="gdi_text.h" />
-    <ClInclude Include="ggo_renderer.h" />
+    <ClInclude Include="ggo_text.h" />
     <ClInclude Include="glyph_cache.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="lock.h" />
@@ -46,11 +46,11 @@
     <ClCompile Include="font_link.cpp" />
     <ClCompile Include="font_man.cpp" />
     <ClCompile Include="ft.cpp" />
-    <ClCompile Include="ft_renderer.cpp" />
+    <ClCompile Include="ft_text.cpp" />
     <ClCompile Include="gamma.cpp" />
     <ClCompile Include="gdimm.cpp" />
     <ClCompile Include="gdi_text.cpp" />
-    <ClCompile Include="ggo_renderer.cpp" />
+    <ClCompile Include="ggo_text.cpp" />
     <ClCompile Include="glyph_cache.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="lock.cpp" />

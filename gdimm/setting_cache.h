@@ -5,9 +5,13 @@ using namespace std;
 enum RENDERER_TYPE
 {
 	CLEARTYPE,
-	GETGLYPHOUTLINE,
+	DIRECTWRITE,
 	FREETYPE,
-	DIRECTWRITE
+	GETGLYPHOUTLINE,
+
+	// count of renderer types
+	// never use this type
+	_RENDERER_TYPE_COUNT_
 };
 
 struct font_setting_cache

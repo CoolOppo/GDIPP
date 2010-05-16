@@ -21,6 +21,9 @@ class gdimm_font_man
 
 	struct font_info
 	{
+		// latest known DC owning this font
+		HDC font_holder;
+
 		// handle of the linked font for destructor
 		// NULL if registered font
 		HFONT hfont;
@@ -37,6 +40,14 @@ class gdimm_font_man
 		FT_UShort fsSelection;
 	};
 
+	// face name -> font id
+	// we use this map because FreeType callback only have face id
+	static map<wstring, long> _name_to_id;
+	// font id -> font info
+	// we use this map because vector internally free and re-allocate existing entries
+	// pointers become invalid
+	static map<long, font_info> _id_to_info;
+	
 	/*
 	HDC that holds font per thread
 
@@ -46,24 +57,7 @@ class gdimm_font_man
 	linked font holder is created by font manager
 	linked fonts are selected into linked font holder before retrieving font data
 	*/
-	struct tls_font_holder
-	{
-		HDC registered;
-		HDC linked;
-	};
-
-	// for registered fonts
-	// face name -> font id
-	// we use this map because FreeType callback only have face id
-	map<wstring, long> _reg_ids;
-	// font id -> font info
-	// we use this map because vector internally free and re-allocate existing entries
-	// pointers become invalid
-	map<long, font_info> _reg_fonts;
-
-	// for linked fonts
-	map<wstring, long> _linked_ids;
-	map<long, font_info> _linked_fonts;
+	HDC _linked_font_holder;
 
 	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_close(FT_Stream stream);
@@ -72,24 +66,19 @@ class gdimm_font_man
 	static DWORD get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
 	static bool get_os2_info(HDC font_holder, font_info& info);
 
-	HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face) const;
+	static HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
 
 public:
-	static DWORD tls_index;
+	static FT_Stream get_stream(long font_id);
+	static DWORD get_face_index(long font_id);
+	static FT_Short get_xAvgCharWidth(long font_id);
+	static FT_UShort get_usWeightClass(long font_id);
+	static FT_UShort get_fsSelection(long font_id);
 
+	gdimm_font_man();
 	~gdimm_font_man();
 
-	static void *create_font_holder();
-	static void delete_font_holder();
-
-	long register_font(HDC hdc, const wchar_t *font_face);
+	long register_font(HDC font_holder, const wchar_t *font_face);
 	long lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
-
 	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
-	
-	FT_Stream get_stream(long font_id);
-	DWORD get_face_index(long font_id);
-	FT_Short get_xAvgCharWidth(long font_id);
-	FT_UShort get_usWeightClass(long font_id);
-	FT_UShort get_fsSelection(long font_id);
 };

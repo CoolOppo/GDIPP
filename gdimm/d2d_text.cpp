@@ -9,12 +9,6 @@ CComPtr<ID2D1DCRenderTarget > gdimm_d2d_text::_d2d1_render_target = NULL;
 CComPtr<IDWriteFactory> gdimm_d2d_text::_dw_factory = NULL;
 CComPtr<IDWriteGdiInterop> gdimm_d2d_text::_dw_gdi_interop = NULL;
 
-gdimm_d2d_text::gdimm_d2d_text(HDC hdc)
-:
-gdimm_text(hdc)
-{
-}
-
 void gdimm_d2d_text::get_text_geometry(int x, int y, int width, int height, int ascent, D2D1_POINT_2F &origin, RECT &text_rect) const
 {
 	origin = D2D1::Point2F(0, ascent);
@@ -202,9 +196,9 @@ bool gdimm_d2d_text::draw_text(int x, int y, UINT options, CONST RECT *lprect, L
 	return true;
 }
 
-bool gdimm_d2d_text::init()
+bool gdimm_d2d_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
 {
-	if (!gdimm_text::init())
+	if (!gdimm_text::begin(hdc, outline_metrics, font_face, setting_cache))
 		return false;
 
 	HRESULT hr;
