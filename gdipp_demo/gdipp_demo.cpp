@@ -17,7 +17,7 @@ int total_count = 5000;
 vector<const wstring> candidate_font;
 bool random_text = false;
 
-wchar_t window_title[100];
+wchar_t window_title[GDIPP_DEMO_MAX_STR_LEN];
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {

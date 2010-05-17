@@ -10,8 +10,6 @@ int APIENTRY wWinMain(
 	LPTSTR    lpCmdLine,
 	int       nCmdShow)
 {
-	return 0;
-
 	int argc;
 	LPWSTR *argv = CommandLineToArgvW(lpCmdLine, &argc);
 	assert(argv != NULL);

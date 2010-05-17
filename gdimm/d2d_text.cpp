@@ -233,9 +233,9 @@ bool gdimm_d2d_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, c
 		}
 	}
 
-	_fg_color = D2D1::ColorF((FLOAT) GetRValue(_text_color) / 255,
-		(FLOAT) GetGValue(_text_color) / 255,
-		(FLOAT) GetBValue(_text_color) / 255);
+	_fg_color = D2D1::ColorF(GetRValue(_text_color) / 255.0f,
+		GetGValue(_text_color) / 255.0f,
+		GetBValue(_text_color) / 255.0f);
 
 	return true;
 }

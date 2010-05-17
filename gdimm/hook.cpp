@@ -75,7 +75,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	//if ((options & ETO_GLYPH_INDEX))
+	//if (options & ETO_GLYPH_INDEX)
 	//if (c != 3)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 

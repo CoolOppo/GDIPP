@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include "gdipp_demo.h"
+
 class CMainDlg : public CDialogImpl<CMainDlg>, public CUpdateUI<CMainDlg>,
 		public CMessageFilter, public CIdleHandler
 {
 	HFONT _curr_font;
-	wchar_t _result_str[100];
+	wchar_t _result_str[GDIPP_DEMO_MAX_STR_LEN];
 
 	void prepare_result(CPaintDC &dc);
 

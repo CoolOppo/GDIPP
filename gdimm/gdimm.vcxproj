@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d2d_text.h" />
-    <ClInclude Include="dw_renderer.h" />
     <ClInclude Include="dw_text.h" />
     <ClInclude Include="font_link.h" />
     <ClInclude Include="font_man.h" />
@@ -40,8 +39,9 @@
     <ClInclude Include="text_helper.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="d2d_text.cpp" />
-    <ClCompile Include="dw_renderer.cpp" />
+    <ClCompile Include="d2d_text.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="dw_text.cpp" />
     <ClCompile Include="font_link.cpp" />
     <ClCompile Include="font_man.cpp" />

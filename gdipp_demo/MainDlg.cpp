@@ -8,8 +8,6 @@
 #include "aboutdlg.h"
 #include "MainDlg.h"
 
-#include "gdipp_demo.h"
-
 DWORD start_time;
 
 void CMainDlg::prepare_result(CPaintDC &dc)
@@ -21,7 +19,7 @@ void CMainDlg::prepare_result(CPaintDC &dc)
 	dc.SetTextAlign(TA_LEFT | TA_TOP);
 
 	const DWORD elapse_time = GetTickCount() - start_time;
-	swprintf(_result_str, 100, L"%u milliseconds render time, %.2f ms per text run", elapse_time, (double) elapse_time / total_count);
+	swprintf(_result_str, GDIPP_DEMO_MAX_STR_LEN, L"%u milliseconds render time, %.2f ms per text run", elapse_time, (float) elapse_time / total_count);
 
 	_curr_font = CreateFontW(-20, 0, 0, 0, FW_REGULAR, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Tahoma");
 }
@@ -91,7 +89,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	CPaintDC dc(m_hWnd);
 
 	if (window_title[0] == L'\0')
-		GetWindowText(window_title, GDIPP_DEMO_WINDOW_TITLE_LEN);
+		GetWindowText(window_title, GDIPP_DEMO_MAX_STR_LEN);
 
 	if (rendered == 0)
 	{
@@ -151,7 +149,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		_curr_font = NULL;
 
 		// show the rendered text count in the window title
-		wchar_t new_title[100];
+		wchar_t new_title[GDIPP_DEMO_MAX_STR_LEN];
 		wsprintf(new_title, TEXT("%s - %u"), window_title, rendered);
 		SetWindowText(new_title);
 #endif // test
