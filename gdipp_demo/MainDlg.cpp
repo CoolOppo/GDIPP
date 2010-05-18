@@ -162,10 +162,6 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		if (rendered == total_count + 1)
 			prepare_result(dc);
 
-		/*dc.SetMapMode(MM_ANISOTROPIC);
-		dc.SetViewportExt(1, 1500);
-		dc.SetWindowExt(1, 1000);*/
-
 		dc.SelectFont(_curr_font);
 		dc.ExtTextOut(10, 10, 0, NULL, _result_str, (UINT) wcslen(_result_str), NULL);
 	}

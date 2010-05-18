@@ -3,11 +3,14 @@
 #include "text_helper.h"
 #include "gdimm.h"
 
-CComPtr<ID2D1Factory> gdimm_d2d_text::_d2d1_factory = NULL;
-CComPtr<ID2D1DCRenderTarget > gdimm_d2d_text::_d2d1_render_target = NULL;
-
-CComPtr<IDWriteFactory> gdimm_d2d_text::_dw_factory = NULL;
-CComPtr<IDWriteGdiInterop> gdimm_d2d_text::_dw_gdi_interop = NULL;
+gdimm_d2d_text::gdimm_d2d_text()
+:
+_d2d1_factory(NULL),
+_d2d1_render_target(NULL),
+_dw_factory(NULL),
+_dw_gdi_interop(NULL)
+{
+}
 
 void gdimm_d2d_text::get_text_geometry(int x, int y, int width, int height, int ascent, D2D1_POINT_2F &origin, RECT &text_rect) const
 {

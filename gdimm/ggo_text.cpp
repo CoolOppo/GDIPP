@@ -165,7 +165,7 @@ bool gdimm_ggo_text::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, 
 	if (options & ETO_GLYPH_INDEX)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
-	if (!_setting_cache->hinting)
+	if (_setting_cache->hinting == 0)
 		_ggo_format |= GGO_UNHINTED;
 
 	for (unsigned int i = 0; i < c; i++)

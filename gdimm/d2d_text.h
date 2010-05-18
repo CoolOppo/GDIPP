@@ -4,11 +4,11 @@
 
 class gdimm_d2d_text : public gdimm_text
 {
-	static CComPtr<ID2D1Factory> _d2d1_factory;
-	static CComPtr<ID2D1DCRenderTarget > _d2d1_render_target;
+	CComPtr<ID2D1Factory> _d2d1_factory;
+	CComPtr<ID2D1DCRenderTarget > _d2d1_render_target;
 
-	static CComPtr<IDWriteFactory> _dw_factory;
-	static CComPtr<IDWriteGdiInterop> _dw_gdi_interop;
+	CComPtr<IDWriteFactory> _dw_factory;
+	CComPtr<IDWriteGdiInterop> _dw_gdi_interop;
 
 	D2D1_COLOR_F _fg_color;
 
@@ -19,6 +19,7 @@ class gdimm_d2d_text : public gdimm_text
 	bool draw_text(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:
+	gdimm_d2d_text();
 	bool begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache);
 	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };
