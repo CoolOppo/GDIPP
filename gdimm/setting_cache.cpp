@@ -15,16 +15,15 @@ font_setting_cache::font_shadow::font_shadow()
 :
 offset_x(0),
 offset_y(0),
-alpha(8)
+alpha(0)
 {
 }
 font_setting_cache::font_setting_cache()
 :
-auto_hinting(false),
+auto_hinting(1),
 embedded_bitmap(false),
 embolden(0),
-hinting(true),
-light_mode(true),
+hinting(1),
 max_height(72),
 render_mono(false),
 render_non_aa(false),
@@ -59,7 +58,6 @@ const font_setting_cache *gdimm_setting_cache::lookup(const wchar_t *font_name)
 			wcs_convert(gdipp_get_gdimm_setting(L"gamma/blue", font_name), &new_cache.gamma.blue);
 
 			wcs_convert(gdipp_get_gdimm_setting(L"hinting", font_name), &new_cache.hinting);
-			wcs_convert(gdipp_get_gdimm_setting(L"light_mode", font_name), &new_cache.light_mode);
 			wcs_convert(gdipp_get_gdimm_setting(L"max_height", font_name), &new_cache.max_height);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mono", font_name), &new_cache.render_mono);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_non_aa", font_name), &new_cache.render_non_aa);

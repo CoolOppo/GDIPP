@@ -16,6 +16,8 @@ bool gdimm_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const
 	_font_face = font_face;
 	_setting_cache = setting_cache;
 
+	_font_attr = get_logfont(_hdc_text);
+
 	_text_alignment = GetTextAlign(_hdc_text);
 	assert(_text_alignment != GDI_ERROR);
 
@@ -23,7 +25,6 @@ bool gdimm_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const
 
 	_text_color = GetTextColor(_hdc_text);
 	assert(_text_color != CLR_INVALID);
-	_font_attr = get_logfont(_hdc_text);
 
 	return true;
 }

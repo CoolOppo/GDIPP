@@ -99,13 +99,6 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	/*
 	the DC use another map mode, which transform the GDI coordination space
 	we tried to implement MM_ANISOTROPIC, and found that the text looks worse than the native API
-
-	note for implementing MM_ANISOTROPIC:
-	1. call GetViewportExtEx, GetViewportOrgEx, GetWindowExtEx and GetWindowOrgEx to get the new coordinations
-	2. for all metrics come from GDI API, they are transform, while the outline metrics remain the same
-	3. apply some multiplier to restore GDI metrics
-	4. when drawing the bitmap back to DC, use StretchBlt
-	yes, it is slow, ugly, but it works. hope you can find a better way
 	*/
 	if (GetMapMode(hdc) != MM_TEXT)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -120,7 +113,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	
 #ifdef _DEBUG
 	const wchar_t *debug_text = NULL;
-	//debug_text = L"";
+	//debug_text = L"AaBb";
 	const int start_index = 0;
 
 	if (debug_text != NULL)

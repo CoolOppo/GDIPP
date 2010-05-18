@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "gdipp_enum.h"
 #include <gdipp_common.h>
 
 using namespace std;

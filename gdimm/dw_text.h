@@ -11,11 +11,13 @@ class gdimm_dw_text : public gdimm_text, private IDWriteTextRenderer
 	IDWriteBitmapRenderTarget *_dw_render_target;
 
 	DWRITE_MEASURING_MODE _measuring_mode;
+	bool _use_gdi_natural;
 	vector<FLOAT> _advances;
 	FLOAT _pixels_per_dip;
 
 	UINT32 _cell_width;
 	LONG _cell_height;
+	LONG _extra_height;
 	LONG _em_height;
 
 	bool prepare_glyph(LPCWSTR lpString, UINT c, IDWriteFontFace **dw_font_face);

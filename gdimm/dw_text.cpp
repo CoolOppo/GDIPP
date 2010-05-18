@@ -24,10 +24,16 @@ bool gdimm_dw_text::prepare_glyph(LPCWSTR lpString, UINT c,	IDWriteFontFace **dw
 	assert(hr == S_OK);
 
 	UINT32 glyph_run_width = 0;
+	UINT32 glyph_run_height = 0;
 	for (UINT i = 0; i < c; i++)
+	{
 		glyph_run_width += (UINT32) ceil((FLOAT) glyph_metrics[i].advanceWidth * _em_height / _outline_metrics->otmEMSquare);
+		glyph_run_height = max(glyph_run_height, glyph_metrics[i].advanceHeight);
+	}
+	glyph_run_height = (UINT32) ceil((FLOAT) glyph_run_height * _em_height / _outline_metrics->otmEMSquare);
 
 	_cell_width = max(_cell_width, glyph_run_width);
+	_extra_height = max((LONG) glyph_run_height - _cell_height, 0);
 
 	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_hdc_text, _cell_width, _cell_height, &_dw_render_target);
 	assert(hr == S_OK);
@@ -74,17 +80,19 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 			0,
 			_pixels_per_dip,
 			NULL,
-			TRUE,
+			_use_gdi_natural,
 			dw_text_layout);
 	}
 	assert(hr == S_OK);
 
-	DWRITE_TEXT_METRICS text_metrics;
-	hr = (*dw_text_layout)->GetMetrics(&text_metrics);
+	DWRITE_TEXT_METRICS dw_text_metrics;
+	hr = (*dw_text_layout)->GetMetrics(&dw_text_metrics);
 	if (hr != S_OK)
 		return false;
 	assert(hr == S_OK);
-	_cell_width = max(_cell_width, (UINT32) ceil(text_metrics.width));
+
+	_cell_width = max(_cell_width, (UINT32) ceil(dw_text_metrics.width));
+	_extra_height = (LONG) max(ceil(dw_text_metrics.height) - _cell_height, 0);
 
 	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_hdc_text, _cell_width, _cell_height, &_dw_render_target);
 	assert(hr == S_OK);
@@ -312,7 +320,19 @@ bool gdimm_dw_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, co
 	if (is_mono && !_setting_cache->render_mono)
 		return false;
 
-	_measuring_mode = (_setting_cache->light_mode ? DWRITE_MEASURING_MODE_NATURAL : DWRITE_MEASURING_MODE_GDI_NATURAL);
+	switch (_setting_cache->hinting)
+	{
+	case 2:
+		_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+		break;
+	case 3:
+		_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
+		break;
+	default:
+		_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
+		break;
+	}
+	_use_gdi_natural = (_measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL);
 	_advances.clear();
 	_pixels_per_dip = GetDeviceCaps(_hdc_text, LOGPIXELSY) / 96.0f;
 
@@ -351,6 +371,7 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 	if (!success)
 		return false;
 
+	_extra_height = min(_extra_height, 2);
 	LONG cell_ascent = _outline_metrics->otmTextMetrics.tmAscent;
 	LONG cell_descent = _outline_metrics->otmTextMetrics.tmDescent;
 	const POINT baseline = get_baseline(_text_alignment,
@@ -412,12 +433,12 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 			FALSE,
 			0};
 
-		HRESULT hr = _dw_render_target->DrawGlyphRun(0, (FLOAT) cell_ascent, _measuring_mode, &dw_glyph_run, _dw_render_param, _text_color);
+		HRESULT hr = _dw_render_target->DrawGlyphRun(0, (FLOAT)(cell_ascent - _extra_height), _measuring_mode, &dw_glyph_run, _dw_render_param, _text_color);
 		assert(hr == S_OK);
 	}
 	else
 	{
-		HRESULT hr = dw_text_layout->Draw(NULL, this, 0, 0);
+		HRESULT hr = dw_text_layout->Draw(NULL, this, 0, (FLOAT) -_extra_height);
 		assert(hr == S_OK);
 	}
 

@@ -35,12 +35,11 @@ struct font_setting_cache
 		font_shadow();
 	};
 
-	bool auto_hinting;
+	WORD auto_hinting;
 	bool embedded_bitmap;
 	FT_F26Dot6 embolden;
 	font_gamma gamma;
-	bool hinting;
-	bool light_mode;
+	WORD hinting;
 	LONG max_height;
 	bool render_mono;
 	bool render_non_aa;

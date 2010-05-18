@@ -2,6 +2,7 @@
 
 #include "gdipp_common.h"
 using namespace std;
+using namespace std::tr1;
 using namespace pugi;
 
 class gdipp_setting

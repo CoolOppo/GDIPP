@@ -23,22 +23,41 @@ FT_ULong gdimm_ft_text::get_load_flags(FT_Render_Mode render_mode, const wchar_t
 	FT_ULong load_flags = FT_LOAD_CROP_BITMAP |
 		(setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
-	if (setting_cache->hinting)
+	if (setting_cache->hinting == 0)
+		load_flags |= FT_LOAD_NO_HINTING;
+	else
 	{
-		load_flags |= (setting_cache->auto_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_DEFAULT);
-
-		switch (render_mode)
+		switch (setting_cache->hinting)
 		{
-		case FT_RENDER_MODE_NORMAL:
-			load_flags |= (setting_cache->light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_NORMAL);
-		case FT_RENDER_MODE_MONO:
+		case 1:
+			load_flags |= FT_LOAD_TARGET_LIGHT;
+			break;
+		case 3:
 			load_flags |= FT_LOAD_TARGET_MONO;
-		case FT_RENDER_MODE_LCD:
-			load_flags |= (setting_cache->light_mode ? FT_LOAD_TARGET_LIGHT : FT_LOAD_TARGET_LCD);
+			break;
+		default:
+			{
+				if (render_mode == FT_RENDER_MODE_LCD)
+					load_flags |= FT_LOAD_TARGET_LCD;
+				else
+					load_flags |= FT_LOAD_TARGET_NORMAL;
+				break;
+			}
+		}
+
+		switch (setting_cache->auto_hinting)
+		{
+		case 0:
+			load_flags |= FT_LOAD_NO_AUTOHINT;
+			break;
+		case 2:
+			load_flags |= FT_LOAD_FORCE_AUTOHINT;
+			break;
+		default:
+			load_flags |= FT_LOAD_DEFAULT;
+			break;
 		}
 	}
-	else
-		load_flags |= FT_LOAD_NO_HINTING;
 
 	return load_flags;
 }
@@ -337,6 +356,16 @@ bool gdimm_ft_text::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, U
 		return false;
 
 	update_glyph_pos(options, lpDx);
+
+	return true;
+}
+
+bool gdimm_ft_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
+{
+	if (!gdimm_gdi_text::begin(hdc, outline_metrics, font_face, setting_cache))
+		return false;
+
+	_cache_node_ptr = NULL;
 
 	return true;
 }
