@@ -37,7 +37,7 @@ class gdimm_gdi_text : public gdimm_text
 		UINT options,
 		CONST RECT *lprect) const;
 
-	virtual bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) = 0;
+	virtual bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode) = 0;
 
 protected:
 	POINT _cursor;

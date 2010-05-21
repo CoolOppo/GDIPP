@@ -140,7 +140,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	return (const FT_BitmapGlyph) generic_glyph;
 }
 
-bool gdimm_ggo_text::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
+bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);

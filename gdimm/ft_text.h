@@ -17,7 +17,7 @@ class gdimm_ft_text : public gdimm_gdi_text
 	void update_embolden(FT_UShort weight_class, const wchar_t *font_name);
 	const FT_BitmapGlyph render_glyph(WORD glyph_index, const wchar_t *font_face);
 	void update_glyph_pos(UINT options, CONST INT *lpDx);
-	bool render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
+	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode);
 
 public:
 	gdimm_ft_text();

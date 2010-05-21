@@ -231,7 +231,7 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 	_cursor = pen_pos;
 }
 
-bool gdimm_ft_text::render(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
+bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
 	const wchar_t *dc_font_family = metric_family_name(_outline_metrics);
 	wstring curr_font_face = _font_face;

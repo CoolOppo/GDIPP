@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "hook.h"
-#include "dw_text.h"
+#include "d2d_text.h"
 #include "ft_text.h"
 #include "ggo_text.h"
 #include "gdimm.h"
@@ -163,7 +163,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		switch (setting_cache->renderer)
 		{
 		case DIRECTWRITE:
-			text_instances[setting_cache->renderer] = new gdimm_dw_text;
+			text_instances[setting_cache->renderer] = new gdimm_d2d_text;
 			break;
 		case GETGLYPHOUTLINE:
 			text_instances[setting_cache->renderer] = new gdimm_ggo_text;
@@ -185,7 +185,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	return TRUE;
 }
 
-#ifndef _M_X64
+#if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 {
 	BOOL b_ret;
@@ -321,7 +321,7 @@ CreateProcessAsUserW_hook(
 
 	return TRUE;
 }
-#endif // _M_X64
+#endif // GDIPP_INJECT_SANDBOX && _M_X64
 
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
@@ -410,10 +410,10 @@ bool gdimm_hook::hook()
 	install_hook(TEXT("gdi32.dll"), "BeginPath", BeginPath_hook);
 	install_hook(TEXT("gdi32.dll"), "EndPath", EndPath_hook);
 
-#ifndef _M_X64
+#if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
-#endif // _M_X64
+#endif // GDIPP_INJECT_SANDBOX && _M_X64
 
 	return !(_hooks.empty());
 }

@@ -439,7 +439,9 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
 	{
 		POINT cp;
-		GetCurrentPositionEx(_hdc_text, &cp);
+		b_ret = GetCurrentPositionEx(_hdc_text, &cp);
+		assert(b_ret);
+
 		_cursor.x = cp.x;
 		_cursor.y = cp.y;
 		update_cursor = true;
@@ -451,7 +453,7 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		update_cursor = false;
 	}
 
-	bool render_success = render(options, lprect, lpString, c, lpDx, render_mode);
+	const bool render_success = render(options, lpString, c, lpDx, render_mode);
 	if (!render_success)
 		return false;
 
