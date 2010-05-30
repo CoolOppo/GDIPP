@@ -5,12 +5,20 @@
 
 font_setting_cache::font_gamma::font_gamma()
 :
-gray(1.0),
 red(1.0),
 green(1.0),
 blue(1.0)
 {
 }
+
+font_setting_cache::font_render_mode::font_render_mode()
+:
+mono(0),
+gray(0),
+subpixel(0)
+{
+};
+
 font_setting_cache::font_shadow::font_shadow()
 :
 offset_x(0),
@@ -18,6 +26,7 @@ offset_y(0),
 alpha(0)
 {
 }
+
 font_setting_cache::font_setting_cache()
 :
 auto_hinting(1),
@@ -25,11 +34,8 @@ embedded_bitmap(false),
 embolden(0),
 hinting(1),
 max_height(72),
-render_mono(false),
-render_non_aa(false),
 renderer(FREETYPE),
-subpixel_render(true),
-zero_alpha(false)
+use_alpha(false)
 {
 }
 
@@ -52,23 +58,23 @@ const font_setting_cache *gdimm_setting_cache::lookup(const wchar_t *font_name)
 			wcs_convert(gdipp_get_gdimm_setting(L"embedded_bitmap", font_name), &new_cache.embedded_bitmap);
 			wcs_convert(gdipp_get_gdimm_setting(L"embolden", font_name), &new_cache.embolden);
 
-			wcs_convert(gdipp_get_gdimm_setting(L"gamma/gray", font_name), &new_cache.gamma.gray);
 			wcs_convert(gdipp_get_gdimm_setting(L"gamma/red", font_name), &new_cache.gamma.red);
 			wcs_convert(gdipp_get_gdimm_setting(L"gamma/green", font_name), &new_cache.gamma.green);
 			wcs_convert(gdipp_get_gdimm_setting(L"gamma/blue", font_name), &new_cache.gamma.blue);
 
 			wcs_convert(gdipp_get_gdimm_setting(L"hinting", font_name), &new_cache.hinting);
 			wcs_convert(gdipp_get_gdimm_setting(L"max_height", font_name), &new_cache.max_height);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mono", font_name), &new_cache.render_mono);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_non_aa", font_name), &new_cache.render_non_aa);
 			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_name), (int*) &new_cache.renderer);
+
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/mono", font_name), &new_cache.render_mode.mono);
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/gray", font_name), &new_cache.render_mode.gray);
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/subpixel", font_name), (int*) &new_cache.render_mode.subpixel);
 
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_name), &new_cache.shadow.offset_x);
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_name), &new_cache.shadow.offset_y);
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/alpha", font_name), (int*) &new_cache.shadow.alpha);
 
-			wcs_convert(gdipp_get_gdimm_setting(L"subpixel_render", font_name), &new_cache.subpixel_render);
-			wcs_convert(gdipp_get_gdimm_setting(L"zero_alpha", font_name), &new_cache.zero_alpha);
+			wcs_convert(gdipp_get_gdimm_setting(L"use_alpha", font_name), &new_cache.use_alpha);
 
 			_cache[font_name] = new_cache;
 		}

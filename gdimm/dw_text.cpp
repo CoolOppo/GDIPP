@@ -15,7 +15,7 @@ bool gdimm_dw_text::prepare_glyph(LPCWSTR lpString, UINT c,	IDWriteFontFace **dw
 {
 	HRESULT hr;
 
-	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_hdc_text, dw_font_face);
+	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_context->hdc, dw_font_face);
 	assert(hr == S_OK);
 
 	vector<DWRITE_GLYPH_METRICS> glyph_metrics;
@@ -27,15 +27,15 @@ bool gdimm_dw_text::prepare_glyph(LPCWSTR lpString, UINT c,	IDWriteFontFace **dw
 	UINT32 glyph_run_height = 0;
 	for (UINT i = 0; i < c; i++)
 	{
-		glyph_run_width += (UINT32) ceil((FLOAT) glyph_metrics[i].advanceWidth * _em_height / _outline_metrics->otmEMSquare);
+		glyph_run_width += (UINT32) ceil((FLOAT) glyph_metrics[i].advanceWidth * _em_height / _context->outline_metrics->otmEMSquare);
 		glyph_run_height = max(glyph_run_height, glyph_metrics[i].advanceHeight);
 	}
-	glyph_run_height = (UINT32) ceil((FLOAT) glyph_run_height * _em_height / _outline_metrics->otmEMSquare);
+	glyph_run_height = (UINT32) ceil((FLOAT) glyph_run_height * _em_height / _context->outline_metrics->otmEMSquare);
 
 	_cell_width = max(_cell_width, glyph_run_width);
 	_extra_height = max((LONG) glyph_run_height - _cell_height, 0);
 
-	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_hdc_text, _cell_width, _cell_height, &_dw_render_target);
+	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_context->hdc, _cell_width, _cell_height, &_dw_render_target);
 	assert(hr == S_OK);
 
 	return true;
@@ -46,7 +46,7 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 	HRESULT hr;
 
 	LOGFONT actual_lf = _font_attr;
-	wcsncpy_s(actual_lf.lfFaceName, metric_family_name(_outline_metrics), LF_FACESIZE);
+	wcsncpy_s(actual_lf.lfFaceName, metric_family_name(_context->outline_metrics), LF_FACESIZE);
 	
 	CComPtr<IDWriteFont> dw_font;
 	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&actual_lf, &dw_font);
@@ -67,7 +67,7 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 		hr = _dw_factory->CreateTextLayout(lpString,
 			c,
 			*dw_text_format,
-			(FLOAT) _bmp_info.bmiHeader.biWidth,
+			(FLOAT) _dc_bmp_header.biWidth,
 			0,
 			dw_text_layout);
 	}
@@ -76,7 +76,7 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 		hr = _dw_factory->CreateGdiCompatibleTextLayout(lpString,
 			c,
 			*dw_text_format,
-			(FLOAT) _bmp_info.bmiHeader.biWidth,
+			(FLOAT) _dc_bmp_header.biWidth,
 			0,
 			_pixels_per_dip,
 			NULL,
@@ -94,7 +94,7 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 	_cell_width = max(_cell_width, (UINT32) ceil(dw_text_metrics.width));
 	_extra_height = (LONG) max(ceil(dw_text_metrics.height) - _cell_height, 0);
 
-	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_hdc_text, _cell_width, _cell_height, &_dw_render_target);
+	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_context->hdc, _cell_width, _cell_height, &_dw_render_target);
 	assert(hr == S_OK);
 
 	return true;
@@ -106,7 +106,7 @@ bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **d
 //      These methods are never called in this scenario so we just use stub
 //      implementations.
 //
-IFACEMETHODIMP gdimm_dw_text::QueryInterface(
+IFACEMETHODIMP gdimm_dw_text::QueryInterface( 
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject
 	)
@@ -115,12 +115,12 @@ IFACEMETHODIMP gdimm_dw_text::QueryInterface(
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP_(ULONG) gdimm_dw_text::AddRef()
+IFACEMETHODIMP_(ULONG) gdimm_dw_text::AddRef( void)
 {
 	return 0;
 }
 
-IFACEMETHODIMP_(ULONG) gdimm_dw_text::Release()
+IFACEMETHODIMP_(ULONG) gdimm_dw_text::Release( void)
 {
 	return 0;
 }
@@ -287,9 +287,9 @@ IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
 
 //////////////////////////////////////////////////////////////////////////
 
-bool gdimm_dw_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
+bool gdimm_dw_text::begin(const gdimm_text_context *context)
 {
-	if (!gdimm_text::begin(hdc, outline_metrics, font_face, setting_cache))
+	if (!gdimm_text::begin(context))
 		return false;
 
 	HRESULT hr;
@@ -312,15 +312,15 @@ bool gdimm_dw_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, co
 		}
 	}
 
-	bool is_mono = false;
-	if (is_non_aa(_font_attr.lfQuality, _setting_cache) || 
-		(_bmp_info.bmiHeader.biBitCount == 1))
+	/*bool is_mono = false;
+	if (is_non_aa(_font_attr.lfQuality, _context->setting_cache) || 
+		(_dc_bmp_header.biBitCount == 1))
 		is_mono = true;
 
-	if (is_mono && !_setting_cache->render_mono)
-		return false;
+	if (is_mono && !_context->setting_cache->render_mono)
+		return false;*/
 
-	switch (_setting_cache->hinting)
+	switch (_context->setting_cache->hinting)
 	{
 	case 2:
 		_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
@@ -334,11 +334,11 @@ bool gdimm_dw_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, co
 	}
 	_use_gdi_natural = (_measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL);
 	_advances.clear();
-	_pixels_per_dip = GetDeviceCaps(_hdc_text, LOGPIXELSY) / 96.0f;
+	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	_cell_width = 0;
-	_cell_height = _outline_metrics->otmTextMetrics.tmHeight;
-	_em_height = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
+	_cell_height = _context->outline_metrics->otmTextMetrics.tmHeight;
+	_em_height = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
 
 	return true;
 }
@@ -372,8 +372,8 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 		return false;
 
 	_extra_height = min(_extra_height, 2);
-	LONG cell_ascent = _outline_metrics->otmTextMetrics.tmAscent;
-	LONG cell_descent = _outline_metrics->otmTextMetrics.tmDescent;
+	LONG cell_ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
+	LONG cell_descent = _context->outline_metrics->otmTextMetrics.tmDescent;
 	const POINT baseline = get_baseline(_text_alignment,
 		x,
 		y,
@@ -399,12 +399,12 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 
 	HDC hdc_canvas = _dw_render_target->GetMemoryDC();
 
-	const COLORREF bg_color = GetBkColor(_hdc_text);
+	const COLORREF bg_color = GetBkColor(_context->hdc);
 
 	if (options & ETO_OPAQUE)
-		draw_background(_hdc_text, lprect, bg_color);
+		draw_background(_context->hdc, lprect, bg_color);
 
-	const int bk_mode = GetBkMode(_hdc_text);
+	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
 		const RECT bk_rect = {0, 0, _cell_width, _cell_height};
@@ -412,7 +412,7 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
-		b_ret = BitBlt(hdc_canvas, 0, 0, _cell_width, _cell_height, _hdc_text, bmp_rect.left, bmp_rect.top, SRCCOPY);
+		b_ret = BitBlt(hdc_canvas, 0, 0, _cell_width, _cell_height, _context->hdc, bmp_rect.left, bmp_rect.top, SRCCOPY);
 	}
 	else
 		b_ret = FALSE;
@@ -448,7 +448,7 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 		return false;
 	}
 
-	b_ret = BitBlt(_hdc_text, bmp_rect.left, bmp_rect.top, _cell_width, _cell_height, hdc_canvas, 0, 0, SRCCOPY);
+	b_ret = BitBlt(_context->hdc, bmp_rect.left, bmp_rect.top, _cell_width, _cell_height, hdc_canvas, 0, 0, SRCCOPY);
 	assert(b_ret);
 
 	_dw_render_target->Release();

@@ -18,12 +18,20 @@ struct font_setting_cache
 {
 	struct font_gamma
 	{
-		double gray;
 		double red;
 		double green;
 		double blue;
 
 		font_gamma();
+	};
+
+	struct font_render_mode
+	{
+		WORD mono;
+		WORD gray;
+		WORD subpixel;
+
+		font_render_mode();
 	};
 
 	struct font_shadow
@@ -41,12 +49,10 @@ struct font_setting_cache
 	font_gamma gamma;
 	WORD hinting;
 	LONG max_height;
-	bool render_mono;
-	bool render_non_aa;
+	font_render_mode render_mode;
 	RENDERER_TYPE renderer;
 	font_shadow shadow;
-	bool subpixel_render;
-	bool zero_alpha;
+	bool use_alpha;
 
 	font_setting_cache();
 };

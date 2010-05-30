@@ -25,11 +25,11 @@ class gdimm_dw_text : public gdimm_text, private IDWriteTextRenderer
 
 	//////////////////////////////////////////////////////////////////////////
 
-	IFACEMETHOD(QueryInterface) (
+	IFACEMETHOD(QueryInterface)( 
 		/* [in] */ REFIID riid,
 		/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject);
-	IFACEMETHOD_(ULONG, AddRef) ();
-	IFACEMETHOD_(ULONG, Release) ();
+	IFACEMETHOD_(ULONG, AddRef)( void);
+	IFACEMETHOD_(ULONG, Release)( void);
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +83,6 @@ class gdimm_dw_text : public gdimm_text, private IDWriteTextRenderer
 
 public:
 	gdimm_dw_text();
-	bool begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache);
+	bool begin(const gdimm_text_context *context);
 	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

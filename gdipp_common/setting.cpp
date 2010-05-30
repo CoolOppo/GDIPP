@@ -19,7 +19,7 @@ void gdipp_setting::parse_gdimm_setting_node(const xml_node &setting_node, setti
 {
 	const wstring name = as_utf16(setting_node.name());
 
-	if (name == L"freetype" || name == L"gamma" || name == L"shadow")
+	if (name == L"freetype" || name == L"gamma" || name == L"render_mode" || name == L"shadow")
 	{
 		// these settings have nested items
 		for (xml_node::iterator iter = setting_node.begin(); iter != setting_node.end(); iter++)
@@ -43,7 +43,8 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 		const xml_node curr_proc = node_iter->node();
 		const xml_attribute name_attr = curr_proc.attribute("name");
 
-		const wregex name_ex(as_utf16(name_attr.value()), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
+		const wregex name_ex(as_utf16(name_attr.value()),
+			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
 		if (regex_match(_process_name, name_ex))
 		{
 			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
@@ -104,7 +105,8 @@ const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, con
 	// check setting for the specified font
 	for (gdimm_list::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
 	{
-		const wregex name_ex(list_iter->first.data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
+		const wregex name_ex(list_iter->first.data(),
+			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
 		if (regex_match(font_name, name_ex))
 		{
 			setting_iter = list_iter->second.find(setting_name);
@@ -154,7 +156,8 @@ bool gdipp_setting::is_process_excluded(const wchar_t *proc_name) const
 
 	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); iter++)
 	{
-		const wregex name_ex(iter->data(), regex_constants::icase | regex_constants::nosubs | regex_constants::optimize);
+		const wregex name_ex(iter->data(),
+			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
 		if (regex_match(final_name, name_ex))
 			return true;
 	}

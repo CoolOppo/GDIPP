@@ -22,6 +22,6 @@ class gdimm_ft_text : public gdimm_gdi_text
 public:
 	gdimm_ft_text();
 
-	bool begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache);
+	bool begin(const gdimm_text_context *context);
 	void end();
 };

@@ -17,7 +17,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 {
 	FT_Error ft_error;
 
-	DWORD outline_buf_len = GetGlyphOutline(_hdc_text, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
+	DWORD outline_buf_len = GetGlyphOutline(_context->hdc, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
 
 	// some character's glyph outline is empty (e.g. space), skip
@@ -29,7 +29,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	vector<short> contour_indices;
 
 	BYTE *outline_buf = new BYTE[outline_buf_len];
-	outline_buf_len = GetGlyphOutline(_hdc_text, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
+	outline_buf_len = GetGlyphOutline(_context->hdc, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
 
 	// parse outline coutours
@@ -120,9 +120,9 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 		}
 	};
 
-	if (_setting_cache->embolden != 0)
+	if (_context->setting_cache->embolden != 0)
 	{
-		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _setting_cache->embolden);
+		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _context->setting_cache->embolden);
 		assert(ft_error == 0);
 	}
 
@@ -165,7 +165,7 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	if (options & ETO_GLYPH_INDEX)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
-	if (_setting_cache->hinting == 0)
+	if (_context->setting_cache->hinting == 0)
 		_ggo_format |= GGO_UNHINTED;
 
 	for (unsigned int i = 0; i < c; i++)
@@ -209,9 +209,9 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	return true;
 }
 
-bool gdimm_ggo_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
+bool gdimm_ggo_text::begin(const gdimm_text_context *context)
 {
-	if (!gdimm_gdi_text::begin(hdc, outline_metrics, font_face, setting_cache))
+	if (!gdimm_gdi_text::begin(context))
 		return false;
 
 	/*
@@ -227,7 +227,7 @@ bool gdimm_ggo_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, c
 
 	if (_glyph_clazz == NULL)
 	{
-		const long font_id = _font_man.register_font(_hdc_text, _font_face);
+		const long font_id = _font_man.register_font(_context->hdc, _context->font_face);
 		const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
 		FT_Face font_face;
@@ -239,7 +239,7 @@ bool gdimm_ggo_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, c
 		ft_error = FTC_Manager_LookupSize(ft_cache_man, &cache_scale, &font_size);
 		assert(ft_error == 0);
 
-		ft_error = FT_Load_Char(font_face, _outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
+		ft_error = FT_Load_Char(font_face, _context->outline_metrics->otmTextMetrics.tmDefaultChar, FT_LOAD_NO_BITMAP);
 		assert(ft_error == 0);
 
 		FT_Glyph useless;

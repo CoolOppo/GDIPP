@@ -23,6 +23,6 @@
 #include <regex>
 #include <vector>
 
- // 3rd-party dependency libraries
+ // 3rd-party dependency
 #include <pugixml.hpp>
 #include <easyhook.h>

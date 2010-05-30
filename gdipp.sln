@@ -57,6 +57,11 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_32_zh-cn", "insta
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_enum", "gdipp_enum\gdipp_enum.vcxproj", "{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npgdipp", "npgdipp\npgdipp.vcxproj", "{F8829284-0122-4DA8-8704-FDCD47062CD2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -157,6 +162,12 @@ Global
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|Win32.Build.0 = Release|Win32
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|x64.ActiveCfg = Release|x64
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|x64.Build.0 = Release|x64
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Debug|Win32.Build.0 = Debug|Win32
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Debug|x64.ActiveCfg = Debug|Win32
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Release|Win32.ActiveCfg = Release|Win32
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Release|Win32.Build.0 = Release|Win32
+		{F8829284-0122-4DA8-8704-FDCD47062CD2}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -233,8 +233,8 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
 {
-	const wchar_t *dc_font_family = metric_family_name(_outline_metrics);
-	wstring curr_font_face = _font_face;
+	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
+	wstring curr_font_face = _context->font_face;
 	const wchar_t *curr_font_family = dc_font_family;
 
 	_render_mode = render_mode;
@@ -251,9 +251,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, never be 0
 	*/
 
-	long font_id = _font_man.register_font(_hdc_text, curr_font_face.c_str());
+	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
 	_ft_scaler.face_id = (FTC_FaceID) font_id;
-	_ft_scaler.height = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
+	_ft_scaler.height = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
 	update_embolden(_font_man.get_usWeightClass(font_id), curr_font_face.c_str());
 	_is_italic = (_font_man.get_fsSelection(font_id) & 1);
 
@@ -262,8 +262,8 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	else
 	{
 		// compare the xAvgCharWidth against the current average char width
-		_ft_scaler.width = MulDiv(_outline_metrics->otmTextMetrics.tmAveCharWidth,
-			_outline_metrics->otmEMSquare,
+		_ft_scaler.width = MulDiv(_context->outline_metrics->otmTextMetrics.tmAveCharWidth,
+			_context->outline_metrics->otmEMSquare,
 			_font_man.get_xAvgCharWidth(font_id));
 	}
 
@@ -287,12 +287,13 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	{
 		UINT rendered_count = 0;
 		int font_link_index = 0;
-		wstring final_string = lpString;
+		wstring final_string;
 		wstring glyph_indices;
 
 		_glyphs.resize(c);
 		_glyph_pos.resize(c);
 		glyph_indices.resize(c);
+		final_string.assign(lpString, c);
 
 		while (true)
 		{
@@ -335,7 +336,8 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 			if (_ft_scaler.face_id == NULL)
 				return false;
 
-			if (!get_ft_render_mode(curr_font_face.c_str(), _bmp_info.bmiHeader.biBitCount, _render_mode))
+			const font_setting_cache *font_setting = setting_cache_instance.lookup(curr_font_face.c_str());
+			if (!get_ft_render_mode(font_setting, _dc_bmp_header.biBitCount, 0, _render_mode))
 				return false;
 
 			_load_flags = get_load_flags(_render_mode, curr_font_face.c_str());
@@ -360,9 +362,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	return true;
 }
 
-bool gdimm_ft_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
+bool gdimm_ft_text::begin(const gdimm_text_context *context)
 {
-	if (!gdimm_gdi_text::begin(hdc, outline_metrics, font_face, setting_cache))
+	if (!gdimm_gdi_text::begin(context))
 		return false;
 
 	_cache_node_ptr = NULL;

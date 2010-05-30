@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
-	<version>0.8.0</version>
+	<version>0.8.1</version>
 	
 	<gdimm>
 		<process name="explorer\.exe">
-			<zero_alpha>0</zero_alpha>
+			<use_alpha>1</use_alpha>
 		</process>
 		
 		<process name=".+\.exe">
@@ -21,23 +21,24 @@
 			<embedded_bitmap>0</embedded_bitmap>
 			<embolden>0</embolden>
 			<gamma>
-				<gray>1.0</gray>
 				<red>1.0</red>
 				<green>1.0</green>
 				<blue>1.0</blue>
 			</gamma>
 			<hinting>1</hinting>
 			<max_height>72</max_height>
-			<render_mono>0</render_mono>
-			<render_non_aa>0</render_non_aa>
+			<render_mode>
+				<mono>0</mono>
+				<gray>0</gray>
+				<subpixel>1</subpixel>
+			</render_mode>
 			<renderer>2</renderer>
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>
 				<alpha>0</alpha>
 			</shadow>
-			<subpixel_render>1</subpixel_render>
-			<zero_alpha>1</zero_alpha>
+			<use_alpha>0</use_alpha>
 		</font>
 	</gdimm>
 	

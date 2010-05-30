@@ -81,20 +81,29 @@ int get_bmp_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
-BITMAPINFO get_dc_bmp_info(HDC hdc)
+bool get_dc_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 {
-	int i_ret;
+	dc_dc_bmp_header.biSize = sizeof(BITMAPINFOHEADER);
 
 	const HBITMAP dc_bitmap = (HBITMAP) GetCurrentObject(hdc, OBJ_BITMAP);
-	assert(dc_bitmap != NULL);
+	if (dc_bitmap == NULL)
+	{
+		// currently no selected bitmap
+		// use DC capability
 
-	BITMAPINFO bmi = {};
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, &bmi, DIB_RGB_COLORS);
+		dc_dc_bmp_header.biWidth = GetDeviceCaps(hdc, HORZRES);
+		dc_dc_bmp_header.biHeight = GetDeviceCaps(hdc, VERTRES);
+		dc_dc_bmp_header.biPlanes = GetDeviceCaps(hdc, PLANES);
+		dc_dc_bmp_header.biBitCount = GetDeviceCaps(hdc, BITSPIXEL);
+
+		return false;
+	}
+
+	dc_dc_bmp_header.biBitCount = 0;
+	int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, (BITMAPINFO*) &dc_dc_bmp_header, DIB_RGB_COLORS);
 	assert(i_ret != 0);
-	assert(bmi.bmiHeader.biBitCount != 0);
 
-	return bmi;
+	return true;
 }
 
 bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outline_metrics)
@@ -157,28 +166,33 @@ RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vec
 	return glyph_run_rect;
 }
 
-bool get_ft_render_mode(const wchar_t *font_name, WORD dc_bmp_bpp, FT_Render_Mode &render_mode)
+bool get_ft_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
 {
-	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_name);
-
-	switch (dc_bmp_bpp)
+	if ((font_setting->render_mode.mono == 1 && dc_bmp_bpp == 1) ||
+		(font_setting->render_mode.mono == 2) ||
+		// non-antialiased font
+		(font_quality == NONANTIALIASED_QUALITY && font_setting->render_mode.subpixel < 2))
 	{
-	case 1:
 		render_mode = FT_RENDER_MODE_MONO;
-		break;
-	case 8:
-		render_mode = FT_RENDER_MODE_NORMAL;
-		break;
-	case 24:
-	case 32:
-		render_mode = (setting_cache->subpixel_render ? FT_RENDER_MODE_LCD : FT_RENDER_MODE_NORMAL);
-		break;
-	default:
-		// we do not support 16 bpp currently
-		return false;
+		return true;
 	}
 
-	return true;
+	if ((font_setting->render_mode.gray == 1 && dc_bmp_bpp == 8) ||
+		(font_setting->render_mode.gray == 2))
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	// we do not support 16 bpp currently
+	if ((font_setting->render_mode.subpixel == 1 && dc_bmp_bpp >= 24) ||
+		(font_setting->render_mode.subpixel == 2))
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	return false;
 }
 
 LOGFONTW get_logfont(HDC hdc)
@@ -190,12 +204,6 @@ LOGFONTW get_logfont(HDC hdc)
 	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
 
 	return font_attr;
-}
-
-bool is_non_aa(BYTE font_quality, const font_setting_cache *setting_cache)
-{
-	// non-antialiased font
-	return (font_quality == NONANTIALIASED_QUALITY && !setting_cache->render_non_aa);
 }
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)

@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-// 3rd-party dependency libraries
+// 3rd-party dependency
 #include "ft2build.h"
 #include FT_BBOX_H
 #include FT_CACHE_H
@@ -40,3 +40,4 @@
 
 #include <d2d1.h>
 #include <dwrite.h>
+#include <wincodec.h>

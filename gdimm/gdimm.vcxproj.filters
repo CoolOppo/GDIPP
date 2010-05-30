@@ -69,6 +69,12 @@
     <ClInclude Include="ggo_text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wic_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wic_text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="font_link.cpp">
@@ -116,10 +122,16 @@
     <ClCompile Include="ggo_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dw_text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="d2d_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dw_text.cpp">
+    <ClCompile Include="wic_impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wic_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

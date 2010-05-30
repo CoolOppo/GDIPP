@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "hook.h"
-#include "d2d_text.h"
 #include "ft_text.h"
 #include "ggo_text.h"
+#include "d2d_text.h"
+#include "dw_text.h"
+#include "wic_text.h"
 #include "gdimm.h"
 #include "lock.h"
 #include "text_helper.h"
@@ -10,6 +12,7 @@
 HANDLE h_svc_event = NULL;
 HANDLE h_unload = NULL;
 set<HDC> hdc_with_path;
+set<HDC> hdc_use_alpha;
 
 DWORD gdimm_hook::tls_index = 0;
 gdimm_text *_text_instances[_RENDERER_TYPE_COUNT_];
@@ -26,33 +29,6 @@ unsigned __stdcall unload_self(void *arglist)
 
 	_endthreadex(0);
 	return 0;
-}
-
-BOOL WINAPI AbortPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = AbortPath(hdc);
-	if (b_ret)
-		hdc_with_path.erase(hdc);
-
-	return b_ret;
-}
-
-BOOL WINAPI BeginPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = BeginPath(hdc);
-	if (b_ret)
-		hdc_with_path.insert(hdc);
-
-	return b_ret;
-}
-
-BOOL WINAPI EndPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = EndPath(hdc);
-	if (b_ret)
-		hdc_with_path.erase(hdc);
-
-	return b_ret;
 }
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
@@ -76,10 +52,10 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 	//if (options & ETO_GLYPH_INDEX)
-	//if (c != 3)
+	//if (c != 1)
 	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	// no text to render
+	// no text to output
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
@@ -144,45 +120,77 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	// uncomment this to make rendering single-threaded
 	//gdimm_lock lock(LOCK_DEBUG);
 
+	gdimm_text::gdimm_text_context context;
+
 	vector<BYTE> metric_buf;
-	OUTLINETEXTMETRICW *outline_metrics;
-	if (!get_dc_metrics(hdc, metric_buf, outline_metrics))
+	if (!get_dc_metrics(hdc, metric_buf, context.outline_metrics))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	const wchar_t *font_face = metric_face_name(outline_metrics);
-	const font_setting_cache *setting_cache = setting_cache_instance.lookup(font_face);
-	if (setting_cache->renderer == CLEARTYPE)
+	context.font_face = metric_face_name(context.outline_metrics);
+	context.setting_cache = setting_cache_instance.lookup(context.font_face);
+	if (context.setting_cache->renderer == CLEARTYPE)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// gdimm may be attached to a process which already has multiple threads
 	// always check if the current thread has text instances
 	gdimm_text **text_instances = (gdimm_text**) gdimm_hook::create_tls_text();
+	gdimm_text *&curr_instance =  text_instances[context.setting_cache->renderer];
 
-	if (text_instances[setting_cache->renderer] == NULL)
+	if (curr_instance == NULL)
 	{
-		switch (setting_cache->renderer)
+		switch (context.setting_cache->renderer)
 		{
 		case DIRECTWRITE:
-			text_instances[setting_cache->renderer] = new gdimm_d2d_text;
+			curr_instance = new gdimm_d2d_text;
 			break;
 		case GETGLYPHOUTLINE:
-			text_instances[setting_cache->renderer] = new gdimm_ggo_text;
+			curr_instance = new gdimm_ggo_text;
 			break;
 		default:
-			text_instances[setting_cache->renderer] = new gdimm_ft_text;
+			curr_instance = new gdimm_ft_text;
 			break;
 		}
 	}
 
-	if (!text_instances[setting_cache->renderer]->begin(hdc, outline_metrics, font_face, setting_cache))
+	context.hdc = hdc;
+	context.use_alpha = true;
+
+	if (!curr_instance->begin(&context))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!text_instances[setting_cache->renderer]->text_out(x, y, options, lprect, lpString, c, lpDx))
+	if (!curr_instance->text_out(x, y, options, lprect, lpString, c, lpDx))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	text_instances[setting_cache->renderer]->end();
+	curr_instance->end();
 
 	return TRUE;
+}
+
+BOOL WINAPI AbortPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = AbortPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI BeginPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = BeginPath(hdc);
+	if (b_ret)
+		hdc_with_path.insert(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI EndPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = EndPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
 }
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
@@ -321,7 +329,7 @@ CreateProcessAsUserW_hook(
 
 	return TRUE;
 }
-#endif // GDIPP_INJECT_SANDBOX && _M_X64
+#endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
@@ -413,7 +421,7 @@ bool gdimm_hook::hook()
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
 	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
-#endif // GDIPP_INJECT_SANDBOX && _M_X64
+#endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
 	return !(_hooks.empty());
 }
