@@ -37,7 +37,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	do
 	{
 		const BYTE *header_ptr = outline_buf + header_off;
-		const TTPOLYGONHEADER *header = (TTPOLYGONHEADER*) header_ptr;
+		const TTPOLYGONHEADER *header = (TTPOLYGONHEADER *)header_ptr;
 
 		// FreeType uses 26.6 format, while Windows gives logical units
 		const FT_Vector start_point = {to_26dot6(header->pfxStart.x), to_26dot6(header->pfxStart.y)};
@@ -53,7 +53,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 			// the first point is on the curve
 			curve_tags.push_back(FT_CURVE_TAG_ON);
 
-			const TTPOLYCURVE *curve = (TTPOLYCURVE*)(header_ptr + curve_off);
+			const TTPOLYCURVE *curve = (TTPOLYCURVE *)(header_ptr + curve_off);
 			char curr_tag;
 			switch (curve->wType)
 			{
@@ -140,7 +140,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	return (const FT_BitmapGlyph) generic_glyph;
 }
 
-bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx, FT_Render_Mode render_mode)
+bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
@@ -151,8 +151,6 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	memset(&_matrix, 0, sizeof(MAT2));
 	_matrix.eM11.value = 1;
 	_matrix.eM22.value = 1;
-
-	_render_mode = render_mode;
 
 	/*
 	GetGlyphOutline is capable of returning cubic B¨¦zier curves

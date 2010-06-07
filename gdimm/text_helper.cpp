@@ -4,12 +4,17 @@
 
 FT_F26Dot6 to_26dot6(const FIXED &x)
 {
-	return *((FT_F26Dot6*) &x) >> 10;
+	return *((FT_F26Dot6 *)&x) >> 10;
 }
 
 FT_F26Dot6 to_26dot6(FLOAT x)
 {
-	return (FT_F26Dot6)(x * 32);
+	return (FT_F26Dot6)(x * 64);
+}
+
+LONG from_26dot6(FT_Pos x)
+{
+	return x >> 6;
 }
 
 LONG from_16dot16(FT_Pos x)
@@ -100,7 +105,7 @@ bool get_dc_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 	}
 
 	dc_dc_bmp_header.biBitCount = 0;
-	int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, (BITMAPINFO*) &dc_dc_bmp_header, DIB_RGB_COLORS);
+	int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, (BITMAPINFO *)&dc_dc_bmp_header, DIB_RGB_COLORS);
 	assert(i_ret != 0);
 
 	return true;
@@ -114,7 +119,7 @@ bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outl
 		return false;
 
 	metric_buf.resize(metric_size);
-	outline_metrics = (OUTLINETEXTMETRICW*) &metric_buf[0];
+	outline_metrics = (OUTLINETEXTMETRICW *)&metric_buf[0];
 	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
 	assert(metric_size != 0);
 
@@ -206,17 +211,38 @@ LOGFONTW get_logfont(HDC hdc)
 	return font_attr;
 }
 
+unsigned char get_gdi_weight_class(unsigned short weight)
+{
+	/*
+	emulate GDI behavior:
+	weight 1 to 550 are rendered as Regular
+	551 to 611 are Semibold
+	612 to infinity are Bold
+	*/
+
+	const LONG weight_class_max[] = {550, 611};
+	const unsigned char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
+
+	for (unsigned char i = 0; i < max_weight_class; i++)
+	{
+		if (weight <= weight_class_max[i])
+			return i;
+	}
+
+	return max_weight_class;
+}
+
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFamilyName);
+	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpFamilyName);
 }
 
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpFaceName);
+	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpFaceName);
 }
 
 const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE*) outline_metric + (UINT) outline_metric->otmpStyleName);
+	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpStyleName);
 }

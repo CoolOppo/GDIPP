@@ -6,7 +6,8 @@
 gdimm_d2d_text::gdimm_d2d_text()
 :
 _d2d1_factory(NULL),
-_d2d1_render_target(NULL),
+_dc_render_target(NULL),
+_d2d1_brush(NULL),
 _dw_factory(NULL),
 _dw_gdi_interop(NULL)
 {
@@ -83,22 +84,22 @@ bool gdimm_d2d_text::draw_glyph(int x, int y, UINT options, CONST RECT *lprect, 
 	HRESULT hr;
 
 	CComPtr<IDWriteFontFace> dw_font_face;
-	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_hdc_text, &dw_font_face);
+	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_context->hdc, &dw_font_face);
 	assert(hr == S_OK);
 
 	DWRITE_GLYPH_METRICS *glyph_metrics = new DWRITE_GLYPH_METRICS[c];
-	hr = dw_font_face->GetDesignGlyphMetrics((UINT16*) lpString, c, glyph_metrics);
+	hr = dw_font_face->GetDesignGlyphMetrics((UINT16 *)lpString, c, glyph_metrics);
 	assert(hr == S_OK);
 
-	const LONG point_size = _outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading;
+	const LONG point_size = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
 	SIZE bbox = get_glyph_run_bbox(dw_font_face, glyph_metrics, c, point_size);
-	bbox.cy = max(bbox.cy, _outline_metrics->otmTextMetrics.tmHeight);
+	bbox.cy = max(bbox.cy, _context->outline_metrics->otmTextMetrics.tmHeight);
 
 	DWRITE_GLYPH_RUN glyph_run = {};
 	glyph_run.fontFace = dw_font_face;
 	glyph_run.fontEmSize = (FLOAT) point_size;
 	glyph_run.glyphCount = c;
-	glyph_run.glyphIndices = (UINT16*) lpString;
+	glyph_run.glyphIndices = (UINT16 *)lpString;
 
 	vector<FLOAT> glyph_advances;
 	if (lpDx != NULL)
@@ -109,25 +110,22 @@ bool gdimm_d2d_text::draw_glyph(int x, int y, UINT options, CONST RECT *lprect, 
 	}
 
 	D2D1_POINT_2F dest_origin;
-	RECT dc_rect;
+	RECT text_rect;
 	get_text_geometry(x,
 		y,
 		bbox.cx, 
-		_outline_metrics->otmTextMetrics.tmHeight,
-		_outline_metrics->otmTextMetrics.tmAscent,
+		_context->outline_metrics->otmTextMetrics.tmHeight,
+		_context->outline_metrics->otmTextMetrics.tmAscent,
 		dest_origin,
-		dc_rect);
+		text_rect);
 
-	CComPtr<ID2D1SolidColorBrush> fg_brush;
-	hr = _d2d1_render_target->CreateSolidColorBrush(_fg_color, &fg_brush);
+	const RECT dc_rect = {0, 0, _dc_bmp_header.biWidth, _dc_bmp_header.biHeight};
+	hr = _dc_render_target->BindDC(_context->hdc, &dc_rect);
 	assert(hr == S_OK);
 
-	hr = _d2d1_render_target->BindDC(_hdc_text, &dc_rect);
-	assert(hr == S_OK);
-
-	_d2d1_render_target->BeginDraw();
-	_d2d1_render_target->DrawGlyphRun(dest_origin, &glyph_run, fg_brush);
-	hr = _d2d1_render_target->EndDraw();
+	_dc_render_target->BeginDraw();
+	_dc_render_target->DrawGlyphRun(dest_origin, &glyph_run, _d2d1_brush);
+	hr = _dc_render_target->EndDraw();
 	assert(hr == S_OK);
 
 	return true;
@@ -138,17 +136,17 @@ bool gdimm_d2d_text::draw_text(int x, int y, UINT options, CONST RECT *lprect, L
 	HRESULT hr;
 	
 	CComPtr<IDWriteFont> dw_font;
-	wcsncpy_s(_font_attr.lfFaceName, metric_family_name(_outline_metrics), LF_FACESIZE);
-	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&_font_attr, &dw_font);
+	wcsncpy_s(_context->font_attr.lfFaceName, metric_family_name(_context->outline_metrics), LF_FACESIZE);
+	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&_context->font_attr, &dw_font);
 	assert(hr == S_OK);
 	
 	CComPtr<IDWriteTextFormat> dw_text_format;
-	hr = _dw_factory->CreateTextFormat(metric_family_name(_outline_metrics),
+	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
 		NULL,
 		dw_font->GetWeight(),
 		dw_font->GetStyle(),
 		dw_font->GetStretch(),
-		(FLOAT)(_outline_metrics->otmTextMetrics.tmHeight - _outline_metrics->otmTextMetrics.tmInternalLeading),
+		(FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading),
 		L"",
 		&dw_text_format);
 	assert(hr == S_OK);
@@ -158,10 +156,11 @@ bool gdimm_d2d_text::draw_text(int x, int y, UINT options, CONST RECT *lprect, L
 		lpString,
 		c,
 		dw_text_format,
-		(FLOAT) _bmp_info.bmiHeader.biWidth,
-		(FLOAT) _bmp_info.bmiHeader.biHeight,
+		(FLOAT) _dc_bmp_header.biWidth,
+		(FLOAT) _dc_bmp_header.biHeight,
 		&dw_text_layout);
 	assert(hr == S_OK);
+	
 
 	DWRITE_TEXT_METRICS text_metrics;
 	hr = dw_text_layout->GetMetrics(&text_metrics);
@@ -171,37 +170,36 @@ bool gdimm_d2d_text::draw_text(int x, int y, UINT options, CONST RECT *lprect, L
 	const UINT32 text_height = (UINT32) ceil(text_metrics.height);
 
 	D2D1_POINT_2F dest_origin;
+	RECT r = {0, 0, _dc_bmp_header.biWidth, _dc_bmp_header.biHeight};
 	RECT dc_rect;
 	get_text_geometry(x,
 		y,
 		text_width, 
 		text_height,
-		_outline_metrics->otmTextMetrics.tmAscent,
+		_context->outline_metrics->otmTextMetrics.tmAscent,
 		dest_origin,
 		dc_rect);
-	const D2D1_RECT_F d2d1_rect = D2D1::RectF(0,
-		0,
-		text_width,
-		text_height);
 
-	CComPtr<ID2D1SolidColorBrush> fg_brush;
-	hr = _d2d1_render_target->CreateSolidColorBrush(_fg_color, &fg_brush);
-	assert(hr == S_OK);
+	dest_origin.x += dc_rect.left;
+	dest_origin.y += dc_rect.top - _context->outline_metrics->otmTextMetrics.tmAscent;
 
-	hr = _d2d1_render_target->BindDC(_hdc_text, &dc_rect);
-	assert(hr == S_OK);
+	if (_context->hdc != _last_hdc)
+	{
+		hr = _dc_render_target->BindDC(_context->hdc, &r);
+		assert(hr == S_OK);
+	}
 
-	_d2d1_render_target->BeginDraw();
-	_d2d1_render_target->DrawText(lpString, c, dw_text_format, d2d1_rect, fg_brush, D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_GDI_NATURAL);
-	hr = _d2d1_render_target->EndDraw();
+	_dc_render_target->BeginDraw();
+	_dc_render_target->DrawTextLayout(dest_origin, dw_text_layout, _d2d1_brush);
+	hr = _dc_render_target->EndDraw();
 	assert(hr == S_OK);
 
 	return true;
 }
 
-bool gdimm_d2d_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, const wchar_t *font_face, const font_setting_cache *setting_cache)
+bool gdimm_d2d_text::begin(const gdimm_text_context *context)
 {
-	if (!gdimm_text::begin(hdc, outline_metrics, font_face, setting_cache))
+	if (!gdimm_text::begin(context))
 		return false;
 
 	HRESULT hr;
@@ -210,23 +208,29 @@ bool gdimm_d2d_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, c
 	{
 		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &_d2d1_factory);
 		assert(hr == S_OK);
+	}
 
-		if (_d2d1_render_target == NULL)
-		{
-			const D2D1_RENDER_TARGET_PROPERTIES target_prop = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
-				D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
-				0,
-				0,
-				D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE,
-				D2D1_FEATURE_LEVEL_DEFAULT);
-			hr = _d2d1_factory->CreateDCRenderTarget(&target_prop, &_d2d1_render_target);
-			assert(hr == S_OK);
-		}
+	if (_dc_render_target == NULL)
+	{
+		const D2D1_RENDER_TARGET_PROPERTIES target_prop = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			0,
+			0,
+			D2D1_RENDER_TARGET_USAGE_NONE,
+			D2D1_FEATURE_LEVEL_DEFAULT);
+		hr = _d2d1_factory->CreateDCRenderTarget(&target_prop, &_dc_render_target);
+		assert(hr == S_OK);
+	}
+
+	if (_d2d1_brush == NULL)
+	{
+		hr = _dc_render_target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &_d2d1_brush);
+		assert(hr == S_OK);
 	}
 
 	if (_dw_factory == NULL)
 	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**) &_dw_factory);
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)&_dw_factory);
 		assert(hr == S_OK);
 
 		if (_dw_gdi_interop == NULL)
@@ -236,17 +240,20 @@ bool gdimm_d2d_text::begin(HDC hdc, const OUTLINETEXTMETRICW *outline_metrics, c
 		}
 	}
 
-	_fg_color = D2D1::ColorF(GetRValue(_text_color) / 255.0f,
-		GetGValue(_text_color) / 255.0f,
-		GetBValue(_text_color) / 255.0f);
+	_d2d1_brush->SetColor(D2D1::ColorF(_text_color));
 
 	return true;
 }
 
 bool gdimm_d2d_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
+	bool b_ret;
 	if (options & ETO_GLYPH_INDEX)
-		return draw_glyph(x, y, options, lprect, lpString, c, lpDx);
+		return true;//draw_glyph(x, y, options, lprect, lpString, c, lpDx);
 	else
-		return draw_text(x, y, options, lprect, lpString, c, lpDx);
+		b_ret = draw_text(x, y, options, lprect, lpString, c, lpDx);
+
+	_last_hdc = _context->hdc;
+
+	return b_ret;
 }

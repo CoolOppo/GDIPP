@@ -15,11 +15,11 @@ void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", L""), &ft_cache_max_faces);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", L""), &ft_cache_max_sizes);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", L""), &ft_cache_max_bytes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", L"", 0, false), &ft_cache_max_faces);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", L"", 0, false), &ft_cache_max_sizes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", L"", 0, false), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L""), (int*) &lcd_filter);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L"", 0, false), (int *)&lcd_filter);
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
@@ -52,7 +52,7 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 
 	FT_Open_Args args = {};
 	args.flags = FT_OPEN_STREAM;
-	args.stream = gdimm_font_man::get_stream(font_id);
+	args.stream = gdimm_font_man::lookup_stream(font_id);
 
-	return FT_Open_Face(library, &args, gdimm_font_man::get_face_index(font_id), aface);
+	return FT_Open_Face(library, &args, gdimm_font_man::lookup_face_index(font_id), aface);
 }

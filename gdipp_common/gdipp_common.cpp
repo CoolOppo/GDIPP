@@ -61,9 +61,9 @@ GDIPP_API BOOL gdipp_remove_setting(const wchar_t *node_xpath)
 	return setting_instance.remove_setting(node_xpath);
 }
 
-GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name)
+GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight_class, bool italic)
 {
-	return setting_instance.get_gdimm_setting(setting_name, font_name);
+	return setting_instance.get_gdimm_setting(setting_name, font_name, weight_class, italic);
 }
 
 GDIPP_API const wchar_t *gdipp_get_demo_setting(const wchar_t *setting_name)

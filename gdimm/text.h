@@ -1,6 +1,7 @@
 #pragma once
 
 #include "setting_cache.h"
+#include "os2_metrics.h"
 using namespace std;
 
 class gdimm_text
@@ -12,15 +13,19 @@ public:
 		OUTLINETEXTMETRICW *outline_metrics;
 		const wchar_t *font_face;
 		const font_setting_cache *setting_cache;
-		bool use_alpha;
+
+		bool init(HDC hdc);
+
+	private:
+		vector<BYTE> _metric_buf;
 	};
 
 protected:
 	const gdimm_text_context *_context;
-	BITMAPINFOHEADER _dc_bmp_header;
-	UINT _text_alignment;
-	COLORREF _text_color;
 	LOGFONTW _font_attr;
+	UINT _text_alignment;
+	BITMAPINFOHEADER _dc_bmp_header;
+	COLORREF _text_color;
 
 public:
 	virtual ~gdimm_text();

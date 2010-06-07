@@ -3,10 +3,6 @@
 	<version>0.8.1</version>
 	
 	<gdimm>
-		<process name="explorer\.exe">
-			<use_alpha>1</use_alpha>
-		</process>
-		
 		<process name=".+\.exe">
 			<freetype>
 				<cache_max_faces>8</cache_max_faces>
@@ -26,10 +22,11 @@
 				<blue>1.0</blue>
 			</gamma>
 			<hinting>1</hinting>
+			<kerning>0</kerning>
 			<max_height>72</max_height>
 			<render_mode>
 				<mono>0</mono>
-				<gray>0</gray>
+				<gray>1</gray>
 				<subpixel>1</subpixel>
 			</render_mode>
 			<renderer>2</renderer>
@@ -38,7 +35,6 @@
 				<offset_y>1</offset_y>
 				<alpha>0</alpha>
 			</shadow>
-			<use_alpha>0</use_alpha>
 		</font>
 	</gdimm>
 	

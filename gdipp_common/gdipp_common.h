@@ -24,7 +24,7 @@ GDIPP_API BOOL gdipp_insert_setting(const wchar_t *node_name, const wchar_t *nod
 GDIPP_API BOOL gdipp_set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value);
 GDIPP_API BOOL gdipp_remove_setting(const wchar_t *node_xpath);
 
-GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name);
+GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight_class, bool italic);
 GDIPP_API const wchar_t *gdipp_get_demo_setting(const wchar_t *setting_name);
 GDIPP_API const vector<const wstring> &gdipp_get_demo_fonts();
 GDIPP_API const wchar_t *gdipp_get_service_setting(const wchar_t *setting_name);

@@ -69,10 +69,16 @@
     <ClInclude Include="ggo_text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wic_impl.h">
+    <ClInclude Include="wic_text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wic_text.h">
+    <ClInclude Include="ggro_text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wic_dib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="os2_metrics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -125,13 +131,16 @@
     <ClCompile Include="dw_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="d2d_text.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="wic_impl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="wic_text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wic_dib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="os2_metrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ggro_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

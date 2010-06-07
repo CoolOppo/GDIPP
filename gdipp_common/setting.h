@@ -9,12 +9,19 @@ class gdipp_setting
 {
 	// setting names are case-insensitive
 	typedef map<const wstring, wstring, wstring_ci_less> setting_map;
-	typedef list<pair<const wstring, setting_map>> gdimm_list;
+
+	struct gdimm_font_node
+	{
+		wstring name;
+		char weight;
+		char italic;
+		setting_map settings;
+	};
 
 	xml_document *_xml_doc;
 
 	setting_map _process_setting;
-	gdimm_list _gdimm_font;
+	list<gdimm_font_node> _gdimm_font;
 	setting_map _demo_setting;
 	setting_map _service_setting;
 	vector<const wstring> _demo_fonts;
@@ -33,7 +40,7 @@ public:
 	gdipp_setting();
 	~gdipp_setting();
 
-	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name) const;
+	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight_class, bool italic) const;
 	const wchar_t *get_demo_setting(const wchar_t *setting_name) const;
 	const vector<const wstring> &get_demo_fonts() const;
 	const wchar_t *get_service_setting(const wchar_t *setting_name) const;

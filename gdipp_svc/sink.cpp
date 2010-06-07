@@ -16,7 +16,7 @@ IFACEMETHODIMP inject_sink::QueryInterface(
 {
 	if (riid == IID_IUnknown || riid == IID_IWbemObjectSink)
 	{
-		*ppvObject = (IWbemObjectSink*) this;
+		*ppvObject = (IWbemObjectSink *)this;
 		AddRef();
 		return WBEM_S_NO_ERROR;
 	}
@@ -43,7 +43,7 @@ unsigned __stdcall process_obj(void *arglist)
 {
 	HRESULT hr;
 
-	IWbemClassObject *obj = (IWbemClassObject*) arglist;
+	IWbemClassObject *obj = (IWbemClassObject *)arglist;
 
 	CComVariant var_event;
 	VariantInit(&var_event);
@@ -51,7 +51,7 @@ unsigned __stdcall process_obj(void *arglist)
 	assert(hr == S_OK);
 
 	CComPtr<IWbemClassObject> proc_obj;
-	hr = V_UNKNOWN(&var_event)->QueryInterface(IID_IWbemClassObject, (void**) &proc_obj);
+	hr = V_UNKNOWN(&var_event)->QueryInterface(IID_IWbemClassObject, (void **)&proc_obj);
 	assert(hr == S_OK);
 
 	CComVariant var_exe_name;

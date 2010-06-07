@@ -29,19 +29,20 @@
     <ClInclude Include="gdimm.h" />
     <ClInclude Include="gdi_text.h" />
     <ClInclude Include="ggo_text.h" />
+    <ClInclude Include="ggro_text.h" />
     <ClInclude Include="glyph_cache.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="lock.h" />
+    <ClInclude Include="os2_metrics.h" />
     <ClInclude Include="setting_cache.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="text.h" />
     <ClInclude Include="text_helper.h" />
-    <ClInclude Include="wic_impl.h" />
+    <ClInclude Include="wic_dib.h" />
     <ClInclude Include="wic_text.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="d2d_text.cpp" />
     <ClCompile Include="dw_text.cpp" />
     <ClCompile Include="font_link.cpp" />
     <ClCompile Include="font_man.cpp" />
@@ -51,9 +52,11 @@
     <ClCompile Include="gdimm.cpp" />
     <ClCompile Include="gdi_text.cpp" />
     <ClCompile Include="ggo_text.cpp" />
+    <ClCompile Include="ggro_text.cpp" />
     <ClCompile Include="glyph_cache.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="lock.cpp" />
+    <ClCompile Include="os2_metrics.cpp" />
     <ClCompile Include="setting_cache.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -63,7 +66,7 @@
     </ClCompile>
     <ClCompile Include="text.cpp" />
     <ClCompile Include="text_helper.cpp" />
-    <ClCompile Include="wic_impl.cpp" />
+    <ClCompile Include="wic_dib.cpp" />
     <ClCompile Include="wic_text.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -167,7 +170,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIPP_INJECT_SANDBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)freetype;$(SolutionDir)gdipp_common;$(SolutionDir)freetype\include;$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -205,7 +208,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_INJECT_SANDBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)freetype;$(SolutionDir)gdipp_common;$(SolutionDir)freetype\include;$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>

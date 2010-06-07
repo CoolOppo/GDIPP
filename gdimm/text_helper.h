@@ -11,6 +11,9 @@ FT_F26Dot6 to_26dot6(const FIXED &x);
 // convert floating point to 26.6 fixed point format
 FT_F26Dot6 to_26dot6(FLOAT x);
 
+// convert 26.6 fixed float type to integer
+LONG from_26dot6(FT_Pos x);
+
 // convert 16.16 fixed float type to integer
 LONG from_16dot16(FT_Pos x);
 
@@ -39,6 +42,8 @@ RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vec
 bool get_ft_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
 
 LOGFONTW get_logfont(HDC hdc);
+
+unsigned char get_gdi_weight_class(unsigned short weight);
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);

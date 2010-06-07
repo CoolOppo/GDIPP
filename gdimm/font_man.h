@@ -1,5 +1,6 @@
 #pragma once
 
+#include "os2_metrics.h"
 using namespace std;
 
 class gdimm_font_man
@@ -33,11 +34,7 @@ class gdimm_font_man
 		DWORD face_index;
 
 		FT_StreamRec stream;
-		
-		// from OS/2 table
-		FT_Short xAvgCharWidth;
-		FT_UShort usWeightClass;
-		FT_UShort fsSelection;
+		gdimm_os2_metrics os2_metrics;
 	};
 
 	// face name -> font id
@@ -64,16 +61,14 @@ class gdimm_font_man
 
 	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
 	static DWORD get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
-	static bool get_os2_info(HDC font_holder, font_info& info);
 
 	static HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
 
 public:
-	static FT_Stream get_stream(long font_id);
-	static DWORD get_face_index(long font_id);
-	static FT_Short get_xAvgCharWidth(long font_id);
-	static FT_UShort get_usWeightClass(long font_id);
-	static FT_UShort get_fsSelection(long font_id);
+	static FT_Stream lookup_stream(long font_id);
+	static ULONG lookup_face_index(long font_id);
+	static gdimm_os2_metrics lookup_os2_metrics(long font_id);
+	static int lookup_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph);
 
 	gdimm_font_man();
 	~gdimm_font_man();

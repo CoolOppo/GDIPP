@@ -2,7 +2,6 @@
 #include "glyph_cache.h"
 #include "ft.h"
 #include "lock.h"
-#include <gdipp_common.h>
 
 bool gdimm_glyph_cache::cache_trait::operator==(const gdimm_glyph_cache::cache_trait &trait) const
 {
@@ -23,12 +22,12 @@ _cached_bytes(0)
 
 void gdimm_glyph_cache::add_ref(const void *cache_node_ptr)
 {
-	((cache_node*)cache_node_ptr)->ref_count += 1;
+	((cache_node *)cache_node_ptr)->ref_count += 1;
 }
 
 void gdimm_glyph_cache::release(const void *cache_node_ptr)
 {
-	((cache_node*)cache_node_ptr)->ref_count -= 1;
+	((cache_node *)cache_node_ptr)->ref_count -= 1;
 }
 
 void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)

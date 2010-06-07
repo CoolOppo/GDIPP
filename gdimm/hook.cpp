@@ -2,6 +2,7 @@
 #include "hook.h"
 #include "ft_text.h"
 #include "ggo_text.h"
+#include "ggro_text.h"
 #include "d2d_text.h"
 #include "dw_text.h"
 #include "wic_text.h"
@@ -51,9 +52,10 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 
-	//if (options & ETO_GLYPH_INDEX)
-	//if (c != 1)
-	//	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+//	if (options & ETO_GLYPH_INDEX)
+//		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+//	if (c < 3)
+//		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to output
 	if (lpString == NULL || c == 0)
@@ -102,7 +104,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 			WORD *gi = new WORD[debug_len];
 			GetGlyphIndicesW(hdc, debug_text, debug_len, gi, 0);
 
-			if (memcmp((WORD*) lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
+			if (memcmp((WORD *)lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
 				is_target = true;
 
 			delete[] gi;
@@ -121,19 +123,15 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	//gdimm_lock lock(LOCK_DEBUG);
 
 	gdimm_text::gdimm_text_context context;
-
-	vector<BYTE> metric_buf;
-	if (!get_dc_metrics(hdc, metric_buf, context.outline_metrics))
+	if (!context.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	context.font_face = metric_face_name(context.outline_metrics);
-	context.setting_cache = setting_cache_instance.lookup(context.font_face);
 	if (context.setting_cache->renderer == CLEARTYPE)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// gdimm may be attached to a process which already has multiple threads
 	// always check if the current thread has text instances
-	gdimm_text **text_instances = (gdimm_text**) gdimm_hook::create_tls_text();
+	gdimm_text **text_instances = (gdimm_text* *)gdimm_hook::create_tls_text();
 	gdimm_text *&curr_instance =  text_instances[context.setting_cache->renderer];
 
 	if (curr_instance == NULL)
@@ -141,7 +139,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		switch (context.setting_cache->renderer)
 		{
 		case DIRECTWRITE:
-			curr_instance = new gdimm_d2d_text;
+			curr_instance = new gdimm_wic_text;
 			break;
 		case GETGLYPHOUTLINE:
 			curr_instance = new gdimm_ggo_text;
@@ -151,9 +149,6 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 			break;
 		}
 	}
-
-	context.hdc = hdc;
-	context.use_alpha = true;
 
 	if (!curr_instance->begin(&context))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -208,7 +203,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	// put gdimm path at the end of the buffer, leave space at the beginning for code
 	const DWORD path_offset = sys_info.dwPageSize - MAX_PATH * sizeof(wchar_t);
-	dw_ret = GetModuleFileNameW(h_self, (wchar_t*)(inject_buffer + path_offset), MAX_PATH);
+	dw_ret = GetModuleFileNameW(h_self, (wchar_t *)(inject_buffer + path_offset), MAX_PATH);
 	assert(dw_ret != 0);
 
 	// get eip of the spawned thread
@@ -338,7 +333,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	if (remote_info->UserDataSize != sizeof(gdipp_inject_payload))
 		return;
 
-	const gdipp_inject_payload payload = *(gdipp_inject_payload*) remote_info->UserData;
+	const gdipp_inject_payload payload = *(gdipp_inject_payload *)remote_info->UserData;
 	switch (payload.inject_type)
 	{
 	case GDIPP_SERVICE:

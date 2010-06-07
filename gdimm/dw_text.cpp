@@ -20,7 +20,7 @@ bool gdimm_dw_text::prepare_glyph(LPCWSTR lpString, UINT c,	IDWriteFontFace **dw
 
 	vector<DWRITE_GLYPH_METRICS> glyph_metrics;
 	glyph_metrics.resize(c);
-	hr = (*dw_font_face)->GetDesignGlyphMetrics((UINT16*) lpString, c, &glyph_metrics[0]);
+	hr = (*dw_font_face)->GetDesignGlyphMetrics((UINT16 *)lpString, c, &glyph_metrics[0]);
 	assert(hr == S_OK);
 
 	UINT32 glyph_run_width = 0;
@@ -296,7 +296,7 @@ bool gdimm_dw_text::begin(const gdimm_text_context *context)
 
 	if (_dw_factory == NULL)
 	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**) &_dw_factory);
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)&_dw_factory);
 		assert(hr == S_OK);
 
 		if (_dw_gdi_interop == NULL)
@@ -307,7 +307,7 @@ bool gdimm_dw_text::begin(const gdimm_text_context *context)
 
 		if (_dw_render_param == NULL)
 		{
-			hr = _dw_factory->CreateRenderingParams(&_dw_render_param);
+			hr = _dw_factory->CreateCustomRenderingParams(0.8f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_RGB, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC, &_dw_render_param);
 			assert(hr == S_OK);
 		}
 	}
@@ -428,7 +428,7 @@ bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPC
 		DWRITE_GLYPH_RUN dw_glyph_run = {dw_font_face,
 			(FLOAT) _em_height,
 			c,
-			(UINT16*) lpString,
+			(UINT16 *)lpString,
 			(_advances.empty() ? NULL : &_advances[0]),
 			FALSE,
 			0};

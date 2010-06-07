@@ -1,6 +1,28 @@
 #include "stdafx.h"
 #include "text.h"
 #include "text_helper.h"
+#include "gdimm.h"
+
+bool gdimm_text::gdimm_text_context::init(HDC hdc)
+{
+	bool b_ret;
+
+	this->hdc = hdc;
+
+	if (!get_dc_metrics(hdc, _metric_buf, outline_metrics))
+		return false;
+
+	font_face = metric_face_name(outline_metrics);
+
+	gdimm_os2_metrics os2_metrics;
+	b_ret = os2_metrics.init(hdc);
+	assert(b_ret);
+	
+	const gdimm_font_trait font_trait = {font_face, os2_metrics.get_weight_class(), os2_metrics.is_italic()};
+	setting_cache = setting_cache_instance.lookup(font_trait);
+	
+	return true;
+}
 
 gdimm_text::~gdimm_text()
 {

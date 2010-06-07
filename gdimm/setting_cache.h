@@ -48,21 +48,38 @@ struct font_setting_cache
 	FT_F26Dot6 embolden;
 	font_gamma gamma;
 	WORD hinting;
+	bool kerning;
 	LONG max_height;
 	font_render_mode render_mode;
 	RENDERER_TYPE renderer;
 	font_shadow shadow;
-	bool use_alpha;
 
 	font_setting_cache();
 };
 
+struct gdimm_font_trait
+{
+	const wchar_t *font_name;
+	unsigned char weight_class;
+	bool italic;
+};
+
 class gdimm_setting_cache
 {
-	typedef map<const wstring, font_setting_cache> cache_map;
+	struct cache_trait
+	{
+		wstring font_name;
+		unsigned char weight_class;
+		bool italic;
+
+		cache_trait(const gdimm_font_trait &font_trait);
+		bool operator<(const cache_trait &trait) const;
+	};
+
+	typedef map<cache_trait, font_setting_cache> cache_map;
 
 	cache_map _cache;
 
 public:
-	const font_setting_cache *lookup(const wchar_t *font_name);
+	const font_setting_cache *lookup(const gdimm_font_trait &font_trait);
 };
