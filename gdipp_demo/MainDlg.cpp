@@ -163,6 +163,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			prepare_result(dc);
 
 		dc.SelectFont(_curr_font);
+
 		dc.ExtTextOut(10, 10, 0, NULL, _result_str, (UINT) wcslen(_result_str), NULL);
 	}
 

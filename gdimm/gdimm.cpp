@@ -20,8 +20,6 @@ BOOL APIENTRY DllMain(
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved)
 {
-	BOOL b_ret;
-
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
@@ -30,12 +28,12 @@ BOOL APIENTRY DllMain(
 
 		// get setting file path
 		wchar_t setting_path[MAX_PATH];
-		b_ret = gdipp_get_dir_file_path(hModule, L"gdipp_setting.xml", setting_path);
-		assert(b_ret);
+		if (!gdipp_get_dir_file_path(hModule, L"gdipp_setting.xml", setting_path))
+			return FALSE;
 
 		gdipp_init_setting();
-		b_ret = gdipp_load_setting(setting_path);
-		assert(b_ret);
+		if (!gdipp_load_setting(setting_path))
+			return FALSE;
 
 		if (gdipp_is_process_excluded(NULL))
 			return FALSE;

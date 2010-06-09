@@ -3,7 +3,6 @@
 #include "text.h"
 #include "font_man.h"
 #include "wic_dib.h"
-
 using namespace std;
 
 class gdimm_wic_text : public gdimm_text
@@ -23,17 +22,19 @@ class gdimm_wic_text : public gdimm_text
 	CComPtr<IDWriteFactory> _dw_factory;
 	CComPtr<IDWriteGdiInterop> _dw_gdi_interop;
 
-	gdimm_wic_dib _wic_bitmap;
-	DWRITE_MEASURING_MODE _measuring_mode;
-	bool _use_gdi_natural;
 	vector<FLOAT> _advances;
+	DWRITE_MEASURING_MODE _dw_measuring_mode;
+	HDC _hdc_canvas;
+	FLOAT _pixels_per_dip;
+	bool _use_gdi_natural;
+	gdimm_wic_dib _wic_bitmap;
+
 	LONG _em_size;
-	COLORREF _bg_color;
 	POINT _cursor;
-	int _char_extra;
 
 	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run);
-	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextFormat **dw_text_format, IDWriteTextLayout **dw_text_layout);
+	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextLayout **dw_text_layout);
+	void set_param(ID2D1RenderTarget *render_target);
 	bool draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:

@@ -37,13 +37,13 @@ int get_ft_bmp_width(const FT_Bitmap &bitmap);
 
 RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos);
 
-// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
-// otherwise, return false
-bool get_ft_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+unsigned char get_gdi_weight_class(unsigned short weight);
 
 LOGFONTW get_logfont(HDC hdc);
 
-unsigned char get_gdi_weight_class(unsigned short weight);
+// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
+// otherwise, return false
+bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);

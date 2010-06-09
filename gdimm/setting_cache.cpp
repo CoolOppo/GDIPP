@@ -15,7 +15,8 @@ font_setting_cache::font_render_mode::font_render_mode()
 :
 mono(0),
 gray(1),
-subpixel(1)
+subpixel(1),
+pixel_geometry(PIXEL_GEOMETRY_RGB)
 {
 };
 
@@ -35,7 +36,7 @@ embolden(0),
 hinting(1),
 kerning(false),
 max_height(72),
-renderer(FREETYPE)
+renderer(RENDERER_FREETYPE)
 {
 }
 
@@ -85,11 +86,12 @@ const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_font_trait &fo
 			wcs_convert(gdipp_get_gdimm_setting(L"hinting", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.hinting);
 			wcs_convert(gdipp_get_gdimm_setting(L"kerning", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.kerning);
 			wcs_convert(gdipp_get_gdimm_setting(L"max_height", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.max_height);
-			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_trait.font_name, font_trait.weight_class, font_trait.italic), (int *)&new_cache.renderer);
+			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.renderer);
 
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/mono", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.render_mode.mono);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/gray", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.render_mode.gray);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/subpixel", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.render_mode.subpixel);
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/pixel_geometry", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.pixel_geometry);
 
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.shadow.offset_x);
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.shadow.offset_y);

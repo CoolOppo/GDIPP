@@ -171,7 +171,39 @@ RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vec
 	return glyph_run_rect;
 }
 
-bool get_ft_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+unsigned char get_gdi_weight_class(unsigned short weight)
+{
+	/*
+	emulate GDI behavior:
+	weight 1 to 550 are rendered as Regular
+	551 to 611 are Semibold
+	612 to infinity are Bold
+	*/
+
+	const LONG weight_class_max[] = {550, 611};
+	const unsigned char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
+
+	for (unsigned char i = 0; i < max_weight_class; i++)
+	{
+		if (weight <= weight_class_max[i])
+			return i;
+	}
+
+	return max_weight_class;
+}
+
+LOGFONTW get_logfont(HDC hdc)
+{
+	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
+	assert(h_font != NULL);
+
+	LOGFONTW font_attr;
+	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
+
+	return font_attr;
+}
+
+bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
 {
 	if ((font_setting->render_mode.mono == 1 && dc_bmp_bpp == 1) ||
 		(font_setting->render_mode.mono == 2) ||
@@ -198,38 +230,6 @@ bool get_ft_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp,
 	}
 
 	return false;
-}
-
-LOGFONTW get_logfont(HDC hdc)
-{
-	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
-	assert(h_font != NULL);
-
-	LOGFONTW font_attr;
-	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
-
-	return font_attr;
-}
-
-unsigned char get_gdi_weight_class(unsigned short weight)
-{
-	/*
-	emulate GDI behavior:
-	weight 1 to 550 are rendered as Regular
-	551 to 611 are Semibold
-	612 to infinity are Bold
-	*/
-
-	const LONG weight_class_max[] = {550, 611};
-	const unsigned char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
-
-	for (unsigned char i = 0; i < max_weight_class; i++)
-	{
-		if (weight <= weight_class_max[i])
-			return i;
-	}
-
-	return max_weight_class;
 }
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)

@@ -74,11 +74,14 @@ FT_F26Dot6 gdimm_ft_text::get_embolden(const font_setting_cache *setting_cache, 
 	// the embolden weight is based on the difference between demanded weight and the regular weight
 	if (_font_attr.lfWeight != FW_DONTCARE)
 	{
-		const FT_F26Dot6 weight_embolden[] = {0, 16};
+		const FT_F26Dot6 embolden_values[] = {0, 16};
 		const FT_F26Dot6 max_embolden = 32;
+		const unsigned char embolden_count = sizeof(embolden_values) / sizeof(FT_F26Dot6);
 
-		const unsigned char text_weight_class = get_gdi_weight_class((unsigned short) _font_attr.lfWeight);
-		embolden += weight_embolden[max(text_weight_class - font_weight_class, 0)];
+		const unsigned char text_weight_class = get_gdi_weight_class((unsigned short) _context->outline_metrics->otmTextMetrics.tmWeight);
+		const unsigned char embolden_class = max(text_weight_class - font_weight_class, 0);
+
+		embolden += (embolden_class < embolden_count ? embolden_values[embolden_class] : max_embolden);
 	}
 
 	return embolden;
@@ -172,7 +175,7 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 
 void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 {
-	POINT pen_pos = _cursor;
+	POINT pen_pos = {};
 
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
@@ -180,8 +183,7 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 	for (size_t i = 0; i < _glyphs.size(); i++)
 	{
 		pen_pos.x += _glyph_pos[i].x;
-		_glyph_pos[i].x = pen_pos.x - _cursor.x + _glyphs[i]->left;
-		_glyph_pos[i].y = pen_pos.y - _cursor.y;
+		_glyph_pos[i].x = pen_pos.x + _glyphs[i]->left;
 
 		const LONG char_advance = from_16dot16(_glyphs[i]->root.advance.x) + _char_extra;
 		LONG advance_x;
@@ -200,10 +202,7 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 		pen_pos.x += advance_x;
 		pen_pos.y += from_16dot16(_glyphs[i]->root.advance.y);
-
 	}
-
-	_cursor = pen_pos;
 }
 
 bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
@@ -226,8 +225,6 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
 	gdimm_os2_metrics os2_metrics = _font_man.lookup_os2_metrics(font_id);
-	gdimm_font_trait font_trait = {_context->font_face, os2_metrics.get_weight_class(), os2_metrics.is_italic()};
-
 	FTC_ScalerRec scaler = {(FTC_FaceID) font_id,
 		0,
 		_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading,
@@ -245,8 +242,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 			os2_metrics.get_xAvgCharWidth());
 	}
 
-	FT_F26Dot6 embolden = get_embolden(curr_setting_cache, font_trait.weight_class);
-	FT_ULong load_flags = get_load_flags(curr_setting_cache, _render_mode);
+	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
+	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, os2_metrics.get_weight_class());
+	bool curr_italic = !!_context->outline_metrics->otmTextMetrics.tmItalic;
 
 	if (options & ETO_GLYPH_INDEX)
 	{
@@ -257,7 +255,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 		for (UINT i = 0; i < c; i++)
 		{
-			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, embolden, font_trait.italic, _render_mode, load_flags);
+			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, curr_italic, _render_mode, curr_load_flags);
 			if (curr_glyph == NULL)
 				_glyphs[i] = &empty_glyph;
 			else
@@ -269,11 +267,12 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	}
 	else
 	{
+		FT_Render_Mode curr_render_mode = _render_mode;
+
 		UINT rendered_count = 0;
 		int font_link_index = 0;
 		wstring final_string(lpString, c);
 		wstring glyph_indices(L"", c);
-		FT_Render_Mode curr_render_mode = _render_mode;
 
 		_glyphs.resize(c);
 		_glyph_pos.resize(c);
@@ -291,7 +290,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 					_glyphs[i] = (const FT_BitmapGlyph) &empty_glyph;
 				else
 				{
-					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, embolden, font_trait.italic, _render_mode, load_flags);
+					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, curr_italic, _render_mode, curr_load_flags);
 					if (curr_glyph == NULL)
 						_glyphs[i] = &empty_glyph;
 					else
@@ -325,14 +324,14 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			// reload metrics for the linked font
 
+			// get linked font's metrics from OS/2 table
 			os2_metrics = _font_man.lookup_os2_metrics(font_id);
-			font_trait.font_name = curr_font_face.c_str();
-			font_trait.weight_class = os2_metrics.get_weight_class();
-			font_trait.italic = os2_metrics.is_italic();
+			const gdimm_font_trait font_trait = {curr_font_face.c_str(), os2_metrics.get_weight_class(), os2_metrics.is_italic()};
 
 			curr_setting_cache = setting_cache_instance.lookup(font_trait);
-			embolden = get_embolden(curr_setting_cache, font_trait.weight_class);
-			load_flags = get_load_flags(curr_setting_cache, _render_mode);
+			curr_embolden = get_embolden(curr_setting_cache, font_trait.weight_class);
+			curr_italic = font_trait.italic;
+			curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
 		}
 	}
 

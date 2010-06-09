@@ -23,9 +23,13 @@ public:
 protected:
 	const gdimm_text_context *_context;
 	LOGFONTW _font_attr;
-	UINT _text_alignment;
 	BITMAPINFOHEADER _dc_bmp_header;
+	FT_Render_Mode _render_mode;
+	UINT _text_alignment;
+	int _char_extra;
 	COLORREF _text_color;
+	COLORREF _bg_color;
+	POINT _cursor;
 
 public:
 	virtual ~gdimm_text();

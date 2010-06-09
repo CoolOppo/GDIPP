@@ -28,7 +28,7 @@ int APIENTRY wWinMain(
 		}
 	}
 
-	gdipp_init_payload(GDIPP_SERVICE, svc_name);
+	gdipp_init_payload(GDIPP_INJECTOR_SERVICE, svc_name);
 
 	list<const wchar_t*> init_proc;
 	init_proc.push_back(L"explorer.exe");

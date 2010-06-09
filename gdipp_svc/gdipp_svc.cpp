@@ -126,7 +126,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
-	gdipp_init_payload(GDIPP_SERVICE, svc_name.c_str());
+	gdipp_init_payload(GDIPP_INJECTOR_SERVICE, svc_name.c_str());
 
 	initial_inject(svc_name.c_str());
 

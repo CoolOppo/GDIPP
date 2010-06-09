@@ -1,10 +1,8 @@
 #include "stdafx.h"
 #include "hook.h"
+#include "dw_text.h"
 #include "ft_text.h"
 #include "ggo_text.h"
-#include "ggro_text.h"
-#include "d2d_text.h"
-#include "dw_text.h"
 #include "wic_text.h"
 #include "gdimm.h"
 #include "lock.h"
@@ -53,8 +51,9 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 
 //	if (options & ETO_GLYPH_INDEX)
+//	if ((options & ETO_GLYPH_INDEX) == 0)
 //		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-//	if (c < 3)
+//	if (c != 3)
 //		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// no text to output
@@ -126,23 +125,29 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	if (!context.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (context.setting_cache->renderer == CLEARTYPE)
+	if (context.setting_cache->renderer == RENDERER_CLEARTYPE)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// gdimm may be attached to a process which already has multiple threads
 	// always check if the current thread has text instances
-	gdimm_text **text_instances = (gdimm_text* *)gdimm_hook::create_tls_text();
+	gdimm_text **text_instances = (gdimm_text **)gdimm_hook::create_tls_text();
 	gdimm_text *&curr_instance =  text_instances[context.setting_cache->renderer];
 
 	if (curr_instance == NULL)
 	{
 		switch (context.setting_cache->renderer)
 		{
-		case DIRECTWRITE:
-			curr_instance = new gdimm_wic_text;
+		case RENDERER_STUB:
+			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 			break;
-		case GETGLYPHOUTLINE:
+		case RENDERER_GETGLYPHOUTLINE:
 			curr_instance = new gdimm_ggo_text;
+			break;
+		case RENDERER_DIRECTWRITE:
+			curr_instance = new gdimm_dw_text;
+			break;
+		case RENDERER_WIC:
+			curr_instance = new gdimm_wic_text;
 			break;
 		default:
 			curr_instance = new gdimm_ft_text;
@@ -336,7 +341,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	const gdipp_inject_payload payload = *(gdipp_inject_payload *)remote_info->UserData;
 	switch (payload.inject_type)
 	{
-	case GDIPP_SERVICE:
+	case GDIPP_INJECTOR_SERVICE:
 		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
 
 		// force the foreground window of the injected process to redraw
@@ -344,7 +349,7 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 		assert(b_ret);
 
 		break;
-	case GDIPP_LOADER:
+	case GDIPP_INJECTOR_LOADER:
 		// wake up suspended process
 		RhWakeUpProcess();
 		break;
@@ -398,8 +403,8 @@ bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 	assert(eh_error == 0);
 
 	ULONG thread_id_list[1] = {};
- 	eh_error = LhSetExclusiveACL(thread_id_list, 0, h_hook);
- 	assert(eh_error == 0);
+	eh_error = LhSetExclusiveACL(thread_id_list, 0, h_hook);
+	assert(eh_error == 0);
 
 	_hooks.push_back(h_hook);
 

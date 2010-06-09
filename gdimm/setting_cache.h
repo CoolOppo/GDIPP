@@ -4,14 +4,22 @@ using namespace std;
 
 enum RENDERER_TYPE
 {
-	CLEARTYPE,
-	DIRECTWRITE,
-	FREETYPE,
-	GETGLYPHOUTLINE,
+	RENDERER_CLEARTYPE,
+	RENDERER_STUB,
+	RENDERER_FREETYPE,
+	RENDERER_GETGLYPHOUTLINE,
+	RENDERER_DIRECTWRITE,
+	RENDERER_WIC,
 
 	// count of renderer types
 	// never use this type
 	_RENDERER_TYPE_COUNT_
+};
+
+enum PIXEL_GEOMETRY_TYPE
+{
+	PIXEL_GEOMETRY_RGB,
+	PIXEL_GEOMETRY_BGR
 };
 
 struct font_setting_cache
@@ -30,6 +38,7 @@ struct font_setting_cache
 		WORD mono;
 		WORD gray;
 		WORD subpixel;
+		PIXEL_GEOMETRY_TYPE pixel_geometry;
 
 		font_render_mode();
 	};

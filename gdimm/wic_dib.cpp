@@ -96,7 +96,17 @@ IFACEMETHODIMP gdimm_wic_dib::GetSize(
 IFACEMETHODIMP gdimm_wic_dib::GetPixelFormat( 
 	/* [out] */ __RPC__out WICPixelFormatGUID *pPixelFormat)
 {
-	*pPixelFormat = GUID_WICPixelFormat32bppBGR;
+	switch (_bmp_header->biBitCount)
+	{
+	case 1:
+		*pPixelFormat = GUID_WICPixelFormatBlackWhite;
+	case 8:
+		*pPixelFormat = GUID_WICPixelFormat8bppGray;
+	case 24:
+	case 32:
+		*pPixelFormat = GUID_WICPixelFormat32bppBGR;
+		break;
+	}
 
 	return S_OK;
 }

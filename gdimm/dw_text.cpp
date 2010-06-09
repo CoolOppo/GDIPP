@@ -6,98 +6,176 @@
 gdimm_dw_text::gdimm_dw_text()
 :
 _dw_factory(NULL),
-_dw_gdi_interop(NULL),
-_dw_render_param(NULL)
+_dw_gdi_interop(NULL)
 {
 }
 
-bool gdimm_dw_text::prepare_glyph(LPCWSTR lpString, UINT c,	IDWriteFontFace **dw_font_face)
+bool gdimm_dw_text::make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run)
 {
 	HRESULT hr;
 
-	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_context->hdc, dw_font_face);
-	assert(hr == S_OK);
-
-	vector<DWRITE_GLYPH_METRICS> glyph_metrics;
-	glyph_metrics.resize(c);
-	hr = (*dw_font_face)->GetDesignGlyphMetrics((UINT16 *)lpString, c, &glyph_metrics[0]);
-	assert(hr == S_OK);
-
-	UINT32 glyph_run_width = 0;
-	UINT32 glyph_run_height = 0;
-	for (UINT i = 0; i < c; i++)
+	DWRITE_RENDERING_MODE dw_render_mode;
+	if (_render_mode == FT_RENDER_MODE_LCD)
 	{
-		glyph_run_width += (UINT32) ceil((FLOAT) glyph_metrics[i].advanceWidth * _em_height / _context->outline_metrics->otmEMSquare);
-		glyph_run_height = max(glyph_run_height, glyph_metrics[i].advanceHeight);
+		switch (_context->setting_cache->hinting)
+		{
+		case 0:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL;
+			break;
+		case 1:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
+			break;
+		case 2:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL;
+			break;
+		default:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC;
+			break;
+		}
 	}
-	glyph_run_height = (UINT32) ceil((FLOAT) glyph_run_height * _em_height / _context->outline_metrics->otmEMSquare);
+	else
+		dw_render_mode = DWRITE_RENDERING_MODE_ALIASED;
 
-	_cell_width = max(_cell_width, glyph_run_width);
-	_extra_height = max((LONG) glyph_run_height - _cell_height, 0);
+	DWRITE_TEXTURE_TYPE dw_texture_type;
+	int bytes_per_pixel;
+	char ft_pixel_mode;
+	if (_render_mode == FT_RENDER_MODE_LCD)
+	{
+		dw_texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
+		bytes_per_pixel = 3;
+		ft_pixel_mode = FT_PIXEL_MODE_LCD;
+	}
+	else
+	{
+		dw_texture_type = DWRITE_TEXTURE_ALIASED_1x1;
+		bytes_per_pixel = 1;
+		ft_pixel_mode = FT_PIXEL_MODE_GRAY;
+	}
 
-	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_context->hdc, _cell_width, _cell_height, &_dw_render_target);
+	CComPtr<IDWriteGlyphRunAnalysis> dw_analysis;
+	hr = _dw_factory->CreateGlyphRunAnalysis(dw_glyph_run,
+		_pixels_per_dip,
+		NULL,
+		dw_render_mode,
+		_dw_measuring_mode,
+		0,
+		0,
+		&dw_analysis);
+	assert(hr == S_OK);
+
+	RECT texture_rect;
+	hr = dw_analysis->GetAlphaTextureBounds(dw_texture_type, &texture_rect);
+	assert(hr == S_OK);
+
+	if (IsRectEmpty(&texture_rect))
+		return false;
+
+	_glyphs.resize(1);
+	_glyph_pos.resize(1);
+
+	_glyphs[0] = new FT_BitmapGlyphRec();
+	_glyphs[0]->left = texture_rect.left;
+	_glyphs[0]->top = -texture_rect.top;
+	_glyphs[0]->bitmap.rows = texture_rect.bottom - texture_rect.top;
+	_glyphs[0]->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
+	_glyphs[0]->bitmap.pitch = _glyphs[0]->bitmap.width;
+	_glyphs[0]->bitmap.pixel_mode = ft_pixel_mode;
+
+	const int bmp_size = _glyphs[0]->bitmap.pitch * _glyphs[0]->bitmap.rows;
+	_glyphs[0]->bitmap.buffer = new BYTE[bmp_size];
+	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, _glyphs[0]->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
 
 	return true;
 }
 
-bool gdimm_dw_text::prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **dw_text_format, IDWriteTextLayout **dw_text_layout)
+bool gdimm_dw_text::render_glyph(LPCWSTR lpString, UINT c)
 {
 	HRESULT hr;
 
-	LOGFONT actual_lf = _font_attr;
+	CComPtr<IDWriteFontFace> dw_font_face;
+	hr = _dw_gdi_interop->CreateFontFaceFromHdc(_context->hdc, &dw_font_face);
+	assert(hr == S_OK);
+
+	DWRITE_GLYPH_RUN dw_glyph_run;
+	dw_glyph_run.fontFace = dw_font_face;
+	dw_glyph_run.fontEmSize = (FLOAT) _em_size;
+	dw_glyph_run.glyphCount = c;
+	dw_glyph_run.glyphIndices = (UINT16 *)lpString;
+	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
+	dw_glyph_run.glyphOffsets = NULL;
+	dw_glyph_run.isSideways = FALSE;
+	dw_glyph_run.bidiLevel = 0;
+
+	return make_glyph_texture(&dw_glyph_run);
+}
+
+bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
+{
+	HRESULT hr;
+
+	LOGFONTW actual_lf = _font_attr;
 	wcsncpy_s(actual_lf.lfFaceName, metric_family_name(_context->outline_metrics), LF_FACESIZE);
-	
+
 	CComPtr<IDWriteFont> dw_font;
 	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&actual_lf, &dw_font);
 	assert(hr == S_OK);
-	
-	hr = _dw_factory->CreateTextFormat(actual_lf.lfFaceName,
+
+	CComPtr<IDWriteTextFormat> dw_text_format;
+	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
 		NULL,
 		dw_font->GetWeight(),
 		dw_font->GetStyle(),
 		dw_font->GetStretch(),
-		(FLOAT) _em_height,
+		(FLOAT) _em_size,
 		L"",
-		dw_text_format);
+		&dw_text_format);
 	assert(hr == S_OK);
 
-	if (_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
+	CComPtr<IDWriteTextLayout> dw_text_layout;
+	if (_dw_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
 	{
 		hr = _dw_factory->CreateTextLayout(lpString,
 			c,
-			*dw_text_format,
+			dw_text_format,
 			(FLOAT) _dc_bmp_header.biWidth,
 			0,
-			dw_text_layout);
+			&dw_text_layout);
 	}
 	else
 	{
 		hr = _dw_factory->CreateGdiCompatibleTextLayout(lpString,
 			c,
-			*dw_text_format,
+			dw_text_format,
 			(FLOAT) _dc_bmp_header.biWidth,
 			0,
 			_pixels_per_dip,
 			NULL,
 			_use_gdi_natural,
-			dw_text_layout);
+			&dw_text_layout);
 	}
 	assert(hr == S_OK);
 
-	DWRITE_TEXT_METRICS dw_text_metrics;
-	hr = (*dw_text_layout)->GetMetrics(&dw_text_metrics);
-	if (hr != S_OK)
-		return false;
-	assert(hr == S_OK);
-
-	_cell_width = max(_cell_width, (UINT32) ceil(dw_text_metrics.width));
-	_extra_height = (LONG) max(ceil(dw_text_metrics.height) - _cell_height, 0);
-
-	hr = _dw_gdi_interop->CreateBitmapRenderTarget(_context->hdc, _cell_width, _cell_height, &_dw_render_target);
+	hr = dw_text_layout->Draw(NULL, this, 0, 0);
 	assert(hr == S_OK);
 
 	return true;
+}
+
+bool gdimm_dw_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+{
+	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
+	if (lpDx != NULL)
+	{
+		_advances.resize(c);
+		for (UINT i = 0; i < c; i++)
+			_advances[i] = (FLOAT) lpDx[i * advance_factor];
+	}
+
+	if (options & ETO_GLYPH_INDEX)
+		return render_glyph(lpString, c);
+	else
+		return render_text(lpString, c);
 }
 
 //
@@ -111,7 +189,6 @@ IFACEMETHODIMP gdimm_dw_text::QueryInterface(
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject
 	)
 {
-	*ppvObject = NULL;
 	return E_NOTIMPL;
 }
 
@@ -141,6 +218,7 @@ IFACEMETHODIMP gdimm_dw_text::IsPixelSnappingDisabled(
 	)
 {
 	*isDisabled = FALSE;
+
 	return S_OK;
 }
 
@@ -157,7 +235,8 @@ IFACEMETHODIMP gdimm_dw_text::GetCurrentTransform(
 	__out DWRITE_MATRIX* transform
 	)
 {
-	_dw_render_target->GetCurrentTransform(transform);
+	transform = NULL;
+
 	return S_OK;
 }
 
@@ -174,7 +253,8 @@ IFACEMETHODIMP gdimm_dw_text::GetPixelsPerDip(
 	__out FLOAT* pixelsPerDip
 	)
 {
-	*pixelsPerDip = _dw_render_target->GetPixelsPerDip();
+	*pixelsPerDip = _pixels_per_dip;
+
 	return S_OK;
 }
 
@@ -198,26 +278,16 @@ IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
 	)
 {
 	if (_advances.empty())
-	{
-		return _dw_render_target->DrawGlyphRun(baselineOriginX,
-			baselineOriginY,
-			_measuring_mode,
-			glyphRun,
-			_dw_render_param,
-			_text_color);
-	}
+		make_glyph_texture(glyphRun);
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[0];
-
-		return _dw_render_target->DrawGlyphRun(baselineOriginX,
-			baselineOriginY,
-			_measuring_mode,
-			&final_glyph_run,
-			_dw_render_param,
-			_text_color);
+		
+		make_glyph_texture(&final_glyph_run);
 	}
+
+	return S_OK;
 }
 
 /******************************************************************
@@ -237,7 +307,6 @@ IFACEMETHODIMP gdimm_dw_text::DrawUnderline(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
-	// Not implemented
 	return E_NOTIMPL;
 }
 
@@ -258,7 +327,6 @@ IFACEMETHODIMP gdimm_dw_text::DrawStrikethrough(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
-	// Not implemented
 	return E_NOTIMPL;
 }
 
@@ -281,7 +349,6 @@ IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
-	// Not implemented
 	return E_NOTIMPL;
 }
 
@@ -289,168 +356,58 @@ IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
 
 bool gdimm_dw_text::begin(const gdimm_text_context *context)
 {
-	if (!gdimm_text::begin(context))
+	HRESULT hr;
+
+	if (!gdimm_gdi_text::begin(context))
 		return false;
 
-	HRESULT hr;
+	// ignore rotated DC
+	if (_font_attr.lfEscapement % 3600 != 0)
+		return false;
 
 	if (_dw_factory == NULL)
 	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)&_dw_factory);
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)(&_dw_factory));
 		assert(hr == S_OK);
-
-		if (_dw_gdi_interop == NULL)
-		{
-			hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
-			assert(hr == S_OK);
-		}
-
-		if (_dw_render_param == NULL)
-		{
-			hr = _dw_factory->CreateCustomRenderingParams(0.8f, 0.0f, 1.0f, DWRITE_PIXEL_GEOMETRY_RGB, DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC, &_dw_render_param);
-			assert(hr == S_OK);
-		}
 	}
 
-	/*bool is_mono = false;
-	if (is_non_aa(_font_attr.lfQuality, _context->setting_cache) || 
-		(_dc_bmp_header.biBitCount == 1))
-		is_mono = true;
-
-	if (is_mono && !_context->setting_cache->render_mono)
-		return false;*/
+	if (_dw_gdi_interop == NULL)
+	{
+		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
+		assert(hr == S_OK);
+	}
 
 	switch (_context->setting_cache->hinting)
 	{
-	case 2:
-		_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+	case 0:
+	case 1:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
 		break;
-	case 3:
-		_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
+	case 2:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
 		break;
 	default:
-		_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
 		break;
 	}
-	_use_gdi_natural = (_measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL);
-	_advances.clear();
-	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
+	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
 
-	_cell_width = 0;
-	_cell_height = _context->outline_metrics->otmTextMetrics.tmHeight;
-	_em_height = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
+	_advances.clear();
+	_em_size = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
+	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;
 }
 
 bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	BOOL b_ret;
+	bool b_ret = gdimm_gdi_text::text_out(x, y, options, lprect, lpString, c, lpDx);
 
-	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
-	if (lpDx != NULL)
+	if (!_glyphs.empty())
 	{
-		_advances.resize(c);
-		for (UINT i = 0; i < c; i++)
-		{
-			_advances[i] = (FLOAT) lpDx[i * advance_factor];
-			_cell_width += (UINT32) _advances[i];
-		}
+		delete[] _glyphs[0]->bitmap.buffer;
+		delete _glyphs[0];
 	}
 
-	CComPtr<IDWriteFontFace> dw_font_face;
-	CComPtr<IDWriteTextFormat> dw_text_format;
-	CComPtr<IDWriteTextLayout> dw_text_layout;
-
-	bool success;
-	if (options & ETO_GLYPH_INDEX)
-		success = prepare_glyph(lpString, c, &dw_font_face);
-	else
-		success = prepare_text(lpString, c, &dw_text_format, &dw_text_layout);
-
-	if (!success)
-		return false;
-
-	_extra_height = min(_extra_height, 2);
-	LONG cell_ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
-	LONG cell_descent = _context->outline_metrics->otmTextMetrics.tmDescent;
-	const POINT baseline = get_baseline(_text_alignment,
-		x,
-		y,
-		_cell_width,
-		cell_ascent,
-		cell_descent);
-	RECT bmp_rect = {baseline.x,
-		baseline.y - cell_ascent,
-		baseline.x + _cell_width,
-		baseline.y + cell_descent};
-
-	// apply clipping
-	if (options & ETO_CLIPPED)
-	{
-		if (!IntersectRect(&bmp_rect, &bmp_rect, lprect))
-			bmp_rect = *lprect;
-
-		_cell_width = bmp_rect.right - bmp_rect.left;
-		_cell_height = bmp_rect.bottom - bmp_rect.top;
-		cell_ascent = baseline.y - bmp_rect.top;
-		cell_descent = bmp_rect.bottom - baseline.y;
-	}
-
-	HDC hdc_canvas = _dw_render_target->GetMemoryDC();
-
-	const COLORREF bg_color = GetBkColor(_context->hdc);
-
-	if (options & ETO_OPAQUE)
-		draw_background(_context->hdc, lprect, bg_color);
-
-	const int bk_mode = GetBkMode(_context->hdc);
-	if (bk_mode == OPAQUE)
-	{
-		const RECT bk_rect = {0, 0, _cell_width, _cell_height};
-		b_ret = draw_background(hdc_canvas, &bk_rect, bg_color);
-	}
-	else if (bk_mode == TRANSPARENT)
-	{
-		b_ret = BitBlt(hdc_canvas, 0, 0, _cell_width, _cell_height, _context->hdc, bmp_rect.left, bmp_rect.top, SRCCOPY);
-	}
-	else
-		b_ret = FALSE;
-
-	if (!b_ret)
-	{
-		_dw_render_target->Release();
-		return false;
-	}
-
-	if (options & ETO_GLYPH_INDEX)
-	{
-		DWRITE_GLYPH_RUN dw_glyph_run = {dw_font_face,
-			(FLOAT) _em_height,
-			c,
-			(UINT16 *)lpString,
-			(_advances.empty() ? NULL : &_advances[0]),
-			FALSE,
-			0};
-
-		HRESULT hr = _dw_render_target->DrawGlyphRun(0, (FLOAT)(cell_ascent - _extra_height), _measuring_mode, &dw_glyph_run, _dw_render_param, _text_color);
-		assert(hr == S_OK);
-	}
-	else
-	{
-		HRESULT hr = dw_text_layout->Draw(NULL, this, 0, (FLOAT) -_extra_height);
-		assert(hr == S_OK);
-	}
-
-	if (!success)
-	{
-		_dw_render_target->Release();
-		return false;
-	}
-
-	b_ret = BitBlt(_context->hdc, bmp_rect.left, bmp_rect.top, _cell_width, _cell_height, hdc_canvas, 0, 0, SRCCOPY);
-	assert(b_ret);
-
-	_dw_render_target->Release();
-	return true;
+	return b_ret;
 }

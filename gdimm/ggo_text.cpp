@@ -7,12 +7,6 @@
 
 const FT_Glyph_Class *gdimm_ggo_text::_glyph_clazz = NULL;
 
-gdimm_ggo_text::~gdimm_ggo_text()
-{
-	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
-		FT_Done_Glyph((FT_Glyph) *iter);
-}
-
 const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
@@ -145,7 +139,7 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	// is ETO_PDY is set, lpDx contains both x increment and y displacement
 	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
 
-	POINT pen_pos = _cursor;
+	POINT pen_pos = {};
 
 	// identity matrix
 	memset(&_matrix, 0, sizeof(MAT2));
@@ -179,7 +173,7 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 		{
 			_glyphs.push_back(bmp_glyph);
 
-			POINT curr_pos = {pen_pos.x - _cursor.x + bmp_glyph->left, pen_pos.y - _cursor.y};
+			POINT curr_pos = {pen_pos.x + bmp_glyph->left, pen_pos.y};
 			_glyph_pos.push_back(curr_pos);
 		}
 
@@ -201,8 +195,6 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 		pen_pos.x += glyph_advance.x;
 		pen_pos.y += glyph_advance.y;
 	}
-
-	_cursor = pen_pos;
 
 	return true;
 }
@@ -247,4 +239,14 @@ bool gdimm_ggo_text::begin(const gdimm_text_context *context)
 	}
 
 	return true;
+}
+
+bool gdimm_ggo_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+{
+	bool b_ret = gdimm_gdi_text::text_out(x, y, options, lprect, lpString, c, lpDx);
+
+ 	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
+ 		FT_Done_Glyph((FT_Glyph) *iter);
+
+	return b_ret;
 }

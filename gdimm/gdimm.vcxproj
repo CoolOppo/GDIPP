@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="d2d_text.h" />
     <ClInclude Include="dw_text.h" />
     <ClInclude Include="font_link.h" />
     <ClInclude Include="font_man.h" />
@@ -29,7 +28,6 @@
     <ClInclude Include="gdimm.h" />
     <ClInclude Include="gdi_text.h" />
     <ClInclude Include="ggo_text.h" />
-    <ClInclude Include="ggro_text.h" />
     <ClInclude Include="glyph_cache.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="lock.h" />
@@ -52,7 +50,6 @@
     <ClCompile Include="gdimm.cpp" />
     <ClCompile Include="gdi_text.cpp" />
     <ClCompile Include="ggo_text.cpp" />
-    <ClCompile Include="ggro_text.cpp" />
     <ClCompile Include="glyph_cache.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="lock.cpp" />
@@ -180,7 +177,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>EasyHook32.lib;d2d1.lib;dwrite.lib;psapi.lib;windowscodecs.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EasyHook32.lib;d2d1.lib;dwrite.lib;msimg32.lib;psapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -197,7 +194,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>EasyHook64.lib;d2d1.lib;dwrite.lib;psapi.lib;windowscodecs.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EasyHook64.lib;d2d1.lib;dwrite.lib;msimg32.lib;psapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -205,20 +202,20 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_INJECT_SANDBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)freetype;$(SolutionDir)gdipp_common;$(SolutionDir)freetype\include;$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <Optimization>Full</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>EasyHook32.lib;d2d1.lib;dwrite.lib;psapi.lib;windowscodecs.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EasyHook32.lib;d2d1.lib;dwrite.lib;msimg32.lib;psapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -238,7 +235,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>EasyHook64.lib;d2d1.lib;dwrite.lib;psapi.lib;windowscodecs.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>EasyHook64.lib;d2d1.lib;dwrite.lib;msimg32.lib;psapi.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

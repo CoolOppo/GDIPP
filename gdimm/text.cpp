@@ -5,20 +5,16 @@
 
 bool gdimm_text::gdimm_text_context::init(HDC hdc)
 {
-	bool b_ret;
-
 	this->hdc = hdc;
 
 	if (!get_dc_metrics(hdc, _metric_buf, outline_metrics))
 		return false;
 
 	font_face = metric_face_name(outline_metrics);
-
-	gdimm_os2_metrics os2_metrics;
-	b_ret = os2_metrics.init(hdc);
-	assert(b_ret);
 	
-	const gdimm_font_trait font_trait = {font_face, os2_metrics.get_weight_class(), os2_metrics.is_italic()};
+	const gdimm_font_trait font_trait = {font_face,
+		get_gdi_weight_class((unsigned short) outline_metrics->otmTextMetrics.tmWeight),
+		!!outline_metrics->otmTextMetrics.tmItalic};
 	setting_cache = setting_cache_instance.lookup(font_trait);
 	
 	return true;
@@ -38,13 +34,22 @@ bool gdimm_text::begin(const gdimm_text_context *context)
 
 	_font_attr = get_logfont(_context->hdc);
 
+	get_dc_dc_bmp_header(_context->hdc, _dc_bmp_header);
+
+	if (!get_render_mode(_context->setting_cache, _dc_bmp_header.biBitCount, _font_attr.lfQuality, _render_mode))
+		return false;
+
 	_text_alignment = GetTextAlign(_context->hdc);
 	assert(_text_alignment != GDI_ERROR);
 
-	get_dc_dc_bmp_header(_context->hdc, _dc_bmp_header);
+	_char_extra = GetTextCharacterExtra(_context->hdc);
+	assert(_char_extra != 0x8000000);
 
 	_text_color = GetTextColor(_context->hdc);
 	assert(_text_color != CLR_INVALID);
+
+	// transparent DC may not have background color
+	_bg_color = GetBkColor(_context->hdc);
 
 	return true;
 }

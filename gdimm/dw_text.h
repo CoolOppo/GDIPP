@@ -1,27 +1,22 @@
 #pragma once
 
-#include "text.h"
-using namespace std;
+#include "gdi_text.h"
 
-class gdimm_dw_text : public gdimm_text, private IDWriteTextRenderer
+class gdimm_dw_text : public gdimm_gdi_text, public IDWriteTextRenderer
 {
 	CComPtr<IDWriteFactory> _dw_factory;
 	CComPtr<IDWriteGdiInterop> _dw_gdi_interop;
-	CComPtr<IDWriteRenderingParams> _dw_render_param;
-	IDWriteBitmapRenderTarget *_dw_render_target;
 
-	DWRITE_MEASURING_MODE _measuring_mode;
-	bool _use_gdi_natural;
 	vector<FLOAT> _advances;
+	DWRITE_MEASURING_MODE _dw_measuring_mode;
+	LONG _em_size;
 	FLOAT _pixels_per_dip;
+	bool _use_gdi_natural;
 
-	UINT32 _cell_width;
-	LONG _cell_height;
-	LONG _extra_height;
-	LONG _em_height;
-
-	bool prepare_glyph(LPCWSTR lpString, UINT c, IDWriteFontFace **dw_font_face);
-	bool prepare_text(LPCWSTR lpString, UINT c, IDWriteTextFormat **dw_text_format, IDWriteTextLayout **dw_text_layout);
+	bool make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run);
+	bool render_glyph(LPCWSTR lpString, UINT c);
+	bool render_text(LPCWSTR lpString, UINT c);
+	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +78,7 @@ class gdimm_dw_text : public gdimm_text, private IDWriteTextRenderer
 
 public:
 	gdimm_dw_text();
+
 	bool begin(const gdimm_text_context *context);
 	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

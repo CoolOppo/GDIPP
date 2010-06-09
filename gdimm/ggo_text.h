@@ -13,7 +13,6 @@ class gdimm_ggo_text : public gdimm_gdi_text
 	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:
-	~gdimm_ggo_text();
-
 	bool begin(const gdimm_text_context *context);
+	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

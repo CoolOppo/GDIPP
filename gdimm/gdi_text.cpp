@@ -124,10 +124,8 @@ void gdimm_gdi_text::set_gray_text_bits(const FT_BitmapGlyph glyph,
 				_gamma_ramps[1][MulDiv(_text_rgb.rgbtGreen, src_alpha, 255)],
 				_gamma_ramps[0][MulDiv(_text_rgb.rgbtRed, src_alpha, 255)]};
 
-			dest_bits[dest_px_ptr] = src_color.rgbtBlue;
-			dest_bits[dest_px_ptr+1] = src_color.rgbtGreen;
-			dest_bits[dest_px_ptr+2] = src_color.rgbtRed;
-			dest_bits[dest_px_ptr+3] = src_alpha;
+			// this approach is faster than setting each byte separately
+			*(DWORD*)(dest_bits + dest_px_ptr) = ((src_alpha<<24) + (src_color.rgbtRed<<16) + (src_color.rgbtGreen<<8) + (src_color.rgbtBlue));
 		}
 	}
 }
@@ -184,19 +182,37 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 				_gamma_ramps[0][MulDiv(_text_rgb.rgbtRed, alpha, 255)]};
 
 			// alpha components of the source bitmap
-			const RGBTRIPLE src_alpha = {MulDiv(glyph->bitmap.buffer[src_px_ptr+2], alpha, 255),
-				MulDiv(glyph->bitmap.buffer[src_px_ptr+1], alpha, 255),
-				MulDiv(glyph->bitmap.buffer[src_px_ptr], alpha, 255)};
+			// apply pixel geometry
+			RGBTRIPLE src_alpha;
+			if (_context->setting_cache->render_mode.pixel_geometry == PIXEL_GEOMETRY_BGR)
+			{
+				src_alpha.rgbtRed = MulDiv(glyph->bitmap.buffer[src_px_ptr+2], alpha, 255);
+				src_alpha.rgbtGreen = MulDiv(glyph->bitmap.buffer[src_px_ptr+1], alpha, 255);
+				src_alpha.rgbtBlue = MulDiv(glyph->bitmap.buffer[src_px_ptr], alpha, 255);
+			}
+			else
+			{
+				src_alpha.rgbtRed = MulDiv(glyph->bitmap.buffer[src_px_ptr], alpha, 255);
+				src_alpha.rgbtGreen = MulDiv(glyph->bitmap.buffer[src_px_ptr+1], alpha, 255);
+				src_alpha.rgbtBlue = MulDiv(glyph->bitmap.buffer[src_px_ptr+2], alpha, 255);
+			}
+
+			/*
+			GDI's behavior:
+			if the destination pixel is modified, reset its alpha value to 0
+			otherwise, leave the alpha value untouched
+			*/
+			BYTE dest_alpha = 0;
+			if (src_alpha.rgbtBlue == 0 && src_alpha.rgbtGreen == 0 && src_alpha.rgbtRed == 0)
+				dest_alpha = dest_bits[dest_px_ptr+3];
 
 			// alpha blending
-			dest_bits[dest_px_ptr] = dest_bits[dest_px_ptr] + MulDiv(src_color.rgbtBlue - dest_bits[dest_px_ptr], src_alpha.rgbtBlue, 255);
-			dest_bits[dest_px_ptr+1] = dest_bits[dest_px_ptr+1] + MulDiv(src_color.rgbtGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbtGreen, 255);
-			dest_bits[dest_px_ptr+2] = dest_bits[dest_px_ptr+2] + MulDiv(src_color.rgbtRed - dest_bits[dest_px_ptr+2], src_alpha.rgbtRed, 255);
+			const RGBTRIPLE dest_color = {dest_bits[dest_px_ptr] + MulDiv(src_color.rgbtBlue - dest_bits[dest_px_ptr], src_alpha.rgbtBlue, 255),
+				dest_bits[dest_px_ptr+1] + MulDiv(src_color.rgbtGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbtGreen, 255),
+				dest_bits[dest_px_ptr+2] + MulDiv(src_color.rgbtRed - dest_bits[dest_px_ptr+2], src_alpha.rgbtRed, 255)};
 
-			// this destination pixel will be modified
-			// reset its alpha value to mimic GDI's behavior
-			if (src_alpha.rgbtBlue != 0 || src_alpha.rgbtGreen != 0 || src_alpha.rgbtRed != 0)
-				dest_bits[dest_px_ptr+3] = 0;
+			// this approach is faster than setting each byte separately
+			*(DWORD*)(dest_bits + dest_px_ptr) = ((dest_alpha<<24) + (dest_color.rgbtRed<<16) + (dest_color.rgbtGreen<<8) + (dest_color.rgbtBlue));
 		}
 	}
 }
@@ -229,7 +245,7 @@ bool gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *mask_bits;
-	const HBITMAP mask_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID* *)&mask_bits, NULL, 0);
+	const HBITMAP mask_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&mask_bits, NULL, 0);
 	assert(mask_bitmap != NULL);
 
 	/*
@@ -310,7 +326,7 @@ bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
-	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID* *)&text_bits, NULL, 0);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
 	assert(text_bitmap != NULL);
 
 	if (options & ETO_OPAQUE)
@@ -401,7 +417,7 @@ bool gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
-	HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID* *)&text_bits, NULL, 0);
+	HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
 	assert(text_bitmap != NULL);
 
 	SelectObject(_hdc_canvas, text_bitmap);
@@ -475,7 +491,7 @@ bool gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	return !!draw_success;
 }
 
-bool gdimm_gdi_text::draw_text(int x, int y, UINT options, CONST RECT *lprect) const
+bool gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 {
 	assert(!_glyphs.empty());
 	assert(_glyphs.size() == _glyph_pos.size());
@@ -491,14 +507,17 @@ bool gdimm_gdi_text::draw_text(int x, int y, UINT options, CONST RECT *lprect) c
 
 	// adjusted baseline where the bitmap will be finally drawn before applying clipping
 	metrics.baseline = get_baseline(_text_alignment,
-		x,
-		y,
+		_cursor.x,
+		_cursor.y,
 		metrics.width,
 		metrics.ascent,
 		metrics.descent);
 
 	metrics.origin.x = metrics.baseline.x;
 	metrics.origin.y = metrics.baseline.y - metrics.ascent;
+
+	_cursor.x += metrics.width;
+	_cursor.y += metrics.height;
 	
 	// apply clipping
 	if (options & ETO_CLIPPED)
@@ -539,19 +558,11 @@ bool gdimm_gdi_text::begin(const gdimm_text_context *context)
 	if (_font_attr.lfEscapement % 3600 != 0)
 		return false;
 
-	if (!get_ft_render_mode(_context->setting_cache, _dc_bmp_header.biBitCount, _font_attr.lfQuality, _render_mode))
-		return false;
-
-	_char_extra = GetTextCharacterExtra(_context->hdc);
-	assert(_char_extra != 0x8000000);
-
 	if (_hdc_canvas == NULL)
 	{
 		_hdc_canvas = CreateCompatibleDC(NULL);
 		assert(_hdc_canvas != NULL);
 	}
-
-	_bg_color = GetBkColor(_context->hdc);
 
 	_glyphs.clear();
 	_glyph_pos.clear();
@@ -597,7 +608,7 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		_gamma_ramps[1] = gamma_instance.get_ramp(_context->setting_cache->gamma.green);
 		_gamma_ramps[2] = gamma_instance.get_ramp(_context->setting_cache->gamma.blue);
 
-		render_success = draw_text(x, y, options, lprect);
+		render_success = draw_text(options, lprect);
 	}
 
 	// if TA_UPDATECP is set, update current position after text out

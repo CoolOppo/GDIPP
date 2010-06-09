@@ -47,8 +47,8 @@ GDIPP_LOADER: gdimm.dll does not care about the injector
 */
 enum GDIPP_INJECTOR_TYPE
 {
-	GDIPP_SERVICE,
-	GDIPP_LOADER
+	GDIPP_INJECTOR_SERVICE,
+	GDIPP_INJECTOR_LOADER
 };
 
 struct gdipp_inject_payload
