@@ -241,12 +241,8 @@ bool gdimm_ggo_text::begin(const gdimm_text_context *context)
 	return true;
 }
 
-bool gdimm_ggo_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+void gdimm_ggo_text::end()
 {
-	bool b_ret = gdimm_gdi_text::text_out(x, y, options, lprect, lpString, c, lpDx);
-
  	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
  		FT_Done_Glyph((FT_Glyph) *iter);
-
-	return b_ret;
 }

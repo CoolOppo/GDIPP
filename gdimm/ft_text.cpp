@@ -74,14 +74,19 @@ FT_F26Dot6 gdimm_ft_text::get_embolden(const font_setting_cache *setting_cache, 
 	// the embolden weight is based on the difference between demanded weight and the regular weight
 	if (_font_attr.lfWeight != FW_DONTCARE)
 	{
-		const FT_F26Dot6 embolden_values[] = {0, 16};
-		const FT_F26Dot6 max_embolden = 32;
-		const unsigned char embolden_count = sizeof(embolden_values) / sizeof(FT_F26Dot6);
+		const FT_F26Dot6 embolden_values[] = {-32, -16, 0, 16, 32};
+		const unsigned char embolden_class_count = sizeof(embolden_values) / sizeof(FT_F26Dot6);
+		const unsigned char regular_embolden_class = (embolden_class_count - 1) / 2;
 
 		const unsigned char text_weight_class = get_gdi_weight_class((unsigned short) _context->outline_metrics->otmTextMetrics.tmWeight);
-		const unsigned char embolden_class = max(text_weight_class - font_weight_class, 0);
+		char embolden_class = text_weight_class - font_weight_class + regular_embolden_class;
 
-		embolden += (embolden_class < embolden_count ? embolden_values[embolden_class] : max_embolden);
+		if (embolden_class < 0)
+			embolden_class = 0;
+		else if (embolden_class >= embolden_class_count)
+			embolden_class = embolden_class_count - 1;
+
+		embolden += embolden_values[embolden_class];
 	}
 
 	return embolden;
@@ -90,14 +95,14 @@ FT_F26Dot6 gdimm_ft_text::get_embolden(const font_setting_cache *setting_cache, 
 const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	const FTC_Scaler scaler,
 	FT_F26Dot6 embolden,
-	bool italic,
+	bool font_italic,
 	FT_Render_Mode render_mode,
 	FT_ULong load_flags)
 {
 	FT_Error ft_error;
 
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
-	const bool is_oblique = (_font_attr.lfItalic && !italic);
+	const bool is_oblique = (_context->outline_metrics->otmTextMetrics.tmItalic && !font_italic);
 	
 	// each renderer instance add the reference count to the glyph cache at most once
 	// only add reference count in the first time
@@ -207,8 +212,8 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	wstring curr_font_face = _context->font_face;
+	const wchar_t *dc_font_family = _context->font_family;
 	const wchar_t *curr_font_family = dc_font_family;
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 

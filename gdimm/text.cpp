@@ -11,6 +11,7 @@ bool gdimm_text::gdimm_text_context::init(HDC hdc)
 		return false;
 
 	font_face = metric_face_name(outline_metrics);
+	font_family = metric_family_name(outline_metrics);
 	
 	const gdimm_font_trait font_trait = {font_face,
 		get_gdi_weight_class((unsigned short) outline_metrics->otmTextMetrics.tmWeight),

@@ -22,28 +22,38 @@ bool gdimm_os2_metrics::init(HDC hdc)
 	if (font_data_size == GDI_ERROR)
 		return false;
 
+	font_data_size = GetFontData(hdc, OS2_TABLE_TAG, offsetof(TT_OS2, usWidthClass), &_usWidthClass, sizeof(_usWidthClass));
+	if (font_data_size == GDI_ERROR)
+		return false;
+
 	font_data_size = GetFontData(hdc, OS2_TABLE_TAG, offsetof(TT_OS2, fsSelection), &_fsSelection, sizeof(_fsSelection));
 	if (font_data_size == GDI_ERROR)
 		return false;
 
 	_xAvgCharWidth = SWAPWORD(_xAvgCharWidth);
 	_usWeightClass = SWAPWORD(_usWeightClass);
+	_usWidthClass = SWAPWORD(_usWidthClass);
 	_fsSelection = SWAPWORD(_fsSelection);
 
 	return true;
 }
 
-FT_Short gdimm_os2_metrics::get_xAvgCharWidth()
+FT_Short gdimm_os2_metrics::get_xAvgCharWidth() const
 {
 	return _xAvgCharWidth;
 }
 
-unsigned char gdimm_os2_metrics::get_weight_class()
+unsigned char gdimm_os2_metrics::get_weight_class() const
 {
 	return get_gdi_weight_class(_usWeightClass);
 }
 
-bool gdimm_os2_metrics::is_italic()
+FT_UShort gdimm_os2_metrics::get_usWidthClass() const
+{
+	return _usWidthClass;
+}
+
+bool gdimm_os2_metrics::is_italic() const
 {
 	return (_fsSelection & 1);
 }

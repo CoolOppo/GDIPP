@@ -32,7 +32,8 @@ BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 {
 	int i_ret;
 
-	assert(bg_color != CLR_INVALID);
+	if (bg_color == CLR_INVALID)
+		return FALSE;
 
 	const HBRUSH bg_brush = CreateSolidBrush(bg_color);
 	if (bg_brush == NULL)
@@ -234,15 +235,15 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpFamilyName);
+	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpFamilyName);
 }
 
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpFaceName);
+	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpFaceName);
 }
 
 const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t*)((BYTE *)outline_metric + (UINT) outline_metric->otmpStyleName);
+	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpStyleName);
 }

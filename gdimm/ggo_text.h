@@ -14,5 +14,5 @@ class gdimm_ggo_text : public gdimm_gdi_text
 
 public:
 	bool begin(const gdimm_text_context *context);
-	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
+	void end();
 };

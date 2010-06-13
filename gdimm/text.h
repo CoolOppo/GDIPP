@@ -12,6 +12,7 @@ public:
 		HDC hdc;
 		OUTLINETEXTMETRICW *outline_metrics;
 		const wchar_t *font_face;
+		const wchar_t *font_family;
 		const font_setting_cache *setting_cache;
 
 		bool init(HDC hdc);

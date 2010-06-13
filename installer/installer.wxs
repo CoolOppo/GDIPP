@@ -7,6 +7,7 @@
 			 Codepage="$(var.codepage)"
 			 Version="!(bind.FileVersion.gdimm_dll)">
 		<Package InstallerVersion="200" Compressed="yes" />
+		<WixVariable Id="WixUICostingPopupOptOut" Value="1" Overridable="yes" />
 
 <?if $(var.Platform) = x86 ?>
 		<!-- if this is the x86 installer, do not install on 64-bit OS -->

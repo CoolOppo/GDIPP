@@ -29,7 +29,7 @@ class gdimm_wic_text : public gdimm_text
 	bool _use_gdi_natural;
 	gdimm_wic_dib _wic_bitmap;
 
-	LONG _em_size;
+	FLOAT _em_size;
 	POINT _cursor;
 
 	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run);

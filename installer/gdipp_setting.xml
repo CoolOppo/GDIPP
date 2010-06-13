@@ -28,6 +28,7 @@
 				<mono>0</mono>
 				<gray>1</gray>
 				<subpixel>1</subpixel>
+				<pixel_geometry>0</pixel_geometry>
 			</render_mode>
 			<renderer>2</renderer>
 			<shadow>

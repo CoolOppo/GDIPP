@@ -90,13 +90,8 @@ LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
 	const HANDLE dmp_file = CreateFileW(dmp_file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (dmp_file != INVALID_HANDLE_VALUE)
 	{
-		MINIDUMP_CALLBACK_INFORMATION ci;
-		ci.CallbackRoutine = minidump_callback;
-		ci.CallbackParam = NULL;
-
-		MINIDUMP_TYPE dump_type = (MINIDUMP_TYPE)(MiniDumpWithPrivateReadWriteMemory |
-			MiniDumpWithDataSegs |
-			MiniDumpWithHandleData);
+		MINIDUMP_CALLBACK_INFORMATION ci = {minidump_callback, NULL};
+		const MINIDUMP_TYPE dump_type = (MINIDUMP_TYPE)(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory | MiniDumpWithDataSegs | MiniDumpWithHandleData);
 		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dmp_file, dump_type, &ex_info, NULL, &ci);
 		CloseHandle(dmp_file);
 	}

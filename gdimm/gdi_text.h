@@ -65,5 +65,5 @@ public:
 	~gdimm_gdi_text();
 
 	virtual bool begin(const gdimm_text_context *context);
-	virtual bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
+	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

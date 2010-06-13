@@ -32,6 +32,8 @@ unsigned __stdcall unload_self(void *arglist)
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
+	bool b_ret;
+
 	// if injected by service, check if the service event is set (service process terminates)
 	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) != WAIT_TIMEOUT)
 	{
@@ -155,13 +157,16 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		}
 	}
 
-	if (!curr_instance->begin(&context))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	b_ret = curr_instance->begin(&context);
 
-	if (!curr_instance->text_out(x, y, options, lprect, lpString, c, lpDx))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	if (b_ret)
+	{
+		b_ret = curr_instance->text_out(x, y, options, lprect, lpString, c, lpDx);
+		curr_instance->end();
+	}
 
-	curr_instance->end();
+	if (!b_ret)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	return TRUE;
 }

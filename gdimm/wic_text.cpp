@@ -22,7 +22,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	assert(hr == S_OK);
 
 	dw_glyph_run.fontFace = *dw_font_face;
-	dw_glyph_run.fontEmSize = (FLOAT) _em_size;
+	dw_glyph_run.fontEmSize = _em_size;
 	dw_glyph_run.glyphCount = c;
 	dw_glyph_run.glyphIndices = (UINT16 *)lpString;
 	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
@@ -34,7 +34,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	if (_dw_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
 		hr = (*dw_font_face)->GetDesignGlyphMetrics((UINT16 *)lpString, c, &glyph_metrics[0]);
 	else
-		hr = (*dw_font_face)->GetGdiCompatibleGlyphMetrics((FLOAT) _em_size,
+		hr = (*dw_font_face)->GetGdiCompatibleGlyphMetrics(_em_size,
 			_pixels_per_dip,
 			NULL,
 			_use_gdi_natural,
@@ -53,7 +53,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &text_extent);
 	assert(b_ret);
 
-	metrics.width = max(metrics.width, text_extent.cx);
+	metrics.width = max(metrics.width, (UINT32) text_extent.cx);
 
 	return true;
 }
@@ -61,23 +61,32 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextLayout **dw_text_layout)
 {
 	HRESULT hr;
+	bool b_ret;
 
-	LOGFONTW actual_lf = _font_attr;
-	wcsncpy_s(actual_lf.lfFaceName, metric_family_name(_context->outline_metrics), LF_FACESIZE);
+	gdimm_os2_metrics os2_metrics;
+	b_ret = os2_metrics.init(_context->hdc);
+	assert(b_ret);
 
-	CComPtr<IDWriteFont> dw_font;
-	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&actual_lf, &dw_font);
-	assert(hr == S_OK);
+	DWRITE_FONT_STYLE dw_font_style;
+	if (!_context->outline_metrics->otmTextMetrics.tmItalic)
+		dw_font_style = DWRITE_FONT_STYLE_NORMAL;
+	else if (os2_metrics.is_italic())
+		dw_font_style = DWRITE_FONT_STYLE_ITALIC;
+	else
+		dw_font_style = DWRITE_FONT_STYLE_OBLIQUE;
 
 	CComPtr<IDWriteTextFormat> dw_text_format;
-	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
+	hr = _dw_factory->CreateTextFormat(_context->font_family,
 		NULL,
-		dw_font->GetWeight(),
-		dw_font->GetStyle(),
-		dw_font->GetStretch(),
-		(FLOAT) _em_size,
+		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
+		dw_font_style,
+		(DWRITE_FONT_STRETCH) os2_metrics.get_usWidthClass(),
+		_em_size,
 		L"",
 		&dw_text_format);
+	assert(hr == S_OK);
+
+	hr = dw_text_format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
 	assert(hr == S_OK);
 
 	if (_dw_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
@@ -123,7 +132,7 @@ void gdimm_wic_text::set_param(ID2D1RenderTarget *render_target)
 		switch (_context->setting_cache->hinting)
 		{
 		case 0:
-			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL;
+			dw_render_mode = DWRITE_RENDERING_MODE_DEFAULT;
 			break;
 		case 1:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
@@ -216,7 +225,6 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 	metrics.origin.y = metrics.baseline.y - metrics.ascent;
 
 	_cursor.x += metrics.width;
-	_cursor.y += metrics.height;
 
 	// calculate metrics after clipping
 	if (options & ETO_CLIPPED)
@@ -371,7 +379,7 @@ bool gdimm_wic_text::begin(const gdimm_text_context *context)
 	_bg_color = RGB(GetBValue(_bg_color), GetGValue(_bg_color), GetRValue(_bg_color));
 
 	_advances.clear();
-	_em_size = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
+	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;

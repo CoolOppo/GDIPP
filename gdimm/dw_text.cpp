@@ -10,7 +10,7 @@ _dw_gdi_interop(NULL)
 {
 }
 
-bool gdimm_dw_text::make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run)
+bool gdimm_dw_text::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run)
 {
 	HRESULT hr;
 
@@ -20,7 +20,7 @@ bool gdimm_dw_text::make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run)
 		switch (_context->setting_cache->hinting)
 		{
 		case 0:
-			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL;
+			dw_render_mode = DWRITE_RENDERING_MODE_DEFAULT;
 			break;
 		case 1:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
@@ -70,21 +70,23 @@ bool gdimm_dw_text::make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run)
 	if (IsRectEmpty(&texture_rect))
 		return false;
 
-	_glyphs.resize(1);
-	_glyph_pos.resize(1);
+	FT_BitmapGlyph new_glyph = new FT_BitmapGlyphRec();
+	new_glyph->left = texture_rect.left;
+	new_glyph->top = -texture_rect.top;
+	new_glyph->bitmap.rows = texture_rect.bottom - texture_rect.top;
+	new_glyph->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
+	new_glyph->bitmap.pitch = new_glyph->bitmap.width;
+	new_glyph->bitmap.pixel_mode = ft_pixel_mode;
 
-	_glyphs[0] = new FT_BitmapGlyphRec();
-	_glyphs[0]->left = texture_rect.left;
-	_glyphs[0]->top = -texture_rect.top;
-	_glyphs[0]->bitmap.rows = texture_rect.bottom - texture_rect.top;
-	_glyphs[0]->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
-	_glyphs[0]->bitmap.pitch = _glyphs[0]->bitmap.width;
-	_glyphs[0]->bitmap.pixel_mode = ft_pixel_mode;
-
-	const int bmp_size = _glyphs[0]->bitmap.pitch * _glyphs[0]->bitmap.rows;
-	_glyphs[0]->bitmap.buffer = new BYTE[bmp_size];
-	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, _glyphs[0]->bitmap.buffer, bmp_size);
+	const int bmp_size = new_glyph->bitmap.pitch * new_glyph->bitmap.rows;
+	new_glyph->bitmap.buffer = new BYTE[bmp_size];
+	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_glyph->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
+
+	const POINT pen_pos = {(LONG) x, (LONG) y};
+
+	_glyphs.push_back(new_glyph);
+	_glyph_pos.push_back(pen_pos);
 
 	return true;
 }
@@ -99,7 +101,7 @@ bool gdimm_dw_text::render_glyph(LPCWSTR lpString, UINT c)
 
 	DWRITE_GLYPH_RUN dw_glyph_run;
 	dw_glyph_run.fontFace = dw_font_face;
-	dw_glyph_run.fontEmSize = (FLOAT) _em_size;
+	dw_glyph_run.fontEmSize = _em_size;
 	dw_glyph_run.glyphCount = c;
 	dw_glyph_run.glyphIndices = (UINT16 *)lpString;
 	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
@@ -107,29 +109,36 @@ bool gdimm_dw_text::render_glyph(LPCWSTR lpString, UINT c)
 	dw_glyph_run.isSideways = FALSE;
 	dw_glyph_run.bidiLevel = 0;
 
-	return make_glyph_texture(&dw_glyph_run);
+	return make_glyph_texture(0, 0, &dw_glyph_run);
 }
 
 bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 {
 	HRESULT hr;
 
-	LOGFONTW actual_lf = _font_attr;
-	wcsncpy_s(actual_lf.lfFaceName, metric_family_name(_context->outline_metrics), LF_FACESIZE);
+	const long font_id = _font_man.register_font(_context->hdc, _context->font_face);
+	const gdimm_os2_metrics os2_metrics = _font_man.lookup_os2_metrics(font_id);
 
-	CComPtr<IDWriteFont> dw_font;
-	hr = _dw_gdi_interop->CreateFontFromLOGFONT(&actual_lf, &dw_font);
-	assert(hr == S_OK);
+	DWRITE_FONT_STYLE dw_font_style;
+	if (!_context->outline_metrics->otmTextMetrics.tmItalic)
+		dw_font_style = DWRITE_FONT_STYLE_NORMAL;
+	else if (os2_metrics.is_italic())
+		dw_font_style = DWRITE_FONT_STYLE_ITALIC;
+	else
+		dw_font_style = DWRITE_FONT_STYLE_OBLIQUE;
 
 	CComPtr<IDWriteTextFormat> dw_text_format;
-	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
+	hr = _dw_factory->CreateTextFormat(_context->font_family,
 		NULL,
-		dw_font->GetWeight(),
-		dw_font->GetStyle(),
-		dw_font->GetStretch(),
-		(FLOAT) _em_size,
+		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
+		dw_font_style,
+		(DWRITE_FONT_STRETCH) os2_metrics.get_usWidthClass(),
+		_em_size,
 		L"",
 		&dw_text_format);
+	assert(hr == S_OK);
+	
+	hr = dw_text_format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
 	assert(hr == S_OK);
 
 	CComPtr<IDWriteTextLayout> dw_text_layout;
@@ -157,9 +166,8 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 	assert(hr == S_OK);
 
 	hr = dw_text_layout->Draw(NULL, this, 0, 0);
-	assert(hr == S_OK);
-
-	return true;
+	
+	return (hr == S_OK);
 }
 
 bool gdimm_dw_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
@@ -277,17 +285,22 @@ IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
+	bool b_ret;
+
 	if (_advances.empty())
-		make_glyph_texture(glyphRun);
+		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun);
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[0];
 		
-		make_glyph_texture(&final_glyph_run);
+		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run);
 	}
 
-	return S_OK;
+	if (b_ret)
+		return S_OK;
+	else
+		return E_FAIL;
 }
 
 /******************************************************************
@@ -393,21 +406,17 @@ bool gdimm_dw_text::begin(const gdimm_text_context *context)
 	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
 
 	_advances.clear();
-	_em_size = _context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading;
+	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;
 }
 
-bool gdimm_dw_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+void gdimm_dw_text::end()
 {
-	bool b_ret = gdimm_gdi_text::text_out(x, y, options, lprect, lpString, c, lpDx);
-
-	if (!_glyphs.empty())
+	for (vector<const FT_BitmapGlyph>::iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
 	{
-		delete[] _glyphs[0]->bitmap.buffer;
-		delete _glyphs[0];
+		delete[] (*iter)->bitmap.buffer;
+		delete *iter;
 	}
-
-	return b_ret;
 }

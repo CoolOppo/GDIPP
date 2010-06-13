@@ -221,7 +221,7 @@ long gdimm_font_man::register_font(HDC font_holder, const wchar_t *font_face)
 
 long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
 {
-	HFONT linked_font = create_linked_font(_linked_font_holder, font_attr, font_family, font_face);
+	const HFONT linked_font = create_linked_font(_linked_font_holder, font_attr, font_family, font_face);
 	if (linked_font == NULL)
 		return 0;
 

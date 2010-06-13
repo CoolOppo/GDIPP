@@ -13,7 +13,7 @@ class gdimm_ft_text : public gdimm_gdi_text
 	const FT_BitmapGlyph render_glyph(WORD glyph_index,
 		const FTC_Scaler scaler,
 		FT_F26Dot6 embolden,
-		bool italic,
+		bool font_italic,
 		FT_Render_Mode render_mode,
 		FT_ULong load_flags);
 	void update_glyph_pos(UINT options, CONST INT *lpDx);

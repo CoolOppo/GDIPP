@@ -203,7 +203,7 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 			otherwise, leave the alpha value untouched
 			*/
 			BYTE dest_alpha = 0;
-			if (src_alpha.rgbtBlue == 0 && src_alpha.rgbtGreen == 0 && src_alpha.rgbtRed == 0)
+			if (src_alpha.rgbtRed == 0 && src_alpha.rgbtGreen == 0 && src_alpha.rgbtBlue == 0)
 				dest_alpha = dest_bits[dest_px_ptr+3];
 
 			// alpha blending
@@ -517,7 +517,6 @@ bool gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 	metrics.origin.y = metrics.baseline.y - metrics.ascent;
 
 	_cursor.x += metrics.width;
-	_cursor.y += metrics.height;
 	
 	// apply clipping
 	if (options & ETO_CLIPPED)

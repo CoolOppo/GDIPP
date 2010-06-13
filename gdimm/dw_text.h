@@ -9,11 +9,11 @@ class gdimm_dw_text : public gdimm_gdi_text, public IDWriteTextRenderer
 
 	vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;
-	LONG _em_size;
+	FLOAT _em_size;
 	FLOAT _pixels_per_dip;
 	bool _use_gdi_natural;
 
-	bool make_glyph_texture(const DWRITE_GLYPH_RUN *dw_glyph_run);
+	bool make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run);
 	bool render_glyph(LPCWSTR lpString, UINT c);
 	bool render_text(LPCWSTR lpString, UINT c);
 	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx);
@@ -80,5 +80,5 @@ public:
 	gdimm_dw_text();
 
 	bool begin(const gdimm_text_context *context);
-	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
+	void end();
 };
