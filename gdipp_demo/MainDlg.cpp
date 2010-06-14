@@ -8,7 +8,10 @@
 #include "aboutdlg.h"
 #include "MainDlg.h"
 
-DWORD start_time;
+#include <gdipp_common.h>
+
+int rendered = 0;
+DWORD start_time = 0;
 
 void CMainDlg::prepare_result(CPaintDC &dc)
 {
@@ -85,7 +88,6 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	static int rendered = 0;
 	CPaintDC dc(m_hWnd);
 
 	if (window_title[0] == L'\0')
@@ -176,6 +178,35 @@ LRESULT CMainDlg::OnFileExit(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, B
 {
 	// TODO: Add validation code 
 	CloseDialog(wID);
+	return 0;
+}
+
+LRESULT CMainDlg::OnToolsStop(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	total_count = rendered;
+
+	return 0;
+}
+
+LRESULT CMainDlg::OnToolsLoad(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	if (h_gdimm == NULL)
+		h_gdimm = LoadLibraryW(gdimm_path);
+
+	return 0;
+}
+
+LRESULT CMainDlg::OnToolsUnload(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+	BOOL b_ret;
+
+	if (h_gdimm != NULL)
+	{
+		b_ret = FreeLibrary(h_gdimm);
+		if (b_ret)
+			h_gdimm = NULL;
+	}
+
 	return 0;
 }
 

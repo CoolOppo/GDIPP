@@ -229,7 +229,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	*/
 
 	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
-	gdimm_os2_metrics os2_metrics = _font_man.lookup_os2_metrics(font_id);
+	assert(font_id >= 0);
+
+	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
 	FTC_ScalerRec scaler = {(FTC_FaceID) font_id,
 		0,
 		_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading,
@@ -244,11 +246,11 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 		// compare the xAvgCharWidth against the current average char width
 		scaler.width = MulDiv(_context->outline_metrics->otmTextMetrics.tmAveCharWidth,
 			_context->outline_metrics->otmEMSquare,
-			os2_metrics.get_xAvgCharWidth());
+			os2_metrics->get_xAvgCharWidth());
 	}
 
 	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
-	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, os2_metrics.get_weight_class());
+	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class());
 	bool curr_italic = !!_context->outline_metrics->otmTextMetrics.tmItalic;
 
 	if (options & ETO_GLYPH_INDEX)
@@ -321,7 +323,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 				return false;
 
 			font_id = _font_man.lookup_font(_font_attr, curr_font_family, curr_font_face);
-			assert(font_id != 0);
+			assert(font_id < 0);
 
 			scaler.face_id = (FTC_FaceID) font_id;
 			if (scaler.face_id == NULL)
@@ -331,7 +333,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			// get linked font's metrics from OS/2 table
 			os2_metrics = _font_man.lookup_os2_metrics(font_id);
-			const gdimm_font_trait font_trait = {curr_font_face.c_str(), os2_metrics.get_weight_class(), os2_metrics.is_italic()};
+			const gdimm_font_trait font_trait = {curr_font_face.c_str(), os2_metrics->get_weight_class(), os2_metrics->is_italic()};
 
 			curr_setting_cache = setting_cache_instance.lookup(font_trait);
 			curr_embolden = get_embolden(curr_setting_cache, font_trait.weight_class);

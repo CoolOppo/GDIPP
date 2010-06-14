@@ -28,6 +28,19 @@ FT_Pos to_16dot16(double x)
 	return (FT_Pos)(x * 65536);
 }
 
+DWORD create_tls_index()
+{
+	DWORD new_tls_index = TlsAlloc();
+	assert(new_tls_index != TLS_OUT_OF_INDEXES);
+
+	return new_tls_index;
+}
+
+BOOL free_tls_index(DWORD tls_index)
+{
+	return TlsFree(tls_index);
+}
+
 BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 {
 	int i_ret;

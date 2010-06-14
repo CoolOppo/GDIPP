@@ -171,7 +171,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)freetype;$(SolutionDir)gdipp_common;$(SolutionDir)freetype\include;$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
@@ -207,7 +207,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_INJECT_SANDBOX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)freetype;$(SolutionDir)gdipp_common;$(SolutionDir)freetype\include;$(SolutionDir)EasyHook;$(SolutionDir)DirectX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <Optimization>Full</Optimization>
     </ClCompile>
     <Link>

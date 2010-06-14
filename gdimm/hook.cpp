@@ -13,8 +13,7 @@ HANDLE h_unload = NULL;
 set<HDC> hdc_with_path;
 set<HDC> hdc_use_alpha;
 
-DWORD gdimm_hook::tls_index = 0;
-gdimm_text *_text_instances[_RENDERER_TYPE_COUNT_];
+DWORD gdimm_hook::text_tls_index = 0;
 
 unsigned __stdcall unload_self(void *arglist)
 {
@@ -132,10 +131,10 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 
 	// gdimm may be attached to a process which already has multiple threads
 	// always check if the current thread has text instances
-	gdimm_text **text_instances = (gdimm_text **)gdimm_hook::create_tls_text();
-	gdimm_text *&curr_instance =  text_instances[context.setting_cache->renderer];
+	gdimm_text **text_instances = gdimm_hook::create_tls_text();
+	gdimm_text *&curr_text =  text_instances[context.setting_cache->renderer];
 
-	if (curr_instance == NULL)
+	if (curr_text == NULL)
 	{
 		switch (context.setting_cache->renderer)
 		{
@@ -143,26 +142,26 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 			break;
 		case RENDERER_GETGLYPHOUTLINE:
-			curr_instance = new gdimm_ggo_text;
+			curr_text = new gdimm_ggo_text;
 			break;
 		case RENDERER_DIRECTWRITE:
-			curr_instance = new gdimm_dw_text;
+			curr_text = new gdimm_dw_text;
 			break;
 		case RENDERER_WIC:
-			curr_instance = new gdimm_wic_text;
+			curr_text = new gdimm_wic_text;
 			break;
 		default:
-			curr_instance = new gdimm_ft_text;
+			curr_text = new gdimm_ft_text;
 			break;
 		}
 	}
 
-	b_ret = curr_instance->begin(&context);
+	b_ret = curr_text->begin(&context);
 
 	if (b_ret)
 	{
-		b_ret = curr_instance->text_out(x, y, options, lprect, lpString, c, lpDx);
-		curr_instance->end();
+		b_ret = curr_text->text_out(x, y, options, lprect, lpString, c, lpDx);
+		curr_text->end();
 	}
 
 	if (!b_ret)
@@ -361,17 +360,28 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	}
 }
 
-void *gdimm_hook::create_tls_text()
+gdimm_hook::gdimm_hook()
+{
+	if (text_tls_index == 0)
+		text_tls_index = create_tls_index();
+}
+
+gdimm_hook::~gdimm_hook()
+{
+	free_tls_index(text_tls_index);
+}
+
+gdimm_text **gdimm_hook::create_tls_text()
 {
 	BOOL b_ret;
 
-	const gdimm_text **text_instances = (const gdimm_text**) TlsGetValue(tls_index);
+	gdimm_text **text_instances = (gdimm_text **)TlsGetValue(text_tls_index);
 	if (text_instances == NULL)
 	{
-		text_instances = (const gdimm_text**) LocalAlloc(LPTR, _RENDERER_TYPE_COUNT_ * sizeof(const gdimm_text*));
+		text_instances = (gdimm_text **)LocalAlloc(LPTR, _RENDERER_TYPE_COUNT_ * sizeof(gdimm_text *));
 		assert(text_instances != NULL);
 
-		b_ret = TlsSetValue(tls_index, text_instances);
+		b_ret = TlsSetValue(text_tls_index, text_instances);
 		assert(b_ret);
 	}
 
@@ -380,7 +390,7 @@ void *gdimm_hook::create_tls_text()
 
 void gdimm_hook::delete_tls_text()
 {
-	const gdimm_text **text_instances = (const gdimm_text**) TlsGetValue(tls_index);
+	gdimm_text **text_instances = (gdimm_text **)TlsGetValue(text_tls_index);
 	if (text_instances != NULL)
 	{
 		for (size_t i = 0; i < _RENDERER_TYPE_COUNT_; i++)
@@ -389,7 +399,7 @@ void gdimm_hook::delete_tls_text()
 				delete text_instances[i];
 		}
 
-		text_instances = (const gdimm_text**) LocalFree((HLOCAL) text_instances);
+		text_instances = (gdimm_text **)LocalFree((HLOCAL) text_instances);
 		assert(text_instances == NULL);
 	}
 }

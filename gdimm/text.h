@@ -1,7 +1,7 @@
 #pragma once
 
 #include "setting_cache.h"
-#include "os2_metrics.h"
+
 using namespace std;
 
 class gdimm_text

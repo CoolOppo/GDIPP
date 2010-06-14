@@ -41,19 +41,19 @@ BOOL APIENTRY DllMain(
 		gdimm_lock::initialize();
 		initialize_freetype();
 
-		gdimm_hook::tls_index = TlsAlloc();
-		assert(gdimm_hook::tls_index != TLS_OUT_OF_INDEXES);
-
 		return hook_instance.hook();
+
+	case DLL_THREAD_ATTACH:
+		break;
+
 	case DLL_THREAD_DETACH:
 		gdimm_hook::delete_tls_text();
 		break;
+
 	case DLL_PROCESS_DETACH:
 		hook_instance.unhook();
-		gdimm_hook::delete_tls_text();
-		TlsFree(gdimm_hook::tls_index);
-
 		destroy_freetype();
+		gdimm_hook::delete_tls_text();
 		gdimm_lock::release();
 
 		break;

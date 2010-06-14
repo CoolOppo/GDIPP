@@ -167,6 +167,12 @@ BEGIN
     BEGIN
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
+    POPUP "Tools"
+    BEGIN
+        MENUITEM "Stop",                        ID_TOOLS_STOP
+        MENUITEM "Load gdimm",                  ID_TOOLS_LOAD
+        MENUITEM "Unload gdimm",                ID_TOOLS_UNLOAD
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About gdipp Demo...",        ID_APP_ABOUT

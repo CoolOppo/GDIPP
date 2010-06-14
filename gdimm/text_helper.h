@@ -20,6 +20,9 @@ LONG from_16dot16(FT_Pos x);
 // convert floating point to 16.16 format
 FT_Pos to_16dot16(double x);
 
+DWORD create_tls_index();
+BOOL free_tls_index(DWORD tls_index);
+
 BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 
 // apply alignment on the reference point and use it to calculate the baseline

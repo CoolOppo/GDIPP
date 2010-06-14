@@ -117,12 +117,12 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 	HRESULT hr;
 
 	const long font_id = _font_man.register_font(_context->hdc, _context->font_face);
-	const gdimm_os2_metrics os2_metrics = _font_man.lookup_os2_metrics(font_id);
+	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
 
 	DWRITE_FONT_STYLE dw_font_style;
 	if (!_context->outline_metrics->otmTextMetrics.tmItalic)
 		dw_font_style = DWRITE_FONT_STYLE_NORMAL;
-	else if (os2_metrics.is_italic())
+	else if (os2_metrics->is_italic())
 		dw_font_style = DWRITE_FONT_STYLE_ITALIC;
 	else
 		dw_font_style = DWRITE_FONT_STYLE_OBLIQUE;
@@ -132,7 +132,7 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 		NULL,
 		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
 		dw_font_style,
-		(DWRITE_FONT_STRETCH) os2_metrics.get_usWidthClass(),
+		(DWRITE_FONT_STRETCH) os2_metrics->get_usWidthClass(),
 		_em_size,
 		L"",
 		&dw_text_format);

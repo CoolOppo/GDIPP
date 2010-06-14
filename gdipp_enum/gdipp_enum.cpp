@@ -3,12 +3,61 @@
 
 using namespace std;
 
+BOOL load_setting()
+{
+	BOOL b_ret;
+
+	// get setting file path
+	wchar_t setting_path[MAX_PATH];
+	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
+	if (!b_ret)
+		return FALSE;
+
+	gdipp_init_setting();
+	return gdipp_load_setting(setting_path);
+}
+
+BOOL inject_processes()
+{
+	BOOL b_ret;
+
+	DWORD curr_session_id = WTSGetActiveConsoleSessionId();
+	if (curr_session_id == 0xFFFFFFFF)
+		return FALSE;
+
+	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	assert(h_snapshot != INVALID_HANDLE_VALUE);
+
+	PROCESSENTRY32W pe32 = {};
+	pe32.dwSize = sizeof(PROCESSENTRY32W);
+
+	if (Process32FirstW(h_snapshot, &pe32))
+	{
+		do
+		{
+			// processes in session 0 are usually GUI-less
+			DWORD session_id;
+			b_ret = ProcessIdToSessionId(pe32.th32ProcessID, &session_id);
+			if (b_ret && session_id == curr_session_id && !gdipp_is_process_excluded(pe32.szExeFile))
+				gdipp_inject_process(pe32.th32ProcessID);
+
+		} while (Process32NextW(h_snapshot, &pe32));
+	}
+
+	CloseHandle(h_snapshot);
+
+	return TRUE;
+}
+
 int APIENTRY wWinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPTSTR    lpCmdLine,
 	int       nCmdShow)
 {
+	if (!load_setting())
+		return EXIT_FAILURE;
+
 	int argc;
 	LPWSTR *argv = CommandLineToArgvW(lpCmdLine, &argc);
 	assert(argv != NULL);
@@ -30,29 +79,7 @@ int APIENTRY wWinMain(
 
 	gdipp_init_payload(GDIPP_INJECTOR_SERVICE, svc_name);
 
-	list<const wchar_t*> init_proc;
-	init_proc.push_back(L"explorer.exe");
+	inject_processes();
 
-	HANDLE h_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	assert(h_snapshot != INVALID_HANDLE_VALUE);
-
-	PROCESSENTRY32W pe32 = {};
-	pe32.dwSize = sizeof(PROCESSENTRY32W);
-
-	if (Process32FirstW(h_snapshot, &pe32))
-	{
-		do
-		{
-			for (list<const wchar_t*>::const_iterator iter = init_proc.begin(); iter != init_proc.end(); iter++)
-			{
-				if (_wcsicmp(pe32.szExeFile, *iter) == 0)
-					gdipp_inject_process(pe32.th32ProcessID);
-			}
-
-		} while (Process32NextW(h_snapshot, &pe32));
-	}
-
-	CloseHandle(h_snapshot);
-
-	return 0;
+	return EXIT_SUCCESS;
 }
