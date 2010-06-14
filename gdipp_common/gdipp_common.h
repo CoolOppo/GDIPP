@@ -54,11 +54,10 @@ enum GDIPP_INJECTOR_TYPE
 struct gdipp_inject_payload
 {
 	GDIPP_INJECTOR_TYPE inject_type;
-	wchar_t svc_event_name[MAX_PATH]; 
 };
 
 typedef LONG NTSTATUS;
-GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name);
+GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type);
 GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id = 0);
 
 // debug APIs

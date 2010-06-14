@@ -14,6 +14,7 @@
 #include <comutil.h>
 #include <objbase.h>
 #include <wbemidl.h>
+#include <wtsapi32.h>
 
 // C RunTime Header Files
 #include <process.h>

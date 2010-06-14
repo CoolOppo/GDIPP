@@ -8,50 +8,14 @@
 #include "lock.h"
 #include "text_helper.h"
 
-HANDLE h_svc_event = NULL;
-HANDLE h_unload = NULL;
 set<HDC> hdc_with_path;
-set<HDC> hdc_use_alpha;
-
 DWORD gdimm_hook::text_tls_index = 0;
-
-unsigned __stdcall unload_self(void *arglist)
-{
-	BOOL b_ret;
-
-	gdimm_lock lock(LOCK_HOOK);
-	FreeLibraryAndExitThread(h_self, 0);
-
-	b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-	assert(b_ret);
-
-	_endthreadex(0);
-	return 0;
-}
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
 	bool b_ret;
 
-	// if injected by service, check if the service event is set (service process terminates)
-	if (h_svc_event != NULL && WaitForSingleObject(h_svc_event, 0) != WAIT_TIMEOUT)
-	{
-		// double-check lock
-		gdimm_lock lock(LOCK_HOOK);
-
-		if (h_svc_event != NULL)
-		{
-			CloseHandle(h_svc_event);
-			h_svc_event = NULL;
-
-			// use critical section to ensure FreeLibraryAndExitThread is called after this hooked API call
-			h_unload = (HANDLE) _beginthreadex(NULL, 0, unload_self, NULL, 0, NULL);
-		}
-
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	}
-
-//	if (options & ETO_GLYPH_INDEX)
+	//	if (options & ETO_GLYPH_INDEX)
 //	if ((options & ETO_GLYPH_INDEX) == 0)
 //		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 //	if (c != 3)
@@ -346,12 +310,9 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	switch (payload.inject_type)
 	{
 	case GDIPP_INJECTOR_SERVICE:
-		h_svc_event = OpenEventW(SYNCHRONIZE, FALSE, payload.svc_event_name);
-
 		// force the foreground window of the injected process to redraw
 		b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		assert(b_ret);
-
 		break;
 	case GDIPP_INJECTOR_LOADER:
 		// wake up suspended process
@@ -445,9 +406,6 @@ void gdimm_hook::unhook()
 {
 	NTSTATUS eh_error;
 
-	if (h_unload != NULL)
-		CloseHandle(h_unload);
-	
 	eh_error = LhUninstallAllHooks();
 	assert(eh_error == 0);
 

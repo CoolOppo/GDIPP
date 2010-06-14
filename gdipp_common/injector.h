@@ -10,6 +10,6 @@ class gdipp_injector
 
 public:
 	gdipp_injector();
-	void init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name);
+	void init_payload(GDIPP_INJECTOR_TYPE injector_type);
 	NTSTATUS inject_process(ULONG process_id, ULONG thread_id);
 };

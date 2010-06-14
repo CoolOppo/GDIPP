@@ -243,6 +243,6 @@ bool gdimm_ggo_text::begin(const gdimm_text_context *context)
 
 void gdimm_ggo_text::end()
 {
- 	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
- 		FT_Done_Glyph((FT_Glyph) *iter);
+	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
+		FT_Done_Glyph((FT_Glyph) *iter);
 }

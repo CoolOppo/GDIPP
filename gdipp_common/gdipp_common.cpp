@@ -86,9 +86,9 @@ GDIPP_API bool gdipp_is_process_excluded(const wchar_t *proc_name)
 	return setting_instance.is_process_excluded(proc_name);
 }
 
-GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name)
+GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type)
 {
-	injector_instance.init_payload(injector_type, svc_event_name);
+	injector_instance.init_payload(injector_type);
 }
 
 GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id)

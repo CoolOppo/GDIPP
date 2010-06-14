@@ -55,8 +55,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	if (err == 0)
 	{
 		fseek(f, 0, SEEK_END);
- 		const long text_len = ftell(f);
- 		rewind(f);
+		const long text_len = ftell(f);
+		rewind(f);
 
 		preview_text = new wchar_t[text_len + 1];
 		const size_t bytes_read = fread(preview_text, sizeof(wchar_t), text_len, f);

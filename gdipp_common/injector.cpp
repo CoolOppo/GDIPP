@@ -12,12 +12,9 @@ gdipp_injector::gdipp_injector()
 	assert(b_ret);
 }
 
-void gdipp_injector::init_payload(GDIPP_INJECTOR_TYPE injector_type, const wchar_t *svc_event_name)
+void gdipp_injector::init_payload(GDIPP_INJECTOR_TYPE injector_type)
 {
 	_payload.inject_type = injector_type;
-
-	if (svc_event_name != NULL)
-		wcscpy_s(_payload.svc_event_name, svc_event_name);
 }
 
 NTSTATUS gdipp_injector::inject_process(ULONG process_id, ULONG thread_id)

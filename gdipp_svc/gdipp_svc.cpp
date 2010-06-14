@@ -4,19 +4,19 @@
 
 using namespace std;
 
-SERVICE_STATUS			svc_status = {};
-SERVICE_STATUS_HANDLE	svc_status_handle = NULL;
-HANDLE					svc_stop_event = NULL;
-
-svc_mon mon_instance;
-
 #ifdef _M_X64
 #define SVC_NAME TEXT("gdipp_svc_64")
-#define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_64"
+#define SVC_EVENT_NAME L"Local\\gdipp_svc_event_64"
 #else
 #define SVC_NAME TEXT("gdipp_svc_32")
-#define SVC_EVENT_PREFIX L"Global\\gdipp_svc_event_32"
+#define SVC_EVENT_NAME L"Local\\gdipp_svc_event_32"
 #endif // _M_X64
+
+SERVICE_STATUS svc_status = {};
+SERVICE_STATUS_HANDLE svc_status_handle = NULL;
+HANDLE svc_stop_event = NULL;
+
+svc_mon mon_instance;
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
@@ -55,26 +55,7 @@ VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
 	}
 }
 
-bool create_svc_event(wstring &svc_name)
-{
-	// create named event to synchronize between service and gdimm
-
-	// service event name = event name prefix + non-duplicable number (tick count)
-	// use this dynamic event name to avoid existing same-named event, opened by lingering gdimm.dll
-	wostringstream ss;
-	ss << SVC_EVENT_PREFIX;
-	ss << GetTickCount();
-
-	svc_name = ss.str();
-
-	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, svc_name.c_str());
-	if (svc_stop_event == NULL)
-		return false;
-
-	return true;
-}
-
-void initial_inject(const wchar_t *svc_name)
+bool invoke_enum(const wchar_t *parameter)
 {
 #ifdef _M_X64
 	const wchar_t *gdipp_enum_name = L"gdipp_enum_64.exe";
@@ -84,19 +65,34 @@ void initial_inject(const wchar_t *svc_name)
 
 	BOOL b_ret;
 
+	/*
+	service process and its child processes run in session 0
+	some functions of gdipp Enumerator may require interactive session (session ID > 0)
+	use CreateProcessAsUser to create process in the active user's session
+	*/
+	DWORD curr_session_id = WTSGetActiveConsoleSessionId();
+	if (curr_session_id == 0xFFFFFFFF)
+		return false;
+
+	HANDLE user_token;
+	b_ret = WTSQueryUserToken(curr_session_id, &user_token);
+	if (!b_ret)
+		return false;
+
 	wchar_t gdipp_enum_path[MAX_PATH];
 	b_ret = gdipp_get_dir_file_path(NULL, gdipp_enum_name, gdipp_enum_path);
-	assert(b_ret);
+	if (!b_ret)
+		return false;
 
 	wstring cmd_line = gdipp_enum_path;
-	cmd_line += L" --svc_name=";
-	cmd_line += svc_name;
+	if (parameter != NULL)
+		cmd_line += parameter;
 
 	STARTUPINFO si = {};
 	si.cb = sizeof(STARTUPINFO);
 	PROCESS_INFORMATION pi;
 	
-	b_ret = CreateProcess(gdipp_enum_path, &cmd_line[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	b_ret = CreateProcessAsUserW(user_token, gdipp_enum_path, &cmd_line[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 	if (b_ret)
 	{
 		WaitForSingleObject(pi.hProcess, INFINITE);
@@ -119,16 +115,16 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	// report initial status to the SCM
 	set_svc_status(SERVICE_START_PENDING, NO_ERROR, INFINITE);
 
-	wstring svc_name;
-	if (!create_svc_event(svc_name))
+	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, SVC_EVENT_NAME);
+	if (svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
+	
+	gdipp_init_payload(GDIPP_INJECTOR_SERVICE);
 
-	gdipp_init_payload(GDIPP_INJECTOR_SERVICE, svc_name.c_str());
-
-	initial_inject(svc_name.c_str());
+	invoke_enum(NULL);
 
 	// monitor future processes
 	if (mon_instance.start_monitor())
@@ -144,6 +140,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		mon_instance.stop_monitor();
 	}
 
+	invoke_enum(L" --eject");
+
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
@@ -152,26 +150,28 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 int APIENTRY wWinMain(
 	HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
-	LPTSTR    lpCmdLine,
+	LPWSTR    lpCmdLine,
 	int       nCmdShow)
 {
 #ifdef svc_debug
-	wstring svc_name;
-	if (!create_svc_event(svc_name))
+	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, SVC_EVENT_NAME);
+	if (svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		return 0;
+		return;
 	}
-
-	gdipp_init_payload(GDIPP_SERVICE, svc_name.c_str());
-
-	initial_inject(svc_name.c_str());
-
+ 
+	gdipp_init_payload(GDIPP_INJECTOR_SERVICE);
+ 
+	invoke_enum(NULL);
+ 
 	if (mon_instance.start_monitor())
 	{
 		Sleep(5000);
 		mon_instance.stop_monitor();
 	}
+
+	invoke_enum(L" --eject");
 #else
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
