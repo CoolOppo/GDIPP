@@ -9,13 +9,14 @@
 #include "text_helper.h"
 
 set<HDC> hdc_with_path;
+set<gdimm_text **> all_text_instances;
 DWORD gdimm_hook::text_tls_index = 0;
 
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
 	bool b_ret;
 
-	//	if (options & ETO_GLYPH_INDEX)
+//	if (options & ETO_GLYPH_INDEX)
 //	if ((options & ETO_GLYPH_INDEX) == 0)
 //		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 //	if (c != 3)
@@ -102,9 +103,6 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	{
 		switch (context.setting_cache->renderer)
 		{
-		case RENDERER_STUB:
-			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-			break;
 		case RENDERER_GETGLYPHOUTLINE:
 			curr_text = new gdimm_ggo_text;
 			break;
@@ -339,11 +337,12 @@ gdimm_text **gdimm_hook::create_tls_text()
 	gdimm_text **text_instances = (gdimm_text **)TlsGetValue(text_tls_index);
 	if (text_instances == NULL)
 	{
-		text_instances = (gdimm_text **)LocalAlloc(LPTR, _RENDERER_TYPE_COUNT_ * sizeof(gdimm_text *));
-		assert(text_instances != NULL);
+		text_instances = (gdimm_text **)calloc(_RENDERER_TYPE_COUNT_, sizeof(gdimm_text *));
 
 		b_ret = TlsSetValue(text_tls_index, text_instances);
 		assert(b_ret);
+
+		all_text_instances.insert(text_instances);
 	}
 
 	return text_instances;
@@ -354,14 +353,32 @@ void gdimm_hook::delete_tls_text()
 	gdimm_text **text_instances = (gdimm_text **)TlsGetValue(text_tls_index);
 	if (text_instances != NULL)
 	{
+		all_text_instances.erase(text_instances);
+
 		for (size_t i = 0; i < _RENDERER_TYPE_COUNT_; i++)
 		{
 			if (text_instances[i] != NULL)
 				delete text_instances[i];
 		}
 
-		text_instances = (gdimm_text **)LocalFree((HLOCAL) text_instances);
-		assert(text_instances == NULL);
+		free(text_instances);
+	}
+}
+
+void gdimm_hook::cleanup()
+{
+	// when DLL injection and ejection happens, there is no DLL_THREAD_DETACH for the threads
+	// we need to clean all remaining thread-related resources, including text instances and font holders
+
+	for (set<gdimm_text **>::const_iterator iter = all_text_instances.begin(); iter != all_text_instances.end(); iter++)
+	{
+		for (size_t i = 0; i < _RENDERER_TYPE_COUNT_; i++)
+		{
+			if ((*iter)[i] != NULL)
+				delete (*iter)[i];
+		}
+
+		free(*iter);
 	}
 }
 
@@ -412,6 +429,6 @@ void gdimm_hook::unhook()
 	eh_error = LhWaitForPendingRemovals();
 	assert(eh_error == 0);
 
-	for (vector<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
+	for (list<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
 		delete *iter;
 }

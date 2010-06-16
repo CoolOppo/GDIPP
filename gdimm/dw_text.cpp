@@ -165,7 +165,9 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 	}
 	assert(hr == S_OK);
 
-	hr = dw_text_layout->Draw(NULL, this, 0, 0);
+	UINT glyph_run_start = 0;
+	hr = dw_text_layout->Draw(&glyph_run_start, this, 0, 0);
+	assert(glyph_run_start == c);
 	
 	return (hr == S_OK);
 }
@@ -177,7 +179,7 @@ bool gdimm_dw_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	{
 		_advances.resize(c);
 		for (UINT i = 0; i < c; i++)
-			_advances[i] = (FLOAT) lpDx[i * advance_factor];
+			_advances[i] = (FLOAT) lpDx[i * advance_factor] - 0.1f;	// small adjustment to emulate GDI metrics
 	}
 
 	if (options & ETO_GLYPH_INDEX)
@@ -286,16 +288,19 @@ IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
 	)
 {
 	bool b_ret;
+	UINT *glyph_run_start = (UINT *)clientDrawingContext;
 
 	if (_advances.empty())
 		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun);
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
-		final_glyph_run.glyphAdvances = &_advances[0];
+		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
 		
 		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run);
 	}
+
+	*glyph_run_start += glyphRunDescription->stringLength;
 
 	if (b_ret)
 		return S_OK;
@@ -373,7 +378,7 @@ bool gdimm_dw_text::begin(const gdimm_text_context *context)
 
 	if (!gdimm_gdi_text::begin(context))
 		return false;
-
+	
 	// ignore rotated DC
 	if (_font_attr.lfEscapement % 3600 != 0)
 		return false;
@@ -392,15 +397,14 @@ bool gdimm_dw_text::begin(const gdimm_text_context *context)
 
 	switch (_context->setting_cache->hinting)
 	{
-	case 0:
-	case 1:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
-		break;
 	case 2:
 		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
 		break;
-	default:
+	case 3:
 		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+		break;
+	default:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
 		break;
 	}
 	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);

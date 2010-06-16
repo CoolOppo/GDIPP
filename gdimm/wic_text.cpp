@@ -46,13 +46,12 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	UINT32 glyph_run_width = 0;
 	for (UINT i = 0; i < c; i++)
 		glyph_run_width += glyph_metrics[i].advanceWidth;
-	metrics.width = max(metrics.width, MulDiv(glyph_run_width, _em_size, _context->outline_metrics->otmEMSquare));*/
+	metrics.width = max(metrics.width, glyph_run_width * _em_size / _context->outline_metrics->otmEMSquare);*/
 
 	// more accurate width than DirectWrite functions
 	SIZE text_extent;
 	b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &text_extent);
 	assert(b_ret);
-
 	metrics.width = max(metrics.width, (UINT32) text_extent.cx);
 
 	return true;
@@ -111,6 +110,12 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 			dw_text_layout);
 	}
 	assert(hr == S_OK);
+
+// 	// more accurate width than DirectWrite functions
+// 	SIZE text_extent;
+// 	b_ret = GetTextExtentPoint32W(_context->hdc, lpString, c, &text_extent);
+// 	assert(b_ret);
+// 	metrics.width = max(metrics.width, (UINT32) text_extent.cx);
 
 	DWRITE_TEXT_METRICS text_metrics;
 	hr = (*dw_text_layout)->GetMetrics(&text_metrics);
@@ -361,15 +366,14 @@ bool gdimm_wic_text::begin(const gdimm_text_context *context)
 
 	switch (_context->setting_cache->hinting)
 	{
-	case 0:
-	case 1:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
-		break;
 	case 2:
 		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
 		break;
-	default:
+	case 3:
 		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+		break;
+	default:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
 		break;
 	}
 	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
@@ -379,7 +383,7 @@ bool gdimm_wic_text::begin(const gdimm_text_context *context)
 	_bg_color = RGB(GetBValue(_bg_color), GetGValue(_bg_color), GetRValue(_bg_color));
 
 	_advances.clear();
-	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
+	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading) - 0.3f;	// small adjustment to emulate GDI metrics
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;

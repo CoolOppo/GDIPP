@@ -17,6 +17,7 @@ SERVICE_STATUS_HANDLE svc_status_handle = NULL;
 HANDLE svc_stop_event = NULL;
 
 svc_mon mon_instance;
+DWORD user_session_id;
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
@@ -55,7 +56,7 @@ VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
 	}
 }
 
-bool invoke_enum(const wchar_t *parameter)
+BOOL invoke_enum(const wchar_t *parameter)
 {
 #ifdef _M_X64
 	const wchar_t *gdipp_enum_name = L"gdipp_enum_64.exe";
@@ -65,24 +66,15 @@ bool invoke_enum(const wchar_t *parameter)
 
 	BOOL b_ret;
 
-	/*
-	service process and its child processes run in session 0
-	some functions of gdipp Enumerator may require interactive session (session ID > 0)
-	use CreateProcessAsUser to create process in the active user's session
-	*/
-	DWORD curr_session_id = WTSGetActiveConsoleSessionId();
-	if (curr_session_id == 0xFFFFFFFF)
-		return false;
-
 	HANDLE user_token;
-	b_ret = WTSQueryUserToken(curr_session_id, &user_token);
+	b_ret = WTSQueryUserToken(user_session_id, &user_token);
 	if (!b_ret)
-		return false;
+		return FALSE;
 
 	wchar_t gdipp_enum_path[MAX_PATH];
 	b_ret = gdipp_get_dir_file_path(NULL, gdipp_enum_name, gdipp_enum_path);
 	if (!b_ret)
-		return false;
+		return FALSE;
 
 	wstring cmd_line = gdipp_enum_path;
 	if (parameter != NULL)
@@ -99,6 +91,8 @@ bool invoke_enum(const wchar_t *parameter)
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
 	}
+
+	return FALSE;
 }
 
 VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
@@ -153,6 +147,16 @@ int APIENTRY wWinMain(
 	LPWSTR    lpCmdLine,
 	int       nCmdShow)
 {
+	/*
+	service process and its child processes run in session 0
+	some functions of gdipp Enumerator may require interactive session (session ID > 0)
+	use CreateProcessAsUser to create process in the active user's session
+	*/
+	user_session_id = WTSGetActiveConsoleSessionId();
+	if (user_session_id == 0xFFFFFFFF)
+		return FALSE;
+	assert(user_session_id > 0);
+
 #ifdef svc_debug
 	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, SVC_EVENT_NAME);
 	if (svc_stop_event == NULL)

@@ -68,7 +68,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
 #endif // _M_X64
 
-	h_gdimm = LoadLibraryW(gdimm_path);
+	if (b_ret)
+		h_gdimm = LoadLibraryW(gdimm_path);
 #else
 	b_ret = load_setting();
 	assert(b_ret);

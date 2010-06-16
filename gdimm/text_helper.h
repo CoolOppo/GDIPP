@@ -23,6 +23,8 @@ FT_Pos to_16dot16(double x);
 DWORD create_tls_index();
 BOOL free_tls_index(DWORD tls_index);
 
+BYTE division_by_255(short number, short numerator);
+
 BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 
 // apply alignment on the reference point and use it to calculate the baseline

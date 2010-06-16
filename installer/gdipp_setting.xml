@@ -3,6 +3,10 @@
 	<version>0.8.1</version>
 	
 	<gdimm>
+		<process name="chrome\.exe">
+			<renderer>2</renderer>
+		</process>
+		
 		<process name=".+\.exe">
 			<freetype>
 				<cache_max_faces>8</cache_max_faces>
@@ -29,8 +33,9 @@
 				<gray>1</gray>
 				<subpixel>1</subpixel>
 				<pixel_geometry>0</pixel_geometry>
+				<aliased_text>0</aliased_text>
 			</render_mode>
-			<renderer>2</renderer>
+			<renderer>10</renderer>
 			<shadow>
 				<offset_x>1</offset_x>
 				<offset_y>1</offset_y>
@@ -56,16 +61,11 @@
 	<exclude>
 		<process>conhost\.exe</process>
 		<process>csrss\.exe</process>
-		<process>dllhost\.exe</process>
 		<process>dwm\.exe</process>
-		<process>lsass\.exe</process>
-		<process>lsm\.exe</process>
-		<process>services\.exe</process>
-		<process>smss\.exe</process>
+		<process>rundll32\.exe</process>
 		<process>svchost\.exe</process>
 		<process>taskhost\.exe</process>
-		<process>userinit\.exe</process>
-		<process>wininit\.exe</process>
+		<process>wlanext\.exe</process>
 		<process>winlogon\.exe</process>
 	</exclude>
 </gdipp>

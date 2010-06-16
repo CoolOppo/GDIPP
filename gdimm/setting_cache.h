@@ -5,14 +5,13 @@ using namespace std;
 enum RENDERER_TYPE
 {
 	RENDERER_CLEARTYPE,
-	RENDERER_STUB,
 	RENDERER_FREETYPE,
 	RENDERER_GETGLYPHOUTLINE,
 	RENDERER_DIRECTWRITE,
 	RENDERER_WIC,
 
 	// count of renderer types
-	// never use this type
+	// NEVER use this type
 	_RENDERER_TYPE_COUNT_
 };
 
@@ -35,10 +34,11 @@ struct font_setting_cache
 
 	struct font_render_mode
 	{
-		WORD mono;
-		WORD gray;
-		WORD subpixel;
+		BYTE mono;
+		BYTE gray;
+		BYTE subpixel;
 		PIXEL_GEOMETRY_TYPE pixel_geometry;
+		bool aliased_text;
 
 		font_render_mode();
 	};
@@ -47,16 +47,16 @@ struct font_setting_cache
 	{
 		LONG offset_x;
 		LONG offset_y;
-		WORD alpha;
+		BYTE alpha;
 
 		font_shadow();
 	};
 
-	WORD auto_hinting;
+	BYTE auto_hinting;
 	bool embedded_bitmap;
 	FT_F26Dot6 embolden;
 	font_gamma gamma;
-	WORD hinting;
+	BYTE hinting;
 	bool kerning;
 	LONG max_height;
 	font_render_mode render_mode;
@@ -88,6 +88,8 @@ class gdimm_setting_cache
 	typedef map<cache_trait, font_setting_cache> cache_map;
 
 	cache_map _cache;
+
+	RENDERER_TYPE parse_renderer_type(WORD data);
 
 public:
 	const font_setting_cache *lookup(const gdimm_font_trait &font_trait);

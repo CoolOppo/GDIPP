@@ -6,12 +6,13 @@ using namespace std;
 
 class gdimm_hook
 {
-	vector<TRACED_HOOK_HANDLE> _hooks;
+	list<TRACED_HOOK_HANDLE> _hooks;
 
 public:
 	static DWORD text_tls_index;
 	static gdimm_text **create_tls_text();
 	static void delete_tls_text();
+	static void cleanup();
 
 	gdimm_hook();
 	~gdimm_hook();

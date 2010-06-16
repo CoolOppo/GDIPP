@@ -169,7 +169,7 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	}
 
 	// add glyph into cache
-	bmp_glyph = (const FT_BitmapGlyph) glyph;
+	bmp_glyph = (FT_BitmapGlyph) glyph;
 	glyph_cache_instance.add_glyph(trait, glyph_index, bmp_glyph, _cache_node_ptr);
 
 	if (need_add_ref)
@@ -244,9 +244,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	else
 	{
 		// compare the xAvgCharWidth against the current average char width
-		scaler.width = MulDiv(_context->outline_metrics->otmTextMetrics.tmAveCharWidth,
-			_context->outline_metrics->otmEMSquare,
-			os2_metrics->get_xAvgCharWidth());
+		scaler.width = _context->outline_metrics->otmTextMetrics.tmAveCharWidth * _context->outline_metrics->otmEMSquare / os2_metrics->get_xAvgCharWidth();
 	}
 
 	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
@@ -290,11 +288,11 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			for (UINT i = 0; i < c; i++)
 			{
-				if (glyph_indices[i] == 0xffff || final_string[i] == 0)
+				if (glyph_indices[i] == 0xFFFF || final_string[i] == 0)
 					continue;
 
 				if (iswcntrl(final_string[i]))
-					_glyphs[i] = (const FT_BitmapGlyph) &empty_glyph;
+					_glyphs[i] = (FT_BitmapGlyph) &empty_glyph;
 				else
 				{
 					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, curr_italic, _render_mode, curr_load_flags);

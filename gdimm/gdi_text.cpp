@@ -14,7 +14,10 @@ gdimm_gdi_text::~gdimm_gdi_text()
 	// graceful memory DC deletion
 	// note that memory DCs are automatically deleted when the current thread is terminated
 	if (_hdc_canvas != NULL)
+	{
+		DeleteObject(GetCurrentObject(_hdc_canvas, OBJ_BITMAP));
 		DeleteDC(_hdc_canvas);
+	}
 }
 
 void gdimm_gdi_text::set_mono_mask_bits(const FT_BitmapGlyph glyph,
@@ -120,9 +123,9 @@ void gdimm_gdi_text::set_gray_text_bits(const FT_BitmapGlyph glyph,
 				break;
 
 			const BYTE src_alpha = glyph->bitmap.buffer[src_px_ptr];
-			const RGBTRIPLE src_color = {_gamma_ramps[2][MulDiv(_text_rgb.rgbtBlue, src_alpha, 255)],
-				_gamma_ramps[1][MulDiv(_text_rgb.rgbtGreen, src_alpha, 255)],
-				_gamma_ramps[0][MulDiv(_text_rgb.rgbtRed, src_alpha, 255)]};
+			const RGBTRIPLE src_color = {division_by_255(_text_rgb.rgbtBlue, src_alpha),
+				division_by_255(_text_rgb.rgbtGreen, src_alpha),
+				division_by_255(_text_rgb.rgbtRed, src_alpha)};
 
 			// this approach is faster than setting each byte separately
 			*(DWORD*)(dest_bits + dest_px_ptr) = ((src_alpha<<24) + (src_color.rgbtRed<<16) + (src_color.rgbtGreen<<8) + (src_color.rgbtBlue));
@@ -136,7 +139,7 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	int dest_width,
 	int dest_height,
 	int dest_ascent,
-	WORD alpha) const
+	BYTE alpha) const
 {
 	// the source bitmap is 24bpp, in order of R, G, B channels
 	// the destination bitmaps is 32bpp, in order of B, G, R, A channels
@@ -177,24 +180,33 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 				break;
 
 			// color components of the source bitmap
-			const RGBTRIPLE src_color = {_gamma_ramps[2][MulDiv(_text_rgb.rgbtBlue, alpha, 255)],
-				_gamma_ramps[1][MulDiv(_text_rgb.rgbtGreen, alpha, 255)],
-				_gamma_ramps[0][MulDiv(_text_rgb.rgbtRed, alpha, 255)]};
+			RGBTRIPLE src_color = _text_rgb;
 
 			// alpha components of the source bitmap
 			// apply pixel geometry
-			RGBTRIPLE src_alpha;
+			RGBQUAD src_alpha;
 			if (_context->setting_cache->render_mode.pixel_geometry == PIXEL_GEOMETRY_BGR)
 			{
-				src_alpha.rgbtRed = MulDiv(glyph->bitmap.buffer[src_px_ptr+2], alpha, 255);
-				src_alpha.rgbtGreen = MulDiv(glyph->bitmap.buffer[src_px_ptr+1], alpha, 255);
-				src_alpha.rgbtBlue = MulDiv(glyph->bitmap.buffer[src_px_ptr], alpha, 255);
+				src_alpha.rgbRed = glyph->bitmap.buffer[src_px_ptr+2];
+				src_alpha.rgbGreen = glyph->bitmap.buffer[src_px_ptr+1];
+				src_alpha.rgbBlue = glyph->bitmap.buffer[src_px_ptr];
 			}
 			else
 			{
-				src_alpha.rgbtRed = MulDiv(glyph->bitmap.buffer[src_px_ptr], alpha, 255);
-				src_alpha.rgbtGreen = MulDiv(glyph->bitmap.buffer[src_px_ptr+1], alpha, 255);
-				src_alpha.rgbtBlue = MulDiv(glyph->bitmap.buffer[src_px_ptr+2], alpha, 255);
+				src_alpha.rgbRed = glyph->bitmap.buffer[src_px_ptr];
+				src_alpha.rgbGreen = glyph->bitmap.buffer[src_px_ptr+1];
+				src_alpha.rgbBlue = glyph->bitmap.buffer[src_px_ptr+2];
+			}
+
+			// apply shadow alpha
+			if (alpha != 255)
+			{
+				src_color.rgbtRed = division_by_255(src_color.rgbtRed, alpha);
+				src_color.rgbtGreen = division_by_255(src_color.rgbtGreen, alpha);
+				src_color.rgbtBlue = division_by_255(src_color.rgbtBlue, alpha);
+				src_alpha.rgbRed = division_by_255(src_alpha.rgbRed, alpha);
+				src_alpha.rgbGreen = division_by_255(src_alpha.rgbGreen, alpha);
+				src_alpha.rgbBlue = division_by_255(src_alpha.rgbBlue, alpha);
 			}
 
 			/*
@@ -203,23 +215,23 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 			otherwise, leave the alpha value untouched
 			*/
 			BYTE dest_alpha = 0;
-			if (src_alpha.rgbtRed == 0 && src_alpha.rgbtGreen == 0 && src_alpha.rgbtBlue == 0)
+			if (*(DWORD *)&src_alpha == 0)
 				dest_alpha = dest_bits[dest_px_ptr+3];
 
 			// alpha blending
-			const RGBTRIPLE dest_color = {dest_bits[dest_px_ptr] + MulDiv(src_color.rgbtBlue - dest_bits[dest_px_ptr], src_alpha.rgbtBlue, 255),
-				dest_bits[dest_px_ptr+1] + MulDiv(src_color.rgbtGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbtGreen, 255),
-				dest_bits[dest_px_ptr+2] + MulDiv(src_color.rgbtRed - dest_bits[dest_px_ptr+2], src_alpha.rgbtRed, 255)};
+			const RGBQUAD dest_color = {dest_bits[dest_px_ptr] + division_by_255(src_color.rgbtBlue - dest_bits[dest_px_ptr], src_alpha.rgbBlue),
+				dest_bits[dest_px_ptr+1] + division_by_255(src_color.rgbtGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbGreen),
+				dest_bits[dest_px_ptr+2] + division_by_255(src_color.rgbtRed - dest_bits[dest_px_ptr+2], src_alpha.rgbRed),
+				dest_alpha};
 
-			// this approach is faster than setting each byte separately
-			*(DWORD*)(dest_bits + dest_px_ptr) = ((dest_alpha<<24) + (dest_color.rgbtRed<<16) + (dest_color.rgbtGreen<<8) + (dest_color.rgbtBlue));
+			*(DWORD *)(dest_bits + dest_px_ptr) = *(DWORD *)&dest_color;
 		}
 	}
 }
 
-bool gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST RECT *lprect) const
 {
-	BOOL b_ret;
+	BOOL b_ret, draw_success;
 
 	/*
 	the flow direction of the original bitmap is unrecoverable
@@ -287,11 +299,11 @@ bool gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 
 	HBRUSH text_brush = CreateSolidBrush(_text_color);
 	assert(text_brush != NULL);
-	HBRUSH prev_brush = (HBRUSH) SelectObject(_context->hdc, text_brush);
+	const HBRUSH prev_brush = (HBRUSH) SelectObject(_context->hdc, text_brush);
 
 	// foreground ROP: source brush
 	// background ROP: destination color
-	const BOOL draw_success = MaskBlt(_context->hdc,
+	draw_success = MaskBlt(_context->hdc,
 		metrics.origin.x,
 		metrics.origin.y,
 		metrics.width,
@@ -304,18 +316,18 @@ bool gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 		0,
 		MAKEROP4(PATCOPY, 0x00AA0029));
 
-	SelectObject(_context->hdc, prev_brush);
+	text_brush = (HBRUSH) SelectObject(_context->hdc, prev_brush);
 	b_ret = DeleteObject(text_brush);
 	assert(b_ret);
 	b_ret = DeleteObject(mask_bitmap);
 	assert(b_ret);
 
-	return !!draw_success;
+	return draw_success;
 }
 
-bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
 {
-	BOOL b_ret;
+	BOOL b_ret, draw_success;
 
 	BITMAPINFOHEADER bmp_header = {};
 	bmp_header.biSize = sizeof(BITMAPINFOHEADER);
@@ -328,6 +340,10 @@ bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 	BYTE *text_bits;
 	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
 	assert(text_bitmap != NULL);
+
+	const HBITMAP prev_bitmap = (HBITMAP) SelectObject(_hdc_canvas, text_bitmap);
+	b_ret = DeleteObject(prev_bitmap);
+	assert(b_ret);
 
 	if (options & ETO_OPAQUE)
 		draw_background(_context->hdc, lprect, _bg_color);
@@ -358,10 +374,6 @@ bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 			metrics.ascent);
 	}
 
-	HDC _hdc_canvas = CreateCompatibleDC(_context->hdc);
-	assert(_hdc_canvas != NULL);
-	SelectObject(_hdc_canvas, text_bitmap);
-
 	BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
 
 	// AlphaBlend converts the source bitmap pixel format to match destination bitmap pixel format
@@ -384,7 +396,7 @@ bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 	}
 
 	bf.SourceConstantAlpha = 255;
-	const BOOL ab_success = AlphaBlend(_context->hdc,
+	draw_success = AlphaBlend(_context->hdc,
 		metrics.origin.x,
 		metrics.origin.y,
 		metrics.width,
@@ -396,15 +408,10 @@ bool gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 		metrics.height,
 		bf);
 
-	b_ret = DeleteObject(text_bitmap);
-	assert(b_ret);
-	b_ret = DeleteDC(_hdc_canvas);
-	assert(b_ret);
-
-	return !!ab_success;
+	return draw_success;
 }
 
-bool gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
 {
 	BOOL b_ret, draw_success;
 
@@ -417,10 +424,13 @@ bool gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
-	HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
 	assert(text_bitmap != NULL);
 
-	SelectObject(_hdc_canvas, text_bitmap);
+	// delete GDI obeject after deselecting
+	const HBITMAP prev_bitmap = (HBITMAP) SelectObject(_hdc_canvas, text_bitmap);
+	b_ret = DeleteObject(prev_bitmap);
+	assert(b_ret);
 	
 	if (options & ETO_OPAQUE)
 		draw_background(_context->hdc, lprect, _bg_color);
@@ -485,13 +495,10 @@ bool gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 			SRCCOPY);
 	}
 
-	b_ret = DeleteObject(text_bitmap);
-	assert(b_ret);
-
-	return !!draw_success;
+	return draw_success;
 }
 
-bool gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
+BOOL gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 {
 	assert(!_glyphs.empty());
 	assert(_glyphs.size() == _glyph_pos.size());
@@ -544,7 +551,7 @@ bool gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 		case FT_RENDER_MODE_LCD:
 			return draw_lcd(metrics, options, lprect);
 		default:
-			return false;
+			return FALSE;
 	}
 }
 
@@ -571,7 +578,7 @@ bool gdimm_gdi_text::begin(const gdimm_text_context *context)
 
 bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	BOOL b_ret;
+	BOOL b_ret, draw_success = FALSE;
 
 	BOOL update_cursor;
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
@@ -591,31 +598,30 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		update_cursor = false;
 	}
 
-	bool render_success = render(options, lpString, c, lpDx);
-	if (!render_success)
+	if (!render(options, lpString, c, lpDx))
 		return false;
 
-	render_success = !_glyphs.empty();
-	if (render_success)
+	if (!_glyphs.empty())
 	{
-		// get foreground color
-		_text_rgb.rgbtBlue = GetBValue(_text_color);
-		_text_rgb.rgbtGreen = GetGValue(_text_color);
-		_text_rgb.rgbtRed = GetRValue(_text_color);
+		// gamma ramps for red, green, blue
+		const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
 
-		_gamma_ramps[0] = gamma_instance.get_ramp(_context->setting_cache->gamma.red);
-		_gamma_ramps[1] = gamma_instance.get_ramp(_context->setting_cache->gamma.green);
-		_gamma_ramps[2] = gamma_instance.get_ramp(_context->setting_cache->gamma.blue);
+		// get foreground color and apply gamma correction
+		_text_rgb.rgbtBlue = gamma_ramps[2][GetBValue(_text_color)];
+		_text_rgb.rgbtGreen = gamma_ramps[1][GetGValue(_text_color)];
+		_text_rgb.rgbtRed = gamma_ramps[0][GetRValue(_text_color)];
 
-		render_success = draw_text(options, lprect);
+		draw_success = draw_text(options, lprect);
 	}
 
 	// if TA_UPDATECP is set, update current position after text out
-	if (update_cursor && render_success)
+	if (update_cursor && draw_success)
 	{
 		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
 		assert(b_ret);
 	}
 
-	return render_success;
+	return !!draw_success;
 }

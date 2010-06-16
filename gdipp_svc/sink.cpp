@@ -42,6 +42,7 @@ IFACEMETHODIMP_(ULONG) inject_sink::Release()
 unsigned __stdcall process_obj(void *arglist)
 {
 	HRESULT hr;
+	BOOL b_ret;
 
 	IWbemClassObject *obj = (IWbemClassObject *)arglist;
 
@@ -67,7 +68,13 @@ unsigned __stdcall process_obj(void *arglist)
 	hr = proc_obj->Get(L"ProcessId", 0, &var_proc_id, NULL, NULL);
 	assert(hr == S_OK);
 
-	return gdipp_inject_process(V_I4(&var_proc_id));
+	const ULONG process_id = V_I4(&var_proc_id);
+	DWORD proc_session_id;
+	b_ret =  ProcessIdToSessionId(process_id, &proc_session_id);
+	if (proc_session_id != user_session_id)
+		return false;
+
+	return gdipp_inject_process(process_id);
 }
 
 IFACEMETHODIMP inject_sink::Indicate(

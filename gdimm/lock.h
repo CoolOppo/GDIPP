@@ -12,7 +12,7 @@ enum LOCK_TYPE
 	LOCK_DEBUG,
 
 	// count of lock types
-	// never use this type
+	// NEVER use this type
 	_LOCK_TYPE_COUNT_
 };
 

@@ -48,12 +48,14 @@ BOOL APIENTRY DllMain(
 
 	case DLL_THREAD_DETACH:
 		gdimm_hook::delete_tls_text();
+
 		break;
 
 	case DLL_PROCESS_DETACH:
-		hook_instance.unhook();
 		destroy_freetype();
 		gdimm_hook::delete_tls_text();
+		gdimm_hook::cleanup();
+		hook_instance.unhook();
 		gdimm_lock::release();
 
 		break;

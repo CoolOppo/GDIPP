@@ -16,6 +16,7 @@ map<long, gdimm_font_man::font_info> gdimm_font_man::_id_to_info;
 DWORD gdimm_font_man::_ref_count = 0;
 DWORD gdimm_font_man::_reg_tls_index = 0;
 DWORD gdimm_font_man::_linked_tls_index = 0;
+set<HDC> all_linked_font_holder;
 
 gdimm_font_man::gdimm_font_man()
 {
@@ -27,13 +28,16 @@ gdimm_font_man::gdimm_font_man()
 	if (_linked_tls_index == 0)
 		_linked_tls_index = create_tls_index();
 
-	TlsSetValue(_linked_tls_index, CreateCompatibleDC(NULL));
+	const HDC linked_font_holder = CreateCompatibleDC(NULL);
+	TlsSetValue(_linked_tls_index, linked_font_holder);
+	all_linked_font_holder.insert(linked_font_holder);
 }
 
 gdimm_font_man::~gdimm_font_man()
 {
 	// delete current thread's font holder for linked fonts
-	HDC linked_font_holder = (HDC) TlsGetValue(_linked_tls_index);
+	const HDC linked_font_holder = (HDC) TlsGetValue(_linked_tls_index);
+	all_linked_font_holder.erase(linked_font_holder);
 	DeleteDC(linked_font_holder);
 
 	_ref_count -= 1;
@@ -43,6 +47,12 @@ gdimm_font_man::~gdimm_font_man()
 		{
 			// delete linked fonts
 			DeleteObject(iter->second.linked_hfont);
+		}
+
+		for (set<HDC>::const_iterator iter = all_linked_font_holder.begin(); iter != all_linked_font_holder.end(); iter++)
+		{
+
+			DeleteDC(*iter);
 		}
 
 		// delete TLS indices

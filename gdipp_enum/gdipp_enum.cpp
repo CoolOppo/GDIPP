@@ -73,14 +73,14 @@ bool inject_callback(const PROCESSENTRY32W &pe32, void *parameter)
 	BOOL b_ret;
 	NTSTATUS nt_ret;
 
-	const DWORD *curr_session_id = (DWORD *)parameter;
+	const DWORD *user_session_id = (DWORD *)parameter;
 
 	// processes in session 0 are usually UI-less
 	// exclude them from injecting
 	DWORD proc_session_id;
 	b_ret = ProcessIdToSessionId(pe32.th32ProcessID, &proc_session_id);
 
-	if (!b_ret || proc_session_id != *curr_session_id || gdipp_is_process_excluded(pe32.szExeFile))
+	if (!b_ret || proc_session_id != *user_session_id || gdipp_is_process_excluded(pe32.szExeFile))
 		return false;
 
 	nt_ret = gdipp_inject_process(pe32.th32ProcessID);
@@ -121,12 +121,11 @@ bool eject_callback(const PROCESSENTRY32W &pe32, void *parameter)
 	since 32-bit and 64-bit kernel32 are different modules, gdipp Enumerator only ejects gdimm from processes with the same bitness as itself
 	*/
 
-	const DWORD *curr_session_id = (DWORD *)parameter;
+	const DWORD *user_session_id = (DWORD *)parameter;
 
 	DWORD proc_session_id;
 	b_ret = ProcessIdToSessionId(pe32.th32ProcessID, &proc_session_id);
-
-	if (proc_session_id != *curr_session_id)
+	if (proc_session_id != *user_session_id)
 		return false;
 	
 	eject_module_addr remote_mod_addr = {};
@@ -163,7 +162,7 @@ bool eject_callback(const PROCESSENTRY32W &pe32, void *parameter)
 		NULL);
 	if (h_thread != NULL)
 	{
-		WaitForSingleObject(h_thread, INFINITE);
+		WaitForSingleObject(h_thread, 5000);
 		CloseHandle(h_thread);
 	}
 
@@ -212,14 +211,14 @@ int APIENTRY wWinMain(
 	}
 
 	// all functions only affect processes in the same session as gdipp Enumerator 
-	DWORD curr_session_id = WTSGetActiveConsoleSessionId();
-	if (curr_session_id == 0xFFFFFFFF)
+	DWORD user_session_id = WTSGetActiveConsoleSessionId();
+	if (user_session_id == 0xFFFFFFFF)
 		return EXIT_FAILURE;
 
 	switch (op_mode)
 	{
 	case ENUM_OP_EJECT:
-		b_ret = enum_processes(eject_callback, &curr_session_id);
+		b_ret = enum_processes(eject_callback, &user_session_id);
 		break;
 	default:
 		b_ret = load_setting();
@@ -228,7 +227,7 @@ int APIENTRY wWinMain(
 
 		gdipp_init_payload(GDIPP_INJECTOR_SERVICE);
 
-		b_ret = enum_processes(inject_callback, &curr_session_id);
+		b_ret = enum_processes(inject_callback, &user_session_id);
 		break;
 	}
 

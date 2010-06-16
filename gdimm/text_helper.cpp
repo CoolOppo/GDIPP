@@ -41,6 +41,15 @@ BOOL free_tls_index(DWORD tls_index)
 	return TlsFree(tls_index);
 }
 
+BYTE division_by_255(short number, short numerator)
+{
+	// there are many approaches to approximate n1 * n2 / 255
+	// it is a trade-off between efficiency and accuracy
+
+	const int t = number * numerator;
+	return (((t + 255) >> 8) + t) >> 8;
+}
+
 BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
 {
 	int i_ret;
@@ -219,25 +228,42 @@ LOGFONTW get_logfont(HDC hdc)
 
 bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
 {
-	if ((font_setting->render_mode.mono == 1 && dc_bmp_bpp == 1) ||
-		(font_setting->render_mode.mono == 2) ||
-		// non-antialiased font
-		(font_quality == NONANTIALIASED_QUALITY && font_setting->render_mode.subpixel < 2))
+	if (font_setting->render_mode.mono == 2)
 	{
 		render_mode = FT_RENDER_MODE_MONO;
 		return true;
 	}
 
-	if ((font_setting->render_mode.gray == 1 && dc_bmp_bpp == 8) ||
-		(font_setting->render_mode.gray == 2))
+	if (font_setting->render_mode.gray == 2)
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	if (font_setting->render_mode.subpixel == 2)
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	if (!font_setting->render_mode.aliased_text && font_quality == NONANTIALIASED_QUALITY)
+		return false;
+
+	if (font_setting->render_mode.mono == 1 && dc_bmp_bpp == 1)
+	{
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	if (font_setting->render_mode.gray == 1 && dc_bmp_bpp == 8)
 	{
 		render_mode = FT_RENDER_MODE_NORMAL;
 		return true;
 	}
 
 	// we do not support 16 bpp currently
-	if ((font_setting->render_mode.subpixel == 1 && dc_bmp_bpp >= 24) ||
-		(font_setting->render_mode.subpixel == 2))
+
+	if (font_setting->render_mode.subpixel == 1 && dc_bmp_bpp >= 24)
 	{
 		render_mode = FT_RENDER_MODE_LCD;
 		return true;

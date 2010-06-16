@@ -22,9 +22,6 @@ class gdimm_gdi_text : public gdimm_text
 	// device context attributes
 	RGBTRIPLE _text_rgb;
 
-	// gamma ramps for red, green, blue
-	const BYTE *_gamma_ramps[3];
-
 	POINT _cursor;
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,
@@ -45,12 +42,12 @@ class gdimm_gdi_text : public gdimm_text
 		int dest_width,
 		int dest_height,
 		int dest_ascent,
-		WORD alpha) const;
+		BYTE alpha) const;
 
-	bool draw_mono(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
-	bool draw_gray(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
-	bool draw_lcd(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
-	bool draw_text(UINT options, CONST RECT *lprect);
+	BOOL draw_mono(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
+	BOOL draw_gray(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
+	BOOL draw_lcd(const text_metrics &metrics, UINT options, CONST RECT *lprect) const;
+	BOOL draw_text(UINT options, CONST RECT *lprect);
 
 	virtual bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx) = 0;
 

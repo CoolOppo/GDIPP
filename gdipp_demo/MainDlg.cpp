@@ -191,7 +191,15 @@ LRESULT CMainDlg::OnToolsStop(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, 
 LRESULT CMainDlg::OnToolsLoad(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
 	if (h_gdimm == NULL)
+	{
+#ifdef _M_X64
+		gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
+#else
+		gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
+#endif // _M_X64
+
 		h_gdimm = LoadLibraryW(gdimm_path);
+	}
 
 	return 0;
 }
