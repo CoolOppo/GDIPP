@@ -29,7 +29,7 @@ bool gdimm_os2_metrics::init(HDC hdc)
 	font_data_size = GetFontData(hdc, OS2_TABLE_TAG, offsetof(TT_OS2, fsSelection), &_fsSelection, sizeof(_fsSelection));
 	if (font_data_size == GDI_ERROR)
 		return false;
-
+	
 	_xAvgCharWidth = SWAPWORD(_xAvgCharWidth);
 	_usWeightClass = SWAPWORD(_usWeightClass);
 	_usWidthClass = SWAPWORD(_usWidthClass);

@@ -18,11 +18,8 @@ class gdimm_gdi_text : public gdimm_text
 	};
 
 	HDC _hdc_canvas;
-
-	// device context attributes
-	RGBTRIPLE _text_rgb;
-
 	POINT _cursor;
+	RGBQUAD _text_rgb_gamma;
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,
 		BYTE *dest_bits,

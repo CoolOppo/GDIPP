@@ -4,7 +4,7 @@ using namespace std;
 
 class gdimm_gamma
 {
-	map<double, BYTE*> _gamma_ramps;
+	map<double, BYTE *> _gamma_ramps;
 
 	void init_ramp(double gamma);
 

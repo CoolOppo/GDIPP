@@ -123,12 +123,13 @@ void gdimm_gdi_text::set_gray_text_bits(const FT_BitmapGlyph glyph,
 				break;
 
 			const BYTE src_alpha = glyph->bitmap.buffer[src_px_ptr];
-			const RGBTRIPLE src_color = {division_by_255(_text_rgb.rgbtBlue, src_alpha),
-				division_by_255(_text_rgb.rgbtGreen, src_alpha),
-				division_by_255(_text_rgb.rgbtRed, src_alpha)};
+			const RGBQUAD src_color = {division_by_255(_text_rgb_gamma.rgbBlue, src_alpha),
+				division_by_255(_text_rgb_gamma.rgbGreen, src_alpha),
+				division_by_255(_text_rgb_gamma.rgbRed, src_alpha),
+				src_alpha};
 
 			// this approach is faster than setting each byte separately
-			*(DWORD*)(dest_bits + dest_px_ptr) = ((src_alpha<<24) + (src_color.rgbtRed<<16) + (src_color.rgbtGreen<<8) + (src_color.rgbtBlue));
+			*(DWORD*)(dest_bits + dest_px_ptr) = *(DWORD *)&src_color;
 		}
 	}
 }
@@ -180,11 +181,11 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 				break;
 
 			// color components of the source bitmap
-			RGBTRIPLE src_color = _text_rgb;
+			RGBQUAD src_color = _text_rgb_gamma;
 
 			// alpha components of the source bitmap
 			// apply pixel geometry
-			RGBQUAD src_alpha;
+			RGBQUAD src_alpha = {};
 			if (_context->setting_cache->render_mode.pixel_geometry == PIXEL_GEOMETRY_BGR)
 			{
 				src_alpha.rgbRed = glyph->bitmap.buffer[src_px_ptr+2];
@@ -201,28 +202,27 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 			// apply shadow alpha
 			if (alpha != 255)
 			{
-				src_color.rgbtRed = division_by_255(src_color.rgbtRed, alpha);
-				src_color.rgbtGreen = division_by_255(src_color.rgbtGreen, alpha);
-				src_color.rgbtBlue = division_by_255(src_color.rgbtBlue, alpha);
+				src_color.rgbRed = division_by_255(src_color.rgbRed, alpha);
+				src_color.rgbGreen = division_by_255(src_color.rgbGreen, alpha);
+				src_color.rgbBlue = division_by_255(src_color.rgbBlue, alpha);
 				src_alpha.rgbRed = division_by_255(src_alpha.rgbRed, alpha);
 				src_alpha.rgbGreen = division_by_255(src_alpha.rgbGreen, alpha);
 				src_alpha.rgbBlue = division_by_255(src_alpha.rgbBlue, alpha);
 			}
+
+			// alpha blending
+			RGBQUAD dest_color = {dest_bits[dest_px_ptr] + division_by_255(src_color.rgbBlue - dest_bits[dest_px_ptr], src_alpha.rgbBlue),
+				dest_bits[dest_px_ptr+1] + division_by_255(src_color.rgbGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbGreen),
+				dest_bits[dest_px_ptr+2] + division_by_255(src_color.rgbRed - dest_bits[dest_px_ptr+2], src_alpha.rgbRed),
+				0};
 
 			/*
 			GDI's behavior:
 			if the destination pixel is modified, reset its alpha value to 0
 			otherwise, leave the alpha value untouched
 			*/
-			BYTE dest_alpha = 0;
 			if (*(DWORD *)&src_alpha == 0)
-				dest_alpha = dest_bits[dest_px_ptr+3];
-
-			// alpha blending
-			const RGBQUAD dest_color = {dest_bits[dest_px_ptr] + division_by_255(src_color.rgbtBlue - dest_bits[dest_px_ptr], src_alpha.rgbBlue),
-				dest_bits[dest_px_ptr+1] + division_by_255(src_color.rgbtGreen - dest_bits[dest_px_ptr+1], src_alpha.rgbGreen),
-				dest_bits[dest_px_ptr+2] + division_by_255(src_color.rgbtRed - dest_bits[dest_px_ptr+2], src_alpha.rgbRed),
-				dest_alpha};
+				dest_color.rgbReserved = dest_bits[dest_px_ptr+3];
 
 			*(DWORD *)(dest_bits + dest_px_ptr) = *(DWORD *)&dest_color;
 		}
@@ -603,15 +603,13 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 
 	if (!_glyphs.empty())
 	{
-		// gamma ramps for red, green, blue
 		const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
+			gamma_instance.get_ramp(_context->setting_cache->gamma.green),
+			gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
 
-		// get foreground color and apply gamma correction
-		_text_rgb.rgbtBlue = gamma_ramps[2][GetBValue(_text_color)];
-		_text_rgb.rgbtGreen = gamma_ramps[1][GetGValue(_text_color)];
-		_text_rgb.rgbtRed = gamma_ramps[0][GetRValue(_text_color)];
+		_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
+		_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
+		_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
 		draw_success = draw_text(options, lprect);
 	}

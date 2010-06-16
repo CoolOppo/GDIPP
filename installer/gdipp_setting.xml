@@ -4,7 +4,7 @@
 	
 	<gdimm>
 		<process name="chrome\.exe">
-			<renderer>2</renderer>
+			<renderer>10</renderer>
 		</process>
 		
 		<process name=".+\.exe">
@@ -16,7 +16,7 @@
 			</freetype>
 		</process>
 		
-		<font name=".*">
+		<font name=".+">
 			<auto_hinting>1</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>
 			<embolden>0</embolden>

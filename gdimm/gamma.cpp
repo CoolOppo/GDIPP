@@ -4,7 +4,7 @@
 
 gdimm_gamma::~gdimm_gamma()
 {
-	for (map<double, BYTE*>::const_iterator iter = _gamma_ramps.begin(); iter != _gamma_ramps.end(); iter++)
+	for (map<double, BYTE *>::const_iterator iter = _gamma_ramps.begin(); iter != _gamma_ramps.end(); iter++)
 		delete[] iter->second;
 }
 
@@ -20,7 +20,7 @@ void gdimm_gamma::init_ramp(double gamma)
 
 const BYTE *gdimm_gamma::get_ramp(double gamma)
 {
-	map<double, BYTE*>::const_iterator iter = _gamma_ramps.find(gamma);
+	map<double, BYTE *>::const_iterator iter = _gamma_ramps.find(gamma);
 
 	if (iter == _gamma_ramps.end())
 	{

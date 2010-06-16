@@ -64,11 +64,14 @@ void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 
 		const xml_node curr_font = node_iter->node();
 		const xml_attribute name_attr = curr_font.attribute("name");
-		const xml_attribute weight_attr = curr_font.attribute("weight");
+		const xml_attribute bold_attr = curr_font.attribute("bold");
 		const xml_attribute italic_attr = curr_font.attribute("italic");
 
 		// negative indicates such optional attribute is not specified
-		const gdimm_font_node new_font = {as_utf16(name_attr.value()), (weight_attr.empty() ? -1 : weight_attr.as_uint()), (italic_attr.empty() ? -1 : italic_attr.as_uint()), curr_settings};
+		const gdimm_font_node new_font = {as_utf16(name_attr.value()),
+			(bold_attr.empty() ? -1 : bold_attr.as_uint()),
+			(italic_attr.empty() ? -1 : italic_attr.as_uint()),
+			curr_settings};
 		_gdimm_font.push_back(new_font);
 	}
 }
@@ -101,8 +104,6 @@ void gdipp_setting::load_exclude(const xml_node &root_node)
 
 const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight, bool italic) const
 {
-	//weight: bit 0 specify semibold, bit 1 specify bold
-	
 	// check setting for the current process
 	setting_map::const_iterator setting_iter = _process_setting.find(setting_name);
 	if (setting_iter != _process_setting.end())
@@ -111,22 +112,19 @@ const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, con
 	// check setting for the specified font
 	for (list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
 	{
-		const wregex name_ex(list_iter->name.data(),
-			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
-		// check next font if font name mismatch
-		if (!regex_match(font_name, name_ex))
+		// check next font if optional attributes match
+		// easy checks come first
+
+		if ((list_iter->bold >= 0) && (!list_iter->bold == (weight > 0)))
 			continue;
 
-		// check next font if weight is specified and the weight bit mismatch
-		if (list_iter->weight >= 0)
-		{
-			if (((weight == 0) && (list_iter->weight != weight)) ||
-				((weight != 0) && ((list_iter->weight & weight) != weight)))
-				continue;
-		}
-		
-		// check next font if italic is specified and mismatch
 		if ((list_iter->italic >= 0) && (!list_iter->italic == italic))
+			continue;
+
+		const wregex name_ex(list_iter->name.data(),
+			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
+		// check next font if font name match
+		if (!regex_match(font_name, name_ex))
 			continue;
 
 		setting_iter = list_iter->settings.find(setting_name);

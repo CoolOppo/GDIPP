@@ -57,11 +57,9 @@ FT_ULong gdimm_ft_text::get_load_flags(const font_setting_cache *setting_cache, 
 	return load_flags;
 }
 
-void gdimm_ft_text::oblique_outline(const FT_Outline *outline, double angle)
+void gdimm_ft_text::oblique_outline(const FT_Outline *outline, double slant_adv)
 {
-	// the advancement of slant on X-axis direction
-	const double slant_adv = tan(pi * angle / 180);
-
+	// advancement of slant on x-axis
 	FT_Matrix oblique_mat = {to_16dot16(1), to_16dot16(slant_adv), 0, to_16dot16(1)};
 	FT_Outline_Transform(outline, &oblique_mat);
 }
@@ -95,14 +93,13 @@ FT_F26Dot6 gdimm_ft_text::get_embolden(const font_setting_cache *setting_cache, 
 const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	const FTC_Scaler scaler,
 	FT_F26Dot6 embolden,
-	bool font_italic,
 	FT_Render_Mode render_mode,
 	FT_ULong load_flags)
 {
 	FT_Error ft_error;
 
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
-	const bool is_oblique = (_context->outline_metrics->otmTextMetrics.tmItalic && !font_italic);
+	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && (!_os2_metrics->is_italic()));
 	
 	// each renderer instance add the reference count to the glyph cache at most once
 	// only add reference count in the first time
@@ -148,7 +145,7 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 
 		// it seems faster if oblique first, and then embolden
 		if (is_oblique)
-			oblique_outline(glyph_outline, 10);
+			oblique_outline(glyph_outline, 0.3);
 
 		if (need_embolden)
 		{
@@ -231,7 +228,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
 	assert(font_id >= 0);
 
-	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
+	_os2_metrics = _font_man.lookup_os2_metrics(font_id);
 	FTC_ScalerRec scaler = {(FTC_FaceID) font_id,
 		0,
 		_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading,
@@ -244,12 +241,11 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	else
 	{
 		// compare the xAvgCharWidth against the current average char width
-		scaler.width = _context->outline_metrics->otmTextMetrics.tmAveCharWidth * _context->outline_metrics->otmEMSquare / os2_metrics->get_xAvgCharWidth();
+		scaler.width = _context->outline_metrics->otmTextMetrics.tmAveCharWidth * _context->outline_metrics->otmEMSquare / _os2_metrics->get_xAvgCharWidth();
 	}
 
 	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
-	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class());
-	bool curr_italic = !!_context->outline_metrics->otmTextMetrics.tmItalic;
+	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, _os2_metrics->get_weight_class());
 
 	if (options & ETO_GLYPH_INDEX)
 	{
@@ -260,7 +256,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 		for (UINT i = 0; i < c; i++)
 		{
-			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, curr_italic, _render_mode, curr_load_flags);
+			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, _render_mode, curr_load_flags);
 			if (curr_glyph == NULL)
 				_glyphs[i] = &empty_glyph;
 			else
@@ -295,7 +291,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 					_glyphs[i] = (FT_BitmapGlyph) &empty_glyph;
 				else
 				{
-					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, curr_italic, _render_mode, curr_load_flags);
+					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, _render_mode, curr_load_flags);
 					if (curr_glyph == NULL)
 						_glyphs[i] = &empty_glyph;
 					else
@@ -330,12 +326,11 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 			// reload metrics for the linked font
 
 			// get linked font's metrics from OS/2 table
-			os2_metrics = _font_man.lookup_os2_metrics(font_id);
-			const gdimm_font_trait font_trait = {curr_font_face.c_str(), os2_metrics->get_weight_class(), os2_metrics->is_italic()};
+			_os2_metrics = _font_man.lookup_os2_metrics(font_id);
+			const gdimm_font_trait font_trait = {curr_font_face.c_str(), _os2_metrics->get_weight_class(), _os2_metrics->is_italic()};
 
 			curr_setting_cache = setting_cache_instance.lookup(font_trait);
 			curr_embolden = get_embolden(curr_setting_cache, font_trait.weight_class);
-			curr_italic = font_trait.italic;
 			curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
 		}
 	}

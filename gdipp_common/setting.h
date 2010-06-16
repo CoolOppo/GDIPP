@@ -13,7 +13,7 @@ class gdipp_setting
 	struct gdimm_font_node
 	{
 		wstring name;
-		char weight;
+		char bold;
 		char italic;
 		setting_map settings;
 	};
