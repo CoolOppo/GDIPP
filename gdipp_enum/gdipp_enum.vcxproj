@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="gdipp_enum.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gdipp_enum.cpp" />

@@ -141,11 +141,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
  // #define svc_debug
 
-int APIENTRY wWinMain(
-	HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPWSTR    lpCmdLine,
-	int       nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	/*
 	service process and its child processes run in session 0

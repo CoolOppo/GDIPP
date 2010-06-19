@@ -6,9 +6,6 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#ifndef APSTUDIO_INVOKED
-#include "targetver.h"
-#endif
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "windows.h"
 #undef APSTUDIO_HIDDEN_SYMBOLS
@@ -60,8 +57,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,8,1,0
- PRODUCTVERSION 0,8,1,0
+ FILEVERSION 0,8,2,0
+ PRODUCTVERSION 0,8,2,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -78,12 +75,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "gdipp Project"
             VALUE "FileDescription", "gdipp Loader"
-            VALUE "FileVersion", "0, 8, 1, 0"
+            VALUE "FileVersion", "0, 8, 2, 0"
             VALUE "InternalName", "gdipp_loader"
             VALUE "LegalCopyright", "Copyright (C) gdipp Project 2010"
             VALUE "OriginalFilename", "gdipp_loader.exe"
             VALUE "ProductName", "gdipp Loader"
-            VALUE "ProductVersion", "0, 8, 1, 0"
+            VALUE "ProductVersion", "0, 8, 2, 0"
         END
     END
     BLOCK "VarFileInfo"

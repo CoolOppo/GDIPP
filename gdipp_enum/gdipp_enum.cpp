@@ -185,11 +185,7 @@ BOOL load_setting()
 	return gdipp_load_setting(setting_path);
 }
 
-int APIENTRY wWinMain(
-	HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPWSTR    lpCmdLine,
-	int       nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	BOOL b_ret;
 

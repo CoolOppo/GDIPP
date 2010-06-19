@@ -25,7 +25,6 @@
     <ClInclude Include="minidump.h" />
     <ClInclude Include="setting.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fassert.cpp" />

@@ -20,16 +20,16 @@ bool gdimm_dw_text::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN 
 		switch (_context->setting_cache->hinting)
 		{
 		case 0:
-			dw_render_mode = DWRITE_RENDERING_MODE_DEFAULT;
-			break;
-		case 1:
-			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL;
 			break;
 		case 2:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL;
 			break;
-		default:
+		case 3:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC;
+			break;
+		default:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
 			break;
 		}
 	}

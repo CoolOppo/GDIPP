@@ -15,10 +15,7 @@ gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
 gdimm_glyph_cache glyph_cache_instance;
 
-BOOL APIENTRY DllMain(
-	HMODULE hModule,
-	DWORD  ul_reason_for_call,
-	LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
 	{
@@ -32,8 +29,9 @@ BOOL APIENTRY DllMain(
 			return FALSE;
 
 		gdipp_init_setting();
-		if (!gdipp_load_setting(setting_path))
-			return FALSE;
+
+		// return false if setting file does not exist
+		gdipp_load_setting(setting_path);
 
 		if (gdipp_is_process_excluded(NULL))
 			return FALSE;

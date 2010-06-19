@@ -33,7 +33,7 @@ POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int desc
 // for given bitmap width and bit count, compute the bitmap pitch
 int get_bmp_pitch(int width, WORD bpp);
 
-bool get_dc_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
+bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 
 // get various metrics of the DC
 bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outline_metrics);
@@ -49,6 +49,8 @@ LOGFONTW get_logfont(HDC hdc);
 // return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
 // otherwise, return false
 bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+
+COLORREF parse_palette_color(HDC hdc, COLORREF color);
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);

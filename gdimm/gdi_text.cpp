@@ -466,9 +466,12 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 
 			if (_context->setting_cache->shadow.alpha > 0)
 			{
+				const POINT shadow_pos = {solid_pos.x + _context->setting_cache->shadow.offset_x,
+					solid_pos.y + _context->setting_cache->shadow.offset_y};
+
 				set_lcd_text_bits(_glyphs[i],
 					text_bits,
-					solid_pos,
+					shadow_pos,
 					metrics.width,
 					metrics.height,
 					metrics.ascent,

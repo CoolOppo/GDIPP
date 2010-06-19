@@ -1,11 +1,7 @@
 #include "stdafx.h"
 #include <gdipp_common.h>
 
-int APIENTRY wWinMain(
-	HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPWSTR    lpCmdLine,
-	int       nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	BOOL b_ret;
 	NTSTATUS eh_error;

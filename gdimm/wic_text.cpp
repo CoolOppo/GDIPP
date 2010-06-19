@@ -139,14 +139,14 @@ void gdimm_wic_text::set_param(ID2D1RenderTarget *render_target)
 		case 0:
 			dw_render_mode = DWRITE_RENDERING_MODE_DEFAULT;
 			break;
-		case 1:
-			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
-			break;
 		case 2:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_NATURAL;
 			break;
-		default:
+		case 3:
 			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC;
+			break;
+		default:
+			dw_render_mode = DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC;
 			break;
 		}
 	}

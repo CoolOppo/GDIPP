@@ -35,7 +35,7 @@ bool gdimm_text::begin(const gdimm_text_context *context)
 
 	_font_attr = get_logfont(_context->hdc);
 
-	get_dc_dc_bmp_header(_context->hdc, _dc_bmp_header);
+	get_dc_bmp_header(_context->hdc, _dc_bmp_header);
 
 	if (!get_render_mode(_context->setting_cache, _dc_bmp_header.biBitCount, _font_attr.lfQuality, _render_mode))
 		return false;
@@ -46,11 +46,11 @@ bool gdimm_text::begin(const gdimm_text_context *context)
 	_char_extra = GetTextCharacterExtra(_context->hdc);
 	assert(_char_extra != 0x8000000);
 
-	_text_color = GetTextColor(_context->hdc);
+	_text_color = parse_palette_color(_context->hdc, GetTextColor(_context->hdc));
 	assert(_text_color != CLR_INVALID);
 
 	// transparent DC may not have background color
-	_bg_color = GetBkColor(_context->hdc);
+	_bg_color = parse_palette_color(_context->hdc, GetBkColor(_context->hdc));
 
 	return true;
 }

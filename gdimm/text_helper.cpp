@@ -109,7 +109,7 @@ int get_bmp_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
 }
 
-bool get_dc_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
+bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 {
 	dc_dc_bmp_header.biSize = sizeof(BITMAPINFOHEADER);
 
@@ -270,6 +270,29 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 	}
 
 	return false;
+}
+
+COLORREF parse_palette_color(HDC hdc, COLORREF color)
+{
+	// if input color is CLR_INVALID, return it unchanged.
+	if (color == CLR_INVALID)
+		return CLR_INVALID;
+
+	COLORREF color_ret = color;
+
+	// if the high-order byte is odd, use the selected palette whose index is specified in the low-order bytes
+	// see PALETTEINDEX()
+	if ((color_ret & 0x01000000) != 0)
+	{
+		const HPALETTE dc_palette = (HPALETTE) GetCurrentObject(hdc, OBJ_PAL);
+		PALETTEENTRY pal_entry;
+		const UINT entries = GetPaletteEntries(dc_palette, (color_ret & 0x00ffffff), 1, &pal_entry);
+		assert(entries != 0);
+
+		color_ret = RGB(pal_entry.peRed, pal_entry.peGreen, pal_entry.peBlue);
+	}
+
+	return color_ret;
 }
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)

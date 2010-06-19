@@ -284,7 +284,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			for (UINT i = 0; i < c; i++)
 			{
-				if (glyph_indices[i] == 0xFFFF || final_string[i] == 0)
+				if (glyph_indices[i] == 0xffff || final_string[i] == 0)
 					continue;
 
 				if (iswcntrl(final_string[i]))

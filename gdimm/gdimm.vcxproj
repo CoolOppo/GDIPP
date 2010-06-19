@@ -34,7 +34,6 @@
     <ClInclude Include="os2_metrics.h" />
     <ClInclude Include="setting_cache.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="text.h" />
     <ClInclude Include="text_helper.h" />
     <ClInclude Include="wic_dib.h" />
