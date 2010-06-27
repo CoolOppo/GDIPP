@@ -19,6 +19,7 @@ class gdimm_gdi_text : public gdimm_text
 
 	HDC _hdc_canvas;
 	POINT _cursor;
+	SIZE _text_extent;
 	RGBQUAD _text_rgb_gamma;
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,

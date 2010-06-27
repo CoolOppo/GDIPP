@@ -90,12 +90,6 @@ void gdipp_setting::load_demo(const xml_node &root_node)
 	}
 }
 
-void gdipp_setting::load_service(const xml_node &root_node)
-{
-	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
-		_service_setting[as_utf16(iter->name())] = as_utf16(iter->first_child().value());
-}
-
 void gdipp_setting::load_exclude(const xml_node &root_node)
 {
 	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
@@ -150,16 +144,6 @@ const vector<const wstring> &gdipp_setting::get_demo_fonts() const
 	return _demo_fonts;
 }
 
-const wchar_t *gdipp_setting::get_service_setting(const wchar_t *setting_name) const
-{
-	setting_map::const_iterator iter = _service_setting.find(setting_name);
-
-	if (iter == _service_setting.end())
-		return NULL;
-	else
-		return iter->second.c_str();
-}
-
 bool gdipp_setting::is_process_excluded(const wchar_t *proc_name) const
 {
 	// if no process name is specified, return true if the current process is excluded
@@ -193,7 +177,6 @@ void gdipp_setting::init_setting()
 	_process_setting.clear();
 	_gdimm_font.clear();
 	_demo_setting.clear();
-	_service_setting.clear();
 	_demo_fonts.clear();
 	_exclude_process.clear();
 }
@@ -214,10 +197,6 @@ BOOL gdipp_setting::load_setting(const wchar_t *setting_path)
 	const xml_node demo_node = _xml_doc->select_single_node("/gdipp/demo").node();
 	if (!demo_node.empty())
 		load_demo(demo_node);
-
-	const xml_node service_node = _xml_doc->select_single_node("/gdipp/service").node();
-	if (!service_node.empty())
-		load_service(service_node);
 
 	const xml_node exclude_node = _xml_doc->select_single_node("/gdipp/exclude").node();
 	if (!exclude_node.empty())

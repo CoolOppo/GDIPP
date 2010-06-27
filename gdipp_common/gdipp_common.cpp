@@ -76,19 +76,9 @@ GDIPP_API const vector<const wstring> &gdipp_get_demo_fonts()
 	return setting_instance.get_demo_fonts();
 }
 
-GDIPP_API const wchar_t *gdipp_get_service_setting(const wchar_t *setting_name)
-{
-	return setting_instance.get_service_setting(setting_name);
-}
-
 GDIPP_API bool gdipp_is_process_excluded(const wchar_t *proc_name)
 {
 	return setting_instance.is_process_excluded(proc_name);
-}
-
-GDIPP_API void gdipp_init_payload(GDIPP_INJECTOR_TYPE injector_type)
-{
-	injector_instance.init_payload(injector_type);
 }
 
 GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id)
@@ -125,14 +115,6 @@ GDIPP_API void gdipp_debug_output(const void *ptr, unsigned int size)
 	FILE *f;
 	fopen_s(&f, debug_file_name, "ab+");
 	fwrite(ptr, 1, size, f);
-	fclose(f);
-}
-
-GDIPP_API void gdipp_debug_output(long num)
-{
-	FILE *f;
-	fopen_s(&f, debug_file_name, "a+");
-	fwprintf(f, L"%d\n", num);
 	fclose(f);
 }
 

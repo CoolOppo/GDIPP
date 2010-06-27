@@ -297,26 +297,22 @@ CreateProcessAsUserW_hook(
 }
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
+// empty exported function to help loading gdimm into target process
+__declspec(dllexport) void gdimm_empty_proc()
+{
+}
+
+// exported function for SetWindowsHookEx
+EXTERN_C __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(__in int nCode, __in WPARAM wParam, __in LPARAM lParam)
+{
+	return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
+// exported function for EasyHook remote hooking
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
 {
-	BOOL b_ret;
-
-	if (remote_info->UserDataSize != sizeof(gdipp_inject_payload))
-		return;
-
-	const gdipp_inject_payload payload = *(gdipp_inject_payload *)remote_info->UserData;
-	switch (payload.inject_type)
-	{
-	case GDIPP_INJECTOR_SERVICE:
-		// force the foreground window of the injected process to redraw
-		b_ret = RedrawWindow(GetActiveWindow(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-		assert(b_ret);
-		break;
-	case GDIPP_INJECTOR_LOADER:
-		// wake up suspended process
-		RhWakeUpProcess();
-		break;
-	}
+	// the process is created suspended, wake it up
+	RhWakeUpProcess();
 }
 
 gdimm_hook::gdimm_hook()

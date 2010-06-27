@@ -30,7 +30,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (b_ret)
 	{
-		gdipp_init_payload(GDIPP_INJECTOR_LOADER);
 		eh_error = gdipp_inject_process(pi.dwProcessId, pi.dwThreadId);
 		if (eh_error == 0)
 		{

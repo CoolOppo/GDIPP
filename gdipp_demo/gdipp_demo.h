@@ -1,5 +1,3 @@
-// gdipp_demo.h
-
 #pragma once
 
 using namespace std;

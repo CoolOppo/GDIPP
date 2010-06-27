@@ -7,12 +7,6 @@
 
 FT_BitmapGlyphRec empty_glyph = {};
 
-gdimm_ft_text::gdimm_ft_text()
-:
-_cache_node_ptr(NULL)
-{
-}
-
 FT_ULong gdimm_ft_text::get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
 {
 	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
@@ -94,7 +88,8 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	const FTC_Scaler scaler,
 	FT_F26Dot6 embolden,
 	FT_Render_Mode render_mode,
-	FT_ULong load_flags)
+	FT_ULong load_flags,
+	const void *&cache_node_ptr)
 {
 	FT_Error ft_error;
 
@@ -102,18 +97,18 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && (!_os2_metrics->is_italic()));
 	
 	// each renderer instance add the reference count to the glyph cache at most once
-	// only add reference count in the first time
-	const bool need_add_ref = (_cache_node_ptr == NULL);
+	// only add reference count in the first time for a glyph run
+	const bool need_add_ref = (cache_node_ptr == NULL);
 
 	// lookup if there is already a cached glyph
 	const gdimm_glyph_cache::cache_trait trait = {scaler->face_id, scaler->width, scaler->height, embolden, is_oblique, render_mode, load_flags};
-	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup_glyph(trait, glyph_index, _cache_node_ptr);
+	FT_BitmapGlyph bmp_glyph = glyph_cache_instance.lookup_glyph(trait, glyph_index, cache_node_ptr);
 	if (bmp_glyph != NULL)
 	{
 		// this renderer is using the cache node
 		// the glyph cache should not reclaim it until the rendering is finished
 		if (need_add_ref)
-			gdimm_glyph_cache::add_ref(_cache_node_ptr);
+			gdimm_glyph_cache::add_ref(cache_node_ptr);
 
 		return bmp_glyph;
 	}
@@ -167,10 +162,10 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 
 	// add glyph into cache
 	bmp_glyph = (FT_BitmapGlyph) glyph;
-	glyph_cache_instance.add_glyph(trait, glyph_index, bmp_glyph, _cache_node_ptr);
+	glyph_cache_instance.add_glyph(trait, glyph_index, bmp_glyph, cache_node_ptr);
 
 	if (need_add_ref)
-		gdimm_glyph_cache::add_ref(_cache_node_ptr);
+		gdimm_glyph_cache::add_ref(cache_node_ptr);
 
 	return bmp_glyph;
 }
@@ -253,10 +248,11 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 		_glyphs.resize(c);
 		_glyph_pos.resize(c);
+		const void *cache_node_ptr = NULL;
 
 		for (UINT i = 0; i < c; i++)
 		{
-			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, _render_mode, curr_load_flags);
+			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, _render_mode, curr_load_flags, cache_node_ptr);
 			if (curr_glyph == NULL)
 				_glyphs[i] = &empty_glyph;
 			else
@@ -265,6 +261,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 			if (lpDx == NULL && curr_setting_cache->kerning && i > 0)
 				_glyph_pos[i].x = _font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
 		}
+
+		if (cache_node_ptr != NULL)
+			_cache_node_ptrs.push_back(cache_node_ptr);
 	}
 	else
 	{
@@ -280,6 +279,8 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 		while (true)
 		{
+			const void *cache_node_ptr = NULL;
+
 			_font_man.get_glyph_indices((long) scaler.face_id, &final_string[0], c, &glyph_indices[0]);
 
 			for (UINT i = 0; i < c; i++)
@@ -291,7 +292,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 					_glyphs[i] = (FT_BitmapGlyph) &empty_glyph;
 				else
 				{
-					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, _render_mode, curr_load_flags);
+					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, _render_mode, curr_load_flags, cache_node_ptr);
 					if (curr_glyph == NULL)
 						_glyphs[i] = &empty_glyph;
 					else
@@ -304,6 +305,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 				final_string[i] = 0;
 				rendered_count += 1;
 			}
+
+			if (cache_node_ptr != NULL)
+				_cache_node_ptrs.push_back(cache_node_ptr);
 
 			if (rendered_count == c)
 				break;
@@ -355,15 +359,15 @@ bool gdimm_ft_text::begin(const gdimm_text_context *context)
 	if (!gdimm_gdi_text::begin(context))
 		return false;
 
-	_cache_node_ptr = NULL;
+	_cache_node_ptrs.clear();
 
 	return true;
 }
 
 void gdimm_ft_text::end()
 {
-	// the cache node associated with this renderer is not used any more
-	// the glyph cache can reclaim it safely
-	if (_cache_node_ptr != NULL)
-		gdimm_glyph_cache::release(_cache_node_ptr);
+	// the cache nodes associated with this renderer will not be used any more
+	// the glyph cache can reclaim them safely
+	for (list<const void *>::const_iterator iter = _cache_node_ptrs.begin(); iter != _cache_node_ptrs.end(); iter++)
+		gdimm_glyph_cache::release(*iter);
 }

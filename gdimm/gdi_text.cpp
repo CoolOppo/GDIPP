@@ -438,7 +438,7 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
-		const RECT bk_rect = {0, 0, metrics.width, metrics.height};
+		const RECT bk_rect = {0, 0, max(metrics.width, _text_extent.cx), max(metrics.height, _text_extent.cy)};
 		draw_success = draw_background(_hdc_canvas, &bk_rect, _bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
@@ -606,6 +606,14 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 
 	if (!_glyphs.empty())
 	{
+		// get GDI text extent
+		// if background is opaque, use the larger one from rendered glyph metrics and this extent
+		if (options & ETO_GLYPH_INDEX)
+			b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &_text_extent);
+		else
+			b_ret = GetTextExtentPoint32(_context->hdc, lpString, c, &_text_extent);
+		assert(b_ret);
+
 		const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
 			gamma_instance.get_ramp(_context->setting_cache->gamma.green),
 			gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};

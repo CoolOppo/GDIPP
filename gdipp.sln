@@ -55,7 +55,10 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_32_zh-cn", "insta
 		{C777953B-F65D-44AD-9226-0DFA5306D0F9} = {C777953B-F65D-44AD-9226-0DFA5306D0F9}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_enum", "gdipp_enum\gdipp_enum.vcxproj", "{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_hook", "gdipp_hook\gdipp_hook.vcxproj", "{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -23,11 +23,13 @@ _cached_bytes(0)
 void gdimm_glyph_cache::add_ref(const void *cache_node_ptr)
 {
 	((cache_node *)cache_node_ptr)->ref_count += 1;
+	assert(((cache_node *)cache_node_ptr)->ref_count >= 0);
 }
 
 void gdimm_glyph_cache::release(const void *cache_node_ptr)
 {
 	((cache_node *)cache_node_ptr)->ref_count -= 1;
+	assert(((cache_node *)cache_node_ptr)->ref_count >= 0);
 }
 
 void gdimm_glyph_cache::erase_glyph_cache(const cache_map &glyph_cache)

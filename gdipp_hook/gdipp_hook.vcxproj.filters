@@ -18,25 +18,22 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gdipp_enum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gdipp_enum.cpp">
+    <ClCompile Include="gdipp_hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="gdipp_enum.rc">
+    <ResourceCompile Include="gdipp_hook.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\gdipp_enum.ico">
+    <None Include="res\gdipp_hook.ico">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

@@ -29,7 +29,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_MAIN                ICON                    "res\\gdipp_enum.ico"
+IDI_MAIN                ICON                    "res\\gdipp_hook.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -79,12 +79,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "gdipp Project"
-            VALUE "FileDescription", "gdipp Enumerator"
+            VALUE "FileDescription", "gdipp Hook"
             VALUE "FileVersion", "0, 8, 2, 0"
-            VALUE "InternalName", "gdipp_enum"
+            VALUE "InternalName", "gdipp_hook"
             VALUE "LegalCopyright", "Copyright (C) 2010"
-            VALUE "OriginalFilename", "gdipp_enum.exe"
-            VALUE "ProductName", "gdipp Enumerator"
+            VALUE "OriginalFilename", "gdipp_hook.exe"
+            VALUE "ProductName", "gdipp Hook"
             VALUE "ProductVersion", "0, 8, 2, 0"
         END
     END

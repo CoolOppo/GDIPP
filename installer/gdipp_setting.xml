@@ -54,10 +54,6 @@
 		<random_text>0</random_text>
 	</demo>
 	
-	<service>
-		<poll_interval>1.0</poll_interval>
-	</service>
-
 	<exclude>
 		<process>conhost\.exe</process>
 		<process>csrss\.exe</process>

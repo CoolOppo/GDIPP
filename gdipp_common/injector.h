@@ -4,12 +4,9 @@
 
 class gdipp_injector
 {
-	wchar_t _gdimm_path_64[MAX_PATH];
-	wchar_t _gdimm_path_32[MAX_PATH];
-	gdipp_inject_payload _payload;
+	wchar_t _gdimm_path[MAX_PATH];
 
 public:
 	gdipp_injector();
-	void init_payload(GDIPP_INJECTOR_TYPE injector_type);
 	NTSTATUS inject_process(ULONG process_id, ULONG thread_id);
 };
