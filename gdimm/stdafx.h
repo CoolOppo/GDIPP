@@ -33,9 +33,9 @@
 #include FT_LCD_FILTER_H
 #include FT_OUTLINE_H
 
-#pragma pack(1)
+#include <pshpack1.h>
 #include FT_TRUETYPE_TABLES_H
-#pragma pack()
+#include <poppack.h>
 
 #include <easyhook.h>
 

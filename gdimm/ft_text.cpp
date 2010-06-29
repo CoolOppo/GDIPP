@@ -206,7 +206,6 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 {
 	wstring curr_font_face = _context->font_face;
 	const wchar_t *dc_font_family = _context->font_family;
-	const wchar_t *curr_font_family = dc_font_family;
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 
 	/*
@@ -314,18 +313,25 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			// font linking
 
-			curr_font_family = font_link_instance.lookup_link(dc_font_family, font_link_index);
+			const font_link_info *linked_info = font_link_instance.lookup_link(dc_font_family, font_link_index);
 			font_link_index += 1;
 
-			if (curr_font_family == NULL)
+			if (linked_info == NULL)
 				return false;
 
-			font_id = _font_man.lookup_font(_font_attr, curr_font_family, curr_font_face);
+			font_id = _font_man.lookup_font(_font_attr, linked_info->font_family.c_str(), curr_font_face);
 			assert(font_id < 0);
 
 			scaler.face_id = (FTC_FaceID) font_id;
 			if (scaler.face_id == NULL)
 				return false;
+
+			if (linked_info->scaling != 1.0)
+			{
+				// apply font linking scaling factor
+				scaler.width = (FT_UInt)(scaler.width * linked_info->scaling);
+				scaler.height = (FT_UInt)(scaler.height * linked_info->scaling);
+			}
 
 			// reload metrics for the linked font
 

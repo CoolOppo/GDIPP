@@ -378,12 +378,12 @@ void gdimm_hook::cleanup()
 	}
 }
 
-bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_proc)
+bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	NTSTATUS eh_error;
 
 	// the target library module must have been loaded in this process before hooking
-	const HMODULE h_lib = GetModuleHandle(lib_name);
+	const HMODULE h_lib = GetModuleHandleW(lib_name);
 	if (h_lib == NULL)
 		return false;
 
@@ -402,14 +402,14 @@ bool gdimm_hook::install_hook(LPCTSTR lib_name, LPCSTR proc_name, void *hook_pro
 
 bool gdimm_hook::hook()
 {
-	install_hook(TEXT("gdi32.dll"), "ExtTextOutW", ExtTextOutW_hook);
-	install_hook(TEXT("gdi32.dll"), "AbortPath", AbortPath_hook);
-	install_hook(TEXT("gdi32.dll"), "BeginPath", BeginPath_hook);
-	install_hook(TEXT("gdi32.dll"), "EndPath", EndPath_hook);
+	install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
+	install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
+	install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
+	install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
-	install_hook(TEXT("advapi32.dll"), "CreateProcessAsUserW", CreateProcessAsUserW_hook);
+	install_hook(L"advapi32.dll", "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
 	return !(_hooks.empty());

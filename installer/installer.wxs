@@ -34,7 +34,7 @@
 						<File Id="gdimm_dll" Name="gdimm_32.dll" Source="$(var.SolutionDir)Win32\Release\gdimm_32.dll" Vital="yes" KeyPath="yes" />
 						<File Name="gdipp_common_32.dll" Source="$(var.SolutionDir)Win32\Release\gdipp_common_32.dll" Vital="yes" />
 						<File Name="gdipp_demo_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_demo_32.exe" />
-						<File Name="gdipp_enum_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_enum_32.exe" />
+						<File Name="gdipp_hook_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_hook_32.exe" />
 						<File Name="gdipp_loader_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_loader_32.exe" />
 						<File Name="gdipp_pre_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_pre_32.exe" />
 					</Component>
@@ -64,7 +64,7 @@
 						<File Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" Vital="yes" KeyPath="yes" />
 						<File Name="gdipp_common_64.dll" Source="$(var.SolutionDir)x64\Release\gdipp_common_64.dll" Vital="yes" />
 						<File Name="gdipp_demo_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_demo_64.exe" />
-						<File Name="gdipp_enum_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_enum_64.exe" />
+						<File Name="gdipp_hook_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_hook_64.exe" />
 						<File Name="gdipp_loader_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_loader_64.exe" />
 						<File Name="gdipp_pre_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_pre_64.exe" />
 					</Component>
