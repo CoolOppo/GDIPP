@@ -5,6 +5,11 @@
 #include "gdimm.h"
 #include "lock.h"
 
+/*
+empty glyph is glyph with no bitmap data and zero bounding box
+it acts as a placeholder of non-printable characters (e.g. control characters)
+it provides unified interface to glyph drawer
+*/
 FT_BitmapGlyphRec empty_glyph = {};
 
 FT_ULong gdimm_ft_text::get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
@@ -284,12 +289,13 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 			for (UINT i = 0; i < c; i++)
 			{
-				if (glyph_indices[i] == 0xffff || final_string[i] == 0)
+				if (final_string[i] == L'\0')
 					continue;
 
+				// do not render control characters, even corresponding glyphs exist
 				if (iswcntrl(final_string[i]))
 					_glyphs[i] = (FT_BitmapGlyph) &empty_glyph;
-				else
+				else if (glyph_indices[i] != 0xffff)
 				{
 					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, _render_mode, curr_load_flags, cache_node_ptr);
 					if (curr_glyph == NULL)
@@ -300,16 +306,21 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 					if (lpDx == NULL && curr_setting_cache->kerning && i > 0)
 						_glyph_pos[i].x = _font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
 				}
-
-				final_string[i] = 0;
+				else
+					continue;
+					
+				final_string[i] = L'\0';
 				rendered_count += 1;
 			}
 
 			if (cache_node_ptr != NULL)
 				_cache_node_ptrs.push_back(cache_node_ptr);
 
-			if (rendered_count == c)
+			if (rendered_count >= c)
+			{
+				assert(rendered_count == c);
 				break;
+			}
 
 			// font linking
 

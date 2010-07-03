@@ -55,13 +55,16 @@
 	</demo>
 	
 	<exclude>
-		<process>conhost\.exe</process>
-		<process>csrss\.exe</process>
 		<process>dwm\.exe</process>
+		<process>logonui\.exe</process>
 		<process>rundll32\.exe</process>
+		<process>service\.exe</process>
+		<process>spoolsv\.exe</process>
 		<process>svchost\.exe</process>
 		<process>taskhost\.exe</process>
-		<process>wlanext\.exe</process>
+		<process>userinit\.exe</process>
+		<process>werfault\.exe</process>
+		<process>wininit\.exe</process>
 		<process>winlogon\.exe</process>
 	</exclude>
 </gdipp>

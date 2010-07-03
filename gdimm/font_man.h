@@ -57,7 +57,7 @@ class gdimm_font_man
 	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
 	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
 
-	static HFONT create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
+	HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
 
 public:
 	static FT_Stream lookup_stream(long font_id);

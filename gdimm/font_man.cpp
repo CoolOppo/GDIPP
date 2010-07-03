@@ -168,18 +168,15 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_a
 
 	HFONT new_hfont = CreateFontIndirectW(&new_font_attr);
 	assert(new_hfont != NULL);
-	
+
 	SelectObject(font_holder, new_hfont);
-	UINT metric_size = GetOutlineTextMetricsW(font_holder, 0, NULL);
-	if (metric_size == 0)
-		return NULL;
 
 	vector<BYTE> metric_buf;
-	metric_buf.resize(metric_size);
-	metric_size = GetOutlineTextMetricsW(font_holder, metric_size, (OUTLINETEXTMETRICW *)&metric_buf[0]);
-	assert(metric_size != 0);
+	OUTLINETEXTMETRICW *outline_metrics;
+	if (!get_dc_metrics(font_holder, metric_buf, outline_metrics))
+		return NULL;
 
-	font_face = metric_face_name((OUTLINETEXTMETRICW *)&metric_buf[0]);
+	font_face = metric_face_name(outline_metrics);
 
 	return new_hfont;
 }

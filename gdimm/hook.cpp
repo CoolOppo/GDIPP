@@ -12,6 +12,33 @@ set<HDC> hdc_with_path;
 set<gdimm_text **> all_text_instances;
 DWORD gdimm_hook::text_tls_index = 0;
 
+BOOL WINAPI AbortPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = AbortPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI BeginPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = BeginPath(hdc);
+	if (b_ret)
+		hdc_with_path.insert(hdc);
+
+	return b_ret;
+}
+
+BOOL WINAPI EndPath_hook(__in HDC hdc)
+{
+	BOOL b_ret = EndPath(hdc);
+	if (b_ret)
+		hdc_with_path.erase(hdc);
+
+	return b_ret;
+}
+
 __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, __in UINT options, __in_opt CONST RECT * lprect, __in_ecount_opt(c) LPCWSTR lpString, __in UINT c, __in_ecount_opt(c) CONST INT * lpDx)
 {
 	bool b_ret;
@@ -84,7 +111,7 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 	}
 #endif // _DEBUG
 
-	// uncomment this to make rendering single-threaded
+	// uncomment this lock to make rendering single-threaded
 	//gdimm_lock lock(LOCK_DEBUG);
 
 	gdimm_text::gdimm_text_context context;
@@ -130,33 +157,6 @@ __gdi_entry BOOL WINAPI ExtTextOutW_hook( __in HDC hdc, __in int x, __in int y, 
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	return TRUE;
-}
-
-BOOL WINAPI AbortPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = AbortPath(hdc);
-	if (b_ret)
-		hdc_with_path.erase(hdc);
-
-	return b_ret;
-}
-
-BOOL WINAPI BeginPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = BeginPath(hdc);
-	if (b_ret)
-		hdc_with_path.insert(hdc);
-
-	return b_ret;
-}
-
-BOOL WINAPI EndPath_hook(__in HDC hdc)
-{
-	BOOL b_ret = EndPath(hdc);
-	if (b_ret)
-		hdc_with_path.erase(hdc);
-
-	return b_ret;
 }
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
@@ -297,6 +297,39 @@ CreateProcessAsUserW_hook(
 }
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
+// hooks for debugging
+
+/*
+BOOL
+APIENTRY
+GetTextExtentPoint32W_hook(
+	__in HDC hdc,
+	__in_ecount(c) LPCWSTR lpString,
+	__in int c,
+	__out LPSIZE psizl
+	)
+{
+	return GetTextExtentPoint32W(hdc, lpString, c, psizl);
+}
+
+BOOL  WINAPI GetTextExtentPointI_hook(__in HDC hdc, __in_ecount(cgi) LPWORD pgiIn, __in int cgi, __out LPSIZE psize)
+{
+	return GetTextExtentPointI(hdc, pgiIn, cgi, psize);
+}
+
+DWORD WINAPI GetGlyphOutlineA_hook(    __in HDC hdc,
+	__in UINT uChar,
+	__in UINT fuFormat,
+	__out LPGLYPHMETRICS lpgm,
+	__in DWORD cjBuffer,
+	__out_bcount_opt(cjBuffer) LPVOID pvBuffer,
+	__in CONST MAT2 *lpmat2
+	)
+{
+	return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+}
+*/
+
 // empty exported function to help loading gdimm into target process
 __declspec(dllexport) void gdimm_empty_proc()
 {
@@ -387,8 +420,11 @@ bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_pro
 	if (h_lib == NULL)
 		return false;
 
+	const FARPROC proc_addr = GetProcAddress(h_lib, proc_name);
+	assert(proc_addr != NULL);
+
 	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
-	eh_error = LhInstallHook(GetProcAddress(h_lib, proc_name), hook_proc, NULL, h_hook);
+	eh_error = LhInstallHook(proc_addr, hook_proc, NULL, h_hook);
 	assert(eh_error == 0);
 
 	ULONG thread_id_list[1] = {};
@@ -402,15 +438,24 @@ bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_pro
 
 bool gdimm_hook::hook()
 {
-	install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
 	install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
 	install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
 	install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
+
+	install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
 	install_hook(L"advapi32.dll", "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
+
+	// hooks for debugging
+
+	/*
+	install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
+	install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
+	install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
+	*/
 
 	return !(_hooks.empty());
 }
