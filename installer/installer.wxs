@@ -12,11 +12,11 @@
 <?if $(var.Platform) = x86 ?>
 		<!-- if this is the x86 installer, do not install on 64-bit OS -->
 		<Condition Message="!(loc.VersionFailMsg)">
-			(VersionNT >= 501) AND (NOT VersionNT64)
+			(VersionNT >= 600) AND (NOT VersionNT64 >= 600)
 		</Condition>
 <?else if $(var.Platform) = x64 ?>
 		<Condition Message="!(loc.VersionFailMsg)">
-			VersionNT64 >= 501
+			VersionNT64 >= 600
 		</Condition>
 <?endif ?>
 
@@ -154,12 +154,6 @@
 
 			<Component Id="set_loadappinit_dlls_32" Guid="C712E1E1-2AEB-4A6C-B474-B45DFEB349FF" Permanent="yes" Win64="no">
 				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="integer" Name="LoadAppInit_DLLs" Value="1" KeyPath="yes" />
-				<Condition>(VersionNT >= 600) AND (LOADMODE = 1)</Condition>
-			</Component>
-			
-			<!-- set PATH if registry load mode -->
-			<Component Id="set_path" Guid="0F90FCDC-E897-460C-919B-2C2993A216AE" Permanent="no" Win64="no">
-				<Environment Id="env_PATH" Name="PATH" Action="set" Value="[INSTALLDIR]" Part="last" System="yes" Permanent="no" />
 				<Condition>LOADMODE = 1</Condition>
 			</Component>
 
@@ -171,7 +165,7 @@
 
 			<Component Id="set_loadappinit_dlls_64" Guid="F6357385-87C1-4E49-A8EE-C505B7A93871" Permanent="yes" Win64="yes">
 				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Type="integer" Name="LoadAppInit_DLLs" Value="1" KeyPath="yes" />
-				<Condition>(VersionNT >= 600) AND (LOADMODE = 1)</Condition>
+				<Condition>LOADMODE = 1</Condition>
 			</Component>
 <?endif ?>
 
@@ -198,49 +192,137 @@
 				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
 			</Component>
 		</Directory>
-		
-		<CustomAction Id="appinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+
+		<!-- 32-bit custom action command lines-->
+		<CustomAction Id="make_link_gdipp_common_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]gdipp_common_32.dll" "[INSTALLDIR]gdipp_common_32.dll"' />
+		<CustomAction Id="del_link_gdipp_common_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]gdipp_common_32.dll"' />
+		<CustomAction Id="make_link_gdipp_setting_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
+		<CustomAction Id="del_link_gdipp_setting_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]gdipp_setting.xml"' />
+		<CustomAction Id="reset_appinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
 									Value='"[SystemFolder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
-		<CustomAction Id="reset_appinit_dlls_32" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
-		<CustomAction Id="loadappinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+		<CustomAction Id="reset_loadappinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
 									Value='"[SystemFolder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
-		<CustomAction Id="reset_loadappinit_dlls_32" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
-		
+
+		<!-- 32-bit custom action execution -->
+		<CustomAction Id="make_link_gdipp_common_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_gdipp_common_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="make_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="reset_appinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="reset_loadappinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+
 <?if $(var.Platform) = x64 ?>
-		<CustomAction Id="appinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+		<!-- 64-bit custom action command lines-->
+		<CustomAction Id="make_link_gdipp_common_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+									Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]gdipp_common_64.dll" "[INSTALLDIR]gdipp_common_64.dll"' />
+		<CustomAction Id="del_link_gdipp_common_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]gdipp_common_64.dll"' />
+		<CustomAction Id="make_link_gdipp_setting_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+									Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
+		<CustomAction Id="del_link_gdipp_setting_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]gdipp_setting.xml"' />
+		<CustomAction Id="reset_appinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
 									Value='"[System64Folder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
-		<CustomAction Id="reset_appinit_dlls_64" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
-		<CustomAction Id="loadappinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+		<CustomAction Id="reset_loadappinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
 									Value='"[System64Folder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
-		<CustomAction Id="reset_loadappinit_dlls_64" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+
+		<!-- 64-bit custom action execution -->
+		<CustomAction Id="make_link_gdipp_common_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_gdipp_common_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="make_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="reset_appinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="reset_loadappinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 <?endif ?>
 
 		<InstallExecuteSequence>
-			<Custom Action="appinit_dlls_32_cmdline" Before="InstallFinalize">
+			<Custom Action="make_link_gdipp_common_32_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_gdipp_common_32_exec" After="make_link_gdipp_common_32_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			
+			<Custom Action="del_link_gdipp_common_32_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_gdipp_common_32_exec" After="del_link_gdipp_common_32_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+
+			<Custom Action="make_link_gdipp_setting_32_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_gdipp_setting_32_exec" After="make_link_gdipp_setting_32_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			
+			<Custom Action="del_link_gdipp_setting_32_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_gdipp_setting_32_exec" After="del_link_gdipp_setting_32_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			
+			<Custom Action="reset_appinit_dlls_32_cmdline" Before="InstallFinalize">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="reset_appinit_dlls_32" After="appinit_dlls_32_cmdline">
+			<Custom Action="reset_appinit_dlls_32_exec" After="reset_appinit_dlls_32_cmdline">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="loadappinit_dlls_32_cmdline" Before="InstallFinalize">
-				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT >= 600)
+			
+			<Custom Action="reset_loadappinit_dlls_32_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="reset_loadappinit_dlls_32" After="loadappinit_dlls_32_cmdline">
-				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT >= 600)
+			<Custom Action="reset_loadappinit_dlls_32_exec" After="reset_loadappinit_dlls_32_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
 
 <?if $(var.Platform) = x64 ?>
-			<Custom Action="appinit_dlls_64_cmdline" Before="InstallFinalize">
+			<Custom Action="make_link_gdipp_common_64_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_gdipp_common_64_exec" After="make_link_gdipp_common_64_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			
+			<Custom Action="del_link_gdipp_common_64_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_gdipp_common_64_exec" After="del_link_gdipp_common_64_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+
+			<Custom Action="make_link_gdipp_setting_64_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_gdipp_setting_64_exec" After="make_link_gdipp_setting_64_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+
+			<Custom Action="del_link_gdipp_setting_64_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_gdipp_setting_64_exec" After="del_link_gdipp_setting_64_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			
+			<Custom Action="reset_appinit_dlls_64_cmdline" Before="InstallFinalize">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="reset_appinit_dlls_64" After="appinit_dlls_64_cmdline">
+			<Custom Action="reset_appinit_dlls_64_exec" After="reset_appinit_dlls_64_cmdline">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="loadappinit_dlls_64_cmdline" Before="InstallFinalize">
-				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT64 >= 600)
+			
+			<Custom Action="reset_loadappinit_dlls_64_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
-			<Custom Action="reset_loadappinit_dlls_64" After="loadappinit_dlls_64_cmdline">
-				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1) AND (VersionNT64 >= 600)
+			<Custom Action="reset_loadappinit_dlls_64_exec" After="reset_loadappinit_dlls_64_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
 <?endif ?>
 		</InstallExecuteSequence>
@@ -287,7 +369,6 @@
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />
 			<ComponentRef Id="set_load_mode" />
-			<ComponentRef Id="set_path" />
 		</Feature>
 
 		<UIRef Id="gdipp_WixUI_FeatureTree" />
