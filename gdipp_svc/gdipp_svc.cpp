@@ -140,10 +140,12 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 				break;
 			}
+			else
+			{
+				// wait 5 seconds before respawning hook
+				Sleep(5000);
+			}
 		}
-
-		// wait 5 seconds before respawning hook
-		Sleep(5000);
 	}
 
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);

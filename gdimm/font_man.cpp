@@ -170,7 +170,7 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder,
 	new_font_attr.lfOutPrecision = OUT_DEFAULT_PRECIS;
 	wcsncpy_s(new_font_attr.lfFaceName, font_family, LF_FACESIZE);
 
-	HFONT new_hfont = CreateFontIndirectW(&new_font_attr);
+	const HFONT new_hfont = CreateFontIndirectW(&new_font_attr);
 	assert(new_hfont != NULL);
 
 	SelectObject(font_holder, new_hfont);
@@ -269,7 +269,7 @@ long gdimm_font_man::register_font(HDC font_holder, const wchar_t *font_face)
 
 long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
 {
-	HDC font_holder = (HDC) TlsGetValue(_linked_tls_index);
+	const HDC font_holder = (HDC) TlsGetValue(_linked_tls_index);
 	vector<BYTE> metric_buf;
 	OUTLINETEXTMETRICW *outline_metrics;
 	const HFONT linked_hfont = create_linked_font(font_holder, font_attr, font_family, metric_buf, outline_metrics);
@@ -319,7 +319,10 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_
 	// font existed, use existing font
 	DeleteObject(linked_hfont);
 
-	return iter->second;
+	const long font_id = iter->second;
+	_id_to_info[font_id].metric_buf = metric_buf;
+
+	return font_id;
 }
 
 void gdimm_font_man::get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi)
