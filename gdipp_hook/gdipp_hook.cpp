@@ -30,7 +30,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (h_proc != NULL)
 	{
-		const HHOOK h_hook = SetWindowsHookExW(WH_SHELL, h_proc, h_gdimm, 0);
+		const HHOOK h_hook = SetWindowsHookExW(WH_CBT, h_proc, h_gdimm, 0);
 
 		if (h_proc != NULL)
 			WaitForSingleObject(h_svc_event, INFINITE);

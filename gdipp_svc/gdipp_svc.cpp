@@ -10,8 +10,8 @@ using namespace std;
 #endif // _M_X64
 
 SERVICE_STATUS svc_status = {};
-SERVICE_STATUS_HANDLE svc_status_handle = NULL;
-HANDLE svc_stop_event = NULL;
+SERVICE_STATUS_HANDLE h_svc_status = NULL;
+HANDLE h_svc_stop_event = NULL;
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
@@ -34,7 +34,7 @@ VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHin
 		svc_status.dwCheckPoint = dwCheckPoint++;
 
 	// report the status of the service to the SCM
-	SetServiceStatus(svc_status_handle, &svc_status);
+	SetServiceStatus(h_svc_status, &svc_status);
 }
 
 VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
@@ -44,7 +44,7 @@ VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
 	{
 	case SERVICE_CONTROL_STOP:
 		set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
-		SetEvent(svc_stop_event);
+		SetEvent(h_svc_stop_event);
 		set_svc_status(svc_status.dwCurrentState, NO_ERROR, 0);
 		return;
 	}
@@ -95,8 +95,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	BOOL b_ret;
 
 	// register the handler function for the service
-	svc_status_handle = RegisterServiceCtrlHandler(SVC_NAME, svc_ctrl_handler);
-	if (svc_status_handle == NULL)
+	h_svc_status = RegisterServiceCtrlHandler(SVC_NAME, svc_ctrl_handler);
+	if (h_svc_status == NULL)
 		return;
 
 	// these SERVICE_STATUS members remain as set here
@@ -106,28 +106,44 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	// report initial status to the SCM
 	set_svc_status(SERVICE_START_PENDING, NO_ERROR, INFINITE);
 
-	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, GDIPP_SVC_EVENT_NAME);
-	if (svc_stop_event == NULL)
+	h_svc_stop_event = CreateEventW(NULL, TRUE, FALSE, GDIPP_SVC_EVENT_NAME);
+	if (h_svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
 	
-	PROCESS_INFORMATION pi = {};
-	b_ret = start_hook(&pi);
-	if (b_ret)
+	while (true)
 	{
-		// report running status when initialization is complete
-		set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
+		PROCESS_INFORMATION pi = {};
+		b_ret = start_hook(&pi);
+		if (b_ret)
+		{
+			// report running status when initialization is complete
+			set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 
-		// wait for stop event
-		WaitForSingleObject(svc_stop_event, INFINITE);
+			/*
+			wait for stop event and termination of the hook subprocess
+			if stop event is fired first, stop the service
+			otherwise, respawn the hook subprocess
+			*/
 
-		set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
+			HANDLE h_wait[2] = {h_svc_stop_event, pi.hProcess};
+			const DWORD wait_ret = WaitForMultipleObjects(2, h_wait, FALSE, INFINITE);
 
-		WaitForSingleObject(pi.hProcess, INFINITE);
-		CloseHandle(pi.hThread);
-		CloseHandle(pi.hProcess);
+			if (wait_ret - WAIT_OBJECT_0 != 1)
+			{
+				set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
+
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+
+				break;
+			}
+		}
+
+		// wait 5 seconds before respawning hook
+		Sleep(5000);
 	}
 
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
@@ -140,8 +156,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 #ifdef svc_debug
 	BOOL b_ret;
 
-	svc_stop_event = CreateEventW(NULL, TRUE, FALSE, GDIPP_SVC_EVENT_NAME);
-	if (svc_stop_event == NULL)
+	h_svc_stop_event = CreateEventW(NULL, TRUE, FALSE, GDIPP_SVC_EVENT_NAME);
+	if (h_svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return EXIT_FAILURE;

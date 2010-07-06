@@ -154,7 +154,11 @@ ULONG gdimm_font_man::get_ttc_face_index(HDC font_holder, DWORD ttc_file_size)
 	return ULONG_MAX;
 }
 
-HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
+HFONT gdimm_font_man::create_linked_font(HDC font_holder,
+	const LOGFONTW &font_attr,
+	const wchar_t *font_family,
+	vector<BYTE> &metric_buf,
+	OUTLINETEXTMETRICW *&outline_metrics)
 {
 	LOGFONTW new_font_attr = font_attr;
 
@@ -171,12 +175,9 @@ HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_a
 
 	SelectObject(font_holder, new_hfont);
 
-	vector<BYTE> metric_buf;
-	OUTLINETEXTMETRICW *outline_metrics;
-	if (!get_dc_metrics(font_holder, metric_buf, outline_metrics))
+	outline_metrics = get_dc_metrics(font_holder, metric_buf);
+	if (outline_metrics == NULL)
 		return NULL;
-
-	font_face = metric_face_name(outline_metrics);
 
 	return new_hfont;
 }
@@ -194,6 +195,15 @@ ULONG gdimm_font_man::lookup_face_index(long font_id)
 const gdimm_os2_metrics *gdimm_font_man::lookup_os2_metrics(long font_id)
 {
 	return &_id_to_info[font_id].os2_metrics;
+}
+
+const OUTLINETEXTMETRICW *gdimm_font_man::lookup_outline_metrics(long font_id)
+{
+	// return NULL for registered fonts
+	if (font_id >= 0)
+		return NULL;
+
+	return (OUTLINETEXTMETRICW *)&_id_to_info[font_id].metric_buf[0];
 }
 
 int gdimm_font_man::lookup_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph)
@@ -260,10 +270,13 @@ long gdimm_font_man::register_font(HDC font_holder, const wchar_t *font_face)
 long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face)
 {
 	HDC font_holder = (HDC) TlsGetValue(_linked_tls_index);
-	const HFONT linked_hfont = create_linked_font(font_holder, font_attr, font_family, font_face);
+	vector<BYTE> metric_buf;
+	OUTLINETEXTMETRICW *outline_metrics;
+	const HFONT linked_hfont = create_linked_font(font_holder, font_attr, font_family, metric_buf, outline_metrics);
 	if (linked_hfont == NULL)
 		return 0;
 
+	font_face = metric_face_name(outline_metrics);
 	map<wstring, long>::const_iterator iter = _linked_name_to_id.find(font_face);
 	if (iter == _linked_name_to_id.end())
 	{
@@ -282,6 +295,7 @@ long gdimm_font_man::lookup_font(const LOGFONTW &font_attr, const wchar_t *font_
 
 			font_info new_font_data = {};
 			new_font_data.linked_hfont = linked_hfont;
+			new_font_data.metric_buf = metric_buf;
 			new_font_data.stream.size = get_font_size(font_holder, new_font_data.table_header);
 			new_font_data.stream.descriptor.value = new_font_id;
 			new_font_data.stream.read = stream_io;

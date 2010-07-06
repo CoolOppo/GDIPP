@@ -25,6 +25,10 @@ class gdimm_font_man
 		// NULL for registered fonts
 		HFONT linked_hfont;
 
+		// the buffer of the outline metrics of the linked font
+		// empty for registered fonts
+		vector<BYTE> metric_buf;
+
 		// used to retrieve font data from GetFontData
 		DWORD table_header;
 		DWORD face_index;
@@ -57,12 +61,17 @@ class gdimm_font_man
 	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
 	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
 
-	HFONT gdimm_font_man::create_linked_font(HDC font_holder, const LOGFONTW &font_attr, const wchar_t *font_family, wstring &font_face);
+	HFONT gdimm_font_man::create_linked_font(HDC font_holder,
+		const LOGFONTW &font_attr,
+		const wchar_t *font_family,
+		vector<BYTE> &metric_buf,
+		OUTLINETEXTMETRICW *&outline_metrics);
 
 public:
 	static FT_Stream lookup_stream(long font_id);
 	static ULONG lookup_face_index(long font_id);
 	static const gdimm_os2_metrics *lookup_os2_metrics(long font_id);
+	static const OUTLINETEXTMETRICW *lookup_outline_metrics(long font_id);
 	static int lookup_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph);
 
 	gdimm_font_man();

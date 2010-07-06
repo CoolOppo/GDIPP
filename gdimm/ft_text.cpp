@@ -12,6 +12,33 @@ it provides unified interface to glyph drawer
 */
 FT_BitmapGlyphRec empty_glyph = {};
 
+FTC_ScalerRec gdimm_ft_text::get_scaler(const OUTLINETEXTMETRICW *outline_metrics, bool width_specified, FT_Short xAvgCharWidth)
+{
+	/*
+	while the height in FreeType scaler has the same meaning as the height value in LOGFONT structure, the width is different
+	what we know is, when the width in LOGFONT is the xAvgCharWidth (from the OS/2 table), the corresponding FreeType scaler width is the height
+	therefore we need conversion when LOGFONT width is not 0
+	simple calculation yields freetype_width = logfont_width * em_square / xAvgCharWidth
+	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, which is never 0
+	*/
+
+	assert(outline_metrics != NULL);
+
+	FTC_ScalerRec scaler = {};
+	scaler.height = outline_metrics->otmTextMetrics.tmHeight - outline_metrics->otmTextMetrics.tmInternalLeading;
+	scaler.pixel = 1;
+
+	if (width_specified)
+	{
+		// compare the xAvgCharWidth against the current average char width
+		scaler.width = outline_metrics->otmTextMetrics.tmAveCharWidth * outline_metrics->otmEMSquare / xAvgCharWidth;
+	}
+	else
+		scaler.width = scaler.height * outline_metrics->otmTextMetrics.tmDigitizedAspectX / outline_metrics->otmTextMetrics.tmDigitizedAspectY;
+
+	return scaler;
+}
+
 FT_ULong gdimm_ft_text::get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
 {
 	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
@@ -94,12 +121,13 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 	FT_F26Dot6 embolden,
 	FT_Render_Mode render_mode,
 	FT_ULong load_flags,
+	bool is_italic,
 	const void *&cache_node_ptr)
 {
 	FT_Error ft_error;
 
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
-	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && (!_os2_metrics->is_italic()));
+	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && !is_italic);
 	
 	// each renderer instance add the reference count to the glyph cache at most once
 	// only add reference count in the first time for a glyph run
@@ -213,38 +241,16 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	const wchar_t *dc_font_family = _context->font_family;
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 
-	/*
-	glyph metrics setup
-
-	while the height in FreeType scaler has the same meaning as the height value in LOGFONT structure, the widths are different
-	what we know is, when the width in LOGFONT is the xAvgCharWidth defined in the TrueType OS/2 table,
-	the corresponding FreeType scaler width is the height
-	therefore we need conversion when LOGFONT width is not 0
-	simple calculation yields new_freetype_width = logfont_width * em_square / xAvgCharWidth
-	note that the tmAveCharWidth field in TEXTMETRIC is the actual LOGFONT width, never be 0
-	*/
-
 	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
 	assert(font_id >= 0);
 
-	_os2_metrics = _font_man.lookup_os2_metrics(font_id);
-	FTC_ScalerRec scaler = {(FTC_FaceID) font_id,
-		0,
-		_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading,
-		1,
-		0,
-		0};
+	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
 
-	if (_font_attr.lfWidth == 0)
-		scaler.width = scaler.height;
-	else
-	{
-		// compare the xAvgCharWidth against the current average char width
-		scaler.width = _context->outline_metrics->otmTextMetrics.tmAveCharWidth * _context->outline_metrics->otmEMSquare / _os2_metrics->get_xAvgCharWidth();
-	}
+	FTC_ScalerRec scaler = get_scaler(_context->outline_metrics, _font_attr.lfWidth != 0, os2_metrics->get_xAvgCharWidth());
+	scaler.face_id = (FTC_FaceID) font_id;
 
+	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class());
 	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
-	FT_F26Dot6 curr_embolden = get_embolden(curr_setting_cache, _os2_metrics->get_weight_class());
 
 	if (options & ETO_GLYPH_INDEX)
 	{
@@ -256,7 +262,13 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 
 		for (UINT i = 0; i < c; i++)
 		{
-			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i], &scaler, curr_embolden, _render_mode, curr_load_flags, cache_node_ptr);
+			const FT_BitmapGlyph curr_glyph = render_glyph(lpString[i],
+				&scaler,
+				curr_embolden,
+				_render_mode,
+				curr_load_flags,
+				os2_metrics->is_italic(),
+				cache_node_ptr);
 			if (curr_glyph == NULL)
 				_glyphs[i] = &empty_glyph;
 			else
@@ -297,7 +309,13 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 					_glyphs[i] = (FT_BitmapGlyph) &empty_glyph;
 				else if (glyph_indices[i] != 0xffff)
 				{
-					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i], &scaler, curr_embolden, _render_mode, curr_load_flags, cache_node_ptr);
+					const FT_BitmapGlyph curr_glyph = render_glyph(glyph_indices[i],
+						&scaler,
+						curr_embolden,
+						_render_mode,
+						curr_load_flags, 
+						os2_metrics->is_italic(),
+						cache_node_ptr);
 					if (curr_glyph == NULL)
 						_glyphs[i] = &empty_glyph;
 					else
@@ -333,9 +351,13 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 			font_id = _font_man.lookup_font(_font_attr, linked_info->font_family.c_str(), curr_font_face);
 			assert(font_id < 0);
 
+			// reload metrics for the linked font
+
+			// get linked font's metrics from OS/2 table
+			os2_metrics = _font_man.lookup_os2_metrics(font_id);
+
+			scaler = get_scaler(_font_man.lookup_outline_metrics(font_id));
 			scaler.face_id = (FTC_FaceID) font_id;
-			if (scaler.face_id == NULL)
-				return false;
 
 			if (linked_info->scaling != 1.0)
 			{
@@ -344,12 +366,7 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 				scaler.height = (FT_UInt)(scaler.height * linked_info->scaling);
 			}
 
-			// reload metrics for the linked font
-
-			// get linked font's metrics from OS/2 table
-			_os2_metrics = _font_man.lookup_os2_metrics(font_id);
-			const gdimm_font_trait font_trait = {curr_font_face.c_str(), _os2_metrics->get_weight_class(), _os2_metrics->is_italic()};
-
+			const gdimm_font_trait font_trait = {curr_font_face.c_str(), os2_metrics->get_weight_class(), os2_metrics->is_italic()};
 			curr_setting_cache = setting_cache_instance.lookup(font_trait);
 			curr_embolden = get_embolden(curr_setting_cache, font_trait.weight_class);
 			curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);

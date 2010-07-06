@@ -134,19 +134,20 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 	return true;
 }
 
-bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outline_metrics)
+OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 {
 	// get outline metrics of the DC, which also include the text metrics
+
 	UINT metric_size = GetOutlineTextMetricsW(hdc, 0, NULL);
 	if (metric_size == 0)
-		return false;
+		return NULL;
 
 	metric_buf.resize(metric_size);
-	outline_metrics = (OUTLINETEXTMETRICW *)&metric_buf[0];
+	OUTLINETEXTMETRICW *outline_metrics = (OUTLINETEXTMETRICW *)&metric_buf[0];
 	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
 	assert(metric_size != 0);
 
-	return true;
+	return outline_metrics;
 }
 
 int get_ft_bmp_width(const FT_Bitmap &bitmap)
@@ -293,6 +294,21 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 	}
 
 	return color_ret;
+}
+
+const wchar_t *metric_family_name(const BYTE *metric_buf)
+{
+	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpFamilyName);
+}
+
+const wchar_t *metric_face_name(const BYTE *metric_buf)
+{
+	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpFaceName);
+}
+
+const wchar_t *metric_style_name(const BYTE *metric_buf)
+{
+	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpStyleName);
 }
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)

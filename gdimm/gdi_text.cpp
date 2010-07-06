@@ -438,7 +438,7 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
-		const RECT bk_rect = {0, 0, max(metrics.width, _text_extent.cx), max(metrics.height, _text_extent.cy)};
+		const RECT bk_rect = {0, 0, metrics.width, metrics.height};
 		draw_success = draw_background(_hdc_canvas, &bk_rect, _bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
@@ -510,7 +510,7 @@ BOOL gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 	RECT glyph_run_rect = get_ft_glyph_run_rect(_glyphs, _glyph_pos);
 	text_metrics metrics;
 
-	metrics.width = glyph_run_rect.right - glyph_run_rect.left;
+	metrics.width = max(glyph_run_rect.right - glyph_run_rect.left, _text_extent.cx);
 	metrics.height = _context->outline_metrics->otmTextMetrics.tmHeight;
 	metrics.ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	metrics.descent = _context->outline_metrics->otmTextMetrics.tmDescent;

@@ -35,8 +35,8 @@ int get_bmp_pitch(int width, WORD bpp);
 
 bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 
-// get various metrics of the DC
-bool get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf, OUTLINETEXTMETRICW *&outline_metrics);
+// get outline metrics of the DC
+OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
 
 int get_ft_bmp_width(const FT_Bitmap &bitmap);
 
@@ -52,6 +52,9 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 
 COLORREF parse_palette_color(HDC hdc, COLORREF color);
 
+const wchar_t *metric_family_name(const BYTE *metric_buf);
+const wchar_t *metric_face_name(const BYTE *metric_buf);
+const wchar_t *metric_style_name(const BYTE *metric_buf);
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric);
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric);
 const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric);

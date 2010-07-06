@@ -7,7 +7,8 @@ bool gdimm_text::gdimm_text_context::init(HDC hdc)
 {
 	this->hdc = hdc;
 
-	if (!get_dc_metrics(hdc, _metric_buf, outline_metrics))
+	outline_metrics = get_dc_metrics(hdc, _metric_buf);
+	if (outline_metrics == NULL)
 		return false;
 
 	font_face = metric_face_name(outline_metrics);

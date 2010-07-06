@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
-	<version>0.8.1</version>
+	<version>0.8.3</version>
 	
 	<gdimm>
 		<process name="chrome\.exe">
@@ -57,7 +57,6 @@
 	<exclude>
 		<process>dwm\.exe</process>
 		<process>logonui\.exe</process>
-		<process>rundll32\.exe</process>
 		<process>service\.exe</process>
 		<process>spoolsv\.exe</process>
 		<process>svchost\.exe</process>
