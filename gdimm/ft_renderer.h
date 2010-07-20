@@ -1,8 +1,8 @@
 #pragma once
 
-#include "gdi_text.h"
+#include "renderer.h"
 
-class gdimm_ft_text : public gdimm_gdi_text
+class gdimm_ft_renderer : public gdimm_renderer
 {
 	list<const void *> _cache_node_ptrs;
 
@@ -22,6 +22,6 @@ class gdimm_ft_text : public gdimm_gdi_text
 	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:
-	bool begin(const gdimm_text_context *context);
+	bool begin(const dc_context *context);
 	void end();
 };

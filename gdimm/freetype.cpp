@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "ft.h"
+#include "freetype.h"
 #include "font_man.h"
 #include "gdimm.h"
 
@@ -37,8 +37,6 @@ void initialize_freetype()
 void destroy_freetype()
 {
 	FT_Error ft_error;
-
-	glyph_cache_instance.clear();
 
 	FTC_Manager_Done(ft_cache_man);
 	

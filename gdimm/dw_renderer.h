@@ -1,8 +1,8 @@
 #pragma once
 
-#include "gdi_text.h"
+#include "renderer.h"
 
-class gdimm_dw_text : public gdimm_gdi_text, public IDWriteTextRenderer
+class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 {
 	CComPtr<IDWriteFactory> _dw_factory;
 	CComPtr<IDWriteGdiInterop> _dw_gdi_interop;
@@ -77,8 +77,8 @@ class gdimm_dw_text : public gdimm_gdi_text, public IDWriteTextRenderer
 		);
 
 public:
-	gdimm_dw_text();
+	gdimm_dw_renderer();
 
-	bool begin(const gdimm_text_context *context);
+	bool begin(const dc_context *context);
 	void end();
 };

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "os2_metrics.h"
-#include "text_helper.h"
+#include "helper_func.h"
 
 #define OS2_TABLE_TAG mmioFOURCC('O', 'S', '/', '2')
 

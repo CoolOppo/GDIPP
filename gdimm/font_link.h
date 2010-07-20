@@ -1,13 +1,9 @@
 #pragma once
 
+#include "helper_def.h"
 #include <gdipp_common.h>
-using namespace std;
 
-struct font_link_info
-{
-	wstring font_family;
-	double scaling;
-};
+using namespace std;
 
 /*
 only the constructor changes internal state

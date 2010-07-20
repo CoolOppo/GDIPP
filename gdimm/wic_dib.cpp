@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "wic_dib.h"
-#include "text_helper.h"
+#include "helper_func.h"
 
 IFACEMETHODIMP gdimm_wic_dib_lock::QueryInterface( 
 	/* [in] */ REFIID riid,

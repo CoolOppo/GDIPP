@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "wic_text.h"
-#include "text_helper.h"
+#include "wic_painter.h"
+#include "helper_func.h"
 #include "gdimm.h"
 
-gdimm_wic_text::gdimm_wic_text()
+gdimm_wic_painter::gdimm_wic_painter()
 :
 _d2d_factory(NULL),
 _wic_render_target(NULL),
@@ -13,7 +13,7 @@ _hdc_canvas(NULL)
 {
 }
 
-bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run)
+bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run)
 {
 	HRESULT hr;
 	BOOL b_ret;
@@ -57,7 +57,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	return true;
 }
 
-bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextLayout **dw_text_layout)
+bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextLayout **dw_text_layout)
 {
 	HRESULT hr;
 	bool b_ret;
@@ -75,7 +75,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 		dw_font_style = DWRITE_FONT_STYLE_OBLIQUE;
 
 	CComPtr<IDWriteTextFormat> dw_text_format;
-	hr = _dw_factory->CreateTextFormat(_context->font_family,
+	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
 		NULL,
 		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
 		dw_font_style,
@@ -93,7 +93,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 		hr = _dw_factory->CreateTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _dc_bmp_header.biWidth,
+			(FLOAT) _context->bmp_header.biWidth,
 			0,
 			dw_text_layout);
 	}
@@ -102,7 +102,7 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 		hr = _dw_factory->CreateGdiCompatibleTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _dc_bmp_header.biWidth,
+			(FLOAT) _context->bmp_header.biWidth,
 			0,
 			_pixels_per_dip,
 			NULL,
@@ -125,12 +125,12 @@ bool gdimm_wic_text::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, ID
 	return true;
 }
 
-void gdimm_wic_text::set_param(ID2D1RenderTarget *render_target)
+void gdimm_wic_painter::set_param(ID2D1RenderTarget *render_target)
 {
 	HRESULT hr;
 
 	DWRITE_RENDERING_MODE dw_render_mode;
-	if (_render_mode == FT_RENDER_MODE_MONO)
+	if (_context->render_mode == FT_RENDER_MODE_MONO)
 		dw_render_mode = DWRITE_RENDERING_MODE_ALIASED;
 	else
 	{
@@ -152,7 +152,7 @@ void gdimm_wic_text::set_param(ID2D1RenderTarget *render_target)
 	}
 
 	D2D1_TEXT_ANTIALIAS_MODE text_aa_mode;
-	switch (_render_mode)
+	switch (_context->render_mode)
 	{
 	case FT_RENDER_MODE_NORMAL:
 	case FT_RENDER_MODE_LIGHT:
@@ -186,10 +186,10 @@ void gdimm_wic_text::set_param(ID2D1RenderTarget *render_target)
 	render_target->SetTextAntialiasMode(text_aa_mode);
 }
 
-bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	HRESULT hr;
-	BOOL b_ret, draw_success;
+	BOOL b_ret, paint_success;
 
 	text_metrics metrics = {};
 	POINT canvas_origin = {};
@@ -254,7 +254,7 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 	bmp_header.biWidth = metrics.width;
 	bmp_header.biHeight = -metrics.height;
 	bmp_header.biPlanes = 1;
-	bmp_header.biBitCount = _dc_bmp_header.biBitCount;
+	bmp_header.biBitCount = _context->bmp_header.biBitCount;
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
@@ -273,18 +273,18 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 	wic_render_target->BeginDraw();
 
 	if (options & ETO_OPAQUE)
-		draw_background(_context->hdc, lprect, _bg_color);
+		paint_background(_context->hdc, lprect, _bg_color);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
 		wic_render_target->Clear(D2D1::ColorF(_bg_color));
-		draw_success = TRUE;
+		paint_success = TRUE;
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		draw_success = BitBlt(_hdc_canvas,
+		paint_success = BitBlt(_hdc_canvas,
 			0,
 			0,
 			metrics.width,
@@ -295,7 +295,7 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 			SRCCOPY);
 	}
 	
-	if (draw_success)
+	if (paint_success)
 	{
 		CComPtr<ID2D1SolidColorBrush> text_brush;
 		hr = wic_render_target->CreateSolidColorBrush(D2D1::ColorF(_text_color), &text_brush);
@@ -309,10 +309,10 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 	
 	hr = wic_render_target->EndDraw();
 	
-	draw_success = (hr == S_OK);
-	if (draw_success)
+	paint_success = (hr == S_OK);
+	if (paint_success)
 	{
-		draw_success = BitBlt(_context->hdc,
+		paint_success = BitBlt(_context->hdc,
 			metrics.origin.x,
 			metrics.origin.y,
 			metrics.width,
@@ -326,18 +326,18 @@ bool gdimm_wic_text::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpStrin
 	b_ret = DeleteObject(text_bitmap);
 	assert(b_ret);
 
-	return !!draw_success;
+	return !!paint_success;
 }
 
-bool gdimm_wic_text::begin(const gdimm_text_context *context)
+bool gdimm_wic_painter::begin(const dc_context *context)
 {
 	HRESULT hr;
 
-	if (!gdimm_text::begin(context))
+	if (!gdimm_painter::begin(context))
 		return false;
 
 	// ignore rotated DC
-	if (_font_attr.lfEscapement % 3600 != 0)
+	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
 
 	if (_d2d_factory == NULL)
@@ -389,7 +389,7 @@ bool gdimm_wic_text::begin(const gdimm_text_context *context)
 	return true;
 }
 
-bool gdimm_wic_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_wic_painter::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret;
 
@@ -411,14 +411,14 @@ bool gdimm_wic_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		update_cursor = false;
 	}
 
-	const bool draw_success = draw_text(options, lprect, lpString, c, lpDx);
+	const bool paint_success = draw_text(options, lprect, lpString, c, lpDx);
 
 	// if TA_UPDATECP is set, update current position after text out
-	if (update_cursor && draw_success)
+	if (update_cursor && paint_success)
 	{
 		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
 		assert(b_ret);
 	}
 
-	return draw_success;
+	return paint_success;
 }

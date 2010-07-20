@@ -4,7 +4,7 @@
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	BOOL b_ret;
-	NTSTATUS eh_error;
+	NTSTATUS eh_ret;
 
 	if (lpCmdLine == NULL || wcslen(lpCmdLine) == 0)
 	{
@@ -30,8 +30,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (b_ret)
 	{
-		eh_error = gdipp_inject_process(pi.dwProcessId, pi.dwThreadId);
-		if (eh_error == 0)
+		eh_ret = gdipp_inject_process(pi.dwProcessId, pi.dwThreadId);
+		if (eh_ret == 0)
 		{
 			WaitForSingleObject(pi.hProcess, INFINITE);
 			CloseHandle(pi.hThread);
@@ -46,7 +46,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 			wstring error_msg = L"Unable to inject gdimm.dll to the new process";
 
 			// STATUS_WOW_ASSERTION
-			if (eh_error == (NTSTATUS) 0xC0009898L)
+			if (eh_ret == (NTSTATUS) 0xC0009898L)
 				error_msg += L" due to different bitness. Try the other gdipp Loader";
 
 			error_msg += L".";

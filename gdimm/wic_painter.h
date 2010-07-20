@@ -1,11 +1,12 @@
 #pragma once
 
-#include "text.h"
 #include "font_man.h"
+#include "painter.h"
 #include "wic_dib.h"
+
 using namespace std;
 
-class gdimm_wic_text : public gdimm_text
+class gdimm_wic_painter : public gdimm_painter
 {
 	struct text_metrics
 	{
@@ -38,8 +39,8 @@ class gdimm_wic_text : public gdimm_text
 	bool draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 
 public:
-	gdimm_wic_text();
+	gdimm_wic_painter();
 
-	virtual bool begin(const gdimm_text_context *context);
-	bool text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
+	virtual bool begin(const dc_context *context);
+	bool paint(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 };

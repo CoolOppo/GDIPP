@@ -59,28 +59,13 @@ bool gdimm_setting_cache::cache_trait::operator<(const cache_trait &trait) const
 	return (italic < trait.italic);
 }
 
-RENDERER_TYPE gdimm_setting_cache::parse_renderer_type(WORD data)
-{
-	switch (data)
-	{
-	case 20:
-		return RENDERER_GETGLYPHOUTLINE;
-	case 30:
-		return RENDERER_DIRECTWRITE;
-	case 31:
-		return RENDERER_WIC;
-	default:
-		return RENDERER_FREETYPE;
-	}
-}
-
 const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_font_trait &font_trait)
 {
 	const cache_trait key(font_trait);
 
 	// if the setting for the specified font is not found
 	// construct setting cache for the font and return
-	cache_map::const_iterator iter = _cache.find(key);
+	map<cache_trait, font_setting_cache>::const_iterator iter = _cache.find(key);
 	if (iter == _cache.end())
 	{
 		// double-check lock
@@ -103,10 +88,7 @@ const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_font_trait &fo
 			wcs_convert(gdipp_get_gdimm_setting(L"kerning", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.kerning);
 			wcs_convert(gdipp_get_gdimm_setting(L"max_height", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.max_height);
 
-			WORD renderer_data;
-			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_trait.font_name, font_trait.weight_class, font_trait.italic), &renderer_data);
-			new_cache.renderer = parse_renderer_type(renderer_data);
-
+			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.renderer);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/mono", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.mono);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/gray", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.gray);
 			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/subpixel", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.subpixel);

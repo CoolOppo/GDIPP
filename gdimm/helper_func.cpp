@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "text_helper.h"
+#include "helper_func.h"
 #include "gdimm.h"
 
 FT_F26Dot6 to_26dot6(const FIXED &x)
@@ -48,25 +48,6 @@ BYTE division_by_255(short number, short numerator)
 
 	const int t = number * numerator;
 	return (((t + 255) >> 8) + t) >> 8;
-}
-
-BOOL draw_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
-{
-	int i_ret;
-
-	if (bg_color == CLR_INVALID)
-		return FALSE;
-
-	const HBRUSH bg_brush = CreateSolidBrush(bg_color);
-	if (bg_brush == NULL)
-		return FALSE;
-
-	i_ret = FillRect(hdc, bg_rect, bg_brush);
-	if (i_ret == 0)
-		return FALSE;
-
-	DeleteObject(bg_brush);
-	return TRUE;
 }
 
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)
@@ -150,51 +131,6 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
-int get_ft_bmp_width(const FT_Bitmap &bitmap)
-{
-	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
-		return bitmap.width / 3;
-	else
-		return bitmap.width;
-}
-
-RECT get_ft_glyph_run_rect(const vector<const FT_BitmapGlyph> &glyphs, const vector<POINT> &glyph_pos)
-{
-	RECT glyph_run_rect;
-
-	const size_t last_index = glyph_pos.size() - 1;
-
-	// condition checks because glyph might be place right-to-left
-
-	if (glyph_pos[last_index].x >= glyph_pos[0].x)
-	{
-		// left to right
-		glyph_run_rect.left = min(glyph_pos[0].x, 0);
-		glyph_run_rect.right = glyph_pos[last_index].x + get_ft_bmp_width(glyphs[last_index]->bitmap);
-	}
-	else
-	{
-		// right to left
-		glyph_run_rect.left = min(glyph_pos[last_index].x, 0);
-		glyph_run_rect.right = glyph_pos[0].x + get_ft_bmp_width(glyphs[0]->bitmap);
-	}
-
-	if (glyph_pos[last_index].y >= glyph_pos[0].y)
-	{
-		// top to bottom
-		glyph_run_rect.top = glyph_pos[0].y;
-		glyph_run_rect.bottom = glyph_pos[last_index].y + glyphs[last_index]->bitmap.rows;
-	}
-	else
-	{
-		// bottom to top
-		glyph_run_rect.top = glyph_pos[last_index].y;
-		glyph_run_rect.bottom = glyph_pos[0].y + glyphs[0]->bitmap.rows;
-	}
-
-	return glyph_run_rect;
-}
-
 unsigned char get_gdi_weight_class(unsigned short weight)
 {
 	/*
@@ -216,7 +152,50 @@ unsigned char get_gdi_weight_class(unsigned short weight)
 	return max_weight_class;
 }
 
-LOGFONTW get_logfont(HDC hdc)
+int get_glyph_bmp_width(const FT_Bitmap &bitmap)
+{
+	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
+		return bitmap.width / 3;
+	else
+		return bitmap.width;
+}
+
+RECT get_glyph_run_rect(const glyph_run *glyph_run_ptr)
+{
+	RECT glyph_run_rect;
+
+	// condition checks because glyph might be place right-to-left
+
+	if (glyph_run_ptr->back().glyph_pos.x >= glyph_run_ptr->front().glyph_pos.x)
+	{
+		// left to right
+		glyph_run_rect.left = min(glyph_run_ptr->front().glyph_pos.x, 0);
+		glyph_run_rect.right = glyph_run_ptr->back().glyph_pos.x + get_glyph_bmp_width(glyph_run_ptr->back().glyph_bmp->bitmap);
+	}
+	else
+	{
+		// right to left
+		glyph_run_rect.left = min(glyph_run_ptr->back().glyph_pos.x, 0);
+		glyph_run_rect.right = glyph_run_ptr->front().glyph_pos.x + get_glyph_bmp_width(glyph_run_ptr->front().glyph_bmp->bitmap);
+	}
+
+	if (glyph_run_ptr->back().glyph_pos.y >= glyph_run_ptr->front().glyph_pos.y)
+	{
+		// top to bottom
+		glyph_run_rect.top = glyph_run_ptr->front().glyph_pos.y;
+		glyph_run_rect.bottom = glyph_run_ptr->back().glyph_pos.y + glyph_run_ptr->back().glyph_bmp->bitmap.rows;
+	}
+	else
+	{
+		// bottom to top
+		glyph_run_rect.top = glyph_run_ptr->back().glyph_pos.y;
+		glyph_run_rect.bottom = glyph_run_ptr->front().glyph_pos.y + glyph_run_ptr->front().glyph_bmp->bitmap.rows;
+	}
+
+	return glyph_run_rect;
+}
+
+LOGFONTW get_log_font(HDC hdc)
 {
 	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
 	assert(h_font != NULL);
@@ -229,6 +208,9 @@ LOGFONTW get_logfont(HDC hdc)
 
 bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
 {
+	// return true if successfully find an appropriate render mode
+	// otherwise return false
+
 	if (font_setting->render_mode.mono == 2)
 	{
 		render_mode = FT_RENDER_MODE_MONO;
@@ -271,6 +253,25 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 	}
 
 	return false;
+}
+
+BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
+{
+	int i_ret;
+
+	if (bg_color == CLR_INVALID)
+		return FALSE;
+
+	const HBRUSH bg_brush = CreateSolidBrush(bg_color);
+	if (bg_brush == NULL)
+		return FALSE;
+
+	i_ret = FillRect(hdc, bg_rect, bg_brush);
+	if (i_ret == 0)
+		return FALSE;
+
+	DeleteObject(bg_brush);
+	return TRUE;
 }
 
 COLORREF parse_palette_color(HDC hdc, COLORREF color)

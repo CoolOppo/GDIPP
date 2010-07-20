@@ -1,15 +1,15 @@
 #include "stdafx.h"
-#include "gdi_text.h"
-#include "text_helper.h"
+#include "gdi_painter.h"
 #include "gdimm.h"
+#include "helper_func.h"
 
-gdimm_gdi_text::gdimm_gdi_text()
+gdimm_gdi_painter::gdimm_gdi_painter()
 :
 _hdc_canvas(NULL)
 {
 }
 
-gdimm_gdi_text::~gdimm_gdi_text()
+gdimm_gdi_painter::~gdimm_gdi_painter()
 {
 	// graceful memory DC deletion
 	// note that memory DCs are automatically deleted when the current thread is terminated
@@ -20,7 +20,7 @@ gdimm_gdi_text::~gdimm_gdi_text()
 	}
 }
 
-void gdimm_gdi_text::set_mono_mask_bits(const FT_BitmapGlyph glyph,
+void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 	BYTE *dest_bits,
 	POINT dest_pos,
 	int dest_width,
@@ -76,7 +76,7 @@ void gdimm_gdi_text::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-void gdimm_gdi_text::set_gray_text_bits(const FT_BitmapGlyph glyph,
+void gdimm_gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
 	BYTE *dest_bits,
 	POINT dest_pos,
 	int dest_width,
@@ -134,7 +134,7 @@ void gdimm_gdi_text::set_gray_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
+void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	BYTE *dest_bits,
 	POINT dest_pos,
 	int dest_width,
@@ -229,9 +229,9 @@ void gdimm_gdi_text::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
 {
-	BOOL b_ret, draw_success;
+	BOOL b_ret, paint_success;
 
 	/*
 	the flow direction of the original bitmap is unrecoverable
@@ -267,7 +267,7 @@ BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 	*/
 
 	if (options & ETO_OPAQUE)
-		draw_background(_context->hdc, lprect, _bg_color);
+		paint_background(_context->hdc, lprect, _bg_color);
 	
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
@@ -277,17 +277,17 @@ BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 		bk_rect.top =  metrics.origin.y;
 		bk_rect.right = bk_rect.left + metrics.width;
 		bk_rect.bottom = bk_rect.top + metrics.height;
-		draw_background(_context->hdc, &bk_rect, _bg_color);
+		paint_background(_context->hdc, &bk_rect, _bg_color);
 	}
 
-	for (size_t i = 0; i < _glyphs.size(); i++)
+	for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
 	{
-		assert(_glyphs[i]->bitmap.pitch >= 0);
+		assert(iter->glyph_bmp->bitmap.pitch >= 0);
 
-		const POINT solid_pos = {_glyph_pos[i].x + (metrics.baseline.x - metrics.origin.x),
+		const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
 			((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 		
-		set_mono_mask_bits(_glyphs[i],
+		set_mono_mask_bits(iter->glyph_bmp,
 			mask_bits,
 			solid_pos,
 			metrics.width,
@@ -303,7 +303,7 @@ BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 
 	// foreground ROP: source brush
 	// background ROP: destination color
-	draw_success = MaskBlt(_context->hdc,
+	paint_success = MaskBlt(_context->hdc,
 		metrics.origin.x,
 		metrics.origin.y,
 		metrics.width,
@@ -322,12 +322,12 @@ BOOL gdimm_gdi_text::draw_mono(const text_metrics &metrics,	UINT options, CONST 
 	b_ret = DeleteObject(mask_bitmap);
 	assert(b_ret);
 
-	return draw_success;
+	return paint_success;
 }
 
-BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
 {
-	BOOL b_ret, draw_success;
+	BOOL b_ret, paint_success;
 
 	BITMAPINFOHEADER bmp_header = {};
 	bmp_header.biSize = sizeof(BITMAPINFOHEADER);
@@ -346,7 +346,7 @@ BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 	assert(b_ret);
 
 	if (options & ETO_OPAQUE)
-		draw_background(_context->hdc, lprect, _bg_color);
+		paint_background(_context->hdc, lprect, _bg_color);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
@@ -356,17 +356,17 @@ BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 		bk_rect.top =  metrics.origin.y;
 		bk_rect.right = bk_rect.left + metrics.width;
 		bk_rect.bottom = bk_rect.top + metrics.height;
-		draw_background(_context->hdc, &bk_rect, _bg_color);
+		paint_background(_context->hdc, &bk_rect, _bg_color);
 	}
 
-	for (size_t i = 0; i < _glyphs.size(); i++)
+	for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
 	{
-		assert(_glyphs[i]->bitmap.pitch >= 0);
+		assert(iter->glyph_bmp->bitmap.pitch >= 0);
 
-		const POINT solid_pos = {_glyph_pos[i].x + (metrics.baseline.x - metrics.origin.x),
+		const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
 			((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 
-		set_gray_text_bits(_glyphs[i],
+		set_gray_text_bits(iter->glyph_bmp,
 			text_bits,
 			solid_pos,
 			metrics.width,
@@ -396,7 +396,7 @@ BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 	}
 
 	bf.SourceConstantAlpha = 255;
-	draw_success = AlphaBlend(_context->hdc,
+	paint_success = AlphaBlend(_context->hdc,
 		metrics.origin.x,
 		metrics.origin.y,
 		metrics.width,
@@ -408,12 +408,12 @@ BOOL gdimm_gdi_text::draw_gray(const text_metrics &metrics, UINT options, CONST 
 		metrics.height,
 		bf);
 
-	return draw_success;
+	return paint_success;
 }
 
-BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST RECT *lprect) const
+BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
 {
-	BOOL b_ret, draw_success;
+	BOOL b_ret, paint_success;
 
 	BITMAPINFOHEADER bmp_header = {};
 	bmp_header.biSize = sizeof(BITMAPINFOHEADER);
@@ -433,18 +433,18 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 	assert(b_ret);
 	
 	if (options & ETO_OPAQUE)
-		draw_background(_context->hdc, lprect, _bg_color);
+		paint_background(_context->hdc, lprect, _bg_color);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
 		const RECT bk_rect = {0, 0, metrics.width, metrics.height};
-		draw_success = draw_background(_hdc_canvas, &bk_rect, _bg_color);
+		paint_success = paint_background(_hdc_canvas, &bk_rect, _bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		draw_success = BitBlt(_hdc_canvas,
+		paint_success = BitBlt(_hdc_canvas,
 			0,
 			0,
 			metrics.width,
@@ -455,13 +455,13 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 			SRCCOPY);
 	}
 
-	if (draw_success)
+	if (paint_success)
 	{
-		for (size_t i = 0; i < _glyphs.size(); i++)
+		for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
 		{
-			assert(_glyphs[i]->bitmap.pitch >= 0);
+			assert(iter->glyph_bmp->bitmap.pitch >= 0);
 
-			const POINT solid_pos = {_glyph_pos[i].x + (metrics.baseline.x - metrics.origin.x),
+			const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
 				((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 
 			if (_context->setting_cache->shadow.alpha > 0)
@@ -469,7 +469,7 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 				const POINT shadow_pos = {solid_pos.x + _context->setting_cache->shadow.offset_x,
 					solid_pos.y + _context->setting_cache->shadow.offset_y};
 
-				set_lcd_text_bits(_glyphs[i],
+				set_lcd_text_bits(iter->glyph_bmp,
 					text_bits,
 					shadow_pos,
 					metrics.width,
@@ -478,7 +478,7 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 					_context->setting_cache->shadow.alpha);
 			}
 
-			set_lcd_text_bits(_glyphs[i],
+			set_lcd_text_bits(iter->glyph_bmp,
 				text_bits,
 				solid_pos,
 				metrics.width,
@@ -487,7 +487,7 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 				255);
 		}
 
-		draw_success = BitBlt(_context->hdc,
+		paint_success = BitBlt(_context->hdc,
 			metrics.origin.x,
 			metrics.origin.y,
 			metrics.width,
@@ -498,19 +498,16 @@ BOOL gdimm_gdi_text::draw_lcd(const text_metrics &metrics, UINT options, CONST R
 			SRCCOPY);
 	}
 
-	return draw_success;
+	return paint_success;
 }
 
-BOOL gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
+BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr)
 {
-	assert(!_glyphs.empty());
-	assert(_glyphs.size() == _glyph_pos.size());
-
 	// actual rect occupied by the glyphs
-	RECT glyph_run_rect = get_ft_glyph_run_rect(_glyphs, _glyph_pos);
-	text_metrics metrics;
+	const RECT glyph_run_rect = get_glyph_run_rect(glyph_run_ptr);
 
-	metrics.width = max(glyph_run_rect.right - glyph_run_rect.left, _text_extent.cx);
+	text_metrics metrics;
+	metrics.width = glyph_run_rect.right - glyph_run_rect.left;
 	metrics.height = _context->outline_metrics->otmTextMetrics.tmHeight;
 	metrics.ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	metrics.descent = _context->outline_metrics->otmTextMetrics.tmDescent;
@@ -544,27 +541,27 @@ BOOL gdimm_gdi_text::draw_text(UINT options, CONST RECT *lprect)
 		metrics.origin.y = bmp_rect.top;
 	}
 	
-	switch (_render_mode)
+	switch (_context->render_mode)
 	{
 		case FT_RENDER_MODE_NORMAL:
 		case FT_RENDER_MODE_LIGHT:
-			return draw_gray(metrics, options, lprect);
+			return paint_gray(options, lprect, glyph_run_ptr, metrics);
 		case FT_RENDER_MODE_MONO:
-			return draw_mono(metrics, options, lprect);
+			return paint_mono(options, lprect, glyph_run_ptr, metrics);
 		case FT_RENDER_MODE_LCD:
-			return draw_lcd(metrics, options, lprect);
+			return paint_lcd(options, lprect, glyph_run_ptr, metrics);
 		default:
 			return FALSE;
 	}
 }
 
-bool gdimm_gdi_text::begin(const gdimm_text_context *context)
+bool gdimm_gdi_painter::begin(const dc_context *context)
 {
-	if (!gdimm_text::begin(context))
+	if (!gdimm_painter::begin(context))
 		return false;
 
 	// ignore rotated DC
-	if (_font_attr.lfEscapement % 3600 != 0)
+	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
 
 	if (_hdc_canvas == NULL)
@@ -573,15 +570,12 @@ bool gdimm_gdi_text::begin(const gdimm_text_context *context)
 		assert(_hdc_canvas != NULL);
 	}
 
-	_glyphs.clear();
-	_glyph_pos.clear();
-
 	return true;
 }
 
-bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, CONST INT *lpDx, const glyph_run *glyph_run_ptr)
 {
-	BOOL b_ret, draw_success = FALSE;
+	BOOL b_ret, paint_success = FALSE;
 
 	BOOL update_cursor;
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
@@ -601,36 +595,22 @@ bool gdimm_gdi_text::text_out(int x, int y, UINT options, CONST RECT *lprect, LP
 		update_cursor = false;
 	}
 
-	if (!render(options, lpString, c, lpDx))
-		return false;
+	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
 
-	if (!_glyphs.empty())
-	{
-		// get GDI text extent
-		// if background is opaque, use the larger one from rendered glyph metrics and this extent
-		if (options & ETO_GLYPH_INDEX)
-			b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &_text_extent);
-		else
-			b_ret = GetTextExtentPoint32(_context->hdc, lpString, c, &_text_extent);
-		assert(b_ret);
+	_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
+	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
+	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
-		const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
-			gamma_instance.get_ramp(_context->setting_cache->gamma.green),
-			gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
-
-		_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
-		_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
-		_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
-
-		draw_success = draw_text(options, lprect);
-	}
+	paint_success = paint_glyph_run(options, lprect, glyph_run_ptr);
 
 	// if TA_UPDATECP is set, update current position after text out
-	if (update_cursor && draw_success)
+	if (update_cursor && paint_success)
 	{
 		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
 		assert(b_ret);
 	}
 
-	return !!draw_success;
+	return !!paint_success;
 }

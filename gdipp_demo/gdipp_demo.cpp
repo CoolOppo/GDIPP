@@ -61,7 +61,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 {
 	BOOL b_ret;
 
-#ifdef render
+#ifdef hook
 
 #ifdef _M_X64
 	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
@@ -84,7 +84,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	b_ret = load_setting();
 	assert(b_ret);
 
-#endif // render
+#endif // hook
 
 #ifdef test
 	wcs_convert(gdipp_get_demo_setting(L"count"), &total_count);

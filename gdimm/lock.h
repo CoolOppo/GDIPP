@@ -1,20 +1,6 @@
 #pragma once
 
-enum LOCK_TYPE
-{
-	LOCK_GAMMA,
-	LOCK_GLYPH_CACHE,
-	LOCK_HOOK,
-	LOCK_LINKED_FONT,
-	LOCK_REG_FONT,
-	LOCK_SETTING_CACHE,
-	LOCK_TEXT,
-	LOCK_DEBUG,
-
-	// count of lock types
-	// NEVER use this type
-	_LOCK_TYPE_COUNT_
-};
+#include "type_enum.h"
 
 class gdimm_lock
 {

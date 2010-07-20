@@ -1,19 +1,16 @@
-// gdimm.cpp : Defines the exported functions for the DLL application.
-//
-
 #include "stdafx.h"
 #include "gdimm.h"
-#include "ft.h"
+#include "freetype.h"
 #include "lock.h"
 #include <gdipp_common.h>
 
 HMODULE h_self = NULL;
 
 gdimm_font_link font_link_instance;
+gdimm_font_store font_store_instance;
 gdimm_gamma gamma_instance;
 gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
-gdimm_glyph_cache glyph_cache_instance;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -41,19 +38,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 		return hook_instance.hook();
 
-	case DLL_THREAD_ATTACH:
-		break;
-
-	case DLL_THREAD_DETACH:
-		gdimm_hook::delete_tls_text();
-
-		break;
-
 	case DLL_PROCESS_DETACH:
-		destroy_freetype();
-		gdimm_hook::delete_tls_text();
-		gdimm_hook::cleanup();
 		hook_instance.unhook();
+		destroy_freetype();
 		gdimm_lock::release();
 
 		break;

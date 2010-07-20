@@ -2,7 +2,7 @@
 
 using namespace std;
 
-  #define render
+  #define hook
   #define test
 
 extern int total_count;

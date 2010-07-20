@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "dw_text.h"
-#include "text_helper.h"
+#include "dw_renderer.h"
+#include "helper_func.h"
 #include "gdimm.h"
 
 gdimm_dw_text::gdimm_dw_text()
@@ -116,7 +116,7 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 {
 	HRESULT hr;
 
-	const long font_id = _font_man.register_font(_context->hdc, _context->font_face);
+	const long font_id = _font_man.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
 	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
 
 	DWRITE_FONT_STYLE dw_font_style;
@@ -128,7 +128,7 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 		dw_font_style = DWRITE_FONT_STYLE_OBLIQUE;
 
 	CComPtr<IDWriteTextFormat> dw_text_format;
-	hr = _dw_factory->CreateTextFormat(_context->font_family,
+	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
 		NULL,
 		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
 		dw_font_style,
@@ -372,11 +372,11 @@ IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
 
 //////////////////////////////////////////////////////////////////////////
 
-bool gdimm_dw_text::begin(const gdimm_text_context *context)
+bool gdimm_dw_text::begin(const dc_context *context)
 {
 	HRESULT hr;
 
-	if (!gdimm_gdi_text::begin(context))
+	if (!gdimm_gdi_painter::begin(context))
 		return false;
 	
 	// ignore rotated DC

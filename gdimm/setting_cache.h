@@ -1,25 +1,8 @@
 #pragma once
 
+#include "type_enum.h"
+
 using namespace std;
-
-enum RENDERER_TYPE
-{
-	RENDERER_CLEARTYPE,
-	RENDERER_FREETYPE,
-	RENDERER_GETGLYPHOUTLINE,
-	RENDERER_DIRECTWRITE,
-	RENDERER_WIC,
-
-	// count of renderer types
-	// NEVER use this type
-	_RENDERER_TYPE_COUNT_
-};
-
-enum PIXEL_GEOMETRY_TYPE
-{
-	PIXEL_GEOMETRY_RGB,
-	PIXEL_GEOMETRY_BGR
-};
 
 struct font_setting_cache
 {
@@ -85,11 +68,7 @@ class gdimm_setting_cache
 		bool operator<(const cache_trait &trait) const;
 	};
 
-	typedef map<cache_trait, font_setting_cache> cache_map;
-
-	cache_map _cache;
-
-	RENDERER_TYPE parse_renderer_type(WORD data);
+	map<cache_trait, font_setting_cache> _cache;
 
 public:
 	const font_setting_cache *lookup(const gdimm_font_trait &font_trait);

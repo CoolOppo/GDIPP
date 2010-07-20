@@ -1,13 +1,34 @@
 #include "stdafx.h"
-#include "ggo_text.h"
-#include "text_helper.h"
-#include "ft.h"
-#include "gdimm.h"
+#include "ggo_renderer.h"
+#include "freetype.h"
+#include "helper_func.h"
 #include "lock.h"
 
-const FT_Glyph_Class *gdimm_ggo_text::_glyph_clazz = NULL;
+bool ggo_font_trait::operator<(const font_trait &trait) const
+{
+	return memcmp(this, &trait, sizeof(LOGFONTW)) < 0;
+}
 
-const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
+bool ggo_font_trait::extract(HDC hdc)
+{
+	_font_attr = get_log_font(hdc);
+
+	return true;
+}
+
+gdimm_ggo_renderer::gdimm_ggo_renderer()
+:
+_glyph_clazz(NULL)
+{
+}
+
+bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
+{
+	DWORD outline_buf_len = GetGlyphOutline(_context->hdc, ch, (_ggo_format | GGO_METRICS), &glyph_metrics, 0, NULL, &_matrix);
+	return (outline_buf_len != GDI_ERROR);
+}
+
+const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
 
@@ -126,7 +147,7 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	// this FreeType function seems not thread-safe
 	{
 		gdimm_lock lock(LOCK_TEXT);
-		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _render_mode, NULL, FALSE);
+		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _context->render_mode, NULL, FALSE);
 		if (ft_error != 0)
 			return NULL;
 	}
@@ -134,10 +155,9 @@ const FT_BitmapGlyph gdimm_ggo_text::outline_to_bitmap(wchar_t ch, GLYPHMETRICS 
 	return (const FT_BitmapGlyph) generic_glyph;
 }
 
-bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_ggo_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, glyph_run &a_glyph_run)
 {
-	// is ETO_PDY is set, lpDx contains both x increment and y displacement
-	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
+	bool b_ret;
 
 	POINT pen_pos = {};
 
@@ -154,7 +174,7 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	therefore, quadratic B¨¦zier curves are more favored
 	*/
 	_ggo_format = GGO_NATIVE;
-	if (options & ETO_GLYPH_INDEX)
+	if (is_glyph_index)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
 	if (_context->setting_cache->hinting == 0)
@@ -164,60 +184,55 @@ bool gdimm_ggo_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *l
 	{
 		// we do not care about non-printable characters
 		// solution for Windows Vista/7 Date
-		if (!(options & ETO_GLYPH_INDEX) && iswcntrl(lpString[i]))
+		if (!is_glyph_index && iswcntrl(lpString[i]))
 			continue;
 
 		GLYPHMETRICS glyph_metrics;
-		const FT_BitmapGlyph bmp_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
-		if (bmp_glyph != NULL)
-		{
-			_glyphs.push_back(bmp_glyph);
-
-			POINT curr_pos = {pen_pos.x + bmp_glyph->left, pen_pos.y};
-			_glyph_pos.push_back(curr_pos);
-		}
-
-		POINT glyph_advance = {0, glyph_metrics.gmCellIncY};
-		const LONG char_advance = glyph_metrics.gmCellIncX + _char_extra;
-
-		if (lpDx == NULL)
-			glyph_advance.x = char_advance;
+		glyph_info new_glyph;
+		new_glyph.glyph_bmp = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+		if (new_glyph.glyph_bmp == NULL)
+			new_glyph.glyph_bmp = outline_to_bitmap(lpString[i], glyph_metrics);
 		else
 		{
-			glyph_advance.x = lpDx[i * advance_factor];
-
-			// the last element in lpDx may be 0
-			// in that case, we use the character advancement
-			if (i == c - 1 && glyph_advance.x == 0)
-				glyph_advance.x = char_advance;
+			b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
+			assert(b_ret);
 		}
 
-		pen_pos.x += glyph_advance.x;
-		pen_pos.y += glyph_advance.y;
+		if (new_glyph.glyph_bmp != NULL)
+		{
+			_glyph_cache.store_glyph(_font_trait, lpString[i], is_glyph_index, new_glyph.glyph_bmp);
+
+			new_glyph.glyph_pos.x = pen_pos.x + new_glyph.glyph_bmp->left;
+			new_glyph.glyph_pos.y = pen_pos.y;
+
+			a_glyph_run.push_back(new_glyph);
+		}
+
+		pen_pos.x += glyph_metrics.gmCellIncX + _char_extra;
+		pen_pos.y += glyph_metrics.gmCellIncY;
 	}
 
 	return true;
 }
 
-bool gdimm_ggo_text::begin(const gdimm_text_context *context)
+bool gdimm_ggo_renderer::begin(const dc_context *context)
 {
-	if (!gdimm_gdi_text::begin(context))
+	if (!gdimm_renderer::begin(context))
 		return false;
-
+	
 	/*
 	glyph clazz is a private field, cannot be constructed through FreeType API
 	instead, we load the glyph of the default character from the current font
 	use the clazz for all subsequent FT_OutlineGlyph
-	
+
 	we only deal with fonts in outlines, the glyph clazz must be ft_outline_glyph_class
 	glyph class is initialized only once
 	*/
-
-	FT_Error ft_error;
-
 	if (_glyph_clazz == NULL)
 	{
-		const long font_id = _font_man.register_font(_context->hdc, _context->font_face);
+		FT_Error ft_error;
+
+		const long font_id = _font_man.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
 		const FTC_FaceID ft_face_id = (FTC_FaceID) font_id;
 
 		FT_Face font_face;
@@ -239,10 +254,4 @@ bool gdimm_ggo_text::begin(const gdimm_text_context *context)
 	}
 
 	return true;
-}
-
-void gdimm_ggo_text::end()
-{
-	for (vector<const FT_BitmapGlyph>::const_iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
-		FT_Done_Glyph((FT_Glyph) *iter);
 }

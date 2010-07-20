@@ -1,7 +1,7 @@
 #include "stdafx.h"
-#include "ft_text.h"
-#include "text_helper.h"
-#include "ft.h"
+#include "ft_painter.h"
+#include "helper_func.h"
+#include "freetype.h"
 #include "gdimm.h"
 #include "lock.h"
 
@@ -157,7 +157,7 @@ const FT_BitmapGlyph gdimm_ft_text::render_glyph(WORD glyph_index,
 		if (ft_error != 0)
 			return NULL;
 	}
-
+	FT_Load_Glyph
 	// some fonts are embedded with pre-rendered glyph bitmap
 	// in that case, use original ExtTextOutW
 	if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
@@ -237,8 +237,8 @@ void gdimm_ft_text::update_glyph_pos(UINT options, CONST INT *lpDx)
 
 bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
-	wstring curr_font_face = _context->font_face;
-	const wchar_t *dc_font_family = _context->font_family;
+	wstring curr_font_face = metric_face_name(_context->outline_metrics);
+	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 
 	long font_id = _font_man.register_font(_context->hdc, curr_font_face.c_str());
@@ -388,9 +388,9 @@ bool gdimm_ft_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 	return true;
 }
 
-bool gdimm_ft_text::begin(const gdimm_text_context *context)
+bool gdimm_ft_text::begin(const dc_context *context)
 {
-	if (!gdimm_gdi_text::begin(context))
+	if (!gdimm_gdi_painter::begin(context))
 		return false;
 
 	_cache_node_ptrs.clear();
