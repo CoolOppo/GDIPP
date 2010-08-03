@@ -4,24 +4,19 @@
 
 class gdimm_ft_renderer : public gdimm_renderer
 {
-	list<const void *> _cache_node_ptrs;
+	static FT_BitmapGlyphRec empty_glyph;
 
-	static FTC_ScalerRec get_scaler(const OUTLINETEXTMETRICW *outline_metrics, bool width_specified = false, FT_Short xAvgCharWidth = 0);
+	FT_F26Dot6 get_embolden(const font_setting_cache *setting_cache, unsigned char font_weight_class, unsigned char text_weight_class);
+	static void get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
 	static FT_ULong get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode);
 	static void oblique_outline(const FT_Outline *outline, double slant_adv);
 
-	FT_F26Dot6 get_embolden(const font_setting_cache *setting_cache, unsigned char font_weight_class);
 	const FT_BitmapGlyph render_glyph(WORD glyph_index,
 		const FTC_Scaler scaler,
 		FT_F26Dot6 embolden,
-		FT_Render_Mode render_mode,
 		FT_ULong load_flags,
 		bool is_italic,
-		const void *&cache_node_ptr);
-	void update_glyph_pos(UINT options, CONST INT *lpDx);
-	bool render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx);
-
-public:
-	bool begin(const dc_context *context);
-	void end();
+		const LOGFONTW &font_trait);
+	void update_glyph_pos(glyph_run &new_glyph_run);
+	bool render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run);
 };

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "freetype.h"
 #include "helper_func.h"
 #include "gdimm.h"
 
@@ -138,9 +139,11 @@ unsigned char get_gdi_weight_class(unsigned short weight)
 	weight 1 to 550 are rendered as Regular
 	551 to 611 are Semibold
 	612 to infinity are Bold
+
+	weight 0 is DONTCARE
 	*/
 
-	const LONG weight_class_max[] = {550, 611};
+	const LONG weight_class_max[] = {0, 550, 611};
 	const unsigned char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
 
 	for (unsigned char i = 0; i < max_weight_class; i++)
@@ -158,41 +161,6 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width / 3;
 	else
 		return bitmap.width;
-}
-
-RECT get_glyph_run_rect(const glyph_run *glyph_run_ptr)
-{
-	RECT glyph_run_rect;
-
-	// condition checks because glyph might be place right-to-left
-
-	if (glyph_run_ptr->back().glyph_pos.x >= glyph_run_ptr->front().glyph_pos.x)
-	{
-		// left to right
-		glyph_run_rect.left = min(glyph_run_ptr->front().glyph_pos.x, 0);
-		glyph_run_rect.right = glyph_run_ptr->back().glyph_pos.x + get_glyph_bmp_width(glyph_run_ptr->back().glyph_bmp->bitmap);
-	}
-	else
-	{
-		// right to left
-		glyph_run_rect.left = min(glyph_run_ptr->back().glyph_pos.x, 0);
-		glyph_run_rect.right = glyph_run_ptr->front().glyph_pos.x + get_glyph_bmp_width(glyph_run_ptr->front().glyph_bmp->bitmap);
-	}
-
-	if (glyph_run_ptr->back().glyph_pos.y >= glyph_run_ptr->front().glyph_pos.y)
-	{
-		// top to bottom
-		glyph_run_rect.top = glyph_run_ptr->front().glyph_pos.y;
-		glyph_run_rect.bottom = glyph_run_ptr->back().glyph_pos.y + glyph_run_ptr->back().glyph_bmp->bitmap.rows;
-	}
-	else
-	{
-		// bottom to top
-		glyph_run_rect.top = glyph_run_ptr->back().glyph_pos.y;
-		glyph_run_rect.bottom = glyph_run_ptr->front().glyph_pos.y + glyph_run_ptr->front().glyph_bmp->bitmap.rows;
-	}
-
-	return glyph_run_rect;
 }
 
 LOGFONTW get_log_font(HDC hdc)
@@ -253,6 +221,11 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 	}
 
 	return false;
+}
+
+bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
+{
+	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;
 }
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)

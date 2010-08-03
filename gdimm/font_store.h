@@ -1,45 +1,12 @@
 #pragma once
 
-#include "os2_metrics.h"
+#include "font_man.h"
+#include "helper_def.h"
 
 using namespace std;
 
 class gdimm_font_store
 {
-	friend class gdimm_font_man;
-
-	/*
-	font storage stores two kinds of fonts: registered fonts and linked fonts
-
-	registered fonts are created outside the font manager
-	they are considered temporary, not managed by font manager
-	registered fonts have non-negative font id
-	the font information are shared by all threads, however the font holder is stored in TLS
-
-	linked fonts are created by font manager, for font linking
-	every linked font are kept alive until the font manager is destructed
-	linked fonts have negative font id
-	the handle and information of linked fonts are shared by all threads, however the font holder is stored in TLS
-	*/
-
-	struct font_info
-	{
-		// handle of the linked font for destruction
-		// NULL for registered fonts
-		HFONT linked_hfont;
-
-		// the buffer of the outline metrics of the linked font
-		// empty for registered fonts
-		vector<BYTE> metric_buf;
-
-		// used to retrieve font data from GetFontData
-		DWORD table_header;
-		DWORD face_index;
-
-		FT_StreamRec stream;
-		gdimm_os2_metrics os2_metrics;
-	};
-
 	// face name -> font id
 	// we use this map because FreeType callback only have face id
 	map<wstring, long> _reg_name_to_id;
@@ -49,7 +16,22 @@ class gdimm_font_store
 	// pointers become invalid
 	map<long, font_info> _id_to_info;
 
-public:
-	~gdimm_font_store();
-};
+	typedef map<long, const gdimm_font_man *> font_man_tls_map;
+	DWORD _tls_index;
+	list<font_man_tls_map *> _all_font_man_tls;
 
+	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
+	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
+
+	font_man_tls_map *create_font_man_tls();
+
+public:
+	gdimm_font_store();
+	~gdimm_font_store();
+
+	font_info *lookup_font(long font_id);
+	long register_font(HDC font_holder, const wchar_t *font_face);
+	long link_font(HDC font_holder, HFONT linked_hfont, wstring &linked_font_face);
+	void register_font_man(long font_id, const gdimm_font_man *font_man);
+	const gdimm_font_man *lookup_font_man(long font_id);
+};

@@ -4,44 +4,40 @@
 #include "lock.h"
 
 font_setting_cache::font_gamma::font_gamma()
-:
-red(1.0),
-green(1.0),
-blue(1.0)
+	: red(1.0),
+	green(1.0),
+	blue(1.0)
 {
 }
 
 font_setting_cache::font_render_mode::font_render_mode()
-:
-mono(0),
-gray(1),
-subpixel(1),
-pixel_geometry(PIXEL_GEOMETRY_RGB),
-aliased_text(0)
+	: mono(0),
+	gray(1),
+	subpixel(1),
+	pixel_geometry(PIXEL_GEOMETRY_RGB),
+	aliased_text(0)
 {
 };
 
 font_setting_cache::font_shadow::font_shadow()
-:
-offset_x(0),
-offset_y(0),
-alpha(0)
+	: offset_x(0),
+	offset_y(0),
+	alpha(0)
 {
 }
 
 font_setting_cache::font_setting_cache()
-:
-auto_hinting(1),
-embedded_bitmap(false),
-embolden(0),
-hinting(1),
-kerning(false),
-max_height(72),
-renderer(RENDERER_FREETYPE)
+	: auto_hinting(1),
+	embedded_bitmap(false),
+	embolden(0),
+	hinting(1),
+	kerning(false),
+	max_height(72),
+	renderer(RENDERER_FREETYPE)
 {
 }
 
-gdimm_setting_cache::cache_trait::cache_trait(const gdimm_font_trait &font_trait)
+gdimm_setting_cache::cache_trait::cache_trait(const gdimm_setting_trait &font_trait)
 {
 	font_name = font_trait.font_name;
 	weight_class = font_trait.weight_class;
@@ -59,7 +55,7 @@ bool gdimm_setting_cache::cache_trait::operator<(const cache_trait &trait) const
 	return (italic < trait.italic);
 }
 
-const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_font_trait &font_trait)
+const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait &font_trait)
 {
 	const cache_trait key(font_trait);
 

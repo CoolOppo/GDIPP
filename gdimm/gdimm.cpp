@@ -10,6 +10,7 @@ gdimm_font_link font_link_instance;
 gdimm_font_store font_store_instance;
 gdimm_gamma gamma_instance;
 gdimm_hook hook_instance;
+gdimm_obj_registry obj_reg_instance;
 gdimm_setting_cache setting_cache_instance;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

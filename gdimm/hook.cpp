@@ -8,7 +8,7 @@ __declspec(dllexport) void gdimm_empty_proc()
 }
 
 // exported function for SetWindowsHookEx
-EXTERN_C __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(__in int nCode, __in WPARAM wParam, __in LPARAM lParam)
+EXTERN_C __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }

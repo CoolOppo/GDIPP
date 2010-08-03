@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lock.h"
+
 using namespace std;
 
 template <typename T>
@@ -15,14 +17,12 @@ class lru_list
 
 public:
 	lru_list()
-	:
-	_capacity(0)
+		: _capacity(0)
 	{
 	}
 
 	lru_list(size_t capacity)
-	:
-	_capacity(capacity)
+		: _capacity(capacity)
 	{
 	}
 
@@ -34,20 +34,26 @@ public:
 	bool access(const T data, T &erased)
 	{
 		bool overflow = false;
-		_map_type::iterator iter = _data_map.find(data);
 
+		_map_type::iterator iter = _data_map.find(data);
 		if (iter == _data_map.end())
 		{
-			if (_data_map.size() == _capacity && _capacity > 0)
-			{
-				erased = _access_list.back();
-				_data_map.erase(erased);
-				_access_list.pop_back();
-				overflow = true;
-			}
+			gdimm_lock lock(LOCK_LRU);
 
-			_access_list.push_front(data);
-			_data_map[data] = _access_list.begin();
+			iter = _data_map.find(data);
+			if (iter == _data_map.end())
+			{
+				if (_data_map.size() == _capacity && _capacity > 0)
+				{
+					erased = _access_list.back();
+					_access_list.pop_back();
+					_data_map.erase(erased);
+					overflow = true;
+				}
+
+				_access_list.push_front(data);
+				_data_map[data] = _access_list.begin();
+			}
 		}
 		else
 		{

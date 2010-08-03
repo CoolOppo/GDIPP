@@ -9,10 +9,8 @@ class gdimm_lock
 
 public:
 	gdimm_lock(LOCK_TYPE type);
-
 	~gdimm_lock();
 
 	static void initialize();
-
 	static void release();
 };

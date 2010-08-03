@@ -3,12 +3,6 @@
 
 __declspec(dllimport) void gdimm_empty_proc();
 
-// never used function to force static linking gdimm
-void link_gdimm()
-{
-	gdimm_empty_proc();
-}
-
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	gdipp_debug_output(1);
@@ -42,17 +36,23 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if (h_proc != NULL)
 	{
 		const HHOOK h_hook = SetWindowsHookExW(WH_CBT, h_proc, h_gdimm, 0);
-		gdipp_debug_output(7);
+		gdipp_debug_output(6);
 
 		if (h_proc != NULL)
+		{
+			gdipp_debug_output(7);
 			WaitForSingleObject(h_svc_event, INFINITE);
-		gdipp_debug_output(8);
-		UnhookWindowsHookEx(h_hook);
-		gdipp_debug_output(9);
+			gdipp_debug_output(8);
+			UnhookWindowsHookEx(h_hook);
+			gdipp_debug_output(9);
+		}
+		gdipp_debug_output(10);
 	}
-	gdipp_debug_output(6);
+	gdipp_debug_output(11);
 
 	FreeLibrary(h_gdimm);
+
+	gdimm_empty_proc();
 
 	return EXIT_SUCCESS;
 }

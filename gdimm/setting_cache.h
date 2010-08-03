@@ -49,7 +49,7 @@ struct font_setting_cache
 	font_setting_cache();
 };
 
-struct gdimm_font_trait
+struct gdimm_setting_trait
 {
 	const wchar_t *font_name;
 	unsigned char weight_class;
@@ -64,12 +64,12 @@ class gdimm_setting_cache
 		unsigned char weight_class;
 		bool italic;
 
-		cache_trait(const gdimm_font_trait &font_trait);
+		cache_trait(const gdimm_setting_trait &font_trait);
 		bool operator<(const cache_trait &trait) const;
 	};
 
 	map<cache_trait, font_setting_cache> _cache;
 
 public:
-	const font_setting_cache *lookup(const gdimm_font_trait &font_trait);
+	const font_setting_cache *lookup(const gdimm_setting_trait &font_trait);
 };

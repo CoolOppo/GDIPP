@@ -42,9 +42,9 @@ unsigned char get_gdi_weight_class(unsigned short weight);
 
 int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 
-RECT get_glyph_run_rect(const glyph_run *glyph_run_ptr);
-
 LOGFONTW get_log_font(HDC hdc);
+
+bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
 
 // return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
 // otherwise, return false

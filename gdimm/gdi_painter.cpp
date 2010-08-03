@@ -4,8 +4,7 @@
 #include "helper_func.h"
 
 gdimm_gdi_painter::gdimm_gdi_painter()
-:
-_hdc_canvas(NULL)
+	: _hdc_canvas(NULL)
 {
 }
 
@@ -18,6 +17,29 @@ gdimm_gdi_painter::~gdimm_gdi_painter()
 		DeleteObject(GetCurrentObject(_hdc_canvas, OBJ_BITMAP));
 		DeleteDC(_hdc_canvas);
 	}
+}
+
+void gdimm_gdi_painter::adjust_glyph_run_distance(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run &a_glyph_run)
+{
+	assert(lpDx != NULL);
+
+	const BYTE dx_skip = (is_pdy ? 2 : 1);
+	INT prev_x = 0;
+	LONG last_glyph_width = a_glyph_run.back().bbox.right - a_glyph_run.back().bbox.left;
+	glyph_run::iterator iter;
+	UINT i;
+
+	for (iter = a_glyph_run.begin(), i = 0; i < count; iter++, i++)
+	{
+		assert(iter != a_glyph_run.end());
+
+		iter->bbox.left = prev_x;
+		iter->bbox.right = iter->bbox.left + lpDx[i * dx_skip];
+		prev_x = iter->bbox.right;
+	}
+
+	if (lpDx[(count - 1) * dx_skip] == 0)
+		a_glyph_run.back().bbox.right = a_glyph_run.back().bbox.left + last_glyph_width;
 }
 
 void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
@@ -229,7 +251,7 @@ void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
+BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run &a_glyph_run, const text_metrics &metrics) const
 {
 	BOOL b_ret, paint_success;
 
@@ -259,15 +281,6 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	BYTE *mask_bits;
 	const HBITMAP mask_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&mask_bits, NULL, 0);
 	assert(mask_bitmap != NULL);
-
-	/*
-	both ETO_OPAQUE and OPAQUE background mode need background filled
-	for ETO_OPAQUE, direct FillRect to the physical DC
-	for OPAQUE background mode, draw the background on canvas DC (it might be clipped eventually)
-	*/
-
-	if (options & ETO_OPAQUE)
-		paint_background(_context->hdc, lprect, _bg_color);
 	
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
@@ -280,14 +293,14 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 		paint_background(_context->hdc, &bk_rect, _bg_color);
 	}
 
-	for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
+	for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++)
 	{
-		assert(iter->glyph_bmp->bitmap.pitch >= 0);
+		assert(iter->glyph->bitmap.pitch >= 0);
 
-		const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
+		const POINT solid_pos = {(iter->bbox.left + iter->glyph->left) + (metrics.baseline.x - metrics.origin.x),
 			((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 		
-		set_mono_mask_bits(iter->glyph_bmp,
+		set_mono_mask_bits(iter->glyph,
 			mask_bits,
 			solid_pos,
 			metrics.width,
@@ -325,7 +338,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
+BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run &a_glyph_run, const text_metrics &metrics) const
 {
 	BOOL b_ret, paint_success;
 
@@ -345,9 +358,6 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	b_ret = DeleteObject(prev_bitmap);
 	assert(b_ret);
 
-	if (options & ETO_OPAQUE)
-		paint_background(_context->hdc, lprect, _bg_color);
-
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
@@ -359,14 +369,14 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 		paint_background(_context->hdc, &bk_rect, _bg_color);
 	}
 
-	for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
+	for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++)
 	{
-		assert(iter->glyph_bmp->bitmap.pitch >= 0);
+		assert(iter->glyph->bitmap.pitch >= 0);
 
-		const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
+		const POINT solid_pos = {(iter->bbox.left + iter->glyph->left) + (metrics.baseline.x - metrics.origin.x),
 			((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 
-		set_gray_text_bits(iter->glyph_bmp,
+		set_gray_text_bits(iter->glyph,
 			text_bits,
 			solid_pos,
 			metrics.width,
@@ -411,7 +421,7 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr, const text_metrics &metrics) const
+BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run &a_glyph_run, const text_metrics &metrics) const
 {
 	BOOL b_ret, paint_success;
 
@@ -431,9 +441,6 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	const HBITMAP prev_bitmap = (HBITMAP) SelectObject(_hdc_canvas, text_bitmap);
 	b_ret = DeleteObject(prev_bitmap);
 	assert(b_ret);
-	
-	if (options & ETO_OPAQUE)
-		paint_background(_context->hdc, lprect, _bg_color);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
@@ -457,11 +464,11 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 
 	if (paint_success)
 	{
-		for (glyph_run::const_iterator iter = glyph_run_ptr->begin(); iter != glyph_run_ptr->end(); iter++)
+		for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++)
 		{
-			assert(iter->glyph_bmp->bitmap.pitch >= 0);
+			assert(iter->glyph->bitmap.pitch >= 0);
 
-			const POINT solid_pos = {iter->glyph_pos.x + (metrics.baseline.x - metrics.origin.x),
+			const POINT solid_pos = {(iter->bbox.left + iter->glyph->left) + (metrics.baseline.x - metrics.origin.x),
 				((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
 
 			if (_context->setting_cache->shadow.alpha > 0)
@@ -469,7 +476,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 				const POINT shadow_pos = {solid_pos.x + _context->setting_cache->shadow.offset_x,
 					solid_pos.y + _context->setting_cache->shadow.offset_y};
 
-				set_lcd_text_bits(iter->glyph_bmp,
+				set_lcd_text_bits(iter->glyph,
 					text_bits,
 					shadow_pos,
 					metrics.width,
@@ -478,7 +485,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 					_context->setting_cache->shadow.alpha);
 			}
 
-			set_lcd_text_bits(iter->glyph_bmp,
+			set_lcd_text_bits(iter->glyph,
 				text_bits,
 				solid_pos,
 				metrics.width,
@@ -501,16 +508,26 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *glyph_run_ptr)
+BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run &a_glyph_run)
 {
-	// actual rect occupied by the glyphs
-	const RECT glyph_run_rect = get_glyph_run_rect(glyph_run_ptr);
+	/*
+	both ETO_OPAQUE and OPAQUE background mode need background filled
+	for ETO_OPAQUE, direct FillRect to the physical DC
+	for OPAQUE background mode, draw the background on canvas DC (it might be clipped eventually)
+	*/
+	if (options & ETO_OPAQUE)
+		paint_background(_context->hdc, lprect, _bg_color);
 
+	// actual rect occupied by the glyphs
 	text_metrics metrics;
-	metrics.width = glyph_run_rect.right - glyph_run_rect.left;
+	metrics.width = a_glyph_run.back().bbox.right - a_glyph_run.front().bbox.left;
 	metrics.height = _context->outline_metrics->otmTextMetrics.tmHeight;
 	metrics.ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	metrics.descent = _context->outline_metrics->otmTextMetrics.tmDescent;
+
+	// no bitmap to paint
+	if (metrics.width == 0 || metrics.height == 0)
+		return FALSE;
 
 	// adjusted baseline where the bitmap will be finally drawn before applying clipping
 	metrics.baseline = get_baseline(_text_alignment,
@@ -545,11 +562,11 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 	{
 		case FT_RENDER_MODE_NORMAL:
 		case FT_RENDER_MODE_LIGHT:
-			return paint_gray(options, lprect, glyph_run_ptr, metrics);
+			return paint_gray(options, lprect, a_glyph_run, metrics);
 		case FT_RENDER_MODE_MONO:
-			return paint_mono(options, lprect, glyph_run_ptr, metrics);
+			return paint_mono(options, lprect, a_glyph_run, metrics);
 		case FT_RENDER_MODE_LCD:
-			return paint_lcd(options, lprect, glyph_run_ptr, metrics);
+			return paint_lcd(options, lprect, a_glyph_run, metrics);
 		default:
 			return FALSE;
 	}
@@ -573,7 +590,7 @@ bool gdimm_gdi_painter::begin(const dc_context *context)
 	return true;
 }
 
-bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, CONST INT *lpDx, const glyph_run *glyph_run_ptr)
+bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, UINT count, CONST INT *lpDx, const glyph_run &a_glyph_run)
 {
 	BOOL b_ret, paint_success = FALSE;
 
@@ -603,7 +620,14 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, CO
 	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
 	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
-	paint_success = paint_glyph_run(options, lprect, glyph_run_ptr);
+	if (lpDx == NULL)
+		paint_success = paint_glyph_run(options, lprect, a_glyph_run);
+	else
+	{
+		glyph_run adjusted_glyph_run = a_glyph_run;
+		adjust_glyph_run_distance(!!(options & ETO_PDY), count, lpDx, adjusted_glyph_run);
+		paint_success = paint_glyph_run(options, lprect, adjusted_glyph_run);
+	}
 
 	// if TA_UPDATECP is set, update current position after text out
 	if (update_cursor && paint_success)

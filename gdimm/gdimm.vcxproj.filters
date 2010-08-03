@@ -117,6 +117,9 @@
     <ClInclude Include="font_man.h">
       <Filter>Header Files\font</Filter>
     </ClInclude>
+    <ClInclude Include="obj_reg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gamma.cpp">
@@ -172,6 +175,21 @@
     </ClCompile>
     <ClCompile Include="font_man.cpp">
       <Filter>Source Files\font</Filter>
+    </ClCompile>
+    <ClCompile Include="glyph_cache.cpp">
+      <Filter>Source Files\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="ft_renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="dw_renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="obj_reg.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

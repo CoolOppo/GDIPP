@@ -81,15 +81,15 @@ gdimm_font_link::gdimm_font_link()
 		l_ret = RegEnumValueW(key_fl, i, value_name, &name_len, NULL, NULL, value_data, &data_len);
 		assert(l_ret == ERROR_SUCCESS);
 
-		_link_table[value_name] = vector<font_link_info>();
+		_link_table[value_name] = vector<font_link_node>();
 		size_t line_start = 0;
 
 		set<wstring, wstring_ci_less> curr_font_family_pool;
 
 		while (line_start < data_len - sizeof(wchar_t))
 		{
-			font_link_info new_info;
-			new_info.scaling = 1.0;
+			font_link_node new_link;
+			new_link.scaling = 1.0;
 
 			wchar_t *curr_font = (wchar_t *)(value_data + line_start);
 
@@ -120,7 +120,7 @@ gdimm_font_link::gdimm_font_link()
 				// lookup the Fonts table
 				map<wstring, wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
 				if (iter != fonts_table.end())
-					new_info.font_family = iter->second;
+					new_link.font_family = iter->second;
 
 				scaling_prop = 0;
 			}
@@ -131,7 +131,7 @@ gdimm_font_link::gdimm_font_link()
 				if (fonts_table.find(curr_font) != fonts_table.end())
 				{
 					// trust the face name
-					new_info.font_family = properties[0];
+					new_link.font_family = properties[0];
 				}
 
 				scaling_prop = 1;
@@ -154,13 +154,13 @@ gdimm_font_link::gdimm_font_link()
 				ss << properties[scaling_prop + 1];
 				ss >> factor2;
 
-				new_info.scaling = (factor1 / 128.0) * (96.0 / factor2);
+				new_link.scaling = (factor1 / 128.0) * (96.0 / factor2);
 			}
 
-			if (!new_info.font_family.empty() && curr_font_family_pool.find(new_info.font_family) == curr_font_family_pool.end())
+			if (!new_link.font_family.empty() && curr_font_family_pool.find(new_link.font_family) == curr_font_family_pool.end())
 			{
-				_link_table[value_name].push_back(new_info);
-				curr_font_family_pool.insert(new_info.font_family);
+				_link_table[value_name].push_back(new_link);
+				curr_font_family_pool.insert(new_link.font_family);
 			}
 		}
 	}
@@ -171,7 +171,7 @@ gdimm_font_link::gdimm_font_link()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const font_link_info *gdimm_font_link::lookup_link(const wchar_t *font_name, size_t index) const
+const font_link_node *gdimm_font_link::lookup_link(const wchar_t *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

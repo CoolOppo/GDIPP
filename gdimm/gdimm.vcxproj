@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="dw_renderer.h" />
     <ClInclude Include="font_store.h" />
+    <ClInclude Include="obj_reg.h" />
     <ClInclude Include="type_enum.h" />
     <ClInclude Include="font_link.h" />
     <ClInclude Include="font_man.h" />
@@ -47,14 +48,17 @@
     <ClInclude Include="wic_painter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dw_renderer.cpp" />
     <ClCompile Include="font_link.cpp" />
     <ClCompile Include="font_man.cpp" />
     <ClCompile Include="font_store.cpp" />
     <ClCompile Include="freetype.cpp" />
+    <ClCompile Include="ft_renderer.cpp" />
     <ClCompile Include="gamma.cpp" />
     <ClCompile Include="gdimm.cpp" />
     <ClCompile Include="gdi_painter.cpp" />
     <ClCompile Include="ggo_renderer.cpp" />
+    <ClCompile Include="glyph_cache.cpp" />
     <ClCompile Include="helper_def.cpp" />
     <ClCompile Include="helper_func.cpp" />
     <ClCompile Include="hook.cpp" />
@@ -65,9 +69,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="obj_reg.cpp" />
     <ClCompile Include="os2_metrics.cpp" />
     <ClCompile Include="override.cpp" />
     <ClCompile Include="painter.cpp" />
+    <ClCompile Include="renderer.cpp" />
     <ClCompile Include="setting_cache.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

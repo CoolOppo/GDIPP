@@ -1,7 +1,8 @@
 #pragma once
 
-#include "setting_cache.h"
 #include "MurmurHash2_64.h"
+#include "os2_metrics.h"
+#include "setting_cache.h"
 
 class dc_context
 {
@@ -18,23 +19,44 @@ public:
 	bool init(HDC hdc);
 };
 
-struct font_link_info
+struct font_info
+{
+	/*
+	font storage stores two kinds of fonts: registered fonts and linked fonts
+
+	registered fonts are created outside the font manager
+	they are considered temporary, not managed by font manager
+	registered fonts have non-negative font id
+	the font information are shared by all threads, however the font holder is stored in TLS
+
+	linked fonts are created by font manager, for font linking
+	every linked font are kept alive until the font manager is destructed
+	linked fonts have negative font id
+	the handle and information of linked fonts are shared by all threads, however the font holder is stored in TLS
+	*/
+
+	// handle of the linked font for destruction
+	// NULL for registered fonts
+	HFONT linked_hfont;
+
+	// used to retrieve font data from GetFontData
+	DWORD table_header;
+	DWORD face_index;
+
+	FT_StreamRec stream;
+	gdimm_os2_metrics os2_metrics;
+};
+
+struct font_link_node
 {
 	wstring font_family;
 	double scaling;
 };
 
-class font_trait
-{
-public:
-	virtual bool operator<(const font_trait &trait) const = 0;
-	virtual bool extract(HDC hdc) = 0;
-};
-
 struct glyph_info
 {
-	FT_BitmapGlyph glyph_bmp;
-	POINT glyph_pos;
+	FT_BitmapGlyph glyph;
+	RECT bbox;
 };
 
 typedef list<glyph_info> glyph_run;

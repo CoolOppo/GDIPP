@@ -3,19 +3,36 @@
 #include "helper_func.h"
 #include "gdimm.h"
 
-gdimm_dw_text::gdimm_dw_text()
-:
-_dw_factory(NULL),
-_dw_gdi_interop(NULL)
+IDWriteFactory *gdimm_dw_renderer::_dw_factory = NULL;
+IDWriteGdiInterop *gdimm_dw_renderer::_dw_gdi_interop = NULL;
+
+gdimm_dw_renderer::gdimm_dw_renderer()
 {
+	HRESULT hr;
+
+	if (_dw_factory == NULL)
+	{
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)(&_dw_factory));
+		assert(hr == S_OK);
+
+		obj_reg_instance.register_com_ptr(_dw_factory);
+	}
+
+	if (_dw_gdi_interop == NULL)
+	{
+		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
+		assert(hr == S_OK);
+
+		obj_reg_instance.register_com_ptr(_dw_gdi_interop);
+	}
 }
 
-bool gdimm_dw_text::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run)
+bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run)
 {
 	HRESULT hr;
 
 	DWRITE_RENDERING_MODE dw_render_mode;
-	if (_render_mode == FT_RENDER_MODE_LCD)
+	if (_context->render_mode == FT_RENDER_MODE_LCD)
 	{
 		switch (_context->setting_cache->hinting)
 		{
@@ -39,7 +56,7 @@ bool gdimm_dw_text::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN 
 	DWRITE_TEXTURE_TYPE dw_texture_type;
 	int bytes_per_pixel;
 	char ft_pixel_mode;
-	if (_render_mode == FT_RENDER_MODE_LCD)
+	if (_context->render_mode == FT_RENDER_MODE_LCD)
 	{
 		dw_texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 		bytes_per_pixel = 3;
@@ -70,28 +87,31 @@ bool gdimm_dw_text::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN 
 	if (IsRectEmpty(&texture_rect))
 		return false;
 
-	FT_BitmapGlyph new_glyph = new FT_BitmapGlyphRec();
-	new_glyph->left = texture_rect.left;
-	new_glyph->top = -texture_rect.top;
-	new_glyph->bitmap.rows = texture_rect.bottom - texture_rect.top;
-	new_glyph->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
-	new_glyph->bitmap.pitch = new_glyph->bitmap.width;
-	new_glyph->bitmap.pixel_mode = ft_pixel_mode;
+	glyph_info new_glyph;
+	
+	new_glyph.glyph = new FT_BitmapGlyphRec();
+	new_glyph.glyph->left = texture_rect.left;
+	new_glyph.glyph->top = -texture_rect.top;
+	new_glyph.glyph->bitmap.rows = texture_rect.bottom - texture_rect.top;
+	new_glyph.glyph->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
+	new_glyph.glyph->bitmap.pitch = new_glyph.glyph->bitmap.width;
+	new_glyph.glyph->bitmap.pixel_mode = ft_pixel_mode;
 
-	const int bmp_size = new_glyph->bitmap.pitch * new_glyph->bitmap.rows;
-	new_glyph->bitmap.buffer = new BYTE[bmp_size];
-	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_glyph->bitmap.buffer, bmp_size);
+	const int bmp_size = new_glyph.glyph->bitmap.pitch * new_glyph.glyph->bitmap.rows;
+	new_glyph.glyph->bitmap.buffer = new BYTE[bmp_size];
+	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_glyph.glyph->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
 
-	const POINT pen_pos = {(LONG) x, (LONG) y};
+	new_glyph.bbox.left = (LONG) x;
+	new_glyph.bbox.top = (LONG) y;
+	//new_glyph.bbox.right = new_glyph.bbox.left + texture_rect.;
 
-	_glyphs.push_back(new_glyph);
-	_glyph_pos.push_back(pen_pos);
+	a_glyph_run->push_back(new_glyph);
 
 	return true;
 }
 
-bool gdimm_dw_text::render_glyph(LPCWSTR lpString, UINT c)
+bool gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
 {
 	HRESULT hr;
 
@@ -109,15 +129,16 @@ bool gdimm_dw_text::render_glyph(LPCWSTR lpString, UINT c)
 	dw_glyph_run.isSideways = FALSE;
 	dw_glyph_run.bidiLevel = 0;
 
-	return make_glyph_texture(0, 0, &dw_glyph_run);
+	return make_glyph_texture(0, 0, &dw_glyph_run, &new_glyph_run);
 }
 
-bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
+bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
 {
 	HRESULT hr;
 
-	const long font_id = _font_man.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
-	const gdimm_os2_metrics *os2_metrics = _font_man.lookup_os2_metrics(font_id);
+	gdimm_font_man font_man;
+	const long font_id = font_man.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
+	const gdimm_os2_metrics *os2_metrics = font_man.lookup_os2_metrics(font_id);
 
 	DWRITE_FONT_STYLE dw_font_style;
 	if (!_context->outline_metrics->otmTextMetrics.tmItalic)
@@ -147,7 +168,7 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 		hr = _dw_factory->CreateTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _dc_bmp_header.biWidth,
+			(FLOAT) _context->bmp_header.biWidth,
 			0,
 			&dw_text_layout);
 	}
@@ -156,7 +177,7 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 		hr = _dw_factory->CreateGdiCompatibleTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _dc_bmp_header.biWidth,
+			(FLOAT) _context->bmp_header.biWidth,
 			0,
 			_pixels_per_dip,
 			NULL,
@@ -166,26 +187,27 @@ bool gdimm_dw_text::render_text(LPCWSTR lpString, UINT c)
 	assert(hr == S_OK);
 
 	UINT glyph_run_start = 0;
+	void *drawing_context[2] = {&glyph_run_start, &new_glyph_run};
 	hr = dw_text_layout->Draw(&glyph_run_start, this, 0, 0);
 	assert(glyph_run_start == c);
 	
 	return (hr == S_OK);
 }
 
-bool gdimm_dw_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_dw_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run)
 {
-	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
 	if (lpDx != NULL)
 	{
+		const BYTE dx_skip = (is_pdy ? 2 : 1);
 		_advances.resize(c);
 		for (UINT i = 0; i < c; i++)
-			_advances[i] = (FLOAT) lpDx[i * advance_factor] - 0.1f;	// small adjustment to emulate GDI metrics
+			_advances[i] = (FLOAT) lpDx[i * dx_skip] - 0.1f;	// small adjustment to emulate GDI metrics
 	}
 
-	if (options & ETO_GLYPH_INDEX)
-		return render_glyph(lpString, c);
+	if (is_glyph_index)
+		return render_glyph(lpString, c, new_glyph_run);
 	else
-		return render_text(lpString, c);
+		return render_text(lpString, c, new_glyph_run);
 }
 
 //
@@ -194,7 +216,7 @@ bool gdimm_dw_text::render(UINT options, LPCWSTR lpString, UINT c, CONST INT *lp
 //      These methods are never called in this scenario so we just use stub
 //      implementations.
 //
-IFACEMETHODIMP gdimm_dw_text::QueryInterface( 
+IFACEMETHODIMP gdimm_dw_renderer::QueryInterface( 
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject
 	)
@@ -202,19 +224,19 @@ IFACEMETHODIMP gdimm_dw_text::QueryInterface(
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP_(ULONG) gdimm_dw_text::AddRef( void)
+IFACEMETHODIMP_(ULONG) gdimm_dw_renderer::AddRef( void)
 {
 	return 0;
 }
 
-IFACEMETHODIMP_(ULONG) gdimm_dw_text::Release( void)
+IFACEMETHODIMP_(ULONG) gdimm_dw_renderer::Release( void)
 {
 	return 0;
 }
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::IsPixelSnappingDisabled					   *
+*  gdimm_dw_renderer::IsPixelSnappingDisabled					   *
 *																 *
 *  Determines whether pixel snapping is disabled. The recommended *
 *  default is FALSE, unless doing animation that requires		 *
@@ -222,7 +244,7 @@ IFACEMETHODIMP_(ULONG) gdimm_dw_text::Release( void)
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::IsPixelSnappingDisabled(
+IFACEMETHODIMP gdimm_dw_renderer::IsPixelSnappingDisabled(
 	__maybenull void* clientDrawingContext,
 	__out BOOL* isDisabled
 	)
@@ -234,13 +256,13 @@ IFACEMETHODIMP gdimm_dw_text::IsPixelSnappingDisabled(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::GetCurrentTransform						   *
+*  gdimm_dw_renderer::GetCurrentTransform						   *
 *																 *
 *  Returns the current transform applied to the render target..   *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::GetCurrentTransform(
+IFACEMETHODIMP gdimm_dw_renderer::GetCurrentTransform(
 	__maybenull void* clientDrawingContext,
 	__out DWRITE_MATRIX* transform
 	)
@@ -252,13 +274,13 @@ IFACEMETHODIMP gdimm_dw_text::GetCurrentTransform(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::GetPixelsPerDip							   *
+*  gdimm_dw_renderer::GetPixelsPerDip							   *
 *																 *
 *  This returns the number of pixels per DIP.					 *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::GetPixelsPerDip(
+IFACEMETHODIMP gdimm_dw_renderer::GetPixelsPerDip(
 	__maybenull void* clientDrawingContext,
 	__out FLOAT* pixelsPerDip
 	)
@@ -270,14 +292,14 @@ IFACEMETHODIMP gdimm_dw_text::GetPixelsPerDip(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::DrawGlyphRun								  *
+*  gdimm_dw_renderer::DrawGlyphRun								  *
 *																 *
 *  Gets GlyphRun outlines via IDWriteFontFace::GetGlyphRunOutline *
 *  and then draws and fills them using Direct2D path geometries   *
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
+IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -288,16 +310,17 @@ IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
 	)
 {
 	bool b_ret;
-	UINT *glyph_run_start = (UINT *)clientDrawingContext;
+	void **drawing_context = (void **)clientDrawingContext;
+	UINT *glyph_run_start = (UINT *)drawing_context[0];
 
 	if (_advances.empty())
-		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun);
+		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun, (glyph_run *)drawing_context[1]);
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
 		
-		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run);
+		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run, (glyph_run *)drawing_context[1]);
 	}
 
 	*glyph_run_start += glyphRunDescription->stringLength;
@@ -310,14 +333,14 @@ IFACEMETHODIMP gdimm_dw_text::DrawGlyphRun(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::DrawUnderline								 *
+*  gdimm_dw_renderer::DrawUnderline								 *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::DrawUnderline(
+IFACEMETHODIMP gdimm_dw_renderer::DrawUnderline(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -330,14 +353,14 @@ IFACEMETHODIMP gdimm_dw_text::DrawUnderline(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::DrawStrikethrough							 *
+*  gdimm_dw_renderer::DrawStrikethrough							 *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::DrawStrikethrough(
+IFACEMETHODIMP gdimm_dw_renderer::DrawStrikethrough(
 	__maybenull void* clientDrawingContext,
 	FLOAT baselineOriginX,
 	FLOAT baselineOriginY,
@@ -350,14 +373,14 @@ IFACEMETHODIMP gdimm_dw_text::DrawStrikethrough(
 
 /******************************************************************
 *																 *
-*  gdimm_dw_text::DrawInlineObject							  *
+*  gdimm_dw_renderer::DrawInlineObject							  *
 *																 *
 *  This function is not implemented for the purposes of this	  *
 *  sample.														*
 *																 *
 ******************************************************************/
 
-IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
+IFACEMETHODIMP gdimm_dw_renderer::DrawInlineObject(
 	__maybenull void* clientDrawingContext,
 	FLOAT originX,
 	FLOAT originY,
@@ -372,28 +395,14 @@ IFACEMETHODIMP gdimm_dw_text::DrawInlineObject(
 
 //////////////////////////////////////////////////////////////////////////
 
-bool gdimm_dw_text::begin(const dc_context *context)
+bool gdimm_dw_renderer::begin(const dc_context *context)
 {
-	HRESULT hr;
-
-	if (!gdimm_gdi_painter::begin(context))
+	if (!gdimm_renderer::begin(context))
 		return false;
 	
 	// ignore rotated DC
-	if (_font_attr.lfEscapement % 3600 != 0)
+	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
-
-	if (_dw_factory == NULL)
-	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)(&_dw_factory));
-		assert(hr == S_OK);
-	}
-
-	if (_dw_gdi_interop == NULL)
-	{
-		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
-		assert(hr == S_OK);
-	}
 
 	switch (_context->setting_cache->hinting)
 	{
@@ -414,13 +423,4 @@ bool gdimm_dw_text::begin(const dc_context *context)
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;
-}
-
-void gdimm_dw_text::end()
-{
-	for (vector<const FT_BitmapGlyph>::iterator iter = _glyphs.begin(); iter != _glyphs.end(); iter++)
-	{
-		delete[] (*iter)->bitmap.buffer;
-		delete *iter;
-	}
 }

@@ -2,8 +2,7 @@
 #include "setting.h"
 
 gdipp_setting::gdipp_setting()
-:
-_xml_doc(NULL)
+	: _xml_doc(NULL)
 {
 	DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, _process_name, MAX_PATH);
 	assert(dw_ret != 0);
