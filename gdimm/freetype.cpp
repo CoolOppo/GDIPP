@@ -7,9 +7,9 @@ FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_ImageCache ft_glyph_cache;
 
-FT_UInt ft_cache_max_faces = 2;
-FT_UInt ft_cache_max_sizes = 4;
-FT_ULong ft_cache_max_bytes = 200000;
+FT_UInt ft_cache_max_faces = 8;
+FT_UInt ft_cache_max_sizes = 16;
+FT_ULong ft_cache_max_bytes = 1048576;
 
 void initialize_freetype()
 {
@@ -19,7 +19,7 @@ void initialize_freetype()
 	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", L"", 0, false), &ft_cache_max_sizes);
 	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", L"", 0, false), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L"", 0, false), (int *)&lcd_filter);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L"", 0, false), reinterpret_cast<int *>(&lcd_filter));
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
@@ -46,7 +46,7 @@ void destroy_freetype()
 
 FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *aface)
 {
-	const long font_id = (long) face_id;
+	const long font_id = reinterpret_cast<const long>(face_id);
 
 	FT_Open_Args args = {};
 	args.flags = FT_OPEN_STREAM;

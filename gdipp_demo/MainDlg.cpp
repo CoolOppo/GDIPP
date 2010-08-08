@@ -22,7 +22,7 @@ void CMainDlg::prepare_result(CPaintDC &dc)
 	dc.SetTextAlign(TA_LEFT | TA_TOP);
 
 	const DWORD elapse_time = GetTickCount() - start_time;
-	swprintf(_result_str, GDIPP_DEMO_MAX_STR_LEN, L"%u milliseconds render time, %.2f ms per text run", elapse_time, (float) elapse_time / total_count);
+	swprintf(_result_str, GDIPP_DEMO_MAX_STR_LEN, L"%u milliseconds render time, %.2f ms per text run", elapse_time, static_cast<float>(elapse_time) / total_count);
 
 	_curr_font = CreateFontW(-20, 0, 0, 0, FW_REGULAR, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Tahoma");
 }
@@ -95,7 +95,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 	if (rendered == 0)
 	{
-		srand((unsigned) time(NULL));
+		srand(static_cast<unsigned int>(time(NULL)));
 		start_time = GetTickCount();
 	}
 
@@ -116,7 +116,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		const int y = rand() % (dc.m_ps.rcPaint.bottom - dc.m_ps.rcPaint.top);
 
 		// randomize text metrics
-		const LONG height = (rand() % 10) + 10;
+		const LONG height = (rand() % 10) + 8;
 		const LONG weight = (rand() % 8 + 1) * 100;
 		const BYTE italic = rand() % 2;
 		const wstring &font_name = candidate_font[rand() % candidate_font.size()];
@@ -145,7 +145,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			dc.ExtTextOut(x, y, 0, NULL, render_str, render_len, NULL);
 		}
 		else
-			dc.ExtTextOut(x, y, 0, NULL, font_name.c_str(), (UINT) font_name.size(), NULL);
+			dc.ExtTextOut(x, y, 0, NULL, font_name.c_str(), static_cast<UINT>(font_name.size()), NULL);
 
 		DeleteObject(_curr_font);
 		_curr_font = NULL;
@@ -166,7 +166,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 		dc.SelectFont(_curr_font);
 		dc.SetTextColor(PALETTEINDEX(5));
-		dc.ExtTextOut(10, 10, 0, NULL, _result_str, (UINT) wcslen(_result_str), NULL);
+		dc.ExtTextOut(10, 10, 0, NULL, _result_str, static_cast<UINT>(wcslen(_result_str)), NULL);
 	}
 
 	rendered += 1;

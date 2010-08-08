@@ -8,5 +8,6 @@ class gdipp_injector
 
 public:
 	gdipp_injector();
+
 	NTSTATUS inject_process(ULONG process_id, ULONG thread_id);
 };

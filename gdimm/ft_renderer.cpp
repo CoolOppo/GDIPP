@@ -4,7 +4,16 @@
 #include "helper_func.h"
 #include "gdimm.h"
 
-FT_BitmapGlyphRec gdimm_ft_renderer::empty_glyph = {};
+FT_Glyph gdimm_ft_renderer::empty_glyph;
+
+gdimm_ft_renderer::gdimm_ft_renderer()
+{
+	empty_glyph = make_empty_glyph();
+	assert(empty_glyph != NULL);
+
+	empty_glyph = make_empty_bmp_glyph(empty_glyph);
+	assert(empty_glyph != NULL);
+}
 
 FT_F26Dot6 gdimm_ft_renderer::get_embolden(const font_setting_cache *setting_cache, unsigned char font_weight_class, unsigned char text_weight_class)
 {
@@ -107,7 +116,7 @@ const FT_BitmapGlyph gdimm_ft_renderer::render_glyph(WORD glyph_index,
 	FT_F26Dot6 embolden,
 	FT_ULong load_flags,
 	bool is_italic,
-	const LOGFONTW &font_trait)
+	uint64_t font_trait)
 {
 	FT_Error ft_error;
 
@@ -137,7 +146,7 @@ const FT_BitmapGlyph gdimm_ft_renderer::render_glyph(WORD glyph_index,
 		if (need_glyph_copy)
 		{
 			FT_Glyph_Copy(ft_cached_glyph, &glyph);
-			FT_Outline *glyph_outline = &((FT_OutlineGlyph) glyph)->outline;
+			FT_Outline *glyph_outline = &(reinterpret_cast<FT_OutlineGlyph>(glyph)->outline);
 
 			// it seems faster if oblique first, and then embolden
 			if (is_oblique)
@@ -160,7 +169,7 @@ const FT_BitmapGlyph gdimm_ft_renderer::render_glyph(WORD glyph_index,
 			return NULL;
 
 		// add glyph into cache
-		bmp_glyph = (FT_BitmapGlyph) glyph;
+		bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
 	}
 
 	_glyph_cache.store_glyph(font_trait, glyph_index, true, bmp_glyph);
@@ -185,14 +194,14 @@ void gdimm_ft_renderer::update_glyph_pos(glyph_run &new_glyph_run)
 	}
 }
 
-bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run)
+bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	gdimm_font_man font_man;
 
 	wstring curr_font_face = metric_face_name(_context->outline_metrics);
 	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
-	LOGFONTW curr_font_trait = _context->log_font;
+	uint64_t curr_font_trait = _font_trait;
 
 	long font_id = font_man.register_font(_context->hdc, curr_font_face.c_str());
 	assert(font_id >= 0);
@@ -200,15 +209,15 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 	const gdimm_os2_metrics *os2_metrics = font_man.lookup_os2_metrics(font_id);
 
 	FTC_ScalerRec scaler = {};
-	scaler.face_id = (FTC_FaceID) font_id;
+	scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
 	scaler.pixel = 1;
-	get_font_size(_context->outline_metrics, (curr_font_trait.lfWidth == 0 ? 0 : os2_metrics->get_xAvgCharWidth()), scaler.height, scaler.width);
+	get_font_size(_context->outline_metrics, (_context->log_font.lfWidth == 0 ? 0 : os2_metrics->get_xAvgCharWidth()), scaler.height, scaler.width);
 
 	FT_F26Dot6 curr_embolden = 0;
-	if (curr_font_trait.lfWeight != FW_DONTCARE)
+	if (_context->log_font.lfWeight != FW_DONTCARE)
 	{
 		// embolden if some weight is demanded
-		curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class(), (unsigned char) curr_font_trait.lfWeight);
+		curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class(), static_cast<unsigned char>(_context->log_font.lfWeight));
 	}
 
 	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _context->render_mode);
@@ -219,7 +228,7 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 
 		for (UINT i = 0; i < c; i++)
 		{
-			glyph_info new_glyph = {};
+			glyph_node new_glyph = {};
 			new_glyph.glyph = render_glyph(lpString[i],
 				&scaler,
 				curr_embolden,
@@ -228,7 +237,7 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 				curr_font_trait);
 
 			if (new_glyph.glyph == NULL)
-				new_glyph.glyph = &empty_glyph;
+				new_glyph.glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
 			else if (curr_setting_cache->kerning && i > 0)
 			{
 				new_glyph.bbox.left = font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
@@ -250,7 +259,7 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 
 		while (true)
 		{
-			font_man.get_glyph_indices((long) scaler.face_id, &final_string[0], c, &glyph_indices[0]);
+			font_man.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), &final_string[0], c, &glyph_indices[0]);
 
 			glyph_run::iterator iter = new_glyph_run.begin();
 
@@ -261,7 +270,7 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 
 				// do not render control characters, even the corresponding glyphs exist in font
 				if (iswcntrl(final_string[i]))
-					iter->glyph = &empty_glyph;
+					iter->glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
 				else if (glyph_indices[i] != 0xffff)
 				{
 					iter->glyph = render_glyph(glyph_indices[i],
@@ -272,7 +281,7 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 						curr_font_trait);
 
 					if (iter->glyph == NULL)
-						iter->glyph = &empty_glyph;
+						iter->glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
 					else if (curr_setting_cache->kerning && i > 0)
 					{
 						iter->bbox.left = font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
@@ -299,26 +308,33 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 				return false;
 			font_link_index += 1;
 			
+			LOGFONTW linked_log_font = _context->log_font;
 			/*
 			this reset is essential to make GetGlyphIndices work correctly
 			for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
 			if create HFONT of Microsoft YaHei with such lfOutPrecision, GetGlyphIndices always fails
 			*/
-			curr_font_trait.lfOutPrecision = OUT_DEFAULT_PRECIS;
-			wcsncpy_s(curr_font_trait.lfFaceName, curr_link->font_family.c_str(), LF_FACESIZE);
+			linked_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
+			wcsncpy_s(linked_log_font.lfFaceName, curr_link->font_family.c_str(), LF_FACESIZE);
 
-			font_id = font_man.link_font(curr_font_trait, curr_font_face);
+#ifdef _M_X64
+			curr_font_trait = MurmurHash64A(&linked_log_font, sizeof(linked_log_font), 0);
+#else
+			curr_font_trait = MurmurHash64B(&linked_log_font, sizeof(linked_log_font), 0);
+#endif // _M_X64
+
+			font_id = font_man.link_font(linked_log_font, curr_font_face);
 			assert(font_id < 0);
 
 			// reload metrics for the linked font
 
-			scaler.face_id = (FTC_FaceID) font_id;
+			scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
 
 			if (curr_link->scaling != 1.0)
 			{
 				// apply font linking scaling factor
-				scaler.width = (FT_UInt)(scaler.width * curr_link->scaling);
-				scaler.height = (FT_UInt)(scaler.height * curr_link->scaling);
+				scaler.width = static_cast<FT_UInt>(scaler.width * curr_link->scaling);
+				scaler.height = static_cast<FT_UInt>(scaler.height * curr_link->scaling);
 			}
 
 			os2_metrics = font_man.lookup_os2_metrics(font_id);
@@ -327,8 +343,8 @@ bool gdimm_ft_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CO
 			curr_setting_cache = setting_cache_instance.lookup(setting_trait);
 			
 			curr_embolden = 0;
-			if (curr_font_trait.lfWeight != FW_DONTCARE)
-				curr_embolden = get_embolden(curr_setting_cache, setting_trait.weight_class, (unsigned char) curr_font_trait.lfWeight);
+			if (linked_log_font.lfWeight != FW_DONTCARE)
+				curr_embolden = get_embolden(curr_setting_cache, setting_trait.weight_class, static_cast<unsigned char>(linked_log_font.lfWeight));
 
 			curr_load_flags = get_load_flags(curr_setting_cache, _context->render_mode);
 		}

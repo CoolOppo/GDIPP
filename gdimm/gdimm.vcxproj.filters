@@ -102,9 +102,6 @@
     <ClInclude Include="override.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="type_enum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="painter.h">
       <Filter>Header Files\painter</Filter>
     </ClInclude>
@@ -119,6 +116,12 @@
     </ClInclude>
     <ClInclude Include="obj_reg.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="type_enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wic_renderer.h">
+      <Filter>Header Files\renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +193,15 @@
     </ClCompile>
     <ClCompile Include="obj_reg.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="wic_dib.cpp">
+      <Filter>Source Files\painter</Filter>
+    </ClCompile>
+    <ClCompile Include="wic_painter.cpp">
+      <Filter>Source Files\painter</Filter>
+    </ClCompile>
+    <ClCompile Include="wic_renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

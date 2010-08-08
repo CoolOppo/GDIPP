@@ -43,7 +43,7 @@ gdimm_font_link::gdimm_font_link()
 		return;
 
 	// max_data_len is in BYTE
-	value_data = (BYTE *)malloc(max_data_len);
+	value_data = static_cast<BYTE *>(malloc(max_data_len));
 	assert(value_data != NULL);
 
 	for (DWORD i = 0; i < value_count; i++)
@@ -55,7 +55,7 @@ gdimm_font_link::gdimm_font_link()
 		assert(l_ret == ERROR_SUCCESS);
 
 		wstring curr_face = value_name;
-		wstring font_file = (wchar_t *)value_data;
+		wstring font_file = reinterpret_cast<wchar_t *>(value_data);
 		curr_face = curr_face.substr(0, curr_face.find('(') - 1);
 		fonts_table[font_file] = curr_face;
 	}
@@ -70,7 +70,7 @@ gdimm_font_link::gdimm_font_link()
 	if (value_count == 0)
 		return;
 
-	value_data = (BYTE *)realloc(value_data, max_data_len);
+	value_data = static_cast<BYTE *>(realloc(value_data, max_data_len));
 	assert(value_data != NULL);
 	
 	for (DWORD i = 0; i < value_count; i++)
@@ -91,7 +91,7 @@ gdimm_font_link::gdimm_font_link()
 			font_link_node new_link;
 			new_link.scaling = 1.0;
 
-			wchar_t *curr_font = (wchar_t *)(value_data + line_start);
+			wchar_t *curr_font = reinterpret_cast<wchar_t *>(value_data + line_start);
 
 			// including the trailing '\0'
 			line_start += (wcslen(curr_font) + 1) * sizeof(wchar_t);

@@ -16,16 +16,16 @@ gdipp_setting::~gdipp_setting()
 
 void gdipp_setting::parse_gdimm_setting_node(const xml_node &setting_node, setting_map &setting_store)
 {
-	const wstring name = as_utf16(setting_node.name());
+	const string_t name = setting_node.name();
 
 	if (name == L"freetype" || name == L"gamma" || name == L"render_mode" || name == L"shadow")
 	{
 		// these settings have nested items
 		for (xml_node::iterator iter = setting_node.begin(); iter != setting_node.end(); iter++)
-			setting_store[name + L"/" + as_utf16(iter->name())] = as_utf16(iter->first_child().value());
+			setting_store[name + L"/" + iter->name()] = iter->first_child().value();
 	}
 	else
-		setting_store[name] = as_utf16(setting_node.first_child().value());
+		setting_store[name] = setting_node.first_child().value();
 }
 
 void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
@@ -40,9 +40,9 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 		// only store the setting items which match the current process name
 
 		const xml_node curr_proc = node_iter->node();
-		const xml_attribute name_attr = curr_proc.attribute("name");
+		const xml_attribute name_attr = curr_proc.attribute(L"name");
 
-		const wregex name_ex(as_utf16(name_attr.value()),
+		const wregex name_ex(name_attr.value(),
 			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
 		if (regex_match(_process_name, name_ex))
 		{
@@ -62,12 +62,12 @@ void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 			parse_gdimm_setting_node(*set_iter, curr_settings);
 
 		const xml_node curr_font = node_iter->node();
-		const xml_attribute name_attr = curr_font.attribute("name");
-		const xml_attribute bold_attr = curr_font.attribute("bold");
-		const xml_attribute italic_attr = curr_font.attribute("italic");
+		const xml_attribute name_attr = curr_font.attribute(L"name");
+		const xml_attribute bold_attr = curr_font.attribute(L"bold");
+		const xml_attribute italic_attr = curr_font.attribute(L"italic");
 
 		// negative indicates such optional attribute is not specified
-		const gdimm_font_node new_font = {as_utf16(name_attr.value()),
+		const gdimm_font_node new_font = {name_attr.value(),
 			(bold_attr.empty() ? -1 : bold_attr.as_uint()),
 			(italic_attr.empty() ? -1 : italic_attr.as_uint()),
 			curr_settings};
@@ -79,8 +79,8 @@ void gdipp_setting::load_demo(const xml_node &root_node)
 {
 	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
 	{
-		const wstring node_name = as_utf16(iter->name());
-		const wstring curr_value = as_utf16(iter->first_child().value());
+		const wstring node_name = iter->name();
+		const wstring curr_value = iter->first_child().value();
 
 		if (node_name == L"font")
 			_demo_fonts.push_back(curr_value);
@@ -92,7 +92,7 @@ void gdipp_setting::load_demo(const xml_node &root_node)
 void gdipp_setting::load_exclude(const xml_node &root_node)
 {
 	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
-		_exclude_process.push_back(as_utf16(iter->first_child().value()));
+		_exclude_process.push_back(iter->first_child().value());
 }
 
 const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight, bool italic) const
@@ -185,19 +185,19 @@ BOOL gdipp_setting::load_setting(const wchar_t *setting_path)
 	if (!_xml_doc->load_file(as_utf8(setting_path).c_str()))
 		return FALSE;
 
-	const xpath_node_set proc_list = _xml_doc->select_nodes("/gdipp/gdimm/process");
+	const xpath_node_set proc_list = _xml_doc->select_nodes(L"/gdipp/gdimm/process");
 	if (!proc_list.empty())
 		load_gdimm_process(proc_list);
 
-	const xpath_node_set font_list = _xml_doc->select_nodes("/gdipp/gdimm/font");
+	const xpath_node_set font_list = _xml_doc->select_nodes(L"/gdipp/gdimm/font");
 	if (!font_list.empty())
 		load_gdimm_font(font_list);
 
-	const xml_node demo_node = _xml_doc->select_single_node("/gdipp/demo").node();
+	const xml_node demo_node = _xml_doc->select_single_node(L"/gdipp/demo").node();
 	if (!demo_node.empty())
 		load_demo(demo_node);
 
-	const xml_node exclude_node = _xml_doc->select_single_node("/gdipp/exclude").node();
+	const xml_node exclude_node = _xml_doc->select_single_node(L"/gdipp/exclude").node();
 	if (!exclude_node.empty())
 		load_exclude(exclude_node);
 
@@ -215,11 +215,11 @@ BOOL gdipp_setting::insert_setting(const wchar_t *node_name, const wchar_t *node
 
 	bool b_ret;
 
-	xml_node parent_node = _xml_doc->select_single_node(as_utf8(parent_xpath).c_str()).node();
+	xml_node parent_node = _xml_doc->select_single_node(parent_xpath).node();
 	if (parent_node.empty())
 		return FALSE;
 
-	const xml_node ref_node = _xml_doc->select_single_node(as_utf8(ref_node_xpath).c_str()).node();
+	const xml_node ref_node = _xml_doc->select_single_node(ref_node_xpath).node();
 	if (ref_node.empty())
 		return FALSE;
 
@@ -231,35 +231,34 @@ BOOL gdipp_setting::insert_setting(const wchar_t *node_name, const wchar_t *node
 	if (text_node.empty())
 		return FALSE;
 
-	b_ret = new_node.set_name(as_utf8(node_name).c_str());
+	b_ret = new_node.set_name(node_name);
 	if (!b_ret)
 		return FALSE;
 
-	text_node.set_value(as_utf8(node_text).c_str());
+	text_node.set_value(node_text);
 	if (!b_ret)
 		return FALSE;
 
-	new_node_xpath = as_utf16(new_node.path().c_str());
+	new_node_xpath = new_node.path();
 	return TRUE;
 }
 
 BOOL gdipp_setting::set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value)
 {
-	xml_node node = _xml_doc->select_single_node(as_utf8(node_xpath).c_str()).node();
+	xml_node node = _xml_doc->select_single_node(node_xpath).node();
 	if (node.empty())
 		return FALSE;
 
-	const string attr_name_str = as_utf8(attr_name);
-	xml_attribute node_attr = node.attribute(attr_name_str.c_str());
+	xml_attribute node_attr = node.attribute(attr_name);
 	if (node_attr.empty())
-		node_attr = node.append_attribute(attr_name_str.c_str());
+		node_attr = node.append_attribute(attr_name);
 
-	return node_attr.set_value(as_utf8(attr_value).c_str());
+	return node_attr.set_value(attr_value);
 }
 
 BOOL gdipp_setting::remove_setting(const wchar_t *node_xpath)
 {
-	const xml_node node = _xml_doc->select_single_node(as_utf8(node_xpath).c_str()).node();
+	const xml_node node = _xml_doc->select_single_node(node_xpath).node();
 	if (node.empty())
 		return FALSE;
 

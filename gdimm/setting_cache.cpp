@@ -37,67 +37,53 @@ font_setting_cache::font_setting_cache()
 {
 }
 
-gdimm_setting_cache::cache_trait::cache_trait(const gdimm_setting_trait &font_trait)
+const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait &setting_trait)
 {
-	font_name = font_trait.font_name;
-	weight_class = font_trait.weight_class;
-	italic = font_trait.italic;
-}
-
-bool gdimm_setting_cache::cache_trait::operator<(const cache_trait &trait) const
-{
-	if (font_name != trait.font_name)
-		return (font_name < trait.font_name);
-
-	if (weight_class != trait.weight_class)
-		return (weight_class < trait.weight_class);
-
-	return (italic < trait.italic);
-}
-
-const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait &font_trait)
-{
-	const cache_trait key(font_trait);
+#ifdef _M_X64
+	uint64_t cache_trait = MurmurHash64A(&setting_trait, sizeof(setting_trait), 0);
+#else
+	uint64_t cache_trait = MurmurHash64B(&setting_trait, sizeof(setting_trait), 0);
+#endif // _M_X64
 
 	// if the setting for the specified font is not found
 	// construct setting cache for the font and return
-	map<cache_trait, font_setting_cache>::const_iterator iter = _cache.find(key);
+	map<uint64_t, font_setting_cache>::const_iterator iter = _cache.find(cache_trait);
 	if (iter == _cache.end())
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_SETTING_CACHE);
 
-		iter = _cache.find(key);
+		iter = _cache.find(cache_trait);
 		if (iter == _cache.end())
 		{
 			font_setting_cache new_cache;
 
-			wcs_convert(gdipp_get_gdimm_setting(L"auto_hinting", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.auto_hinting);
-			wcs_convert(gdipp_get_gdimm_setting(L"embedded_bitmap", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.embedded_bitmap);
-			wcs_convert(gdipp_get_gdimm_setting(L"embolden", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.embolden);
+			wcs_convert(gdipp_get_gdimm_setting(L"auto_hinting", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.auto_hinting));
+			wcs_convert(gdipp_get_gdimm_setting(L"embedded_bitmap", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.embedded_bitmap);
+			wcs_convert(gdipp_get_gdimm_setting(L"embolden", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.embolden);
 
-			wcs_convert(gdipp_get_gdimm_setting(L"gamma/red", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.gamma.red);
-			wcs_convert(gdipp_get_gdimm_setting(L"gamma/green", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.gamma.green);
-			wcs_convert(gdipp_get_gdimm_setting(L"gamma/blue", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.gamma.blue);
+			wcs_convert(gdipp_get_gdimm_setting(L"gamma/red", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.gamma.red);
+			wcs_convert(gdipp_get_gdimm_setting(L"gamma/green", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.gamma.green);
+			wcs_convert(gdipp_get_gdimm_setting(L"gamma/blue", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.gamma.blue);
 
-			wcs_convert(gdipp_get_gdimm_setting(L"hinting", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.hinting);
-			wcs_convert(gdipp_get_gdimm_setting(L"kerning", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.kerning);
-			wcs_convert(gdipp_get_gdimm_setting(L"max_height", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.max_height);
+			wcs_convert(gdipp_get_gdimm_setting(L"hinting", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.hinting));
+			wcs_convert(gdipp_get_gdimm_setting(L"kerning", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.kerning);
+			wcs_convert(gdipp_get_gdimm_setting(L"max_height", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.max_height);
 
-			wcs_convert(gdipp_get_gdimm_setting(L"renderer", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.renderer);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/mono", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.mono);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/gray", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.gray);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/subpixel", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.subpixel);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/pixel_geometry", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.pixel_geometry);
-			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/aliased_text", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.render_mode.aliased_text);
+			wcs_convert(gdipp_get_gdimm_setting(L"renderer", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.renderer));
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/mono", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.render_mode.mono));
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/gray", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.render_mode.gray));
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/subpixel", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.render_mode.subpixel));
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/pixel_geometry", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.render_mode.pixel_geometry));
+			wcs_convert(gdipp_get_gdimm_setting(L"render_mode/aliased_text", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.render_mode.aliased_text));
 
-			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.shadow.offset_x);
-			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", font_trait.font_name, font_trait.weight_class, font_trait.italic), &new_cache.shadow.offset_y);
-			wcs_convert(gdipp_get_gdimm_setting(L"shadow/alpha", font_trait.font_name, font_trait.weight_class, font_trait.italic), (WORD *)&new_cache.shadow.alpha);
+			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.shadow.offset_x);
+			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), &new_cache.shadow.offset_y);
+			wcs_convert(gdipp_get_gdimm_setting(L"shadow/alpha", setting_trait.font_name, setting_trait.weight_class, setting_trait.italic), reinterpret_cast<WORD *>(&new_cache.shadow.alpha));
 
-			_cache[key] = new_cache;
+			_cache[cache_trait] = new_cache;
 		}
 	}
 
-	return &_cache[key];
+	return &_cache[cache_trait];
 }

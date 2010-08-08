@@ -49,9 +49,9 @@ bool gdimm_hook::hook()
 {
 	install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
 
-	install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
-	install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
-	install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
+ 	install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
+ 	install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
+ 	install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes

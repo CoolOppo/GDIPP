@@ -3,19 +3,17 @@
 #include "gdimm.h"
 #include "helper_func.h"
 
-gdimm_gdi_painter::gdimm_gdi_painter()
-	: _hdc_canvas(NULL)
-{
-}
+HDC gdimm_gdi_painter::_hdc_canvas = NULL;
+gdimm_obj_registry gdimm_gdi_painter::_obj_reg;
 
-gdimm_gdi_painter::~gdimm_gdi_painter()
+gdimm_gdi_painter::gdimm_gdi_painter()
 {
-	// graceful memory DC deletion
-	// note that memory DCs are automatically deleted when the current thread is terminated
-	if (_hdc_canvas != NULL)
+	if (_hdc_canvas == NULL)
 	{
-		DeleteObject(GetCurrentObject(_hdc_canvas, OBJ_BITMAP));
-		DeleteDC(_hdc_canvas);
+		_hdc_canvas = CreateCompatibleDC(NULL);
+		assert(_hdc_canvas != NULL);
+
+		_obj_reg.register_hdc(_hdc_canvas);
 	}
 }
 
@@ -24,11 +22,11 @@ void gdimm_gdi_painter::adjust_glyph_run_distance(bool is_pdy, UINT count, CONST
 	assert(lpDx != NULL);
 
 	const BYTE dx_skip = (is_pdy ? 2 : 1);
-	INT prev_x = 0;
 	LONG last_glyph_width = a_glyph_run.back().bbox.right - a_glyph_run.back().bbox.left;
+	INT prev_x = 0;
+
 	glyph_run::iterator iter;
 	UINT i;
-
 	for (iter = a_glyph_run.begin(), i = 0; i < count; iter++, i++)
 	{
 		assert(iter != a_glyph_run.end());
@@ -65,13 +63,17 @@ void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 	int src_row_ptr = 0;
 	int dest_row_ptr = -top_extra_rows * dest_pitch;
 
-	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch, dest_row_ptr += dest_pitch)
+	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch)
 	{
+		// pointers to the current pixel
+		int src_px_ptr = src_row_ptr;
+		int dest_px_ptr = dest_row_ptr;
+
+		if (j < bottom_end_row - 1)
+			dest_row_ptr += dest_pitch;
+
 		if (j < top_extra_rows)
 			continue;
-
-		if (j >= bottom_end_row)
-			break;
 		
 		for (int i = 0; i < bmp_width; i++)
 		{
@@ -81,11 +83,10 @@ void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 			if (dest_pos.x + i >= dest_width)
 				break;
 
-			// pointers to the current pixel
-			const int src_px_ptr = src_row_ptr + i / 8;
+			src_px_ptr += i / 8;
 			const BYTE src_bit_pos = 7 - i % 8;
 
-			const int dest_px_ptr = dest_row_ptr + (dest_pos.x + i) / 8;
+			dest_px_ptr += (dest_pos.x + i) / 8;
 			const BYTE dest_bit_pos = 7 - (dest_pos.x + i) % 8;
 
 			const bool is_bit_set = ((glyph->bitmap.buffer[src_px_ptr] & (1 << src_bit_pos)) != 0);
@@ -124,17 +125,17 @@ void gdimm_gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
 	int src_row_ptr = 0;
 	int dest_row_ptr = -top_extra_rows * dest_pitch;
 
-	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch, dest_row_ptr += dest_pitch)
+	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch)
 	{
-		if (j < top_extra_rows)
-			continue;
-
-		if (j >= bottom_end_row)
-			break;
-
 		// pointers to the current pixel
 		int src_px_ptr = src_row_ptr;
 		int dest_px_ptr = dest_row_ptr + dest_pos.x * dest_byte_per_px;
+
+		if (j < bottom_end_row - 1)
+			dest_row_ptr += dest_pitch;
+
+		if (j < top_extra_rows)
+			continue;
 
 		for (int i = 0; i < bmp_width; i++, src_px_ptr += bmp_byte_per_px, dest_px_ptr += dest_byte_per_px)
 		{
@@ -151,7 +152,7 @@ void gdimm_gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
 				src_alpha};
 
 			// this approach is faster than setting each byte separately
-			*(DWORD*)(dest_bits + dest_px_ptr) = *(DWORD *)&src_color;
+			*reinterpret_cast<DWORD *>(dest_bits + dest_px_ptr) = *reinterpret_cast<const DWORD *>(&src_color);
 		}
 	}
 }
@@ -168,31 +169,31 @@ void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	// the destination bitmaps is 32bpp, in order of B, G, R, A channels
 	// each row is aligned to DWORD
 
-	const int top_extra_rows = glyph->top - dest_ascent - dest_pos.y;
-	const int bottom_end_row = top_extra_rows + dest_height;
-
 	const WORD bmp_byte_per_px = 3;
 	const int bmp_width = glyph->bitmap.width / bmp_byte_per_px;
 	const int bmp_height = glyph->bitmap.rows;
 	const WORD dest_byte_per_px = 4;
 	const int dest_pitch = get_bmp_pitch(dest_width, 32);
 
+	int top_extra_rows = glyph->top - dest_ascent - dest_pos.y;
+	int bottom_end_row = top_extra_rows + dest_height;
+
 	// pointers to the beginning of a row
 	// initialize at the first available row
 	int src_row_ptr = 0;
 	int dest_row_ptr = -top_extra_rows * dest_pitch;
 
-	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch, dest_row_ptr += dest_pitch)
+	for (int j = 0; j < bmp_height; j++, src_row_ptr += glyph->bitmap.pitch)
 	{
-		if (j < top_extra_rows)
-			continue;
-
-		if (j >= bottom_end_row)
-			break;
-
 		// pointers to the current pixel
 		int src_px_ptr = src_row_ptr;
 		int dest_px_ptr = dest_row_ptr + dest_pos.x * dest_byte_per_px;
+
+		if (j < bottom_end_row - 1)
+			dest_row_ptr += dest_pitch;
+
+		if (j < top_extra_rows)
+			continue;
 
 		for (int i = 0; i < bmp_width; i++, src_px_ptr += bmp_byte_per_px, dest_px_ptr += dest_byte_per_px)
 		{
@@ -243,10 +244,10 @@ void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 			if the destination pixel is modified, reset its alpha value to 0
 			otherwise, leave the alpha value untouched
 			*/
-			if (*(DWORD *)&src_alpha == 0)
+			if (*reinterpret_cast<DWORD *>(&src_alpha) == 0)
 				dest_color.rgbReserved = dest_bits[dest_px_ptr+3];
 
-			*(DWORD *)(dest_bits + dest_px_ptr) = *(DWORD *)&dest_color;
+			*reinterpret_cast<DWORD *>(dest_bits + dest_px_ptr) = *reinterpret_cast<DWORD *>(&dest_color);
 		}
 	}
 }
@@ -279,7 +280,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *mask_bits;
-	const HBITMAP mask_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&mask_bits, NULL, 0);
+	const HBITMAP mask_bitmap = CreateDIBSection(_context->hdc, reinterpret_cast<const BITMAPINFO *>(&bmp_header), DIB_RGB_COLORS, reinterpret_cast<VOID **>(&mask_bits), NULL, 0);
 	assert(mask_bitmap != NULL);
 	
 	const int bk_mode = GetBkMode(_context->hdc);
@@ -312,7 +313,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 
 	HBRUSH text_brush = CreateSolidBrush(_text_color);
 	assert(text_brush != NULL);
-	const HBRUSH prev_brush = (HBRUSH) SelectObject(_context->hdc, text_brush);
+	const HBRUSH prev_brush = static_cast<const HBRUSH>(SelectObject(_context->hdc, text_brush));
 
 	// foreground ROP: source brush
 	// background ROP: destination color
@@ -329,7 +330,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 		0,
 		MAKEROP4(PATCOPY, 0x00AA0029));
 
-	text_brush = (HBRUSH) SelectObject(_context->hdc, prev_brush);
+	text_brush = static_cast<HBRUSH>(SelectObject(_context->hdc, prev_brush));
 	b_ret = DeleteObject(text_brush);
 	assert(b_ret);
 	b_ret = DeleteObject(mask_bitmap);
@@ -351,10 +352,10 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
-	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, reinterpret_cast<const BITMAPINFO *>(&bmp_header), DIB_RGB_COLORS, reinterpret_cast<VOID **>(&text_bits), NULL, 0);
 	assert(text_bitmap != NULL);
 
-	const HBITMAP prev_bitmap = (HBITMAP) SelectObject(_hdc_canvas, text_bitmap);
+	const HBITMAP prev_bitmap = static_cast<const HBITMAP>(SelectObject(_hdc_canvas, text_bitmap));
 	b_ret = DeleteObject(prev_bitmap);
 	assert(b_ret);
 
@@ -389,7 +390,7 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	// AlphaBlend converts the source bitmap pixel format to match destination bitmap pixel format
 	if (_context->setting_cache->shadow.alpha != 0)
 	{
-		bf.SourceConstantAlpha = (BYTE) _context->setting_cache->shadow.alpha;
+		bf.SourceConstantAlpha = _context->setting_cache->shadow.alpha;
 		b_ret = AlphaBlend(_context->hdc,
 			metrics.origin.x + _context->setting_cache->shadow.offset_x,
 			metrics.origin.y + _context->setting_cache->shadow.offset_y,
@@ -434,11 +435,11 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	bmp_header.biCompression = BI_RGB;
 
 	BYTE *text_bits;
-	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, (BITMAPINFO *)&bmp_header, DIB_RGB_COLORS, (VOID **)&text_bits, NULL, 0);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, reinterpret_cast<const BITMAPINFO *>(&bmp_header), DIB_RGB_COLORS, reinterpret_cast<VOID **>(&text_bits), NULL, 0);
 	assert(text_bitmap != NULL);
 
 	// delete GDI obeject after deselecting
-	const HBITMAP prev_bitmap = (HBITMAP) SelectObject(_hdc_canvas, text_bitmap);
+	const HBITMAP prev_bitmap = static_cast<const HBITMAP>(SelectObject(_hdc_canvas, text_bitmap));
 	b_ret = DeleteObject(prev_bitmap);
 	assert(b_ret);
 
@@ -469,7 +470,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			assert(iter->glyph->bitmap.pitch >= 0);
 
 			const POINT solid_pos = {(iter->bbox.left + iter->glyph->left) + (metrics.baseline.x - metrics.origin.x),
-				((metrics.baseline.y - metrics.ascent) - metrics.origin.y)};
+				(metrics.baseline.y - metrics.ascent) - metrics.origin.y};
 
 			if (_context->setting_cache->shadow.alpha > 0)
 			{
@@ -520,7 +521,7 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 
 	// actual rect occupied by the glyphs
 	text_metrics metrics;
-	metrics.width = a_glyph_run.back().bbox.right - a_glyph_run.front().bbox.left;
+	metrics.width = get_glyph_run_width(a_glyph_run, true);
 	metrics.height = _context->outline_metrics->otmTextMetrics.tmHeight;
 	metrics.ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	metrics.descent = _context->outline_metrics->otmTextMetrics.tmDescent;
@@ -581,16 +582,10 @@ bool gdimm_gdi_painter::begin(const dc_context *context)
 	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
 
-	if (_hdc_canvas == NULL)
-	{
-		_hdc_canvas = CreateCompatibleDC(NULL);
-		assert(_hdc_canvas != NULL);
-	}
-
 	return true;
 }
 
-bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, UINT count, CONST INT *lpDx, const glyph_run &a_glyph_run)
+bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret, paint_success = FALSE;
 
@@ -621,11 +616,11 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, UI
 	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
 	if (lpDx == NULL)
-		paint_success = paint_glyph_run(options, lprect, a_glyph_run);
+		paint_success = paint_glyph_run(options, lprect, *reinterpret_cast<const glyph_run *>(text));
 	else
 	{
-		glyph_run adjusted_glyph_run = a_glyph_run;
-		adjust_glyph_run_distance(!!(options & ETO_PDY), count, lpDx, adjusted_glyph_run);
+		glyph_run adjusted_glyph_run = *reinterpret_cast<const glyph_run *>(text);
+		adjust_glyph_run_distance(!!(options & ETO_PDY), c, lpDx, adjusted_glyph_run);
 		paint_success = paint_glyph_run(options, lprect, adjusted_glyph_run);
 	}
 

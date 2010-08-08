@@ -4,18 +4,20 @@
 
 class gdimm_renderer
 {
-	virtual bool render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &a_glyph_run) = 0;
+	virtual bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 
 protected:
 	static gdimm_glyph_cache _glyph_cache;
 
 	int _char_extra;
 	const dc_context *_context;
+	uint64_t _font_trait;
 
 public:
+	gdimm_renderer();
 	virtual ~gdimm_renderer();
 
 	virtual bool begin(const dc_context *context);
 	virtual void end();
-	void fetch_glyph_run(LPCWSTR lpString, int c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &a_glyph_run);
+	void fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, int c, CONST INT *lpDx, glyph_run &a_glyph_run);
 };

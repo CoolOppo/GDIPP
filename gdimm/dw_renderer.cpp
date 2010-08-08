@@ -5,6 +5,7 @@
 
 IDWriteFactory *gdimm_dw_renderer::_dw_factory = NULL;
 IDWriteGdiInterop *gdimm_dw_renderer::_dw_gdi_interop = NULL;
+gdimm_obj_registry gdimm_dw_renderer::_obj_reg;
 
 gdimm_dw_renderer::gdimm_dw_renderer()
 {
@@ -12,10 +13,10 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 
 	if (_dw_factory == NULL)
 	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)(&_dw_factory));
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(&_dw_factory));
 		assert(hr == S_OK);
 
-		obj_reg_instance.register_com_ptr(_dw_factory);
+		_obj_reg.register_com_ptr(_dw_factory);
 	}
 
 	if (_dw_gdi_interop == NULL)
@@ -23,7 +24,7 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
 		assert(hr == S_OK);
 
-		obj_reg_instance.register_com_ptr(_dw_gdi_interop);
+		_obj_reg.register_com_ptr(_dw_gdi_interop);
 	}
 }
 
@@ -87,7 +88,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	if (IsRectEmpty(&texture_rect))
 		return false;
 
-	glyph_info new_glyph;
+	glyph_node new_glyph;
 	
 	new_glyph.glyph = new FT_BitmapGlyphRec();
 	new_glyph.glyph->left = texture_rect.left;
@@ -102,9 +103,10 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_glyph.glyph->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
 
-	new_glyph.bbox.left = (LONG) x;
-	new_glyph.bbox.top = (LONG) y;
-	//new_glyph.bbox.right = new_glyph.bbox.left + texture_rect.;
+	new_glyph.bbox.left = static_cast<LONG>(x);
+	new_glyph.bbox.top = static_cast<LONG>(y);
+	new_glyph.bbox.right = new_glyph.bbox.left + (texture_rect.right - texture_rect.left);
+	new_glyph.bbox.bottom = new_glyph.bbox.top + (texture_rect.bottom - texture_rect.top);
 
 	a_glyph_run->push_back(new_glyph);
 
@@ -123,7 +125,7 @@ bool gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_gl
 	dw_glyph_run.fontFace = dw_font_face;
 	dw_glyph_run.fontEmSize = _em_size;
 	dw_glyph_run.glyphCount = c;
-	dw_glyph_run.glyphIndices = (UINT16 *)lpString;
+	dw_glyph_run.glyphIndices = reinterpret_cast<const UINT16 *>(lpString);
 	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
 	dw_glyph_run.glyphOffsets = NULL;
 	dw_glyph_run.isSideways = FALSE;
@@ -151,9 +153,9 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 	CComPtr<IDWriteTextFormat> dw_text_format;
 	hr = _dw_factory->CreateTextFormat(metric_family_name(_context->outline_metrics),
 		NULL,
-		(DWRITE_FONT_WEIGHT) _context->outline_metrics->otmTextMetrics.tmWeight,
+		static_cast<DWRITE_FONT_WEIGHT>(_context->outline_metrics->otmTextMetrics.tmWeight),
 		dw_font_style,
-		(DWRITE_FONT_STRETCH) os2_metrics->get_usWidthClass(),
+		static_cast<DWRITE_FONT_STRETCH>(os2_metrics->get_usWidthClass()),
 		_em_size,
 		L"",
 		&dw_text_format);
@@ -168,7 +170,7 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 		hr = _dw_factory->CreateTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _context->bmp_header.biWidth,
+			static_cast<FLOAT>(_context->bmp_header.biWidth),
 			0,
 			&dw_text_layout);
 	}
@@ -177,7 +179,7 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 		hr = _dw_factory->CreateGdiCompatibleTextLayout(lpString,
 			c,
 			dw_text_format,
-			(FLOAT) _context->bmp_header.biWidth,
+			static_cast<FLOAT>(_context->bmp_header.biWidth),
 			0,
 			_pixels_per_dip,
 			NULL,
@@ -188,20 +190,20 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 
 	UINT glyph_run_start = 0;
 	void *drawing_context[2] = {&glyph_run_start, &new_glyph_run};
-	hr = dw_text_layout->Draw(&glyph_run_start, this, 0, 0);
+	hr = dw_text_layout->Draw(drawing_context, this, 0, 0);
 	assert(glyph_run_start == c);
 	
 	return (hr == S_OK);
 }
 
-bool gdimm_dw_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run)
+bool gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	if (lpDx != NULL)
 	{
 		const BYTE dx_skip = (is_pdy ? 2 : 1);
 		_advances.resize(c);
 		for (UINT i = 0; i < c; i++)
-			_advances[i] = (FLOAT) lpDx[i * dx_skip] - 0.1f;	// small adjustment to emulate GDI metrics
+			_advances[i] = static_cast<FLOAT>(lpDx[i * dx_skip]);// - 0.1f;	// small adjustment to emulate GDI metrics
 	}
 
 	if (is_glyph_index)
@@ -310,17 +312,17 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	)
 {
 	bool b_ret;
-	void **drawing_context = (void **)clientDrawingContext;
-	UINT *glyph_run_start = (UINT *)drawing_context[0];
+	void **drawing_context = static_cast<void **>(clientDrawingContext);
+	UINT *glyph_run_start = static_cast<UINT *>(drawing_context[0]);
 
 	if (_advances.empty())
-		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun, (glyph_run *)drawing_context[1]);
+		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun, static_cast<glyph_run *>(drawing_context[1]));
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
 		
-		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run, (glyph_run *)drawing_context[1]);
+		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run, static_cast<glyph_run *>(drawing_context[1]));
 	}
 
 	*glyph_run_start += glyphRunDescription->stringLength;
@@ -419,7 +421,7 @@ bool gdimm_dw_renderer::begin(const dc_context *context)
 	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
 
 	_advances.clear();
-	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
+	_em_size = static_cast<FLOAT>(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;

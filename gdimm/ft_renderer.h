@@ -4,7 +4,7 @@
 
 class gdimm_ft_renderer : public gdimm_renderer
 {
-	static FT_BitmapGlyphRec empty_glyph;
+	static FT_Glyph empty_glyph;
 
 	FT_F26Dot6 get_embolden(const font_setting_cache *setting_cache, unsigned char font_weight_class, unsigned char text_weight_class);
 	static void get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
@@ -16,7 +16,10 @@ class gdimm_ft_renderer : public gdimm_renderer
 		FT_F26Dot6 embolden,
 		FT_ULong load_flags,
 		bool is_italic,
-		const LOGFONTW &font_trait);
+		uint64_t font_trait);
 	void update_glyph_pos(glyph_run &new_glyph_run);
-	bool render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run);
+	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
+
+public:
+	gdimm_ft_renderer();
 };

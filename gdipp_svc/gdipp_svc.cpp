@@ -55,6 +55,8 @@ VOID WINAPI svc_ctrl_handler(DWORD dwCtrl)
 
 BOOL start_hook()
 {
+	BOOL b_ret;
+
 #ifdef _M_X64
 	const wchar_t *gdipp_hook_name = L"gdipp_hook_64.exe";
 #else
@@ -75,44 +77,31 @@ BOOL start_hook()
 		return FALSE;
 	assert(user_session_id > 0);
 
-	//HANDLE h_u;
-	if (!WTSQueryUserToken(user_session_id, &h_user_token))
-	//if (!WTSQueryUserToken(user_session_id, &h_u))
-	{
-		gdipp_debug_output(L"Cannot query user token");
-		return FALSE;
-	}
+	b_ret = WTSQueryUserToken(user_session_id, &h_user_token);
+	assert(b_ret);
 
-// 	if (!DuplicateTokenEx(h_u, MAXIMUM_ALLOWED, NULL, SecurityIdentification, TokenPrimary, &h_user_token))
+// 	if (!ImpersonateLoggedOnUser(h_user_token))
 // 	{
-// 		gdipp_debug_output(L"Cannot duplicate user token");
+// 		gdipp_debug_output(L"Cannot impersonate");
 // 		return FALSE;
 // 	}
-//  
-// 	CloseHandle(h_u);
-
-	if (!ImpersonateLoggedOnUser(h_user_token))
-	{
-		gdipp_debug_output(L"Cannot impersonate");
-		return FALSE;
-	}
 
 	STARTUPINFOW si = {};
 	si.cb = sizeof(STARTUPINFO);
-	si.lpDesktop = L"winsta0\\default";
+	//si.lpDesktop = L"winsta0\\default";
 	
 	return CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi_hook);
 }
 
 void stop_hook()
 {
-	BOOL b_ret;
+//	BOOL b_ret;
 
 	CloseHandle(pi_hook.hThread);
 	CloseHandle(pi_hook.hProcess);
 
-	b_ret = RevertToSelf();
-	assert(b_ret);
+// 	b_ret = RevertToSelf();
+// 	assert(b_ret);
 
 	CloseHandle(h_user_token);
 }
@@ -135,7 +124,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	if (h_svc_stop_event == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		gdipp_debug_output(L"Cannot create event.");
 		return;
 	}
 	
@@ -143,8 +131,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	{
 		if (start_hook())
 		{
-			gdipp_debug_output(L"successfully started hook");
-
 			// report running status when initialization is complete
 			set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 
@@ -154,7 +140,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 			otherwise, respawn the hook subprocess
 			*/
 
-			HANDLE h_wait[2] = {h_svc_stop_event, pi_hook.hProcess};
+			const HANDLE h_wait[2] = {h_svc_stop_event, pi_hook.hProcess};
 			const DWORD wait_ret = WaitForMultipleObjects(2, h_wait, FALSE, INFINITE);
 
 			if (wait_ret - WAIT_OBJECT_0 != 1)
@@ -167,18 +153,12 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 			}
 			else
 			{
-				gdipp_debug_output(wait_ret + 20);
-				gdipp_debug_output((DWORD) h_svc_stop_event);
-				gdipp_debug_output((DWORD) pi_hook.hProcess);
-
 				stop_hook();
 
 				// wait 5 seconds before respawning hook
 				Sleep(5000);
 			}
 		}
-		else
-			gdipp_debug_output(GetLastError());
 	}
 
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
@@ -212,7 +192,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 #else
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
-		{ SVC_NAME, (LPSERVICE_MAIN_FUNCTION) svc_main },
+		{ SVC_NAME, svc_main },
 		{ NULL, NULL },
 	};
 

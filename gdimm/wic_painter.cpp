@@ -3,14 +3,47 @@
 #include "helper_func.h"
 #include "gdimm.h"
 
+ID2D1Factory *gdimm_wic_painter::_d2d_factory = NULL;
+IDWriteFactory *gdimm_wic_painter::_dw_factory = NULL;
+IDWriteGdiInterop *gdimm_wic_painter::_dw_gdi_interop = NULL;
+HDC gdimm_wic_painter::_hdc_canvas = NULL;
+gdimm_obj_registry gdimm_wic_painter::_obj_reg;
+
 gdimm_wic_painter::gdimm_wic_painter()
-:
-_d2d_factory(NULL),
-_wic_render_target(NULL),
-_dw_factory(NULL),
-_dw_gdi_interop(NULL),
-_hdc_canvas(NULL)
 {
+	HRESULT hr;
+
+	if (_d2d_factory == NULL)
+	{
+		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &_d2d_factory);
+		assert(hr == S_OK);
+
+		_obj_reg.register_com_ptr(_d2d_factory);
+	}
+
+	if (_dw_factory == NULL)
+	{
+		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(&_dw_factory));
+		assert(hr == S_OK);
+
+		_obj_reg.register_com_ptr(_dw_factory);
+	}
+
+	if (_dw_gdi_interop == NULL)
+	{
+		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
+		assert(hr == S_OK);
+
+		_obj_reg.register_com_ptr(_dw_gdi_interop);
+	}
+
+	if (_hdc_canvas == NULL)
+	{
+		_hdc_canvas = CreateCompatibleDC(NULL);
+		assert(_hdc_canvas != NULL);
+
+		_obj_reg.register_hdc(_hdc_canvas);
+	}
 }
 
 bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run)
@@ -198,14 +231,14 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 	metrics.ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	metrics.descent = _context->outline_metrics->otmTextMetrics.tmDescent;
 
-	const int advance_factor = ((options & ETO_PDY) ? 2 : 1);
+	const int dx_skip = ((options & ETO_PDY) ? 2 : 1);
 	if (lpDx != NULL)
 	{
 		_advances.resize(c);
 		for (UINT i = 0; i < c; i++)
 		{
-			_advances[i] = (FLOAT) lpDx[i * advance_factor];
-			metrics.width += lpDx[i * advance_factor];
+			_advances[i] = static_cast<FLOAT>(lpDx[i * dx_skip]);
+			metrics.width += lpDx[i * dx_skip];
 		}
 	}
 
@@ -331,38 +364,12 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 
 bool gdimm_wic_painter::begin(const dc_context *context)
 {
-	HRESULT hr;
-
 	if (!gdimm_painter::begin(context))
 		return false;
 
 	// ignore rotated DC
 	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
-
-	if (_d2d_factory == NULL)
-	{
-		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &_d2d_factory);
-		assert(hr == S_OK);
-	}
-
-	if (_dw_factory == NULL)
-	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown **)(&_dw_factory));
-		assert(hr == S_OK);
-	}
-
-	if (_dw_gdi_interop == NULL)
-	{
-		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
-		assert(hr == S_OK);
-	}
-
-	if (_hdc_canvas == NULL)
-	{
-		_hdc_canvas = CreateCompatibleDC(NULL);
-		assert(_hdc_canvas != NULL);
-	}
 
 	switch (_context->setting_cache->hinting)
 	{
@@ -382,14 +389,13 @@ bool gdimm_wic_painter::begin(const dc_context *context)
 	_text_color = RGB(GetBValue(_text_color), GetGValue(_text_color), GetRValue(_text_color));
 	_bg_color = RGB(GetBValue(_bg_color), GetGValue(_bg_color), GetRValue(_bg_color));
 
-	_advances.clear();
 	_em_size = (FLOAT)(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading) - 0.3f;	// small adjustment to emulate GDI metrics
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;
 }
 
-bool gdimm_wic_painter::text_out(int x, int y, UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
+bool gdimm_wic_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret;
 
@@ -411,7 +417,7 @@ bool gdimm_wic_painter::text_out(int x, int y, UINT options, CONST RECT *lprect,
 		update_cursor = false;
 	}
 
-	const bool paint_success = draw_text(options, lprect, lpString, c, lpDx);
+	const bool paint_success = draw_text(options, lprect, static_cast<LPCWCHAR>(text), c, lpDx);
 
 	// if TA_UPDATECP is set, update current position after text out
 	if (update_cursor && paint_success)

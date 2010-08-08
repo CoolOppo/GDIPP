@@ -13,7 +13,7 @@ void gdimm_gamma::init_ramp(double gamma)
 	BYTE *new_ramp = new BYTE[256];
 
 	for (int i = 0; i < 256; i++)
-		new_ramp[i] = (BYTE)(pow(i / 255.0, gamma) * 255);
+		new_ramp[i] = static_cast<BYTE>((pow(i / 255.0, gamma) * 255));
 
 	_gamma_ramps[gamma] = new_ramp;
 }

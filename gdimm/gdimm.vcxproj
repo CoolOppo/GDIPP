@@ -46,6 +46,7 @@
     <ClInclude Include="renderer.h" />
     <ClInclude Include="wic_dib.h" />
     <ClInclude Include="wic_painter.h" />
+    <ClInclude Include="wic_renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dw_renderer.cpp" />
@@ -81,6 +82,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="wic_dib.cpp" />
+    <ClCompile Include="wic_painter.cpp" />
+    <ClCompile Include="wic_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="gdimm.rc" />

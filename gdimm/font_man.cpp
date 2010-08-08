@@ -119,6 +119,6 @@ void gdimm_font_man::get_glyph_indices(long font_id, const wchar_t *str, int cou
 	else
 		font_holder = _linked_font_holder;
 
-	DWORD converted = GetGlyphIndices(font_holder, str, count, (LPWORD) gi, GGI_MARK_NONEXISTING_GLYPHS);
+	DWORD converted = GetGlyphIndices(font_holder, str, count, reinterpret_cast<LPWORD>(gi), GGI_MARK_NONEXISTING_GLYPHS);
 	assert(converted == count);
 }

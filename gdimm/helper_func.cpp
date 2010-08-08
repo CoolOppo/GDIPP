@@ -5,12 +5,12 @@
 
 FT_F26Dot6 to_26dot6(const FIXED &x)
 {
-	return *((FT_F26Dot6 *)&x) >> 10;
+	return *(reinterpret_cast<const FT_F26Dot6 *>(&x)) >> 10;
 }
 
 FT_F26Dot6 to_26dot6(FLOAT x)
 {
-	return (FT_F26Dot6)(x * 64);
+	return static_cast<FT_F26Dot6>(x * 64);
 }
 
 LONG from_26dot6(FT_Pos x)
@@ -26,7 +26,7 @@ LONG from_16dot16(FT_Pos x)
 // convert floating point to 16.16 format
 FT_Pos to_16dot16(double x)
 {
-	return (FT_Pos)(x * 65536);
+	return static_cast<FT_Pos>(x * 65536);
 }
 
 DWORD create_tls_index()
@@ -88,14 +88,14 @@ int get_bmp_pitch(int width, WORD bpp)
 #define FT_PAD_ROUND( x, n )  FT_PAD_FLOOR( (x) + ((n)/2), n )
 #define FT_PAD_CEIL( x, n )   FT_PAD_FLOOR( (x) + ((n)-1), n )
 
-	return FT_PAD_CEIL((int) ceil((double)(width * bpp) / 8), sizeof(LONG));
+	return FT_PAD_CEIL(static_cast<int>(ceil(static_cast<double>(width * bpp) / 8)), sizeof(LONG));
 }
 
 bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 {
 	dc_dc_bmp_header.biSize = sizeof(BITMAPINFOHEADER);
 
-	const HBITMAP dc_bitmap = (HBITMAP) GetCurrentObject(hdc, OBJ_BITMAP);
+	const HBITMAP dc_bitmap = static_cast<const HBITMAP>(GetCurrentObject(hdc, OBJ_BITMAP));
 	if (dc_bitmap == NULL)
 	{
 		// currently no selected bitmap
@@ -110,7 +110,7 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 	}
 
 	dc_dc_bmp_header.biBitCount = 0;
-	int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, (BITMAPINFO *)&dc_dc_bmp_header, DIB_RGB_COLORS);
+	const int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, reinterpret_cast<LPBITMAPINFO>(&dc_dc_bmp_header), DIB_RGB_COLORS);
 	assert(i_ret != 0);
 
 	return true;
@@ -125,7 +125,7 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 		return NULL;
 
 	metric_buf.resize(metric_size);
-	OUTLINETEXTMETRICW *outline_metrics = (OUTLINETEXTMETRICW *)&metric_buf[0];
+	OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<OUTLINETEXTMETRICW *>(&metric_buf[0]);
 	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
 	assert(metric_size != 0);
 
@@ -163,6 +163,32 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
+LONG get_glyph_run_width(const glyph_run &a_glyph_run, bool is_actual_width)
+{
+	LONG glyph_run_right;
+
+	if (a_glyph_run.back().bbox.left >= a_glyph_run.front().bbox.left)
+	{
+		glyph_run_right = a_glyph_run.back().bbox.right;
+		if (is_actual_width)
+		{
+			// actual width is the width including all bitmap content
+			// while logical width only includes the glyph bounding box
+			glyph_run_right = max(glyph_run_right, a_glyph_run.back().bbox.left + get_glyph_bmp_width(a_glyph_run.back().glyph->bitmap));
+		}
+
+		return glyph_run_right - a_glyph_run.front().bbox.left;
+	}
+	else
+	{
+		glyph_run_right = a_glyph_run.front().bbox.right;
+		if (is_actual_width)
+			glyph_run_right = max(glyph_run_right, a_glyph_run.front().bbox.left + get_glyph_bmp_width(a_glyph_run.front().glyph->bitmap));
+
+		return glyph_run_right - a_glyph_run.back().bbox.left;
+	}
+}
+
 LOGFONTW get_log_font(HDC hdc)
 {
 	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
@@ -172,6 +198,11 @@ LOGFONTW get_log_font(HDC hdc)
 	GetObject(h_font, sizeof(LOGFONTW), &font_attr);
 
 	return font_attr;
+}
+
+bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
+{
+	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;
 }
 
 bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
@@ -223,9 +254,50 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 	return false;
 }
 
-bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
+const FT_Glyph make_empty_glyph()
 {
-	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;
+	FT_Glyph empty_glyph;
+
+	FT_Error ft_error;
+
+	FT_GlyphSlotRec glyph_slot = {};
+	glyph_slot.library = ft_lib;
+	glyph_slot.format = FT_GLYPH_FORMAT_OUTLINE;
+
+	ft_error = FT_Get_Glyph(&glyph_slot, &empty_glyph);
+	if (ft_error != 0)
+		return NULL;
+
+	return empty_glyph;
+}
+
+const FT_Glyph make_empty_bmp_glyph(const FT_Glyph empty_glyph)
+{
+	FT_Error ft_error;
+
+	assert(empty_glyph != NULL);
+
+	FT_OutlineGlyphRec empty_outline_glyph =
+	{
+		*empty_glyph,
+		{
+			0,
+			0,
+			NULL,
+			NULL,
+			NULL,
+			0
+		}
+	};
+	FT_Glyph empty_bmp_glyph = reinterpret_cast<FT_Glyph>(&empty_outline_glyph);
+
+	ft_error = FT_Glyph_To_Bitmap(&empty_bmp_glyph, FT_RENDER_MODE_NORMAL, NULL, false);
+	if (ft_error != 0)
+		return NULL;
+
+	assert(empty_bmp_glyph->format == FT_GLYPH_FORMAT_BITMAP);
+
+	return empty_bmp_glyph;
 }
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)
@@ -259,7 +331,7 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 	// see PALETTEINDEX()
 	if ((color_ret & 0x01000000) != 0)
 	{
-		const HPALETTE dc_palette = (HPALETTE) GetCurrentObject(hdc, OBJ_PAL);
+		const HPALETTE dc_palette = static_cast<const HPALETTE>(GetCurrentObject(hdc, OBJ_PAL));
 		PALETTEENTRY pal_entry;
 		const UINT entries = GetPaletteEntries(dc_palette, (color_ret & 0x00ffffff), 1, &pal_entry);
 		assert(entries != 0);
@@ -272,30 +344,30 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 
 const wchar_t *metric_family_name(const BYTE *metric_buf)
 {
-	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpFamilyName);
+	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFamilyName)));
 }
 
 const wchar_t *metric_face_name(const BYTE *metric_buf)
 {
-	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpFaceName);
+	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFaceName)));
 }
 
 const wchar_t *metric_style_name(const BYTE *metric_buf)
 {
-	return (const wchar_t *)(metric_buf + (UINT)((OUTLINETEXTMETRICW *)metric_buf)->otmpStyleName);
+	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpStyleName)));
 }
 
 const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpFamilyName);
+	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpFamilyName));
 }
 
 const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpFaceName);
+	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpFaceName));
 }
 
 const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
 {
-	return (const wchar_t *)((BYTE *)outline_metric + (UINT) outline_metric->otmpStyleName);
+	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpStyleName));
 }

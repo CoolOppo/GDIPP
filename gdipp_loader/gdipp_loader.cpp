@@ -8,7 +8,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (lpCmdLine == NULL || wcslen(lpCmdLine) == 0)
 	{
-		MessageBox(NULL, TEXT("Drag an exe file to me and I will load it with gdimm.dll."), TEXT("gdipp Loader"), MB_OK | MB_ICONINFORMATION);
+		MessageBox(NULL, L"Drag an exe file to me and I will load it with gdimm.dll.", L"gdipp Loader", MB_OK | MB_ICONINFORMATION);
 		return EXIT_SUCCESS;
 	}
 
@@ -46,7 +46,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 			wstring error_msg = L"Unable to inject gdimm.dll to the new process";
 
 			// STATUS_WOW_ASSERTION
-			if (eh_ret == (NTSTATUS) 0xC0009898L)
+			if (eh_ret == 0xC0009898L)
 				error_msg += L" due to different bitness. Try the other gdipp Loader";
 
 			error_msg += L".";

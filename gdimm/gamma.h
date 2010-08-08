@@ -10,5 +10,6 @@ class gdimm_gamma
 
 public:
 	~gdimm_gamma();
+
 	const BYTE *get_ramp(double gamma);
 };

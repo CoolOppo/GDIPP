@@ -14,7 +14,7 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 		{
 			for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); iter++)
 			{
-				if (*iter == (HMODULE) CallbackInput->IncludeModule.BaseOfImage)
+				if (*iter == reinterpret_cast<HMODULE>(CallbackInput->IncludeModule.BaseOfImage))
 					return TRUE;
 			}
 
@@ -46,7 +46,7 @@ LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
 
 		// exception not from this module
 		if (ExceptionInfo->ExceptionRecord->ExceptionAddress >= mod_info.lpBaseOfDll &&
-			(DWORD) ExceptionInfo->ExceptionRecord->ExceptionAddress <= (DWORD) mod_info.lpBaseOfDll + mod_info.SizeOfImage)
+			reinterpret_cast<size_t>(ExceptionInfo->ExceptionRecord->ExceptionAddress) <= reinterpret_cast<size_t>(mod_info.lpBaseOfDll) + mod_info.SizeOfImage)
 		{
 			ex_in_module = true;
 			break;
@@ -91,7 +91,7 @@ LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
 	if (dmp_file != INVALID_HANDLE_VALUE)
 	{
 		MINIDUMP_CALLBACK_INFORMATION ci = {minidump_callback, NULL};
-		const MINIDUMP_TYPE dump_type = (MINIDUMP_TYPE)(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory | MiniDumpWithDataSegs | MiniDumpWithHandleData);
+		const MINIDUMP_TYPE dump_type = static_cast<const MINIDUMP_TYPE>(MiniDumpWithIndirectlyReferencedMemory | MiniDumpScanMemory | MiniDumpWithDataSegs | MiniDumpWithHandleData);
 		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dmp_file, dump_type, &ex_info, NULL, &ci);
 		CloseHandle(dmp_file);
 	}

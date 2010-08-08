@@ -1,11 +1,13 @@
 #pragma once
 
 #include "renderer.h"
+#include "obj_reg.h"
 
 class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 {
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
+	static gdimm_obj_registry _obj_reg;
 
 	vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;
@@ -16,7 +18,7 @@ class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 	bool make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run);
 	bool render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
 	bool render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
-	bool render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run);
+	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 
 	//////////////////////////////////////////////////////////////////////////
 

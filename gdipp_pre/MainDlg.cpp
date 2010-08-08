@@ -128,7 +128,7 @@ LRESULT CMainDlg::OnChangeFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 {
 	BOOL b_ret;
 
-	const HFONT old_font = (HFONT) SendMessage(GetDlgItem(IDC_STATIC), WM_GETFONT, 0, 0);
+	const HFONT old_font = reinterpret_cast<const HFONT>(SendMessage(GetDlgItem(IDC_STATIC), WM_GETFONT, 0, 0));
 	assert(old_font != NULL);
 
 	LOGFONTW lf;
@@ -147,7 +147,7 @@ LRESULT CMainDlg::OnChangeFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 		HFONT new_font = CreateFontIndirect(&lf);
 		assert(new_font != NULL);
 
-		SendMessage(GetDlgItem(IDC_STATIC), WM_SETFONT, (WPARAM) new_font, MAKELPARAM(TRUE, 0));
+		SendMessage(GetDlgItem(IDC_STATIC), WM_SETFONT, reinterpret_cast<WPARAM>(new_font), MAKELPARAM(TRUE, 0));
 
 		DeleteObject(old_font);
 	}

@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\pugixml.vcxproj", "{D8742C31-15F3-4452-AF09-79F97277003A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_common", "gdipp_common\gdipp_common.vcxproj", "{A74E25D5-52B8-460E-8C79-1F753D6B732C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "freetype", "freetype\builds\win32\vc2010\freetype.vcxproj", "{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}"
@@ -10,25 +8,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdimm", "gdimm\gdimm.vcxproj", "{13F59647-D2D3-4D41-9C85-6917347686CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_demo", "gdipp_demo\gdipp_demo.vcxproj", "{E44A140A-B4B0-48A8-9D90-8227FE2176A0}"
-	ProjectSection(ProjectDependencies) = postProject
-		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_pre", "gdipp_pre\gdipp_pre.vcxproj", "{8A35C8F6-BD42-44F7-9434-6F51D063578D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_loader", "gdipp_loader\gdipp_loader.vcxproj", "{36499188-A567-4989-890A-872DCA5B9294}"
-	ProjectSection(ProjectDependencies) = postProject
-		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_svc", "gdipp_svc\gdipp_svc.vcxproj", "{7E811567-61BF-4EFC-A6C2-66B0C6FF04EE}"
-	ProjectSection(ProjectDependencies) = postProject
-		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
-		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F} = {8576CAB1-8795-479F-8DDD-DCEC4E7B204F}
-	EndProjectSection
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_32_en-us", "installer\installer_32_en-us.wixproj", "{C777953B-F65D-44AD-9226-0DFA5306D0F9}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -56,9 +41,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "installer_32_zh-cn", "insta
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_hook", "gdipp_hook\gdipp_hook.vcxproj", "{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
-	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\scripts\pugixml_vs2010_static.vcxproj", "{89A1E353-E2DC-495C-B403-742BE206ACED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,14 +52,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|Win32.Build.0 = Debug|Win32
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|x64.ActiveCfg = Debug|x64
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Debug|x64.Build.0 = Debug|x64
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|Win32.ActiveCfg = Release|Win32
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|Win32.Build.0 = Release|Win32
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.ActiveCfg = Release|x64
-		{D8742C31-15F3-4452-AF09-79F97277003A}.Release|x64.Build.0 = Release|x64
 		{A74E25D5-52B8-460E-8C79-1F753D6B732C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A74E25D5-52B8-460E-8C79-1F753D6B732C}.Debug|Win32.Build.0 = Debug|Win32
 		{A74E25D5-52B8-460E-8C79-1F753D6B732C}.Debug|x64.ActiveCfg = Debug|x64
@@ -160,6 +136,14 @@ Global
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|Win32.Build.0 = Release|Win32
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|x64.ActiveCfg = Release|x64
 		{8576CAB1-8795-479F-8DDD-DCEC4E7B204F}.Release|x64.Build.0 = Release|x64
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Debug|Win32.ActiveCfg = Debug|Win32
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Debug|Win32.Build.0 = Debug|Win32
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Debug|x64.ActiveCfg = Debug|x64
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Debug|x64.Build.0 = Debug|x64
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|Win32.ActiveCfg = Release|Win32
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|Win32.Build.0 = Release|Win32
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|x64.ActiveCfg = Release|x64
+		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

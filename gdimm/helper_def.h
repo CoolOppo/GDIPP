@@ -53,10 +53,10 @@ struct font_link_node
 	double scaling;
 };
 
-struct glyph_info
+struct glyph_node
 {
 	FT_BitmapGlyph glyph;
 	RECT bbox;
 };
 
-typedef list<glyph_info> glyph_run;
+typedef list<glyph_node> glyph_run;

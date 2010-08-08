@@ -6,16 +6,15 @@
 #include "lock.h"
 
 FT_Glyph gdimm_ggo_renderer::empty_glyph;
+FT_Glyph gdimm_ggo_renderer::empty_bmp_glyph;
 
 gdimm_ggo_renderer::gdimm_ggo_renderer()
 {
-	FT_Error ft_error;
+	empty_glyph = make_empty_glyph();
+	assert(empty_glyph != NULL);
 
-	FT_GlyphSlotRec glyph_slot = {};
-	glyph_slot.library = ft_lib;
-	glyph_slot.format = FT_GLYPH_FORMAT_OUTLINE;
-	ft_error = FT_Get_Glyph(&glyph_slot, &empty_glyph);
-	assert(ft_error == 0);
+	empty_bmp_glyph = make_empty_bmp_glyph(empty_glyph);
+	assert(empty_bmp_glyph != NULL);
 }
 
 bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
@@ -32,11 +31,7 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 	vector<char> curve_tags;
 	vector<short> contour_indices;
 
-	FT_OutlineGlyphRec outline_glyph = 
-	{
-		*empty_glyph,
-		{}
-	};
+	FT_OutlineGlyphRec outline_glyph = {*empty_glyph, {}};
 
 	DWORD outline_buf_len = GetGlyphOutline(_context->hdc, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
@@ -46,6 +41,8 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 		// the glyph outline of this character is empty (e.g. space)
 		if (!get_glyph_metrics(ch, glyph_metrics))
 			return NULL;
+
+		return reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
 	}
 	else
 	{
@@ -58,7 +55,7 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 		do
 		{
 			const BYTE *header_ptr = outline_buf + header_off;
-			const TTPOLYGONHEADER *header = (TTPOLYGONHEADER *)header_ptr;
+			const TTPOLYGONHEADER *header = reinterpret_cast<const TTPOLYGONHEADER *>(header_ptr);
 
 			// FreeType uses 26.6 format, while Windows gives logical units
 			const FT_Vector start_point = {to_26dot6(header->pfxStart.x), to_26dot6(header->pfxStart.y)};
@@ -74,7 +71,7 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 				// the first point is on the curve
 				curve_tags.push_back(FT_CURVE_TAG_ON);
 
-				const TTPOLYCURVE *curve = (TTPOLYCURVE *)(header_ptr + curve_off);
+				const TTPOLYCURVE *curve = reinterpret_cast<const TTPOLYCURVE *>(header_ptr + curve_off);
 				char curr_tag;
 				switch (curve->wType)
 				{
@@ -101,7 +98,7 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 				curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
 			}
 
-			contour_indices.push_back((short) curve_points.size() - 1);
+			contour_indices.push_back(static_cast<short>(curve_points.size() - 1));
 			header_off += header->cb;
 		} while (header_off < outline_buf_len);
 
@@ -109,43 +106,47 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 
 		assert(curve_points.size() <= FT_OUTLINE_POINTS_MAX);
 
-		outline_glyph.outline.n_contours = (short) contour_indices.size();
-		outline_glyph.outline.n_points = (short) curve_points.size();
+		outline_glyph.outline.n_contours = static_cast<short>(contour_indices.size());
+		outline_glyph.outline.n_points = static_cast<short>(curve_points.size());
 		outline_glyph.outline.points = &curve_points[0];
 		outline_glyph.outline.tags = &curve_tags[0];
 		outline_glyph.outline.contours = &contour_indices[0];
 		outline_glyph.outline.flags = FT_OUTLINE_NONE;
+
+		/*
+		once in possess of FT_Outline, there are several way to get FT_Bitmap
+
+		1. FT_Outline_Render: could pass a callback span function to directly draw scanlines to DC
+		   unfortunately it only output 8-bit bitmap
+		2. FT_Outline_Get_Bitmap: merely a wrapper of FT_Outline_Render
+		3. FT_Glyph_To_Bitmap: first conglyph_indicesuct FT_OutlineGlyph from FT_Outline, then render glyph to get FT_Bitmap
+		   when conglyph_indicesucting FreeType glyph, the private clazz field must be provided
+		   support 24-bit bitmap
+
+		we use method 3
+		*/
+
+		if (_context->setting_cache->embolden != 0)
+		{
+			ft_error = FT_Outline_Embolden(&outline_glyph.outline, _context->setting_cache->embolden);
+			assert(ft_error == 0);
+		}
+
+		// convert outline to bitmap
+		FT_Glyph generic_glyph = reinterpret_cast<FT_Glyph>(&outline_glyph);
+		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _context->render_mode, NULL, false);
+		if (ft_error != 0)
+			return NULL;
+		assert(generic_glyph->format == FT_GLYPH_FORMAT_BITMAP);
+
+		const FT_BitmapGlyph bmp_glyph = reinterpret_cast<const FT_BitmapGlyph>(generic_glyph);
+		_glyph_cache.store_glyph(_font_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), bmp_glyph);
+
+		return bmp_glyph;
 	}
-
-	/*
-	once in possess of FT_Outline, there are several way to get FT_Bitmap
-
-	1. FT_Outline_Render: could pass a callback span function to directly draw scanlines to DC
-	   unfortunately it only output 8-bit bitmap
-	2. FT_Outline_Get_Bitmap: merely a wrapper of FT_Outline_Render
-	3. FT_Glyph_To_Bitmap: first conglyph_indicesuct FT_OutlineGlyph from FT_Outline, then render glyph to get FT_Bitmap
-	   when conglyph_indicesucting FreeType glyph, the private clazz field must be provided
-	   support 24-bit bitmap
-
-	we use method 3
-	*/
-
-	if (_context->setting_cache->embolden != 0)
-	{
-		ft_error = FT_Outline_Embolden(&outline_glyph.outline, _context->setting_cache->embolden);
-		assert(ft_error == 0);
-	}
-
-	// convert outline to bitmap
-	FT_Glyph generic_glyph = (FT_Glyph) &outline_glyph;
-	ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _context->render_mode, NULL, FALSE);
-	if (ft_error != 0)
-		return NULL;
-
-	return (const FT_BitmapGlyph) generic_glyph;
 }
 
-bool gdimm_ggo_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, CONST INT *lpDx, bool is_pdy, glyph_run &new_glyph_run)
+bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	bool b_ret;
 
@@ -172,14 +173,15 @@ bool gdimm_ggo_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, C
 
 	for (UINT i = 0; i < c; i++)
 	{
+		GLYPHMETRICS glyph_metrics;
+		glyph_node new_glyph;
+
 		// we do not care about non-printable characters
 		// solution for Windows Vista/7 Date
 		if (!is_glyph_index && iswcntrl(lpString[i]))
 			continue;
 
-		GLYPHMETRICS glyph_metrics;
-		glyph_info new_glyph;
-		new_glyph.glyph = _glyph_cache.lookup_glyph(_context->log_font, lpString[i], is_glyph_index);
+		new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
 		if (new_glyph.glyph == NULL)
 			new_glyph.glyph = outline_to_bitmap(lpString[i], glyph_metrics);
 		else
@@ -187,6 +189,7 @@ bool gdimm_ggo_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, C
 			b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
 			assert(b_ret);
 		}
+		assert(new_glyph.glyph != NULL);
 
 		new_glyph.bbox.left = pen_pos.x;
 		new_glyph.bbox.top = pen_pos.y;
@@ -197,11 +200,7 @@ bool gdimm_ggo_renderer::render(LPCWSTR lpString, UINT c, bool is_glyph_index, C
 		new_glyph.bbox.right = pen_pos.x;
 		new_glyph.bbox.bottom = pen_pos.x;
 
-		if (new_glyph.glyph != NULL)
-		{
-			_glyph_cache.store_glyph(_context->log_font, lpString[i], is_glyph_index, new_glyph.glyph);
-			new_glyph_run.push_back(new_glyph);
-		}
+		new_glyph_run.push_back(new_glyph);
 	}
 
 	return true;

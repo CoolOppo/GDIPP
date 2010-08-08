@@ -7,6 +7,8 @@
 #include "ggo_renderer.h"
 #include "helper_def.h"
 #include "helper_func.h"
+#include "wic_renderer.h"
+#include "wic_painter.h"
 
 using namespace std;
 
@@ -34,13 +36,53 @@ bool is_valid_dc(HDC hdc)
 	return true;
 }
 
+bool fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, const dc_context &context, glyph_run &a_glyph_run, GLYPH_CACHE_LEVEL &cache_level)
+{
+	bool b_ret;
+
+	gdimm_renderer *renderer;
+	switch (context.setting_cache->renderer)
+	{
+	case RENDERER_CLEARTYPE:
+		return false;
+	case RENDERER_GETGLYPHOUTLINE:
+		renderer = new gdimm_ggo_renderer;
+		cache_level = SINGLE_GLYPH;
+		break;
+	case RENDERER_DIRECTWRITE:
+		renderer = new gdimm_dw_renderer;
+		cache_level = GLYPH_RUN;
+		break;
+	case RENDERER_WIC:
+		renderer = new gdimm_wic_renderer;
+		cache_level = NONE;
+		break;
+	default:
+		renderer = new gdimm_ft_renderer;
+		cache_level = SINGLE_GLYPH;
+		break;
+	}
+
+	b_ret = renderer->begin(&context);
+	if (b_ret)
+	{
+		if (cache_level >= GLYPH_RUN)
+			renderer->fetch_glyph_run(is_glyph_index, is_pdy, lpString, c, lpDx, a_glyph_run);
+
+		renderer->end();
+	}
+
+	delete renderer;
+
+	return b_ret;
+}
+
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	bool b_ret;
 
 //	if (options & ETO_GLYPH_INDEX)
 //	if ((options & ETO_GLYPH_INDEX) == 0)
-//		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 //	if (c == 1)
 //		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
@@ -68,14 +110,14 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (debug_text != NULL)
 	{
 		bool is_target = false;
-		const int debug_len = (int) wcslen(debug_text);
+		const int debug_len = static_cast<const int>(wcslen(debug_text));
 
 		if (options & ETO_GLYPH_INDEX)
 		{
 			WORD *gi = new WORD[debug_len];
 			GetGlyphIndicesW(hdc, debug_text, debug_len, gi, 0);
 
-			if (memcmp((WORD *)lpString + start_index, gi, sizeof(WORD) * debug_len) == 0)
+			if (memcmp(reinterpret_cast<const WORD *>(lpString) + start_index, gi, sizeof(WORD) * debug_len) == 0)
 				is_target = true;
 
 			delete[] gi;
@@ -97,44 +139,44 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (!context.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	gdimm_renderer *renderer;
 	glyph_run a_glyph_run;
+	GLYPH_CACHE_LEVEL cache_level;
+
+	b_ret = fetch_glyph_run(!!(options & ETO_GLYPH_INDEX), !!(options & ETO_PDY), lpString, c, lpDx, context, a_glyph_run, cache_level);
+	if (!b_ret)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	gdimm_painter *painter;
 	switch (context.setting_cache->renderer)
 	{
 	case RENDERER_CLEARTYPE:
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	case RENDERER_GETGLYPHOUTLINE:
-		renderer = new gdimm_ggo_renderer;
+		painter = new gdimm_gdi_painter;
 		break;
 	case RENDERER_DIRECTWRITE:
-		renderer = new gdimm_dw_renderer;
+		painter = new gdimm_gdi_painter;
+		break;
 	case RENDERER_WIC:
+		painter = new gdimm_wic_painter;
 		break;
 	default:
-		renderer = new gdimm_ft_renderer;
+		painter = new gdimm_gdi_painter;
 		break;
 	}
 
-	b_ret = renderer->begin(&context);
+	b_ret = painter->begin(&context);
 	if (b_ret)
 	{
-		renderer->fetch_glyph_run(lpString, c, !!(options & ETO_GLYPH_INDEX), lpDx, !!(options & ETO_PDY), a_glyph_run);
-		renderer->end();
-	}
-	delete renderer;
-	
-	if (!b_ret)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		if (cache_level >= GLYPH_RUN)
+			b_ret = painter->paint(x, y, options, lprect, &a_glyph_run, c, ((cache_level >= SINGLE_GLYPH) ? lpDx : NULL));
+		else
+			b_ret = painter->paint(x, y, options, lprect, lpString, c, lpDx);
 
-	gdimm_gdi_painter painter;
-
-	b_ret = painter.begin(&context);
-	if (b_ret)
-	{
-		const INT *dx = ((context.setting_cache->renderer == RENDERER_DIRECTWRITE) ? NULL : lpDx);
-		b_ret = painter.paint(x, y, options, lprect, c, dx, a_glyph_run);
-		painter.end();
+		painter->end();
 	}
+
+	delete painter;
 
 	if (!b_ret)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -157,7 +199,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	// put gdimm path at the end of the buffer, leave space at the beginning for code
 	const DWORD path_offset = sys_info.dwPageSize - MAX_PATH * sizeof(wchar_t);
-	dw_ret = GetModuleFileNameW(h_self, (wchar_t *)(inject_buffer + path_offset), MAX_PATH);
+	dw_ret = GetModuleFileNameW(h_self, reinterpret_cast<wchar_t *>(inject_buffer + path_offset), MAX_PATH);
 	assert(dw_ret != 0);
 
 	// get eip of the spawned thread
@@ -171,7 +213,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 
 	register BYTE *p = inject_buffer;
 
-#define emit_(t, x)	*(t* UNALIGNED) p = (t)(x); p += sizeof(t)
+#define emit_(t, x)	*reinterpret_cast<t* UNALIGNED>(p) = (t)(x); p += sizeof(t)
 #define emit_db(b)	emit_(BYTE, b)
 #define emit_dw(w)	emit_(WORD, w)
 #define emit_dd(d)	emit_(DWORD, d)
@@ -201,7 +243,7 @@ void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 	assert(b_ret);
 
 	// set eip to the entry point of the injection code
-	ctx.Eip = (DWORD) inject_base;
+	ctx.Eip = reinterpret_cast<DWORD>(inject_base);
 	b_ret = SetThreadContext(lpProcessInformation->hThread, &ctx);
 	assert(b_ret);
 }
@@ -280,7 +322,7 @@ CreateProcessAsUserW_hook(
 }
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
-bool GetTextExtentPoint32_hook(HDC hdc, LPCWSTR lpString, int c, LPSIZE psize, bool is_glyph_index)
+bool GetTextExtentPoint32_hook(HDC hdc, bool is_glyph_index, LPCWSTR lpString, int c, LPSIZE psize)
 {
 	bool b_ret;
 
@@ -294,48 +336,21 @@ bool GetTextExtentPoint32_hook(HDC hdc, LPCWSTR lpString, int c, LPSIZE psize, b
 	if (!context.init(hdc))
 		return false;
 
-	gdimm_renderer *renderer;
 	glyph_run a_glyph_run;
-	switch (context.setting_cache->renderer)
-	{
-	case RENDERER_CLEARTYPE:
-		return false;
-	case RENDERER_GETGLYPHOUTLINE:
-		renderer = new gdimm_ggo_renderer;
-		break;
-	case RENDERER_DIRECTWRITE:
-		renderer = new gdimm_dw_renderer;
-		break;
-	case RENDERER_WIC:
-		break;
-	default:
-		renderer = new gdimm_ft_renderer;
-		break;
-	}
+	GLYPH_CACHE_LEVEL cache_level;
 
-	b_ret = renderer->begin(&context);
-	if (b_ret)
-	{
-		renderer->fetch_glyph_run(lpString, c, is_glyph_index, NULL, false, a_glyph_run);
-		renderer->end();
-	}
-	delete renderer;
-
+	b_ret = fetch_glyph_run(is_glyph_index, false, lpString, c, NULL, context, a_glyph_run, cache_level);
 	if (!b_ret)
 		return false;
+	
+	if (cache_level < GLYPH_RUN)
+		return false;
 
-	psize->cx = a_glyph_run.back().bbox.right - a_glyph_run.front().bbox.left;
+	psize->cx = get_glyph_run_width(a_glyph_run, false);
 	psize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
 
 	for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++)
 		psize->cy = max(psize->cy, iter->bbox.bottom - iter->bbox.top);
-
-	if (psize->cy > context.outline_metrics->otmTextMetrics.tmHeight)
-	{
-		gdipp_debug_output(L"exceeds cell height:");
-		gdipp_debug_output(context.outline_metrics->otmTextMetrics.tmHeight);
-		gdipp_debug_output(psize->cy);
-	}
 
 	return true;
 }
@@ -377,7 +392,7 @@ GetTextExtentPoint32W_hook(
 	LPSIZE psize
 	)
 {
-	if (GetTextExtentPoint32_hook(hdc, lpString, c, psize, false))
+	if (GetTextExtentPoint32_hook(hdc, false, lpString, c, psize))
 		return TRUE;
 	else
 		return GetTextExtentPoint32W(hdc, lpString, c, psize);
@@ -385,7 +400,7 @@ GetTextExtentPoint32W_hook(
 
 BOOL WINAPI GetTextExtentPointI_hook(HDC hdc, LPWORD pgiIn, int cgi, LPSIZE psize)
 {
-	if (GetTextExtentPoint32_hook(hdc, (LPCWSTR) pgiIn, cgi, psize, true))
+	if (GetTextExtentPoint32_hook(hdc, true, (LPCWSTR) pgiIn, cgi, psize))
 		return TRUE;
 	else
 		return GetTextExtentPointI(hdc, pgiIn, cgi, psize);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "painter.h"
+#include "obj_reg.h"
 
 using namespace std;
 
@@ -16,7 +17,9 @@ class gdimm_gdi_painter : public gdimm_painter
 		POINT baseline;
 	};
 
-	HDC _hdc_canvas;
+	static HDC _hdc_canvas;
+	static gdimm_obj_registry _obj_reg;
+
 	RGBQUAD _text_rgb_gamma;
 
 	static void adjust_glyph_run_distance(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run &a_glyph_run);
@@ -48,8 +51,7 @@ class gdimm_gdi_painter : public gdimm_painter
 
 public:
 	gdimm_gdi_painter();
-	~gdimm_gdi_painter();
 
 	virtual bool begin(const dc_context *context);
-	bool paint(int x, int y, UINT options, CONST RECT *lprect, UINT count, CONST INT *lpDx, const glyph_run &a_glyph_run);
+	bool paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx);
 };
