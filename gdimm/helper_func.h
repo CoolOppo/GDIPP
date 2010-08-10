@@ -38,6 +38,8 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 // get outline metrics of the DC
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
 
+uint64_t get_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode);
+
 unsigned char get_gdi_weight_class(unsigned short weight);
 
 int get_glyph_bmp_width(const FT_Bitmap &bitmap);
@@ -55,6 +57,8 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 const FT_Glyph make_empty_glyph();
 
 const FT_Glyph make_empty_bmp_glyph(const FT_Glyph empty_glyph);
+
+bool mb_to_wc(const char *multi_byte_str, int count, wstring &wide_char_str);
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 

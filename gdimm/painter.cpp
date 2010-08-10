@@ -6,9 +6,10 @@ gdimm_painter::~gdimm_painter()
 {
 }
 
-bool gdimm_painter::begin(const dc_context *context)
+bool gdimm_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
 {
 	_context = context;
+	_render_mode = render_mode;
 
 	if (_context->setting_cache->max_height != 0 &&
 		_context->setting_cache->max_height < _context->outline_metrics->otmTextMetrics.tmHeight)

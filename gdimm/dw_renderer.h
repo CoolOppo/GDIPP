@@ -81,5 +81,5 @@ class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 public:
 	gdimm_dw_renderer();
 
-	bool begin(const dc_context *context);
+	bool begin(const dc_context *context, FT_Render_Mode render_mode);
 };

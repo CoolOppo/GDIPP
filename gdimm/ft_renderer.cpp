@@ -111,90 +111,83 @@ void gdimm_ft_renderer::oblique_outline(const FT_Outline *outline, double slant_
 	FT_Outline_Transform(outline, &oblique_mat);
 }
 
-const FT_BitmapGlyph gdimm_ft_renderer::render_glyph(WORD glyph_index,
+const FT_Glyph gdimm_ft_renderer::generate_glyph(WORD glyph_index,
 	const FTC_Scaler scaler,
+	FT_Render_Mode render_mode,
 	FT_F26Dot6 embolden,
 	FT_ULong load_flags,
 	bool is_italic,
+	bool request_outline,
 	uint64_t font_trait)
 {
 	FT_Error ft_error;
 
+	if (!request_outline)
+	{
+		// lookup if there is already a cached glyph
+		FT_Glyph cached_glyph = _glyph_cache.lookup_glyph(font_trait, glyph_index, true);
+		if (cached_glyph != NULL)
+			return cached_glyph;
+	}
+
+	// no cached glyph, or outline glyph is requested, lookup outline
+
+	FT_Glyph glyph, cached_glyph;
+
+	{
+		// the FreeType function seems not thread-safe
+		gdimm_lock lock(LOCK_FREETYPE);
+		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &cached_glyph, NULL);
+		if (ft_error != 0)
+			return NULL;
+	}
+	
+	// some fonts are embedded with pre-rendered glyph bitmap
+	// in that case, use original ExtTextOutW
+	if (cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
+		return NULL;
+
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
 	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && !is_italic);
+	const bool need_embolden = (embolden != 0);
+	const bool need_glyph_copy = (is_oblique || need_embolden);
 
-	// lookup if there is already a cached glyph
-	FT_BitmapGlyph bmp_glyph = _glyph_cache.lookup_glyph(font_trait, glyph_index, true);
-	if (bmp_glyph == NULL)
+	if (need_glyph_copy)
 	{
-		// no cached glyph, lookup outline and rasterize
+		FT_Glyph_Copy(cached_glyph, &glyph);
+		FT_Outline *glyph_outline = &(reinterpret_cast<FT_OutlineGlyph>(glyph)->outline);
 
-		FT_Glyph glyph, ft_cached_glyph;
+		// it seems faster if oblique first, and then embolden
+		if (is_oblique)
+			oblique_outline(glyph_outline, 0.3);
 
-		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &ft_cached_glyph, NULL);
-		if (ft_error != 0)
-			return NULL;
-	
-		// some fonts are embedded with pre-rendered glyph bitmap
-		// in that case, use original ExtTextOutW
-		if (ft_cached_glyph->format != FT_GLYPH_FORMAT_OUTLINE)
-			return NULL;
-
-		const bool need_embolden = (embolden != 0);
-		const bool need_glyph_copy = (is_oblique || need_embolden);
-
-		if (need_glyph_copy)
+		if (need_embolden)
 		{
-			FT_Glyph_Copy(ft_cached_glyph, &glyph);
-			FT_Outline *glyph_outline = &(reinterpret_cast<FT_OutlineGlyph>(glyph)->outline);
-
-			// it seems faster if oblique first, and then embolden
-			if (is_oblique)
-				oblique_outline(glyph_outline, 0.3);
-
-			if (need_embolden)
-			{
-				ft_error = FT_Outline_Embolden(glyph_outline, embolden);
-				assert(ft_error == 0);
-			}
+			ft_error = FT_Outline_Embolden(glyph_outline, embolden);
+			assert(ft_error == 0);
 		}
-		else
-			glyph = ft_cached_glyph;
-
-		// glyph outline -> glyph bitmap conversion
-		// this FreeType function seems not thread-safe
-
-		ft_error = FT_Glyph_To_Bitmap(&glyph, _context->render_mode, NULL, need_glyph_copy);
-		if (ft_error != 0)
-			return NULL;
-
-		// add glyph into cache
-		bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
 	}
+	else
+		glyph = cached_glyph;
 
-	_glyph_cache.store_glyph(font_trait, glyph_index, true, bmp_glyph);
-
-	return bmp_glyph;
-}
-
-void gdimm_ft_renderer::update_glyph_pos(glyph_run &new_glyph_run)
-{
-	POINT pen_pos = {};
-	
-	for (glyph_run::iterator iter = new_glyph_run.begin(); iter != new_glyph_run.end(); iter++)
+	if (!request_outline)
 	{
-		iter->bbox.left += pen_pos.x;
-		iter->bbox.top = pen_pos.y;
-		
-		pen_pos.x += from_16dot16(iter->glyph->root.advance.x) + _char_extra;
-		pen_pos.y += from_16dot16(iter->glyph->root.advance.y);
+		// glyph outline -> glyph bitmap conversion
+		{
+			// the FreeType function seems not thread-safe
+			gdimm_lock lock(LOCK_FREETYPE);
+			ft_error = FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, need_glyph_copy);
+			if (ft_error != 0)
+				return NULL;
+		}
 
-		iter->bbox.right += pen_pos.x;
-		iter->bbox.bottom = pen_pos.y;
+		_glyph_cache.store_glyph(font_trait, glyph_index, true, glyph);
 	}
+
+	return glyph;
 }
 
-bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline)
 {
 	gdimm_font_man font_man;
 
@@ -220,7 +213,7 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 		curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class(), static_cast<unsigned char>(_context->log_font.lfWeight));
 	}
 
-	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _context->render_mode);
+	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
 
 	if (is_glyph_index)
 	{
@@ -229,16 +222,23 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 		for (UINT i = 0; i < c; i++)
 		{
 			glyph_node new_glyph = {};
-			new_glyph.glyph = render_glyph(lpString[i],
+			new_glyph.glyph = generate_glyph(lpString[i],
 				&scaler,
+				_render_mode,
 				curr_embolden,
 				curr_load_flags,
 				os2_metrics->is_italic(),
+				request_outline,
 				curr_font_trait);
 
 			if (new_glyph.glyph == NULL)
-				new_glyph.glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
-			else if (curr_setting_cache->kerning && i > 0)
+			{
+				if (request_outline)
+					return false;
+				else
+					new_glyph.glyph = empty_glyph;
+			}
+			else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 			{
 				new_glyph.bbox.left = font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
 				new_glyph.bbox.right = new_glyph.bbox.left;
@@ -249,7 +249,7 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	}
 	else
 	{
-		FT_Render_Mode curr_render_mode = _context->render_mode;
+		FT_Render_Mode curr_render_mode = _render_mode;
 
 		UINT rendered_count = 0;
 		int font_link_index = 0;
@@ -269,20 +269,27 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 					continue;
 
 				// do not render control characters, even the corresponding glyphs exist in font
-				if (iswcntrl(final_string[i]))
-					iter->glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
+				if (iswcntrl(final_string[i]) && !request_outline)
+					iter->glyph = empty_glyph;
 				else if (glyph_indices[i] != 0xffff)
 				{
-					iter->glyph = render_glyph(glyph_indices[i],
+					iter->glyph = generate_glyph(glyph_indices[i],
 						&scaler,
+						curr_render_mode,
 						curr_embolden,
 						curr_load_flags, 
 						os2_metrics->is_italic(),
+						request_outline,
 						curr_font_trait);
 
 					if (iter->glyph == NULL)
-						iter->glyph = reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
-					else if (curr_setting_cache->kerning && i > 0)
+					{
+						if (request_outline)
+							return false;
+						else
+							iter->glyph = empty_glyph;
+					}
+					else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 					{
 						iter->bbox.left = font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
 						iter->bbox.right = iter->bbox.left;
@@ -317,12 +324,6 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 			linked_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
 			wcsncpy_s(linked_log_font.lfFaceName, curr_link->font_family.c_str(), LF_FACESIZE);
 
-#ifdef _M_X64
-			curr_font_trait = MurmurHash64A(&linked_log_font, sizeof(linked_log_font), 0);
-#else
-			curr_font_trait = MurmurHash64B(&linked_log_font, sizeof(linked_log_font), 0);
-#endif // _M_X64
-
 			font_id = font_man.link_font(linked_log_font, curr_font_face);
 			assert(font_id < 0);
 
@@ -341,16 +342,72 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 			
 			const gdimm_setting_trait setting_trait = {curr_font_face.c_str(), os2_metrics->get_weight_class(), os2_metrics->is_italic()};
 			curr_setting_cache = setting_cache_instance.lookup(setting_trait);
-			
+
+			if (!get_render_mode(curr_setting_cache, _context->bmp_header.biBitCount, _context->log_font.lfQuality, curr_render_mode))
+				return false;
+
+			curr_font_trait = get_font_trait(linked_log_font, curr_render_mode);
+
 			curr_embolden = 0;
 			if (linked_log_font.lfWeight != FW_DONTCARE)
 				curr_embolden = get_embolden(curr_setting_cache, setting_trait.weight_class, static_cast<unsigned char>(linked_log_font.lfWeight));
 
-			curr_load_flags = get_load_flags(curr_setting_cache, _context->render_mode);
+			curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
 		}
 	}
 
-	update_glyph_pos(new_glyph_run);
-
 	return true;
+}
+
+bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+{
+	bool b_ret;
+
+	b_ret = generate_glyph_run(is_glyph_index, lpString, c, new_glyph_run, false);
+	if (b_ret)
+	{
+		POINT pen_pos = {};
+
+		for (glyph_run::iterator iter = new_glyph_run.begin(); iter != new_glyph_run.end(); iter++)
+		{
+			iter->bbox.left += pen_pos.x;
+			iter->bbox.top = pen_pos.y;
+
+			pen_pos.x += from_16dot16(iter->glyph->advance.x) + _char_extra;
+			pen_pos.y += from_16dot16(iter->glyph->advance.y);
+
+			iter->bbox.right += pen_pos.x;
+			iter->bbox.bottom = pen_pos.y;
+		}
+	}
+
+	return b_ret;
+}
+
+bool gdimm_ft_renderer::get_glyph_metrics(wchar_t glyph_char, bool is_glyph_index, LPGLYPHMETRICS lpgm)
+{
+	bool b_ret;
+	FT_Error ft_error;
+
+	glyph_run new_glyph_run;
+	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
+	if (b_ret)
+	{
+		assert(new_glyph_run.size() == 1);
+
+		const FT_Glyph target_glyph = new_glyph_run.front().glyph;
+
+		FT_BBox glyph_bbox;
+		ft_error = FT_Outline_Get_BBox(&(reinterpret_cast<FT_OutlineGlyph>(target_glyph)->outline), &glyph_bbox);
+		assert(ft_error == 0);
+
+		lpgm->gmBlackBoxX = from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
+		lpgm->gmBlackBoxY = from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
+		lpgm->gmptGlyphOrigin.x = from_26dot6(glyph_bbox.xMin);
+		lpgm->gmptGlyphOrigin.y = from_26dot6(glyph_bbox.yMax);
+		lpgm->gmCellIncX = static_cast<short>(from_16dot16(target_glyph->advance.x));
+		lpgm->gmCellIncY = static_cast<short>(from_16dot16(target_glyph->advance.y));
+	}
+
+	return b_ret;
 }

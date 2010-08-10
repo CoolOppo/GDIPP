@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
 
-const FT_BitmapGlyph gdimm_glyph_cache::lookup_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index)
+const FT_Glyph gdimm_glyph_cache::lookup_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index)
 {
 	map<uint64_t, index_to_bmp_map>::const_iterator trait_iter = _glyph_bmp_store.find(font_trait);
 	if (trait_iter == _glyph_bmp_store.end())
@@ -15,12 +15,12 @@ const FT_BitmapGlyph gdimm_glyph_cache::lookup_glyph(uint64_t font_trait, FT_UIn
 	return index_iter->second;
 }
 
-bool gdimm_glyph_cache::store_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index, const FT_BitmapGlyph glyph)
+bool gdimm_glyph_cache::store_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
 {
 	const pair<map<uint64_t, index_to_bmp_map>::iterator, bool> trait_insert_ret = _glyph_bmp_store.insert(pair<uint64_t, index_to_bmp_map>(font_trait, index_to_bmp_map()));
 
 	const FT_Int internal_index = index * (is_glyph_index ? 1 : -1);
-	const pair<index_to_bmp_map::const_iterator, bool> index_insert_ret = trait_insert_ret.first->second.insert(pair<FT_Int, const FT_BitmapGlyph>(internal_index, glyph));
+	const pair<index_to_bmp_map::const_iterator, bool> index_insert_ret = trait_insert_ret.first->second.insert(pair<FT_Int, const FT_Glyph>(internal_index, glyph));
 
 	return index_insert_ret.second;
 }
@@ -58,7 +58,7 @@ bool gdimm_glyph_cache::erase_font_trait(uint64_t font_trait)
 	if (bmp_trait_iter != _glyph_bmp_store.end())
 	{
 		for (index_to_bmp_map::const_iterator index_iter = bmp_trait_iter->second.begin(); index_iter != bmp_trait_iter->second.end(); index_iter++)
-			FT_Done_Glyph((FT_Glyph) index_iter->second);
+			FT_Done_Glyph(index_iter->second);
 
 		_glyph_bmp_store.erase(font_trait);
 	}

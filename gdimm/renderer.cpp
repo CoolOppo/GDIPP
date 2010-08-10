@@ -18,23 +18,15 @@ bool gdimm_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, 
 	return true;
 }
 
-bool gdimm_renderer::begin(const dc_context *context)
+bool gdimm_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)
 {
 	_context = context;
+	_render_mode = render_mode;
 
 	_char_extra = GetTextCharacterExtra(_context->hdc);
 	assert(_char_extra != 0x8000000);
 
-	// exclude the bytes after the face name, which may contain junk data
-	const int lf_metric_size = sizeof(_context->log_font) - sizeof(_context->log_font.lfFaceName);
-	const int lf_facename_size = static_cast<const int>((wcslen(_context->log_font.lfFaceName) * sizeof(wchar_t)));
-	const int lf_total_size = lf_metric_size + lf_facename_size;
-
-#ifdef _M_X64
-	_font_trait = MurmurHash64A(&_context->log_font, lf_total_size, 0);
-#else
-	_font_trait = MurmurHash64B(&_context->log_font, lf_total_size, 0);
-#endif // _M_X64
+	_font_trait = get_font_trait(_context->log_font, render_mode);
 
 	return true;
 }
@@ -43,7 +35,7 @@ void gdimm_renderer::end()
 {
 }
 
-void gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, int c, CONST INT *lpDx, glyph_run &a_glyph_run)
+bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, int c, CONST INT *lpDx, glyph_run &a_glyph_run)
 {
 	bool b_ret;
 
@@ -65,8 +57,11 @@ void gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 	if (!b_ret)
 	{
 		b_ret = render(is_glyph_index, is_pdy, lpString, c, lpDx, a_glyph_run);
-		assert(b_ret);
+		if (!b_ret)
+			return false;
 
 		_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
 	}
+
+	return true;
 }

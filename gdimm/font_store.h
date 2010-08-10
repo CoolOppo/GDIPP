@@ -16,14 +16,10 @@ class gdimm_font_store
 	// pointers become invalid
 	map<long, font_info> _id_to_info;
 
-	typedef map<long, const gdimm_font_man *> font_man_tls_map;
-	DWORD _tls_index;
-	list<font_man_tls_map *> _all_font_man_tls;
+	DWORD _font_man_tls_index;
 
 	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
 	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
-
-	font_man_tls_map *create_font_man_tls();
 
 public:
 	gdimm_font_store();
@@ -32,6 +28,6 @@ public:
 	font_info *lookup_font(long font_id);
 	long register_font(HDC font_holder, const wchar_t *font_face);
 	long link_font(HDC font_holder, HFONT linked_hfont, wstring &linked_font_face);
-	void register_font_man(long font_id, const gdimm_font_man *font_man);
-	const gdimm_font_man *lookup_font_man(long font_id);
+	BOOL register_thread_font_man(gdimm_font_man *font_man);
+	const gdimm_font_man *lookup_thread_font_man();
 };

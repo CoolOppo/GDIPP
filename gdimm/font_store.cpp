@@ -11,8 +11,8 @@
 
 gdimm_font_store::gdimm_font_store()
 {
-	_tls_index = TlsAlloc();
-	assert(_tls_index != TLS_OUT_OF_INDEXES);
+	_font_man_tls_index = TlsAlloc();
+	assert(_font_man_tls_index != TLS_OUT_OF_INDEXES);
 }
 
 gdimm_font_store::~gdimm_font_store()
@@ -25,12 +25,7 @@ gdimm_font_store::~gdimm_font_store()
 		DeleteObject(iter->second.linked_hfont);
 	}
 
-	for (list<font_man_tls_map *>::const_iterator iter = _all_font_man_tls.begin(); iter != _all_font_man_tls.end(); iter++)
-	{
-		delete *iter;
-	}
-
-	b_ret = TlsFree(_tls_index);
+	b_ret = TlsFree(_font_man_tls_index);
 	assert(b_ret);
 }
 
@@ -96,24 +91,6 @@ ULONG gdimm_font_store::get_ttc_face_index(HDC font_holder, DWORD ttc_file_size)
 	}
 
 	return ULONG_MAX;
-}
-
-gdimm_font_store::font_man_tls_map *gdimm_font_store::create_font_man_tls()
-{
-	BOOL b_ret;
-
-	font_man_tls_map *curr_font_man_tls = (font_man_tls_map*) TlsGetValue(_tls_index);
-	if (curr_font_man_tls == NULL)
-	{
-		curr_font_man_tls = new font_man_tls_map;
-		
-		b_ret = TlsSetValue(_tls_index, curr_font_man_tls);
-		assert(b_ret);
-
-		_all_font_man_tls.push_back(curr_font_man_tls);
-	}
-
-	return curr_font_man_tls;
 }
 
 font_info *gdimm_font_store::lookup_font(long font_id)
@@ -220,20 +197,12 @@ long gdimm_font_store::link_font(HDC font_holder, HFONT linked_hfont, wstring &l
 	return iter->second;
 }
 
-void gdimm_font_store::register_font_man(long font_id, const gdimm_font_man *font_man)
+BOOL gdimm_font_store::register_thread_font_man(gdimm_font_man *font_man)
 {
-	font_man_tls_map *font_man_tls = create_font_man_tls();
-
-	(*font_man_tls)[font_id] = font_man;
+	return TlsSetValue(_font_man_tls_index, font_man);
 }
 
-const gdimm_font_man *gdimm_font_store::lookup_font_man(long font_id)
+const gdimm_font_man *gdimm_font_store::lookup_thread_font_man()
 {
-	font_man_tls_map *font_man_tls = create_font_man_tls();
-
-	font_man_tls_map::const_iterator iter = font_man_tls->find(font_id);
-	if (iter == font_man_tls->end())
-		return NULL;
-	else
-		return iter->second;
+	return static_cast<const gdimm_font_man *>(TlsGetValue(_font_man_tls_index));
 }

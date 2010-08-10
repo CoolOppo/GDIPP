@@ -6,7 +6,6 @@
 ID2D1Factory *gdimm_wic_painter::_d2d_factory = NULL;
 IDWriteFactory *gdimm_wic_painter::_dw_factory = NULL;
 IDWriteGdiInterop *gdimm_wic_painter::_dw_gdi_interop = NULL;
-HDC gdimm_wic_painter::_hdc_canvas = NULL;
 gdimm_obj_registry gdimm_wic_painter::_obj_reg;
 
 gdimm_wic_painter::gdimm_wic_painter()
@@ -35,14 +34,6 @@ gdimm_wic_painter::gdimm_wic_painter()
 		assert(hr == S_OK);
 
 		_obj_reg.register_com_ptr(_dw_gdi_interop);
-	}
-
-	if (_hdc_canvas == NULL)
-	{
-		_hdc_canvas = CreateCompatibleDC(NULL);
-		assert(_hdc_canvas != NULL);
-
-		_obj_reg.register_hdc(_hdc_canvas);
 	}
 }
 
@@ -163,7 +154,7 @@ void gdimm_wic_painter::set_param(ID2D1RenderTarget *render_target)
 	HRESULT hr;
 
 	DWRITE_RENDERING_MODE dw_render_mode;
-	if (_context->render_mode == FT_RENDER_MODE_MONO)
+	if (_render_mode == FT_RENDER_MODE_MONO)
 		dw_render_mode = DWRITE_RENDERING_MODE_ALIASED;
 	else
 	{
@@ -185,7 +176,7 @@ void gdimm_wic_painter::set_param(ID2D1RenderTarget *render_target)
 	}
 
 	D2D1_TEXT_ANTIALIAS_MODE text_aa_mode;
-	switch (_context->render_mode)
+	switch (_render_mode)
 	{
 	case FT_RENDER_MODE_NORMAL:
 	case FT_RENDER_MODE_LIGHT:
@@ -362,13 +353,17 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 	return !!paint_success;
 }
 
-bool gdimm_wic_painter::begin(const dc_context *context)
+bool gdimm_wic_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
 {
-	if (!gdimm_painter::begin(context))
+	if (!gdimm_painter::begin(context, render_mode))
 		return false;
 
 	// ignore rotated DC
 	if (_context->log_font.lfEscapement % 3600 != 0)
+		return false;
+
+	_hdc_canvas = CreateCompatibleDC(NULL);
+	if (_hdc_canvas == NULL)
 		return false;
 
 	switch (_context->setting_cache->hinting)
@@ -393,6 +388,11 @@ bool gdimm_wic_painter::begin(const dc_context *context)
 	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
 
 	return true;
+}
+
+void gdimm_wic_painter::end()
+{
+	DeleteDC(_hdc_canvas);
 }
 
 bool gdimm_wic_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)

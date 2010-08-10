@@ -3,10 +3,6 @@
 	<version>0.8.3</version>
 	
 	<gdimm>
-		<process name="chrome\.exe">
-			<renderer>10</renderer>
-		</process>
-		
 		<process name=".+\.exe">
 			<freetype>
 				<cache_max_faces>8</cache_max_faces>

@@ -23,7 +23,7 @@ bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metri
 	return (outline_buf_len != GDI_ERROR);
 }
 
-const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
+const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	FT_Error ft_error;
 
@@ -42,7 +42,7 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 		if (!get_glyph_metrics(ch, glyph_metrics))
 			return NULL;
 
-		return reinterpret_cast<FT_BitmapGlyph>(empty_glyph);
+		return empty_glyph;
 	}
 	else
 	{
@@ -134,15 +134,18 @@ const FT_BitmapGlyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETR
 
 		// convert outline to bitmap
 		FT_Glyph generic_glyph = reinterpret_cast<FT_Glyph>(&outline_glyph);
-		ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _context->render_mode, NULL, false);
-		if (ft_error != 0)
-			return NULL;
-		assert(generic_glyph->format == FT_GLYPH_FORMAT_BITMAP);
 
-		const FT_BitmapGlyph bmp_glyph = reinterpret_cast<const FT_BitmapGlyph>(generic_glyph);
-		_glyph_cache.store_glyph(_font_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), bmp_glyph);
+		{
+			// the FreeType function seems not thread-safe
+			gdimm_lock lock(LOCK_FREETYPE);
+			ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _render_mode, NULL, false);
+			if (ft_error != 0)
+				return NULL;
+		}
 
-		return bmp_glyph;
+		_glyph_cache.store_glyph(_font_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), generic_glyph);
+
+		return generic_glyph;
 	}
 }
 
@@ -203,13 +206,5 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 		new_glyph_run.push_back(new_glyph);
 	}
 
-	return true;
-}
-
-bool gdimm_ggo_renderer::begin(const dc_context *context)
-{
-	if (!gdimm_renderer::begin(context))
-		return false;
-
-	return true;
+	return (!new_glyph_run.empty());
 }

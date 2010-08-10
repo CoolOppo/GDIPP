@@ -33,7 +33,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	HRESULT hr;
 
 	DWRITE_RENDERING_MODE dw_render_mode;
-	if (_context->render_mode == FT_RENDER_MODE_LCD)
+	if (_render_mode == FT_RENDER_MODE_LCD)
 	{
 		switch (_context->setting_cache->hinting)
 		{
@@ -57,7 +57,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	DWRITE_TEXTURE_TYPE dw_texture_type;
 	int bytes_per_pixel;
 	char ft_pixel_mode;
-	if (_context->render_mode == FT_RENDER_MODE_LCD)
+	if (_render_mode == FT_RENDER_MODE_LCD)
 	{
 		dw_texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 		bytes_per_pixel = 3;
@@ -87,22 +87,22 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 
 	if (IsRectEmpty(&texture_rect))
 		return false;
-
-	glyph_node new_glyph;
 	
-	new_glyph.glyph = new FT_BitmapGlyphRec();
-	new_glyph.glyph->left = texture_rect.left;
-	new_glyph.glyph->top = -texture_rect.top;
-	new_glyph.glyph->bitmap.rows = texture_rect.bottom - texture_rect.top;
-	new_glyph.glyph->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
-	new_glyph.glyph->bitmap.pitch = new_glyph.glyph->bitmap.width;
-	new_glyph.glyph->bitmap.pixel_mode = ft_pixel_mode;
+	FT_BitmapGlyph new_bmp_glyph = new FT_BitmapGlyphRec();
+	new_bmp_glyph->left = texture_rect.left;
+	new_bmp_glyph->top = -texture_rect.top;
+	new_bmp_glyph->bitmap.rows = texture_rect.bottom - texture_rect.top;
+	new_bmp_glyph->bitmap.width = (texture_rect.right - texture_rect.left) * bytes_per_pixel;
+	new_bmp_glyph->bitmap.pitch = new_bmp_glyph->bitmap.width;
+	new_bmp_glyph->bitmap.pixel_mode = ft_pixel_mode;
 
-	const int bmp_size = new_glyph.glyph->bitmap.pitch * new_glyph.glyph->bitmap.rows;
-	new_glyph.glyph->bitmap.buffer = new BYTE[bmp_size];
-	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_glyph.glyph->bitmap.buffer, bmp_size);
+	const int bmp_size = new_bmp_glyph->bitmap.pitch * new_bmp_glyph->bitmap.rows;
+	new_bmp_glyph->bitmap.buffer = new BYTE[bmp_size];
+	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_bmp_glyph->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
 
+	glyph_node new_glyph;
+	new_glyph.glyph = reinterpret_cast<FT_Glyph>(new_bmp_glyph);
 	new_glyph.bbox.left = static_cast<LONG>(x);
 	new_glyph.bbox.top = static_cast<LONG>(y);
 	new_glyph.bbox.right = new_glyph.bbox.left + (texture_rect.right - texture_rect.left);
@@ -397,9 +397,9 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawInlineObject(
 
 //////////////////////////////////////////////////////////////////////////
 
-bool gdimm_dw_renderer::begin(const dc_context *context)
+bool gdimm_dw_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)
 {
-	if (!gdimm_renderer::begin(context))
+	if (!gdimm_renderer::begin(context, render_mode))
 		return false;
 	
 	// ignore rotated DC

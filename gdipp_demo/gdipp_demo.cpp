@@ -17,8 +17,6 @@ int total_count = 5000;
 vector<const wstring> candidate_font;
 bool random_text = false;
 
-wchar_t window_title[GDIPP_DEMO_MAX_STR_LEN];
-
 HMODULE h_gdimm = NULL;
 WCHAR gdimm_path[MAX_PATH];
 
@@ -89,11 +87,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 #ifdef test
 	wcs_convert(gdipp_get_demo_setting(L"count"), &total_count);
 	candidate_font = gdipp_get_demo_fonts();
+	
+	// if no font is specified, use Tahoma
 	if (candidate_font.empty())
 		candidate_font.push_back(L"Tahoma");
 	wcs_convert(gdipp_get_demo_setting(L"random_text"), &random_text);
-
-	window_title[0] = L'\0';
 #endif // test
 
 	// If you are running on NT 4.0 or higher you can use the following call instead to 

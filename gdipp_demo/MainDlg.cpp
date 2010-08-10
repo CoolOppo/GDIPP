@@ -90,9 +90,6 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 {
 	CPaintDC dc(m_hWnd);
 
-	if (window_title[0] == L'\0')
-		GetWindowText(window_title, GDIPP_DEMO_MAX_STR_LEN);
-
 	if (rendered == 0)
 	{
 		srand(static_cast<unsigned int>(time(NULL)));
@@ -152,7 +149,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 		// show the rendered text count in the window title
 		wchar_t new_title[GDIPP_DEMO_MAX_STR_LEN];
-		wsprintf(new_title, TEXT("%s - %u"), window_title, rendered);
+		wsprintf(new_title, TEXT("gdipp Demo - %u"), rendered);
 		SetWindowText(new_title);
 #endif // test
 

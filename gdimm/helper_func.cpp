@@ -132,6 +132,20 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
+uint64_t get_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
+{
+	// exclude the bytes after the face name, which may contain junk data
+	const int lf_metric_size = sizeof(log_font) - sizeof(log_font.lfFaceName);
+	const int lf_facename_size = static_cast<const int>((wcslen(log_font.lfFaceName) * sizeof(wchar_t)));
+	const int lf_total_size = lf_metric_size + lf_facename_size;
+
+#ifdef _M_X64
+	return MurmurHash64A(&log_font, lf_total_size, render_mode);
+#else
+	return MurmurHash64B(&log_font, lf_total_size, render_mode);
+#endif // _M_X64
+}
+
 unsigned char get_gdi_weight_class(unsigned short weight)
 {
 	/*
@@ -174,7 +188,7 @@ LONG get_glyph_run_width(const glyph_run &a_glyph_run, bool is_actual_width)
 		{
 			// actual width is the width including all bitmap content
 			// while logical width only includes the glyph bounding box
-			glyph_run_right = max(glyph_run_right, a_glyph_run.back().bbox.left + get_glyph_bmp_width(a_glyph_run.back().glyph->bitmap));
+			glyph_run_right = max(glyph_run_right, a_glyph_run.back().bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(a_glyph_run.back().glyph)->bitmap));
 		}
 
 		return glyph_run_right - a_glyph_run.front().bbox.left;
@@ -183,7 +197,7 @@ LONG get_glyph_run_width(const glyph_run &a_glyph_run, bool is_actual_width)
 	{
 		glyph_run_right = a_glyph_run.front().bbox.right;
 		if (is_actual_width)
-			glyph_run_right = max(glyph_run_right, a_glyph_run.front().bbox.left + get_glyph_bmp_width(a_glyph_run.front().glyph->bitmap));
+			glyph_run_right = max(glyph_run_right, a_glyph_run.front().bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(a_glyph_run.front().glyph)->bitmap));
 
 		return glyph_run_right - a_glyph_run.back().bbox.left;
 	}
@@ -298,6 +312,20 @@ const FT_Glyph make_empty_bmp_glyph(const FT_Glyph empty_glyph)
 	assert(empty_bmp_glyph->format == FT_GLYPH_FORMAT_BITMAP);
 
 	return empty_bmp_glyph;
+}
+
+bool mb_to_wc(const char *multi_byte_str, int count, wstring &wide_char_str)
+{
+	int wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, NULL, 0);
+	if (wc_str_len == 0)
+		return false;
+
+	wide_char_str.resize(wc_str_len);
+	wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, &wide_char_str[0], wc_str_len);
+	if (wc_str_len == 0)
+		return false;
+
+	return true;
 }
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)

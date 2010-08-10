@@ -21,11 +21,11 @@ class gdimm_wic_painter : public gdimm_painter
 	static ID2D1Factory *_d2d_factory;
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
-	static HDC _hdc_canvas;
 	static gdimm_obj_registry _obj_reg;
 
 	vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;
+	HDC _hdc_canvas;
 	FLOAT _pixels_per_dip;
 	bool _use_gdi_natural;
 	gdimm_wic_dib _wic_bitmap;
@@ -40,6 +40,7 @@ class gdimm_wic_painter : public gdimm_painter
 public:
 	gdimm_wic_painter();
 
-	virtual bool begin(const dc_context *context);
+	virtual bool begin(const dc_context *context, FT_Render_Mode render_mode);
+	void end();
 	bool paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx);
 };

@@ -15,7 +15,7 @@ class gdimm_glyph_cache
 	negative index stands for Unicode code point
 	0 is not used for either
 	*/
-	typedef map<FT_Int, const FT_BitmapGlyph> index_to_bmp_map;
+	typedef map<FT_Int, const FT_Glyph> index_to_bmp_map;
 	
 	typedef map<uint64_t, glyph_run> hash_to_run_map;
 
@@ -24,8 +24,8 @@ class gdimm_glyph_cache
 	lru_list<uint64_t> _glyph_run_lru;
 
 public:
-	const FT_BitmapGlyph lookup_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index);
-	bool store_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index, const FT_BitmapGlyph glyph);
+	const FT_Glyph lookup_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index);
+	bool store_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph);
 	bool lookup_glyph_run(uint64_t font_trait, uint64_t str_hash, glyph_run &a_glyph_run);
 	bool store_glyph_run(uint64_t font_trait, uint64_t str_hash, const glyph_run &a_glyph_run);
 	bool erase_font_trait(uint64_t font_trait);

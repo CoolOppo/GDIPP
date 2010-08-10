@@ -13,7 +13,6 @@ public:
 	HDC hdc;
 	LOGFONTW log_font;
 	OUTLINETEXTMETRICW *outline_metrics;
-	FT_Render_Mode render_mode;
 	const font_setting_cache *setting_cache;
 
 	bool init(HDC hdc);
@@ -55,7 +54,7 @@ struct font_link_node
 
 struct glyph_node
 {
-	FT_BitmapGlyph glyph;
+	FT_Glyph glyph;
 	RECT bbox;
 };
 
