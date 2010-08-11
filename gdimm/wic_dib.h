@@ -3,7 +3,7 @@
 class gdimm_wic_dib_lock : public IWICBitmapLock
 {
 	const WICRect *_lock_rect;
-	const BITMAPINFOHEADER *_bmp_header;
+	const BITMAPINFO *_bmp_info;
 	VOID *_bits;
 
 public:
@@ -31,14 +31,14 @@ public:
 		/* [out] */ __RPC__out WICPixelFormatGUID *pPixelFormat);
 
 public:
-	void initialize(const BITMAPINFOHEADER *bmp_header, VOID *bits);
+	void initialize(const BITMAPINFO *bmp_info, VOID *bits);
 	void set_rect(const WICRect *lock_rect);
 };
 
 class gdimm_wic_dib : public IWICBitmap
 {
 private:
-	const BITMAPINFOHEADER *_bmp_header;
+	const BITMAPINFO *_bmp_info;
 	gdimm_wic_dib_lock _lock;
 
 public:
@@ -85,5 +85,5 @@ public:
 		/* [in] */ double dpiY);
 
 public:
-	void initialize(const BITMAPINFOHEADER *bmp_header, VOID *bits);
+	void initialize(const BITMAPINFO *bmp_info, VOID *bits);
 };

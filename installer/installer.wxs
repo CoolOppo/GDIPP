@@ -37,10 +37,11 @@
 						<File Name="gdipp_hook_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_hook_32.exe" />
 						<File Name="gdipp_loader_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_loader_32.exe" />
 						<File Name="gdipp_pre_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_pre_32.exe" />
+						<File Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_svc_32.exe" />
+						<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" />
 					</Component>
 
 					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
-						<File Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_svc_32.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_32_inst"
 										Name="gdipp_svc_32"
 										DisplayName="gdipp Service (32 bit)"
@@ -48,7 +49,6 @@
 										Start="auto"
 										Type="ownProcess"
 										ErrorControl="normal">
-							<ServiceDependency Id="winmgmt" />
 						</ServiceInstall>
 						<ServiceControl Id="gdipp_svc_32_ctrl"
 										Name="gdipp_svc_32"
@@ -67,10 +67,11 @@
 						<File Name="gdipp_hook_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_hook_64.exe" />
 						<File Name="gdipp_loader_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_loader_64.exe" />
 						<File Name="gdipp_pre_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_pre_64.exe" />
+						<File Name="gdipp_svc_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_svc_64.exe" />
+						<File Name="EasyHook64.dll" Source="$(var.SolutionDir)EasyHook\EasyHook64.dll" Vital="yes" />
 					</Component>
 
 					<Component Id="install_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">
-						<File Name="gdipp_svc_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_svc_64.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_64_inst"
 										Name="gdipp_svc_64"
 										DisplayName="gdipp Service (64 bit)"
@@ -78,7 +79,6 @@
 										Start="auto"
 										Type="ownProcess"
 										ErrorControl="normal">
-							<ServiceDependency Id="winmgmt" />
 						</ServiceInstall>
 						<ServiceControl Id="gdipp_svc_64_ctrl"
 										Name="gdipp_svc_64"
@@ -99,12 +99,18 @@
 						<File Name="gdipp_setting.xml" Source="gdipp_setting.xml" Vital="yes" KeyPath="yes" />
 					</Component>
 
-					<Directory Id="registry_dir" Name="Registry">
-						<Component Id="gdipp_registry" Guid="06AB9C26-C535-43C0-B215-4485AC234A9E" Win64="no">
-							<File Name="Enable_32.bat" Source="Registry\Enable_32.bat" />
-							<File Name="Enable_64.bat" Source="Registry\Enable_64.bat" />
-							<File Name="Disable_32.bat" Source="Registry\Disable_32.bat" />
-							<File Name="Disable_64.bat" Source="Registry\Disable_64.bat" />
+					<Directory Id="script_dir" Name="Script">
+						<Component Id="gdipp_script" Guid="06AB9C26-C535-43C0-B215-4485AC234A9E" Win64="no">
+							<File Name="Create_Services.bat" Source="Script\Create_Services.bat" />
+							<File Name="Delete_Services.bat" Source="Script\Delete_Services.bat" />
+							<File Name="Registry_Disable_32.bat" Source="Script\Registry_Disable_32.bat" />
+							<File Name="Registry_Disable_64.bat" Source="Script\Registry_Disable_64.bat" />
+							<File Name="Registry_Enable_32.bat" Source="Script\Registry_Enable_32.bat" />
+							<File Name="Registry_Enable_64.bat" Source="Script\Registry_Enable_64.bat" />
+							<File Name="Start_Service_32.bat" Source="Script\Start_Service_32.bat" />
+							<File Name="Start_Service_64.bat" Source="Script\Start_Service_64.bat" />
+							<File Name="Stop_Service_32.bat" Source="Script\Stop_Service_32.bat" />
+							<File Name="Stop_Service_64.bat" Source="Script\Stop_Service_64.bat" />
 						</Component>
 					</Directory>
 
@@ -130,21 +136,6 @@
 					</Directory>
 				</Directory>
 			</Directory>
-
-			<!-- copy EasyHook to system directory -->
-			<Directory Id="SystemFolder">
-				<Component Id="easyhook_32" Guid="1037FD0E-1AC4-446D-B7F5-8A2D8B4DCDE8" Win64="no">
-					<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" KeyPath="yes" />
-				</Component>
-			</Directory>
-
-<?if $(var.Platform) = x64 ?>
-			<Directory Id="System64Folder">
-				<Component Id="easyhook_64" Guid="BE321E3F-17B5-4F0F-BF0C-9470A5F1F933" Win64="yes">
-					<File Name="EasyHook64.dll" Source="$(var.SolutionDir)EasyHook\EasyHook64.dll" Vital="yes" KeyPath="yes" />
-				</Component>
-			</Directory>
-<?endif ?>
 
 			<!-- set registry if registry load mode -->
 			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes" Win64="no">
@@ -202,6 +193,10 @@
 									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
 		<CustomAction Id="del_link_gdipp_setting_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
 									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]gdipp_setting.xml"' />
+		<CustomAction Id="make_link_EasyHook32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+							Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]EasyHook32.dll" "[INSTALLDIR]EasyHook32.dll"' />
+		<CustomAction Id="del_link_EasyHook32_cmdline" Property="QtExecCmdLine" Execute="immediate"
+									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]EasyHook32.dll"' />
 		<CustomAction Id="reset_appinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
 									Value='"[SystemFolder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
 		<CustomAction Id="reset_loadappinit_dlls_32_cmdline" Property="QtExecCmdLine" Execute="immediate"
@@ -212,6 +207,8 @@
 		<CustomAction Id="del_link_gdipp_common_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
 		<CustomAction Id="make_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
 		<CustomAction Id="del_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="make_link_EasyHook32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_EasyHook32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
 		<CustomAction Id="reset_appinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
 		<CustomAction Id="reset_loadappinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Return="ignore" />
 
@@ -225,6 +222,10 @@
 									Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
 		<CustomAction Id="del_link_gdipp_setting_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
 									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]gdipp_setting.xml"' />
+		<CustomAction Id="make_link_EasyHook64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+							Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]EasyHook64.dll" "[INSTALLDIR]EasyHook64.dll"' />
+		<CustomAction Id="del_link_EasyHook64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
+									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]EasyHook64.dll"' />
 		<CustomAction Id="reset_appinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
 									Value='"[System64Folder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
 		<CustomAction Id="reset_loadappinit_dlls_64_cmdline" Property="QtExec64CmdLine" Execute="immediate"
@@ -235,6 +236,8 @@
 		<CustomAction Id="del_link_gdipp_common_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 		<CustomAction Id="make_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 		<CustomAction Id="del_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="make_link_EasyHook64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
+		<CustomAction Id="del_link_EasyHook64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 		<CustomAction Id="reset_appinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 		<CustomAction Id="reset_loadappinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Execute="immediate" Return="ignore" />
 <?endif ?>
@@ -265,6 +268,20 @@
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
 			</Custom>
 			<Custom Action="del_link_gdipp_setting_32_exec" After="del_link_gdipp_setting_32_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			
+			<Custom Action="make_link_EasyHook32_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_EasyHook32_exec" After="make_link_EasyHook32_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+
+			<Custom Action="del_link_EasyHook32_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_EasyHook32_exec" After="del_link_EasyHook32_cmdline">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
 			</Custom>
 			
@@ -311,6 +328,20 @@
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
 			</Custom>
 			
+			<Custom Action="make_link_EasyHook64_cmdline" Before="InstallFinalize">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+			<Custom Action="make_link_EasyHook64_exec" After="make_link_EasyHook64_cmdline">
+				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
+			</Custom>
+
+			<Custom Action="del_link_EasyHook64_cmdline" Before="InstallFinalize">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			<Custom Action="del_link_EasyHook64_exec" After="del_link_EasyHook64_cmdline">
+				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)
+			</Custom>
+			
 			<Custom Action="reset_appinit_dlls_64_cmdline" Before="InstallFinalize">
 				(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)
 			</Custom>
@@ -341,7 +372,6 @@
 					 AllowAdvertise="no"
 					 Level="1">
 				<ComponentRef Id="gdipp_32" />
-				<ComponentRef Id="easyhook_32" />
 				<ComponentRef Id="install_service_32" />
 				<ComponentRef Id="set_appinit_dlls_32" />
 				<ComponentRef Id="set_loadappinit_dlls_32" />
@@ -355,7 +385,6 @@
 					 AllowAdvertise="no"
 					 Level="1">
 				<ComponentRef Id="gdipp_64" />
-				<ComponentRef Id="easyhook_64" />
 				<ComponentRef Id="install_service_64" />
 				<ComponentRef Id="set_appinit_dlls_64" />
 				<ComponentRef Id="set_loadappinit_dlls_64" />
@@ -364,7 +393,7 @@
 <?endif ?>
 
 			<ComponentRef Id="gdipp_setting" />
-			<ComponentRef Id="gdipp_registry" />
+			<ComponentRef Id="gdipp_script" />
 			<ComponentRef Id="gdipp_doc" />
 			<ComponentRef Id="freetype_doc" />
 			<ComponentRef Id="easyhook_doc" />

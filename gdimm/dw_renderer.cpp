@@ -57,7 +57,9 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	DWRITE_TEXTURE_TYPE dw_texture_type;
 	int bytes_per_pixel;
 	char ft_pixel_mode;
-	if (_render_mode == FT_RENDER_MODE_LCD)
+	if (_render_mode == FT_RENDER_MODE_MONO)
+		return false;
+	else if (_render_mode == FT_RENDER_MODE_LCD)
 	{
 		dw_texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 		bytes_per_pixel = 3;
@@ -189,11 +191,13 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 	assert(hr == S_OK);
 
 	UINT glyph_run_start = 0;
-	void *drawing_context[2] = {&glyph_run_start, &new_glyph_run};
+	bool make_glyph_success = true;
+	void *drawing_context[3] = {&new_glyph_run, &glyph_run_start, &make_glyph_success};
 	hr = dw_text_layout->Draw(drawing_context, this, 0, 0);
+	assert(hr == S_OK);
 	assert(glyph_run_start == c);
 	
-	return (hr == S_OK);
+	return make_glyph_success;
 }
 
 bool gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
@@ -311,26 +315,24 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	__maybenull IUnknown* clientDrawingEffect
 	)
 {
-	bool b_ret;
 	void **drawing_context = static_cast<void **>(clientDrawingContext);
-	UINT *glyph_run_start = static_cast<UINT *>(drawing_context[0]);
+	glyph_run *new_glyph_run = static_cast<glyph_run *>(drawing_context[0]);
+	UINT *glyph_run_start = static_cast<UINT *>(drawing_context[1]);
+	bool *make_glyph_success = static_cast<bool *>(drawing_context[2]);
 
 	if (_advances.empty())
-		b_ret = make_glyph_texture(baselineOriginX, 0, glyphRun, static_cast<glyph_run *>(drawing_context[1]));
+		*make_glyph_success &= make_glyph_texture(baselineOriginX, 0, glyphRun, new_glyph_run);
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
 		
-		b_ret = make_glyph_texture(baselineOriginX, 0, &final_glyph_run, static_cast<glyph_run *>(drawing_context[1]));
+		*make_glyph_success &= make_glyph_texture(baselineOriginX, 0, &final_glyph_run, new_glyph_run);
 	}
 
 	*glyph_run_start += glyphRunDescription->stringLength;
 
-	if (b_ret)
-		return S_OK;
-	else
-		return E_FAIL;
+	return S_OK;
 }
 
 /******************************************************************

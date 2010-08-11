@@ -32,7 +32,7 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetSize(
 IFACEMETHODIMP gdimm_wic_dib_lock::GetStride( 
 	/* [out] */ __RPC__out UINT *pcbStride)
 {
-	*pcbStride = get_bmp_pitch(_lock_rect->Width, _bmp_header->biBitCount);
+	*pcbStride = get_bmp_pitch(_lock_rect->Width, _bmp_info->bmiHeader.biBitCount);
 
 	return S_OK;
 }
@@ -41,7 +41,7 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetStride(
 	/* [out] */ UINT *pcbBufferSize,
 	/* [out] */ BYTE **ppbData)
 {
-	*pcbBufferSize = get_bmp_pitch(_lock_rect->Width, _bmp_header->biBitCount) * _lock_rect->Height;
+	*pcbBufferSize = get_bmp_pitch(_lock_rect->Width, _bmp_info->bmiHeader.biBitCount) * _lock_rect->Height;
 	*ppbData = (BYTE *)_bits;
 
 	return S_OK;
@@ -55,9 +55,9 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetPixelFormat(
 	return S_OK;
 }
 
-void gdimm_wic_dib_lock::initialize(const BITMAPINFOHEADER *bmp_header, VOID *bits)
+void gdimm_wic_dib_lock::initialize(const BITMAPINFO *bmp_info, VOID *bits)
 {
-	_bmp_header = bmp_header;
+	_bmp_info = bmp_info;
 	_bits = bits;
 }
 
@@ -87,8 +87,8 @@ IFACEMETHODIMP gdimm_wic_dib::GetSize(
 	/* [out] */ __RPC__out UINT *puiWidth,
 	/* [out] */ __RPC__out UINT *puiHeight)
 {
-	*puiWidth = _bmp_header->biWidth;
-	*puiHeight = abs(_bmp_header->biHeight);
+	*puiWidth = _bmp_info->bmiHeader.biWidth;
+	*puiHeight = abs(_bmp_info->bmiHeader.biHeight);
 
 	return S_OK;
 }
@@ -96,7 +96,7 @@ IFACEMETHODIMP gdimm_wic_dib::GetSize(
 IFACEMETHODIMP gdimm_wic_dib::GetPixelFormat( 
 	/* [out] */ __RPC__out WICPixelFormatGUID *pPixelFormat)
 {
-	switch (_bmp_header->biBitCount)
+	switch (_bmp_info->bmiHeader.biBitCount)
 	{
 	case 1:
 		*pPixelFormat = GUID_WICPixelFormatBlackWhite;
@@ -160,8 +160,8 @@ IFACEMETHODIMP gdimm_wic_dib::SetResolution(
 	return E_NOTIMPL;
 }
 
-void gdimm_wic_dib::initialize(const BITMAPINFOHEADER *bmp_header, VOID *bits)
+void gdimm_wic_dib::initialize(const BITMAPINFO *bmp_info, VOID *bits)
 {
-	_bmp_header = bmp_header;
-	_lock.initialize(bmp_header, bits);
+	_bmp_info = bmp_info;
+	_lock.initialize(bmp_info, bits);
 }

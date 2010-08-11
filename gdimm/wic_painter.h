@@ -8,16 +8,6 @@ using namespace std;
 
 class gdimm_wic_painter : public gdimm_painter
 {
-	struct text_metrics
-	{
-		UINT32 width;
-		LONG height;
-		LONG ascent;
-		LONG descent;
-		POINT origin;
-		POINT baseline;
-	};
-
 	static ID2D1Factory *_d2d_factory;
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
@@ -32,8 +22,8 @@ class gdimm_wic_painter : public gdimm_painter
 
 	FLOAT _em_size;
 
-	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run);
-	bool prepare(LPCWSTR lpString, UINT c, text_metrics &metrics, IDWriteTextLayout **dw_text_layout);
+	bool prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run);
+	bool prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWriteTextLayout **dw_text_layout);
 	void set_param(ID2D1RenderTarget *render_target);
 	bool draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx);
 

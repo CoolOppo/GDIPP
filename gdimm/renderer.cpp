@@ -43,8 +43,8 @@ bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 	const bool overflow = _glyph_cache._glyph_run_lru.access(_font_trait, erased_trait);
 	if (overflow)
 	{
+		// erasing font trait may fail, in case that no glyph was successfully rendered
 		b_ret = _glyph_cache.erase_font_trait(erased_trait);
-		assert(b_ret);
 	}
 
 #ifdef _M_X64

@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <gdipp>
-	<version>0.8.3</version>
+	<version>0.9.0</version>
 	
 	<gdimm>
 		<process name=".+\.exe">
 			<freetype>
 				<cache_max_faces>8</cache_max_faces>
 				<cache_max_sizes>16</cache_max_sizes>
-				<cache_max_bytes>8388608</cache_max_bytes>
+				<cache_max_bytes>1048576</cache_max_bytes>
 				<lcd_filter>1</lcd_filter>
 			</freetype>
 		</process>
