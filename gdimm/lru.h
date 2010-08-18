@@ -35,27 +35,23 @@ public:
 
 	bool access(const T data, T &erased)
 	{
+		gdimm_lock lock(LOCK_LRU);
+
 		bool overflow = false;
 
 		_map_type::iterator iter = _data_map.find(data);
 		if (iter == _data_map.end())
 		{
-			gdimm_lock lock(LOCK_LRU);
-
-			iter = _data_map.find(data);
-			if (iter == _data_map.end())
+			if (_data_map.size() == _capacity && _capacity > 0)
 			{
-				if (_data_map.size() == _capacity && _capacity > 0)
-				{
-					erased = _access_list.back();
-					_access_list.pop_back();
-					_data_map.erase(erased);
-					overflow = true;
-				}
-
-				_access_list.push_front(data);
-				_data_map[data] = _access_list.begin();
+				erased = _access_list.back();
+				_access_list.pop_back();
+				_data_map.erase(erased);
+				overflow = true;
 			}
+
+			_access_list.push_front(data);
+			_data_map[data] = _access_list.begin();
 		}
 		else
 		{

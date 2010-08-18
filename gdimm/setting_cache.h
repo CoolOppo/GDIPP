@@ -2,6 +2,7 @@
 
 #include "type_enum.h"
 #include "MurmurHash2_64.h"
+#include <gdipp_common.h>
 
 using namespace std;
 
@@ -42,7 +43,6 @@ struct font_setting_cache
 	font_gamma gamma;
 	BYTE hinting;
 	bool kerning;
-	LONG max_height;
 	font_render_mode render_mode;
 	RENDERER_TYPE renderer;
 	font_shadow shadow;
@@ -50,17 +50,10 @@ struct font_setting_cache
 	font_setting_cache();
 };
 
-struct gdimm_setting_trait
-{
-	const wchar_t *font_name;
-	unsigned char weight_class;
-	bool italic;
-};
-
 class gdimm_setting_cache
 {
 	map<uint64_t, font_setting_cache> _cache;
 
 public:
-	const font_setting_cache *lookup(const gdimm_setting_trait &setting_trait);
+	const font_setting_cache *lookup(const gdimm_setting_trait *setting_trait);
 };

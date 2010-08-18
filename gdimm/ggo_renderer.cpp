@@ -5,16 +5,12 @@
 #include "helper_func.h"
 #include "lock.h"
 
-FT_Glyph gdimm_ggo_renderer::empty_glyph;
-FT_Glyph gdimm_ggo_renderer::empty_bmp_glyph;
+FT_Glyph gdimm_ggo_renderer::empty_outline_glyph;
 
 gdimm_ggo_renderer::gdimm_ggo_renderer()
 {
-	empty_glyph = make_empty_glyph();
-	assert(empty_glyph != NULL);
-
-	empty_bmp_glyph = make_empty_bmp_glyph(empty_glyph);
-	assert(empty_bmp_glyph != NULL);
+	empty_outline_glyph = make_empty_outline_glyph();
+	assert(empty_outline_glyph != NULL);
 }
 
 bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
@@ -25,13 +21,15 @@ bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metri
 
 const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
+	bool b_ret;
 	FT_Error ft_error;
 
 	vector<FT_Vector> curve_points;
 	vector<char> curve_tags;
 	vector<short> contour_indices;
 
-	FT_OutlineGlyphRec outline_glyph = {*empty_glyph, {}};
+	FT_OutlineGlyphRec outline_glyph = {*empty_outline_glyph, {}};
+	outline_glyph.root.format = FT_GLYPH_FORMAT_OUTLINE;
 
 	DWORD outline_buf_len = GetGlyphOutline(_context->hdc, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
@@ -39,10 +37,10 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	if (outline_buf_len == 0)
 	{
 		// the glyph outline of this character is empty (e.g. space)
-		if (!get_glyph_metrics(ch, glyph_metrics))
-			return NULL;
+		b_ret = get_glyph_metrics(ch, glyph_metrics);
+		assert(b_ret);
 
-		return empty_glyph;
+		return NULL;
 	}
 	else
 	{
@@ -149,11 +147,9 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	}
 }
 
-bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+int gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	bool b_ret;
-
-	POINT pen_pos = {};
 
 	// identity matrix
 	memset(&_matrix, 0, sizeof(MAT2));
@@ -174,25 +170,37 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 	if (_context->setting_cache->hinting == 0)
 		_ggo_format |= GGO_UNHINTED;
 
+	int glyph_run_height = 0;
+	POINT pen_pos = {};
+
 	for (UINT i = 0; i < c; i++)
 	{
-		GLYPHMETRICS glyph_metrics;
-		glyph_node new_glyph;
+		GLYPHMETRICS glyph_metrics = {};
+		glyph_node new_glyph = {};
 
 		// we do not care about non-printable characters
 		// solution for Windows Vista/7 Date
-		if (!is_glyph_index && iswcntrl(lpString[i]))
-			continue;
-
-		new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
-		if (new_glyph.glyph == NULL)
-			new_glyph.glyph = outline_to_bitmap(lpString[i], glyph_metrics);
-		else
+		if (is_glyph_index || !iswcntrl(lpString[i]))
 		{
-			b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
-			assert(b_ret);
+			new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+			if (new_glyph.glyph == NULL)
+			{
+				// double-check lock
+				gdimm_lock lock(LOCK_GLYPH_CACHE);
+				new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+				if (new_glyph.glyph == NULL)
+					new_glyph.glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+			}
+			else
+			{
+				b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
+				if (!b_ret)
+					return 0;
+			}
 		}
-		assert(new_glyph.glyph != NULL);
+
+		if (new_glyph.glyph != NULL)
+			glyph_run_height = max(glyph_run_height, reinterpret_cast<FT_BitmapGlyph>(new_glyph.glyph)->bitmap.rows);
 
 		new_glyph.bbox.left = pen_pos.x;
 		new_glyph.bbox.top = pen_pos.y;
@@ -206,5 +214,5 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 		new_glyph_run.push_back(new_glyph);
 	}
 
-	return (!new_glyph_run.empty());
+	return glyph_run_height;
 }

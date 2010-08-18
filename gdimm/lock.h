@@ -12,5 +12,5 @@ public:
 	~gdimm_lock();
 
 	static void initialize();
-	static void release();
+	static void finalize();
 };

@@ -20,7 +20,6 @@ extern CAppModule _Module;
 
 // C RunTime Header Files
 #include <cassert>
-#include <ctime>
 #include <map>
 #include <sstream>
 #include <string>

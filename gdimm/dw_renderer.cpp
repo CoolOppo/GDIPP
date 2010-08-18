@@ -28,7 +28,7 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 	}
 }
 
-bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run)
+int gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run)
 {
 	HRESULT hr;
 
@@ -58,7 +58,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	int bytes_per_pixel;
 	char ft_pixel_mode;
 	if (_render_mode == FT_RENDER_MODE_MONO)
-		return false;
+		return 0;
 	else if (_render_mode == FT_RENDER_MODE_LCD)
 	{
 		dw_texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
@@ -88,7 +88,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	assert(hr == S_OK);
 
 	if (IsRectEmpty(&texture_rect))
-		return false;
+		return 0;
 	
 	FT_BitmapGlyph new_bmp_glyph = new FT_BitmapGlyphRec();
 	new_bmp_glyph->left = texture_rect.left;
@@ -112,10 +112,10 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 
 	a_glyph_run->push_back(new_glyph);
 
-	return true;
+	return texture_rect.bottom - texture_rect.top;
 }
 
-bool gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
+int gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
 {
 	HRESULT hr;
 
@@ -136,7 +136,7 @@ bool gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_gl
 	return make_glyph_texture(0, 0, &dw_glyph_run, &new_glyph_run);
 }
 
-bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
+int gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
 {
 	HRESULT hr;
 
@@ -191,16 +191,16 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 	assert(hr == S_OK);
 
 	UINT glyph_run_start = 0;
-	bool make_glyph_success = true;
-	void *drawing_context[3] = {&new_glyph_run, &glyph_run_start, &make_glyph_success};
+	int glyph_run_height;
+	void *drawing_context[3] = {&new_glyph_run, &glyph_run_start, &glyph_run_height};
 	hr = dw_text_layout->Draw(drawing_context, this, 0, 0);
 	assert(hr == S_OK);
 	assert(glyph_run_start == c);
 	
-	return make_glyph_success;
+	return glyph_run_height;
 }
 
-bool gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+int gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	if (lpDx != NULL)
 	{
@@ -318,16 +318,16 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	void **drawing_context = static_cast<void **>(clientDrawingContext);
 	glyph_run *new_glyph_run = static_cast<glyph_run *>(drawing_context[0]);
 	UINT *glyph_run_start = static_cast<UINT *>(drawing_context[1]);
-	bool *make_glyph_success = static_cast<bool *>(drawing_context[2]);
+	int *glyph_run_height = static_cast<int *>(drawing_context[2]);
 
 	if (_advances.empty())
-		*make_glyph_success &= make_glyph_texture(baselineOriginX, 0, glyphRun, new_glyph_run);
+		*glyph_run_height = max(*glyph_run_height, make_glyph_texture(baselineOriginX, 0, glyphRun, new_glyph_run));
 	else
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
 		
-		*make_glyph_success &= make_glyph_texture(baselineOriginX, 0, &final_glyph_run, new_glyph_run);
+		*glyph_run_height = max(*glyph_run_height, make_glyph_texture(baselineOriginX, 0, &final_glyph_run, new_glyph_run));
 	}
 
 	*glyph_run_start += glyphRunDescription->stringLength;

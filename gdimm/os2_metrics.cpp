@@ -43,7 +43,7 @@ FT_Short gdimm_os2_metrics::get_xAvgCharWidth() const
 	return _xAvgCharWidth;
 }
 
-unsigned char gdimm_os2_metrics::get_weight_class() const
+char gdimm_os2_metrics::get_weight_class() const
 {
 	return get_gdi_weight_class(_usWeightClass);
 }

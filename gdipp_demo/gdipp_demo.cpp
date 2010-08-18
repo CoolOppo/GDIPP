@@ -2,37 +2,21 @@
 //
 
 #include "stdafx.h"
-
-#include "resource.h"
-
-#include "aboutdlg.h"
-#include "MainDlg.h"
-
 #include "gdipp_demo.h"
-#include <gdipp_common.h>
+#include "MainDlg.h"
+#include "AboutDlg.h"
+#include "resource.h"
 
 CAppModule _Module;
 
 int total_count = 5000;
-vector<const wstring> candidate_font;
+int thread_count = 2;
 bool random_text = false;
+vector<const wstring> paint_fonts;
 
 HMODULE h_gdimm = NULL;
 WCHAR gdimm_path[MAX_PATH];
-
-BOOL load_setting()
-{
-	BOOL b_ret;
-
-	// get setting file path
-	wchar_t setting_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
-	if (!b_ret)
-		return FALSE;
-
-	gdipp_init_setting();
-	return gdipp_load_setting(setting_path);
-}
+vector<HWND> paint_hwnd;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
@@ -57,43 +41,6 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int nCmdShow)
 {
-	BOOL b_ret;
-
-#ifdef hook
-
-#ifdef _M_X64
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
-#else
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
-#endif // _M_X64
-
-	if (b_ret)
-	{
-		h_gdimm = LoadLibraryW(gdimm_path);
-		if (h_gdimm == NULL)
-		{
-			b_ret = load_setting();
-			assert(b_ret);
-		}
-	}
-
-#else
-
-	b_ret = load_setting();
-	assert(b_ret);
-
-#endif // hook
-
-#ifdef test
-	wcs_convert(gdipp_get_demo_setting(L"count"), &total_count);
-	candidate_font = gdipp_get_demo_fonts();
-	
-	// if no font is specified, use Tahoma
-	if (candidate_font.empty())
-		candidate_font.push_back(L"Tahoma");
-	wcs_convert(gdipp_get_demo_setting(L"random_text"), &random_text);
-#endif // test
-
 	// If you are running on NT 4.0 or higher you can use the following call instead to 
 	// make the EXE free threaded. This means that calls come in on a random RPC thread.
 	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -111,9 +58,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	_Module.Term();
 	::CoUninitialize();
-
-	if (h_gdimm != NULL)
-		FreeLibrary(h_gdimm);
 
 	return nRet;
 }

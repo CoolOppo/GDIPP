@@ -15,6 +15,7 @@ class gdipp_setting
 		wstring name;
 		char bold;
 		char italic;
+		LONG max_height;
 		setting_map settings;
 	};
 
@@ -38,7 +39,7 @@ public:
 	gdipp_setting();
 	~gdipp_setting();
 
-	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight_class, bool italic) const;
+	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const gdimm_setting_trait *setting_trait) const;
 	const wchar_t *get_demo_setting(const wchar_t *setting_name) const;
 	const vector<const wstring> &get_demo_fonts() const;
 	bool is_process_excluded(const wchar_t *proc_name) const;

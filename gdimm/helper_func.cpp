@@ -2,6 +2,7 @@
 #include "freetype.h"
 #include "helper_func.h"
 #include "gdimm.h"
+#include "lock.h"
 
 FT_F26Dot6 to_26dot6(const FIXED &x)
 {
@@ -91,9 +92,9 @@ int get_bmp_pitch(int width, WORD bpp)
 	return FT_PAD_CEIL(static_cast<int>(ceil(static_cast<double>(width * bpp) / 8)), sizeof(LONG));
 }
 
-bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
+bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_bmp_header)
 {
-	dc_dc_bmp_header.biSize = sizeof(BITMAPINFOHEADER);
+	dc_bmp_header.biSize = sizeof(BITMAPINFOHEADER);
 
 	const HBITMAP dc_bitmap = static_cast<const HBITMAP>(GetCurrentObject(hdc, OBJ_BITMAP));
 	if (dc_bitmap == NULL)
@@ -101,19 +102,21 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header)
 		// currently no selected bitmap
 		// use DC capability
 
-		dc_dc_bmp_header.biWidth = GetDeviceCaps(hdc, HORZRES);
-		dc_dc_bmp_header.biHeight = GetDeviceCaps(hdc, VERTRES);
-		dc_dc_bmp_header.biPlanes = GetDeviceCaps(hdc, PLANES);
-		dc_dc_bmp_header.biBitCount = GetDeviceCaps(hdc, BITSPIXEL);
+		dc_bmp_header.biWidth = GetDeviceCaps(hdc, HORZRES);
+		dc_bmp_header.biHeight = GetDeviceCaps(hdc, VERTRES);
+		dc_bmp_header.biPlanes = GetDeviceCaps(hdc, PLANES);
+		dc_bmp_header.biBitCount = GetDeviceCaps(hdc, BITSPIXEL);
 
 		return false;
 	}
+	else
+	{
+		dc_bmp_header.biBitCount = 0;
+		const int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, reinterpret_cast<LPBITMAPINFO>(&dc_bmp_header), DIB_RGB_COLORS);
+		assert(i_ret != 0);
 
-	dc_dc_bmp_header.biBitCount = 0;
-	const int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, reinterpret_cast<LPBITMAPINFO>(&dc_dc_bmp_header), DIB_RGB_COLORS);
-	assert(i_ret != 0);
-
-	return true;
+		return true;
+	}
 }
 
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
@@ -146,7 +149,7 @@ uint64_t get_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
 #endif // _M_X64
 }
 
-unsigned char get_gdi_weight_class(unsigned short weight)
+char get_gdi_weight_class(unsigned short weight)
 {
 	/*
 	emulate GDI behavior:
@@ -158,9 +161,9 @@ unsigned char get_gdi_weight_class(unsigned short weight)
 	*/
 
 	const LONG weight_class_max[] = {0, 550, 611};
-	const unsigned char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
+	const char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
 
-	for (unsigned char i = 0; i < max_weight_class; i++)
+	for (char i = 0; i < max_weight_class; i++)
 	{
 		if (weight <= weight_class_max[i])
 			return i;
@@ -177,35 +180,50 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
-LONG get_glyph_run_width(const glyph_run &a_glyph_run, bool is_actual_width)
+LONG get_glyph_run_height(const glyph_run *a_glyph_run)
 {
-	LONG glyph_run_right;
+	LONG glyph_run_height = 0;
 
-	if (a_glyph_run.back().bbox.left >= a_glyph_run.front().bbox.left)
+	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
+		glyph_run_height = max(glyph_run_height, iter->bbox.bottom - iter->bbox.top);
+
+	return glyph_run_height;
+}
+
+LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_actual_width)
+{
+	assert(a_glyph_run != NULL);
+
+	const glyph_node *start_glyph;
+	const glyph_node *end_glyph;
+
+	if (a_glyph_run->back().bbox.left >= a_glyph_run->front().bbox.left)
 	{
-		glyph_run_right = a_glyph_run.back().bbox.right;
-		if (is_actual_width)
-		{
-			// actual width is the width including all bitmap content
-			// while logical width only includes the glyph bounding box
-			glyph_run_right = max(glyph_run_right, a_glyph_run.back().bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(a_glyph_run.back().glyph)->bitmap));
-		}
-
-		return glyph_run_right - a_glyph_run.front().bbox.left;
+		start_glyph = &a_glyph_run->front();
+		end_glyph = &a_glyph_run->back();
 	}
 	else
 	{
-		glyph_run_right = a_glyph_run.front().bbox.right;
-		if (is_actual_width)
-			glyph_run_right = max(glyph_run_right, a_glyph_run.front().bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(a_glyph_run.front().glyph)->bitmap));
-
-		return glyph_run_right - a_glyph_run.back().bbox.left;
+		start_glyph = &a_glyph_run->back();
+		end_glyph = &a_glyph_run->front();
 	}
+
+	const LONG glyph_run_left = start_glyph->bbox.left;
+	LONG glyph_run_right = end_glyph->bbox.right;
+
+	if (is_actual_width && end_glyph->glyph != NULL)
+	{
+		// actual width is the width including all bitmap content
+		// while logical width only includes the glyph bounding box
+		glyph_run_right = max(glyph_run_right, end_glyph->bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(end_glyph->glyph)->bitmap));
+	}
+
+	return glyph_run_right - glyph_run_left;
 }
 
 LOGFONTW get_log_font(HDC hdc)
 {
-	HFONT h_font = (HFONT) GetCurrentObject(hdc, OBJ_FONT);
+	HFONT h_font = reinterpret_cast<HFONT>(GetCurrentObject(hdc, OBJ_FONT));
 	assert(h_font != NULL);
 
 	LOGFONTW font_attr;
@@ -268,7 +286,7 @@ bool get_render_mode(const font_setting_cache *font_setting, WORD dc_bmp_bpp, BY
 	return false;
 }
 
-const FT_Glyph make_empty_glyph()
+const FT_Glyph make_empty_outline_glyph()
 {
 	FT_Glyph empty_glyph;
 
@@ -283,35 +301,6 @@ const FT_Glyph make_empty_glyph()
 		return NULL;
 
 	return empty_glyph;
-}
-
-const FT_Glyph make_empty_bmp_glyph(const FT_Glyph empty_glyph)
-{
-	FT_Error ft_error;
-
-	assert(empty_glyph != NULL);
-
-	FT_OutlineGlyphRec empty_outline_glyph =
-	{
-		*empty_glyph,
-		{
-			0,
-			0,
-			NULL,
-			NULL,
-			NULL,
-			0
-		}
-	};
-	FT_Glyph empty_bmp_glyph = reinterpret_cast<FT_Glyph>(&empty_outline_glyph);
-
-	ft_error = FT_Glyph_To_Bitmap(&empty_bmp_glyph, FT_RENDER_MODE_NORMAL, NULL, false);
-	if (ft_error != 0)
-		return NULL;
-
-	assert(empty_bmp_glyph->format == FT_GLYPH_FORMAT_BITMAP);
-
-	return empty_bmp_glyph;
 }
 
 bool mb_to_wc(const char *multi_byte_str, int count, wstring &wide_char_str)

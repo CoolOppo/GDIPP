@@ -47,32 +47,35 @@ bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_pro
 
 bool gdimm_hook::hook()
 {
-	if (install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook))
+	bool b_ret;
+	
+	b_ret = install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
+	if (b_ret)
 	{
 		// hook other GDI APIs only if ExtTextOut is successfully hooked
 
-		install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
-		install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
-		install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
 
-		install_hook(L"gdi32.dll", "GetTextExtentExPointA", GetTextExtentExPointA_hook);
-		install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
-		install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointA", GetTextExtentExPointA_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
 
-		install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
-		install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
 
-		install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
-		install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
-		install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
+		b_ret &= install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
+		b_ret &= install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
+		b_ret &= install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
 	}
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
-	install_hook(L"advapi32.dll", "CreateProcessAsUserW", CreateProcessAsUserW_hook);
+	b_ret &= install_hook(L"advapi32.dll", "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
-	return !_hooks.empty();
+	return b_ret;
 }
 
 void gdimm_hook::unhook()

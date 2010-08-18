@@ -3,7 +3,7 @@
 	<version>0.9.0</version>
 	
 	<gdimm>
-		<process name=".+\.exe">
+		<process>
 			<freetype>
 				<cache_max_faces>8</cache_max_faces>
 				<cache_max_sizes>16</cache_max_sizes>
@@ -12,7 +12,7 @@
 			</freetype>
 		</process>
 		
-		<font name=".+">
+		<font max_height="72">
 			<auto_hinting>1</auto_hinting>
 			<embedded_bitmap>0</embedded_bitmap>
 			<embolden>0</embolden>
@@ -23,7 +23,6 @@
 			</gamma>
 			<hinting>1</hinting>
 			<kerning>0</kerning>
-			<max_height>72</max_height>
 			<render_mode>
 				<mono>0</mono>
 				<gray>1</gray>
@@ -38,16 +37,21 @@
 				<alpha>0</alpha>
 			</shadow>
 		</font>
+
+		<font>
+			<renderer>0</renderer>
+		</font>
 	</gdimm>
 	
 	<demo>
 		<count>5000</count>
+		<threads>1</threads>
+		<random_text>0</random_text>
 		<font>Arial</font>
 		<font>Consolas</font>
 		<font>Segoe UI</font>
 		<font>Tahoma</font>
 		<font>Verdana</font>
-		<random_text>0</random_text>
 	</demo>
 	
 	<exclude>

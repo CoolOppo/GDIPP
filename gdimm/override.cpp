@@ -120,11 +120,6 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 {
 	bool b_ret;
 
-//	if (options & ETO_GLYPH_INDEX)
-//	if ((options & ETO_GLYPH_INDEX) == 0)
-//	if (c != 1)
-//		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
 	// no text to output
 	if (lpString == NULL || c == 0)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -145,6 +140,15 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	const bool is_pdy = !!(options & ETO_PDY);
 
 #ifdef _DEBUG
+	bool is_target_arguments = true;
+	//is_target_arguments &= ((options & ETO_GLYPH_INDEX) != 0);
+	//is_target_arguments &= ((options & ETO_GLYPH_INDEX) == 0);
+	//is_target_arguments &= (options == 4102);
+	//is_target_arguments &= (c == 1);
+	
+	if (!is_target_arguments)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
 	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 #endif // _DEBUG
@@ -366,11 +370,9 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	if (cache_level < GLYPH_RUN)
 		return false;
 
-	lpSize->cx = get_glyph_run_width(a_glyph_run, false);
+	lpSize->cx = get_glyph_run_width(&a_glyph_run, false);
 	lpSize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
-
-	for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++)
-		lpSize->cy = max(lpSize->cy, iter->bbox.bottom - iter->bbox.top);
+	//lpSize->cy = max(lpSize->cy, get_glyph_run_height(&a_glyph_run));
 
 	if (lpnFit != NULL || lpnDx != NULL)
 	{
@@ -452,6 +454,12 @@ bool get_glyph_metrics(HDC hdc, wchar_t glyph_char, bool is_glyph_index, LPGLYPH
 {
 	bool b_ret;
 
+	if (lpgm == NULL)
+		return false;
+
+	if (!is_valid_dc(hdc))
+		return false;
+
 	dc_context context;
 	if (!context.init(hdc))
 		return false;
@@ -476,12 +484,26 @@ bool get_glyph_metrics(HDC hdc, wchar_t glyph_char, bool is_glyph_index, LPGLYPH
 
 DWORD WINAPI GetGlyphOutlineA_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
+	bool b_ret;
+
 	const DWORD ggo_ret = GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 	if (ggo_ret == GDI_ERROR)
 		return GDI_ERROR;
 
+	const bool is_glyph_index = !!(fuFormat & GGO_GLYPH_INDEX);
+	if (!is_glyph_index)
+	{
+		const char multi_byte_char = uChar;
+		wstring wide_char_str;
+		b_ret = mb_to_wc(&multi_byte_char, 1, wide_char_str);
+		assert(b_ret);
+		assert(wide_char_str.size() == 1);
+
+		uChar = wide_char_str.front();
+	}
+
 	// not support transformation matrix
-	get_glyph_metrics(hdc, uChar, !!(fuFormat & GGO_GLYPH_INDEX), lpgm);
+	get_glyph_metrics(hdc, uChar, is_glyph_index, lpgm);
 
 	return ggo_ret;
 }

@@ -109,7 +109,6 @@ long gdimm_font_store::register_font(HDC font_holder, const wchar_t *font_face)
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_REG_FONT);
-
 		iter = _reg_name_to_id.find(font_face);
 		if (iter == _reg_name_to_id.end())
 		{
@@ -158,7 +157,6 @@ long gdimm_font_store::link_font(HDC font_holder, HFONT linked_hfont, wstring &l
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_LINKED_FONT);
-
 		iter = _linked_name_to_id.find(linked_font_face);
 		if (iter == _linked_name_to_id.end())
 		{

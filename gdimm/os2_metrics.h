@@ -11,7 +11,7 @@ public:
 	bool init(HDC hdc);
 
 	FT_Short get_xAvgCharWidth() const;
-	unsigned char get_weight_class() const;
+	char get_weight_class() const;
 	FT_UShort get_usWidthClass() const;
 	bool is_italic() const;
 };

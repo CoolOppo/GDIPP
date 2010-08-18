@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "setting.h"
 
+const std::tr1::regex_constants::syntax_option_type regex_flags = std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize;
+
 gdipp_setting::gdipp_setting()
 	: _xml_doc(NULL)
 {
@@ -42,12 +44,14 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 		const xml_node curr_proc = node_iter->node();
 		const xml_attribute name_attr = curr_proc.attribute(L"name");
 
-		const wregex name_ex(name_attr.value(),
-			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
-		if (regex_match(_process_name, name_ex))
+		if (!name_attr.empty())
 		{
-			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
-				parse_gdimm_setting_node(*set_iter, _process_setting);
+			const wregex name_ex(name_attr.value(), regex_flags);
+			if (regex_match(_process_name, name_ex))
+			{
+				for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+					parse_gdimm_setting_node(*set_iter, _process_setting);
+			}
 		}
 	}
 }
@@ -65,11 +69,13 @@ void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 		const xml_attribute name_attr = curr_font.attribute(L"name");
 		const xml_attribute bold_attr = curr_font.attribute(L"bold");
 		const xml_attribute italic_attr = curr_font.attribute(L"italic");
+		const xml_attribute max_height_attr = curr_font.attribute(L"max_height");
 
 		// negative indicates such optional attribute is not specified
-		const gdimm_font_node new_font = {name_attr.value(),
+		const gdimm_font_node new_font = {(name_attr.empty() ? wstring() : name_attr.value()),
 			(bold_attr.empty() ? -1 : bold_attr.as_uint()),
 			(italic_attr.empty() ? -1 : italic_attr.as_uint()),
+			(max_height_attr.empty() ? -1 : max_height_attr.as_uint()),
 			curr_settings};
 		_gdimm_font.push_back(new_font);
 	}
@@ -95,34 +101,42 @@ void gdipp_setting::load_exclude(const xml_node &root_node)
 		_exclude_process.push_back(iter->first_child().value());
 }
 
-const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, const wchar_t *font_name, unsigned char weight, bool italic) const
+const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, const gdimm_setting_trait *setting_trait) const
 {
 	// check setting for the current process
 	setting_map::const_iterator setting_iter = _process_setting.find(setting_name);
 	if (setting_iter != _process_setting.end())
 		return setting_iter->second.c_str();
 
-	// check setting for the specified font
-	for (list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
+	if (setting_trait != NULL)
 	{
-		// check next font if optional attributes match
-		// easy checks come first
+		// check setting for the specified font
+		for (list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
+		{
+			// check next font if optional attributes match
+			// easy checks come first
 
-		if ((list_iter->bold >= 0) && (!list_iter->bold == (weight > 0)))
-			continue;
+			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->weight_class > 0)))
+				continue;
 
-		if ((list_iter->italic >= 0) && (!list_iter->italic == italic))
-			continue;
+			if ((list_iter->italic >= 0) && (!list_iter->italic == setting_trait->italic))
+				continue;
 
-		const wregex name_ex(list_iter->name.data(),
-			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
-		// check next font if font name match
-		if (!regex_match(font_name, name_ex))
-			continue;
+			if ((list_iter->max_height >= 0) && (list_iter->max_height < setting_trait->height))
+				continue;
 
-		setting_iter = list_iter->settings.find(setting_name);
-		if (setting_iter != list_iter->settings.end())
-			return setting_iter->second.c_str();
+			if (!list_iter->name.empty())
+			{
+				const wregex name_ex(list_iter->name.data(), regex_flags);
+				// check next font if font name match
+				if (!regex_match(setting_trait->font_name, name_ex))
+					continue;
+			}
+
+			setting_iter = list_iter->settings.find(setting_name);
+			if (setting_iter != list_iter->settings.end())
+				return setting_iter->second.c_str();
+		}
 	}
 
 	return NULL;
@@ -156,8 +170,7 @@ bool gdipp_setting::is_process_excluded(const wchar_t *proc_name) const
 
 	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); iter++)
 	{
-		const wregex name_ex(iter->data(),
-			std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize);
+		const wregex name_ex(iter->data(), regex_flags);
 		if (regex_match(final_name, name_ex))
 			return true;
 	}

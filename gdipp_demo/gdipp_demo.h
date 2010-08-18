@@ -2,14 +2,13 @@
 
 using namespace std;
 
-  #define hook
-  #define test
-
+// demo settings
 extern int total_count;
-extern vector<const wstring> candidate_font;
+extern int thread_count;
 extern bool random_text;
+extern vector<const wstring> paint_fonts;
 
-#define GDIPP_DEMO_MAX_STR_LEN 100
-
+// gdimm related
 extern HMODULE h_gdimm;
 extern WCHAR gdimm_path[MAX_PATH];
+extern vector<HWND> paint_hwnd;

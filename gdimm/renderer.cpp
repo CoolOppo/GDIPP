@@ -13,9 +13,9 @@ gdimm_renderer::~gdimm_renderer()
 {
 }
 
-bool gdimm_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+int gdimm_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
-	return true;
+	return 0;
 }
 
 bool gdimm_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)
@@ -56,11 +56,18 @@ bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 	b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
 	if (!b_ret)
 	{
-		b_ret = render(is_glyph_index, is_pdy, lpString, c, lpDx, a_glyph_run);
-		if (!b_ret)
-			return false;
+		// double-check lock
+		gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
 
-		_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
+		b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
+		if (!b_ret)
+		{
+			const int glyph_run_height = render(is_glyph_index, is_pdy, lpString, c, lpDx, a_glyph_run);
+			if (glyph_run_height == 0)
+				return false;
+
+			_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
+		}
 	}
 
 	return true;

@@ -41,7 +41,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	case DLL_PROCESS_DETACH:
 		hook_instance.unhook();
 		destroy_freetype();
-		gdimm_lock::release();
+		gdimm_lock::finalize();
 
 		break;
 	}

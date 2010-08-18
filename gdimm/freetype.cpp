@@ -2,6 +2,7 @@
 #include "freetype.h"
 #include "font_man.h"
 #include "gdimm.h"
+#include <gdipp_common.h>
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
@@ -15,11 +16,11 @@ void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", L"", 0, false), &ft_cache_max_faces);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", L"", 0, false), &ft_cache_max_sizes);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", L"", 0, false), &ft_cache_max_bytes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", NULL), &ft_cache_max_faces);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", NULL), &ft_cache_max_sizes);
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", NULL), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", L"", 0, false), reinterpret_cast<int *>(&lcd_filter));
+	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", NULL), reinterpret_cast<int *>(&lcd_filter));
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
