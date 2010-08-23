@@ -4,6 +4,8 @@ using namespace std;
 
 class gdimm_obj_registry
 {
+	// helper class to free static memory pointers
+
 	list<IUnknown *> _com_ptr_store;
 	list<void *> _mem_ptr_store;
 

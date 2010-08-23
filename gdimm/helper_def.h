@@ -6,13 +6,26 @@
 
 class dc_context
 {
+	// data structures and metrics retrieved from HDC commonly used by multiple gdipp components
+	// since gdipp does not alter state of the DC except its selected bitmap during painting, all members are considered constant
+	
+	// actual data buffer of the OUTLINETEXTMETRICW structure
 	vector<BYTE> _metric_buf;
 
 public:
+	// metrics of the selected bitmap in the DC
 	BITMAPINFOHEADER bmp_header;
+
+	// reference to the DC
 	HDC hdc;
+
+	// logical font of the selected font in the DC
 	LOGFONTW log_font;
+
+	// metrics of the text in the DC
 	OUTLINETEXTMETRICW *outline_metrics;
+
+	// gdipp setting associated to the DC
 	const font_setting_cache *setting_cache;
 
 	bool init(HDC hdc);
@@ -20,20 +33,6 @@ public:
 
 struct font_info
 {
-	/*
-	font storage stores two kinds of fonts: registered fonts and linked fonts
-
-	registered fonts are created outside the font manager
-	they are considered temporary, not managed by font manager
-	registered fonts have non-negative font id
-	the font information are shared by all threads, however the font holder is stored in TLS
-
-	linked fonts are created by font manager, for font linking
-	every linked font are kept alive until the font manager is destructed
-	linked fonts have negative font id
-	the handle and information of linked fonts are shared by all threads, however the font holder is stored in TLS
-	*/
-
 	// handle of the linked font for destruction
 	// NULL for registered fonts
 	HFONT linked_hfont;
@@ -52,16 +51,20 @@ struct font_link_node
 	double scaling;
 };
 
-struct glyph_node
+struct glyph_run
 {
-	// glyph data pointer
-	FT_Glyph glyph;
+	// information for a glyph run, minimum units in the glyph run cache
+	
+	// glyph data pointers
+	// different glyph runs could share same glyph, therefore each glyph is the minimum units in the glyph cache
+	list<FT_Glyph> glyphs;
 
-	// box encloses the bitmap of the glyph
-	RECT black_box;
-
-	// box indicates the formal position of the glyph
-	RECT ctrl_box;
+	/*
+	the bounding boxes are dependent to specific glyph run
+	control box is the formal positioning according to the glyph's advance vector
+	black box, on the other hand, is the actual positioning, with glyph's bearing and bitmap width concerned
+	the left border of the first glyph's control box always starts at 0, while the black box varies
+	*/
+	list<RECT> ctrl_boxes;
+	list<RECT> black_boxes;
 };
-
-typedef list<glyph_node> glyph_run;

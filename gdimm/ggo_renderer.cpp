@@ -175,20 +175,20 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 	for (UINT i = 0; i < c; i++)
 	{
 		GLYPHMETRICS glyph_metrics = {};
-		glyph_node new_glyph = {};
+		FT_Glyph new_glyph;
 
 		// we do not care about non-printable characters
 		// solution for Windows Vista/7 Date
 		if (is_glyph_index || !iswcntrl(lpString[i]))
 		{
-			new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
-			if (new_glyph.glyph == NULL)
+			new_glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+			if (new_glyph == NULL)
 			{
 				// double-check lock
 				gdimm_lock lock(LOCK_GLYPH_CACHE);
-				new_glyph.glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
-				if (new_glyph.glyph == NULL)
-					new_glyph.glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+				new_glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+				if (new_glyph == NULL)
+					new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
 			}
 			else
 			{
@@ -200,27 +200,30 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 
 		FT_Int glyph_left = 0, glyph_width = 0;
 
-		if (new_glyph.glyph != NULL)
+		if (new_glyph != NULL)
 		{
-			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(new_glyph.glyph);
+			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(new_glyph);
 			glyph_left = bmp_glyph->left;
 			glyph_width = get_glyph_bmp_width(bmp_glyph->bitmap);
 		}
 
-		new_glyph.ctrl_box.left = pen_pos.x;
-		new_glyph.ctrl_box.top = pen_pos.y;
-		new_glyph.black_box.left = new_glyph.ctrl_box.left + glyph_left;
-		new_glyph.black_box.top = new_glyph.ctrl_box.top;
+		RECT ctrl_box, black_box;
+		ctrl_box.left = pen_pos.x;
+		ctrl_box.top = pen_pos.y;
+		black_box.left = ctrl_box.left + glyph_left;
+		black_box.top = ctrl_box.top;
 		
 		pen_pos.x += glyph_metrics.gmCellIncX + _char_extra;
 		pen_pos.y += glyph_metrics.gmCellIncY;
 
-		new_glyph.ctrl_box.right = pen_pos.x;
-		new_glyph.ctrl_box.bottom = pen_pos.y;
-		new_glyph.black_box.right = new_glyph.black_box.left + glyph_width;
-		new_glyph.black_box.bottom = new_glyph.ctrl_box.bottom;
+		ctrl_box.right = pen_pos.x;
+		ctrl_box.bottom = pen_pos.y;
+		black_box.right = black_box.left + glyph_width;
+		black_box.bottom = ctrl_box.bottom;
 
-		new_glyph_run.push_back(new_glyph);
+		new_glyph_run.glyphs.push_back(new_glyph);
+		new_glyph_run.ctrl_boxes.push_back(ctrl_box);
+		new_glyph_run.black_boxes.push_back(black_box);
 	}
 
 	return true;

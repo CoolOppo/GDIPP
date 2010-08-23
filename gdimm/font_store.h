@@ -7,6 +7,18 @@ using namespace std;
 
 class gdimm_font_store
 {
+	/*
+	font storage manages two kinds of font: registered font and linked font
+	
+	registered fonts are created outside gdipp
+	they are considered temporary, not managed by the font manager
+	registered fonts have non-negative font id
+
+	linked fonts are created by gdipp for font linking
+	every linked font are kept alive until the font storage is destructed
+	linked fonts have negative font id
+	*/
+
 	// face name -> font id
 	// we use this map because FreeType callback only have face id
 	map<wstring, long> _reg_name_to_id;

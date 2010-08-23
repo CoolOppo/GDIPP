@@ -25,7 +25,10 @@ FT_Pos to_16dot16(double x);
 DWORD create_tls_index();
 BOOL free_tls_index(DWORD tls_index);
 
+// high-performance division method to approximate number * numerator / 255
 BYTE division_by_255(short number, short numerator);
+
+uint64_t generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode);
 
 // apply alignment on the reference point and use it to calculate the baseline
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent);
@@ -33,18 +36,17 @@ POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int desc
 // for given bitmap width and bit count, compute the bitmap pitch
 int get_bmp_pitch(int width, WORD bpp);
 
+// retrieve BITMAPINFOHEADER from the selected bitmap of the given DC
 bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 
 // get outline metrics of the DC
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
 
-uint64_t get_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode);
-
 char get_gdi_weight_class(unsigned short weight);
 
 int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 
-LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_black_width);
+LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width);
 
 LOGFONTW get_log_font(HDC hdc);
 

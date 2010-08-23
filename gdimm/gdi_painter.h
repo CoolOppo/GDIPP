@@ -10,8 +10,7 @@ class gdimm_gdi_painter : public gdimm_painter
 	{
 		/*
 		extent and baseline determine the bounding box before clipping
-		visible rectangle is the visible part after clipping
-		they are identical if no clipping happens
+		visible rectangle is the visible part after optional clipping
 		the area of visible rectangle is always less or equal to the extent
 		*/
 		SIZE extent;
@@ -22,6 +21,7 @@ class gdimm_gdi_painter : public gdimm_painter
 	HDC _hdc_canvas;
 	RGBQUAD _text_rgb_gamma;
 
+	// adjust the glyph boxes from distance array
 	static INT adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run);
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,

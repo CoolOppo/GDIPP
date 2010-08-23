@@ -11,16 +11,21 @@ class gdimm_glyph_cache
 	friend class gdimm_renderer;
 
 	/*
-	positive index stands for glyph index
-	negative index stands for Unicode code point
+	map from character to its glyph
+	positive key stands for glyph index
+	negative key stands for Unicode code point
 	0 is not used for either
 	*/
-	typedef map<FT_Int, const FT_Glyph> index_to_bmp_map;
-	
+	typedef map<FT_Int, const FT_Glyph> index_to_glyph_map;
+
+	// map from string hash to glyph run
 	typedef map<uint64_t, glyph_run> hash_to_run_map;
 
-	map<uint64_t, index_to_bmp_map> _glyph_bmp_store;
+	// map from font trait to data
+	map<uint64_t, index_to_glyph_map> _glyph_store;
 	map<uint64_t, hash_to_run_map> _glyph_run_store;
+
+	// least recently used list font trait
 	lru_list<uint64_t> _glyph_run_lru;
 
 public:

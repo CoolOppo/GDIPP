@@ -45,11 +45,27 @@ BOOL free_tls_index(DWORD tls_index)
 
 BYTE division_by_255(short number, short numerator)
 {
-	// there are many approaches to approximate n1 * n2 / 255
+	// there are many approaches to approximate number * numerator / 255
 	// it is a trade-off between efficiency and accuracy
 
 	const int t = number * numerator;
 	return (((t + 255) >> 8) + t) >> 8;
+}
+
+uint64_t generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
+{
+	// the LOGFONTW structure and render mode are the minimal set that uniquely determine font metrics used by any renderer
+
+	// exclude the bytes after the face name, which may contain junk data
+	const int lf_metric_size = sizeof(log_font) - sizeof(log_font.lfFaceName);
+	const int lf_facename_size = static_cast<const int>((wcslen(log_font.lfFaceName) * sizeof(wchar_t)));
+	const int lf_total_size = lf_metric_size + lf_facename_size;
+
+#ifdef _M_X64
+	return MurmurHash64A(&log_font, lf_total_size, render_mode);
+#else
+	return MurmurHash64B(&log_font, lf_total_size, render_mode);
+#endif // _M_X64
 }
 
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)
@@ -135,20 +151,6 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
-uint64_t get_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
-{
-	// exclude the bytes after the face name, which may contain junk data
-	const int lf_metric_size = sizeof(log_font) - sizeof(log_font.lfFaceName);
-	const int lf_facename_size = static_cast<const int>((wcslen(log_font.lfFaceName) * sizeof(wchar_t)));
-	const int lf_total_size = lf_metric_size + lf_facename_size;
-
-#ifdef _M_X64
-	return MurmurHash64A(&log_font, lf_total_size, render_mode);
-#else
-	return MurmurHash64B(&log_font, lf_total_size, render_mode);
-#endif // _M_X64
-}
-
 char get_gdi_weight_class(unsigned short weight)
 {
 	/*
@@ -180,37 +182,30 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
-LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_black_width)
+LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width)
 {
 	assert(a_glyph_run != NULL);
  
-	const glyph_node *start_glyph;
-	const glyph_node *end_glyph;
- 
-	if (a_glyph_run->back().ctrl_box.left >= a_glyph_run->front().ctrl_box.left)
+	list<RECT>::const_iterator first_box_iter;
+	list<RECT>::const_reverse_iterator last_box_iter;
+
+	if (is_control_width)
 	{
-		start_glyph = &a_glyph_run->front();
-		end_glyph = &a_glyph_run->back();
+		// use control box metrics
+		first_box_iter = a_glyph_run->ctrl_boxes.begin();
+		last_box_iter = a_glyph_run->ctrl_boxes.rbegin();
 	}
 	else
 	{
-		start_glyph = &a_glyph_run->back();
-		end_glyph = &a_glyph_run->front();
+		// use black box metrics
+		first_box_iter = a_glyph_run->black_boxes.begin();
+		last_box_iter = a_glyph_run->black_boxes.rbegin();
 	}
- 
-	LONG glyph_run_left, glyph_run_right;
-	if (is_black_width)
-	{
-		glyph_run_left = start_glyph->black_box.left;
-		glyph_run_right = end_glyph->black_box.right;
-	}
+
+	if (a_glyph_run->ctrl_boxes.back().left >= a_glyph_run->ctrl_boxes.front().left)
+		return last_box_iter->right - first_box_iter->left;
 	else
-	{
-		glyph_run_left = start_glyph->ctrl_box.left;
-		glyph_run_right = end_glyph->ctrl_box.right;
-	}
- 
-	return glyph_run_right - glyph_run_left;
+		return first_box_iter->right - last_box_iter->left;
 }
 
 LOGFONTW get_log_font(HDC hdc)

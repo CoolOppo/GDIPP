@@ -42,19 +42,27 @@ public:
 		_map_type::iterator iter = _data_map.find(data);
 		if (iter == _data_map.end())
 		{
+			// data never accessed
+
 			if (_data_map.size() == _capacity && _capacity > 0)
 			{
+				// list is full
+				// erase and return the last accessed data
 				erased = _access_list.back();
 				_access_list.pop_back();
 				_data_map.erase(erased);
 				overflow = true;
 			}
 
+			// add the data to the most recent position
 			_access_list.push_front(data);
 			_data_map[data] = _access_list.begin();
 		}
 		else
 		{
+			// data accessed before
+			// move it to the most recent position
+			// 
 			_list_iter_type node = iter->second;
 
 			if (node != _access_list.begin())

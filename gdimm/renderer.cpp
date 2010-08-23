@@ -26,7 +26,7 @@ bool gdimm_renderer::begin(const dc_context *context, FT_Render_Mode render_mode
 	_char_extra = GetTextCharacterExtra(_context->hdc);
 	assert(_char_extra != 0x8000000);
 
-	_font_trait = get_font_trait(_context->log_font, render_mode);
+	_font_trait = generate_font_trait(_context->log_font, render_mode);
 
 	return true;
 }

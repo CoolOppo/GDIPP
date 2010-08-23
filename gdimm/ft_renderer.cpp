@@ -49,7 +49,7 @@ void gdimm_ft_renderer::get_font_size(const OUTLINETEXTMETRICW *outline_metrics,
 	}
 }
 
-FT_ULong gdimm_ft_renderer::get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
+FT_ULong gdimm_ft_renderer::make_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
 {
 	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
 		(setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
@@ -223,7 +223,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 		curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class(), static_cast<char>(_context->log_font.lfWeight));
 	}
 
-	FT_ULong curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
+	FT_ULong curr_load_flags = make_load_flags(curr_setting_cache, _render_mode);
 
 	if (is_glyph_index)
 	{
@@ -231,8 +231,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 		for (UINT i = 0; i < c; i++)
 		{
-			glyph_node new_glyph = {};
-			new_glyph.glyph = generate_bitmap_glyph(lpString[i],
+			const FT_Glyph new_glyph = generate_bitmap_glyph(lpString[i],
 				&scaler,
 				_render_mode,
 				curr_embolden,
@@ -240,19 +239,22 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 				os2_metrics->is_italic(),
 				request_outline,
 				curr_font_trait);
+			RECT ctrl_box = {}, black_box = {};
 
-			if (new_glyph.glyph == NULL)
+			if (new_glyph == NULL)
 			{
 				if (request_outline)
 					return false;
 			}
 			else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 			{
-				new_glyph.ctrl_box.left = font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
-				new_glyph.ctrl_box.right = new_glyph.ctrl_box.left;
+				ctrl_box.left = font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
+				ctrl_box.right = ctrl_box.left;
 			}
 			
-			new_glyph_run.push_back(new_glyph);
+			new_glyph_run.glyphs.push_back(new_glyph);
+			new_glyph_run.ctrl_boxes.push_back(ctrl_box);
+			new_glyph_run.black_boxes.push_back(black_box);
 		}
 	}
 	else
@@ -263,25 +265,30 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 		int font_link_index = 0;
 		wstring final_string(lpString, c);
 		wstring glyph_indices(L"", c);
-		new_glyph_run.resize(c);
+
+		new_glyph_run.glyphs.resize(c);
+		new_glyph_run.ctrl_boxes.resize(c);
+		new_glyph_run.black_boxes.resize(c);
 
 		while (true)
 		{
 			font_man.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), &final_string[0], c, &glyph_indices[0]);
 
-			glyph_run::iterator iter = new_glyph_run.begin();
-
-			for (UINT i = 0; i < c; i++, iter++)
+			list<FT_Glyph>::iterator glyph_iter;
+			list<RECT>::iterator ctrl_iter, black_iter;
+			UINT i;
+			for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin(), i = 0;
+				i < c; i++, glyph_iter++, ctrl_iter++, black_iter++)
 			{
 				if (final_string[i] == L'\0')
 					continue;
 
 				// do not render control characters, even the corresponding glyphs exist in font
 				if (iswcntrl(final_string[i]) && !request_outline)
-					iter->glyph = NULL;
+					*glyph_iter = NULL;
 				else if (glyph_indices[i] != 0xffff)
 				{
-					iter->glyph = generate_bitmap_glyph(glyph_indices[i],
+					*glyph_iter = generate_bitmap_glyph(glyph_indices[i],
 						&scaler,
 						curr_render_mode,
 						curr_embolden,
@@ -290,15 +297,15 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 						request_outline,
 						curr_font_trait);
 
-					if (iter->glyph == NULL)
+					if (*glyph_iter == NULL)
 					{
 						if (request_outline)
 							return false;
 					}
 					else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 					{
-						iter->ctrl_box.left = font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
-						iter->ctrl_box.right = iter->ctrl_box.left;
+						ctrl_iter->left = font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
+						ctrl_iter->right = ctrl_iter->left;
 					}
 				}
 				else
@@ -352,13 +359,13 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			if (!get_render_mode(curr_setting_cache, _context->bmp_header.biBitCount, _context->log_font.lfQuality, curr_render_mode))
 				return false;
 
-			curr_font_trait = get_font_trait(linked_log_font, curr_render_mode);
+			curr_font_trait = generate_font_trait(linked_log_font, curr_render_mode);
 
 			curr_embolden = 0;
 			if (linked_log_font.lfWeight != FW_DONTCARE)
 				curr_embolden = get_embolden(curr_setting_cache, setting_trait.weight_class, static_cast<char>(linked_log_font.lfWeight));
 
-			curr_load_flags = get_load_flags(curr_setting_cache, _render_mode);
+			curr_load_flags = make_load_flags(curr_setting_cache, _render_mode);
 		}
 	}
 
@@ -375,31 +382,34 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 
 	POINT pen_pos = {};
 
-	for (glyph_run::iterator iter = new_glyph_run.begin(); iter != new_glyph_run.end(); iter++)
+	list<FT_Glyph>::iterator glyph_iter;
+	list<RECT>::iterator ctrl_iter, black_iter;
+	for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin();
+		glyph_iter != new_glyph_run.glyphs.end(); glyph_iter++, ctrl_iter++, black_iter++)
 	{
 		FT_Int glyph_left = 0, glyph_width = 0;
 		FT_Vector glyph_advance = {};
 
-		if (iter->glyph != NULL)
+		const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
+		if (bmp_glyph != NULL)
 		{
-			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(iter->glyph);
 			glyph_left = bmp_glyph->left;
 			glyph_width = get_glyph_bmp_width(bmp_glyph->bitmap);
-			glyph_advance = iter->glyph->advance;
+			glyph_advance = bmp_glyph->root.advance;
 		}
 
-		iter->ctrl_box.left += pen_pos.x;
-		iter->ctrl_box.top += pen_pos.y;
-		iter->black_box.left = iter->ctrl_box.left + glyph_left;
-		iter->black_box.top = iter->ctrl_box.top;
+		ctrl_iter->left += pen_pos.x;
+		ctrl_iter->top += pen_pos.y;
+		black_iter->left = ctrl_iter->left + glyph_left;
+		black_iter->top = ctrl_iter->top;
 
 		pen_pos.x += from_16dot16(glyph_advance.x) + _char_extra;
 		pen_pos.y += from_16dot16(glyph_advance.y);
 
-		iter->ctrl_box.right += pen_pos.x;
-		iter->ctrl_box.bottom += pen_pos.y;
-		iter->black_box.right = iter->black_box.left + glyph_width;
-		iter->black_box.bottom = iter->ctrl_box.bottom;
+		ctrl_iter->right += pen_pos.x;
+		ctrl_iter->bottom += pen_pos.y;
+		black_iter->right = black_iter->left + glyph_width;
+		black_iter->bottom = ctrl_iter->bottom;
 	}
 
 	return true;
@@ -414,9 +424,9 @@ bool gdimm_ft_renderer::get_glyph_metrics(wchar_t glyph_char, bool is_glyph_inde
 	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
 	if (b_ret)
 	{
-		assert(new_glyph_run.size() == 1);
+		assert(new_glyph_run.glyphs.size() == 1);
 
-		const FT_Glyph target_glyph = new_glyph_run.front().glyph;
+		const FT_Glyph target_glyph = new_glyph_run.glyphs.front();
 
 		FT_BBox glyph_bbox;
 		ft_error = FT_Outline_Get_BBox(&(reinterpret_cast<FT_OutlineGlyph>(target_glyph)->outline), &glyph_bbox);

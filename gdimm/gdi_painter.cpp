@@ -5,28 +5,37 @@
 
 INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
 {
+	/*
+	the DX array stores the distance from the left border of the current glyph to the next glyph
+	the count of such array should be no less than the count of glyphs
+	the last element indicates the distance between the right border of the control box of the glyph run and the left border of the last glyph
+	if PDY flag is set, every 2 elements specifies the distance of the glyph in both X and Y axis
+	
+	gdipp matches the metrics of the glyph control box against the DX array, then adjusts black box accordingly
+	DX array is application specific, therefore the boxes after adjustment are not cached
+	*/
+
 	assert(lpDx != NULL);
 
 	const BYTE dx_skip = (is_pdy ? 2 : 1);
 	INT curr_left = 0;
-	bool first_glyph = true;
 
-	glyph_run::iterator iter;
+	list<RECT>::iterator ctrl_iter, black_iter;
 	UINT i;
-	for (iter = a_glyph_run->begin(), i = 0; i < count; iter++, i++)
+	for (ctrl_iter = a_glyph_run->ctrl_boxes.begin(), black_iter = a_glyph_run->black_boxes.begin(), i = 0;
+		i < count; ctrl_iter++, black_iter++, i++)
 	{
-		assert(iter != a_glyph_run->end());
+		assert(ctrl_iter != a_glyph_run->ctrl_boxes.end());
 
-		if (first_glyph)
-			first_glyph = false;
-		else
+		if (i != 0)
 		{
-			const int distance_shift = curr_left - iter->ctrl_box.left;
+			
+			const int distance_shift = curr_left - ctrl_iter->left;
 
-			iter->ctrl_box.left += distance_shift;
-			iter->ctrl_box.right += distance_shift;
-			iter->black_box.left += distance_shift;
-			iter->black_box.right += distance_shift;
+			ctrl_iter->left += distance_shift;
+			ctrl_iter->right += distance_shift;
+			black_iter->left += distance_shift;
+			black_iter->right += distance_shift;
 		}
 
 		curr_left += lpDx[i * dx_skip];
@@ -205,6 +214,9 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 {
 	BOOL b_ret, paint_success;
 
+	// the data source is FreeType bitmap with black/white mask
+	// create GDI mask bitmap and use MaskBlt to complete text painting
+
 	/*
 	the flow direction of the original bitmap is unrecoverable
 	it seems BitBlt would automatically convert the direction of its source bitmap if necessary
@@ -231,17 +243,23 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	if (bk_mode == OPAQUE)
 		paint_background(_context->hdc, &grm.visible_rect, _bg_color);
 
-	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
+	list<FT_Glyph>::const_iterator glyph_iter;
+	list<RECT>::const_iterator black_iter;
+	for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
+		glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 	{
-		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(iter->glyph);
+		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
+		assert(bmp_glyph != NULL);
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
+		// the bounding box of the current glyph in the DC bitmap
 		RECT glyph_rect;
-		glyph_rect.left = grm.baseline.x + iter->black_box.left;
+		glyph_rect.left = grm.baseline.x + black_iter->left;
 		glyph_rect.top = grm.baseline.y - bmp_glyph->top;
-		glyph_rect.right = grm.baseline.x + iter->black_box.right;
+		glyph_rect.right = grm.baseline.x + black_iter->right;
 		glyph_rect.bottom = glyph_rect.top + bmp_glyph->bitmap.rows;
 
+		// only paint the visible part of the source to the new bitmap
 		RECT glyph_rect_in_bbox;
 		const BOOL is_glyph_in_bbox = IntersectRect(&glyph_rect_in_bbox, &glyph_rect, &grm.visible_rect);
 		if (is_glyph_in_bbox)
@@ -292,6 +310,9 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 
 BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
+	// the data source is FreeType bitmap with 256 gray levels
+	// create GDI alpha bitmap and use AlphaBlend() to paint both solid and shadow text
+
 	BOOL b_ret, paint_success;
 
 	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
@@ -307,15 +328,19 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	if (bk_mode == OPAQUE)
 		paint_background(_context->hdc, &grm.visible_rect, _bg_color);
 
-	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
+	list<FT_Glyph>::const_iterator glyph_iter;
+	list<RECT>::const_iterator black_iter;
+	for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
+		glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 	{
-		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(iter->glyph);
+		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
+		assert(bmp_glyph != NULL);
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
 		RECT glyph_rect;
-		glyph_rect.left = grm.baseline.x + iter->black_box.left;
+		glyph_rect.left = grm.baseline.x + black_iter->left;
 		glyph_rect.top = grm.baseline.y - bmp_glyph->top;
-		glyph_rect.right = grm.baseline.x + iter->black_box.right;
+		glyph_rect.right = grm.baseline.x + black_iter->right;
 		glyph_rect.bottom = glyph_rect.top + bmp_glyph->bitmap.rows;
 
 		RECT glyph_rect_in_bbox;
@@ -378,6 +403,9 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 
 BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
+	// the data source is FreeType bitmap with 256 gray levels in R, G, B channels
+	// create GDI bitmap and optionally copy from DC, then use BitBlt() to paint both solid and shadow text
+	
 	BOOL b_ret, paint_success;
 
 	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
@@ -397,6 +425,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
+		// BitBlt overwrites rather than overlays, therefore retrieve the original DC bitmap if transparent
 		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
 		paint_success = BitBlt(_hdc_canvas,
 			0,
@@ -413,18 +442,19 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	{
 		const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
 
-		for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
+		list<FT_Glyph>::const_iterator glyph_iter;
+		list<RECT>::const_iterator black_iter;
+		for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
+			glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 		{
-			if (iter->glyph == NULL)
-				continue;
-
-			FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(iter->glyph);
+			FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
+			assert(bmp_glyph != NULL);
 			assert(bmp_glyph->bitmap.pitch >= 0);
 
 			RECT solid_glyph_rect;
-			solid_glyph_rect.left = grm.baseline.x + iter->black_box.left;
+			solid_glyph_rect.left = grm.baseline.x + black_iter->left;
 			solid_glyph_rect.top = grm.baseline.y - bmp_glyph->top;
-			solid_glyph_rect.right = grm.baseline.x + iter->black_box.right;
+			solid_glyph_rect.right = grm.baseline.x + black_iter->right;
 			solid_glyph_rect.bottom = solid_glyph_rect.top + bmp_glyph->bitmap.rows;
 			
 			RECT solid_rect_in_bbox;
@@ -493,11 +523,11 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 	if (options & ETO_OPAQUE)
 		paint_background(_context->hdc, lprect, _bg_color);
 
-	// actual bounding box occupied by the glyphs
 	glyph_run_metrics grm;
-	grm.extent.cx = max(get_glyph_run_width(a_glyph_run, true), max_glyph_distance);
+	// actual bounding box occupied by the glyphs
+	grm.extent.cx = max(get_glyph_run_width(a_glyph_run, false), max_glyph_distance);
 
-	// no bitmap to paint
+	// nothing to paint
 	if (grm.extent.cx == 0)
 		return FALSE;
 
@@ -513,12 +543,13 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 		bbox_ascent,
 		bbox_descent);
 
-	grm.visible_rect.left = grm.baseline.x + a_glyph_run->front().black_box.left;
+	grm.visible_rect.left = grm.baseline.x + a_glyph_run->black_boxes.front().left;
 	grm.visible_rect.top = grm.baseline.y - bbox_ascent;
 	grm.visible_rect.right = grm.visible_rect.left + grm.extent.cx;
 	grm.visible_rect.bottom = grm.visible_rect.top + grm.extent.cy;
 
-	_cursor.x += max(a_glyph_run->back().ctrl_box.right - a_glyph_run->front().ctrl_box.left, max_glyph_distance);;
+	// advance cursor by the width of the control box of the glyph run
+	_cursor.x += max(a_glyph_run->ctrl_boxes.back().right - a_glyph_run->ctrl_boxes.front().left, max_glyph_distance);
 	
 	// apply clipping
 	if (options & ETO_CLIPPED && !IntersectRect(&grm.visible_rect, &grm.visible_rect, lprect))

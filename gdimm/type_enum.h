@@ -2,6 +2,19 @@
 
 enum GLYPH_CACHE_LEVEL
 {
+	/*
+	every renderer supports one of the following glyph cache levels
+	
+	if NONE is supported, the renderer does not generate intermediate glyph or glyph run bitmap, and nothing can be cached
+	all render process must be repeated disregarding request
+	
+	if GLYPH_RUN is supported, the renderer groups multiple glyphs into single cacheable bitmap
+	such "glyph" does not correspond to any character
+
+	if SINGLE_GLYPH is supported, single glyphs of each character are generated accordingly by the renderer
+	each glyph can be shared across glyph runs
+	*/
+
 	NONE,
 	GLYPH_RUN,
 	SINGLE_GLYPH
@@ -9,6 +22,8 @@ enum GLYPH_CACHE_LEVEL
 
 enum LOCK_TYPE
 {
+	// lock with same type will be blocked
+
 	LOCK_FREETYPE,
 	LOCK_GAMMA,
 	LOCK_GLYPH_CACHE,

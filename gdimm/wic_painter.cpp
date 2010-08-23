@@ -61,7 +61,7 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 			_pixels_per_dip,
 			NULL,
 			_use_gdi_natural,
-			(UINT16 *)lpString,
+			reinterpret_cast<const UINT16 *>(lpString),
 			c,
 			&glyph_metrics[0]);
 	assert(hr == S_OK);
@@ -134,16 +134,16 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	}
 	assert(hr == S_OK);
 
+	DWRITE_TEXT_METRICS text_bbox;
+	hr = (*dw_text_layout)->GetMetrics(&text_bbox);
+	assert(hr == S_OK);
+	bbox_width = max(bbox_width, static_cast<LONG>(ceil(text_bbox.width)));
+
 // 	// more accurate width than DirectWrite functions
 // 	SIZE text_extent;
 // 	b_ret = GetTextExtentPoint32W(_context->hdc, lpString, c, &text_extent);
 // 	assert(b_ret);
 // 	bbox_width = max(bbox_width, reinterpret_cast<UINT32>(text_extent.cx));
-	
-	DWRITE_TEXT_METRICS text_bbox;
-	hr = (*dw_text_layout)->GetMetrics(&text_bbox);
-	assert(hr == S_OK);
-	bbox_width = max(bbox_width, static_cast<LONG>(ceil(text_bbox.width)));
 
 	return true;
 }

@@ -6,7 +6,7 @@ class gdimm_ft_renderer : public gdimm_renderer
 {
 	FT_F26Dot6 get_embolden(const font_setting_cache *setting_cache, char font_weight_class, char text_weight_class);
 	static void get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
-	static FT_ULong get_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode);
+	static FT_ULong make_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode);
 	static void oblique_outline(const FT_Outline *outline, double slant_adv);
 
 	bool generate_outline_glyph(FT_Glyph *glyph,

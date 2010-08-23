@@ -106,18 +106,19 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 	hr = dw_analysis->CreateAlphaTexture(dw_texture_type, &texture_rect, new_bmp_glyph->bitmap.buffer, bmp_size);
 	assert(hr == S_OK);
 
-	glyph_node new_glyph;
-	new_glyph.glyph = reinterpret_cast<FT_Glyph>(new_bmp_glyph);
-	new_glyph.ctrl_box.left = static_cast<LONG>(x);
-	new_glyph.ctrl_box.top = static_cast<LONG>(y);
-	new_glyph.ctrl_box.right = texture_width;
-	new_glyph.ctrl_box.bottom = new_glyph.ctrl_box.top;
-	new_glyph.black_box.left = new_glyph.ctrl_box.left + texture_rect.left;
-	new_glyph.black_box.top = new_glyph.ctrl_box.top;
-	new_glyph.black_box.right = new_glyph.black_box.left + texture_width;
-	new_glyph.black_box.bottom = new_glyph.ctrl_box.bottom;
+	RECT ctrl_box, black_box;
+	ctrl_box.left = static_cast<LONG>(x);
+	ctrl_box.top = static_cast<LONG>(y);
+	ctrl_box.right = texture_width;
+	ctrl_box.bottom = ctrl_box.top;
+	black_box.left = ctrl_box.left + texture_rect.left;
+	black_box.top = ctrl_box.top;
+	black_box.right = black_box.left + texture_width;
+	black_box.bottom = ctrl_box.bottom;
 
-	a_glyph_run->push_back(new_glyph);
+	a_glyph_run->glyphs.push_back(reinterpret_cast<FT_Glyph>(new_bmp_glyph));
+	a_glyph_run->ctrl_boxes.push_back(ctrl_box);
+	a_glyph_run->black_boxes.push_back(black_box);
 
 	return true;
 }

@@ -42,6 +42,12 @@ bool is_valid_dc(HDC hdc)
 
 bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_t *target_text, int start_index = 0)
 {
+	/*
+	return true if the current string is the target text (string or glyph index array)
+	otherwise return false
+	always return true if the target is invalid
+	*/
+
 	bool is_target = false;
 
 	if (target_text == NULL)
@@ -140,13 +146,13 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	const bool is_pdy = !!(options & ETO_PDY);
 
 #ifdef _DEBUG
-	bool is_target_arguments = true;
-	//is_target_arguments &= ((options & ETO_GLYPH_INDEX) != 0);
-	//is_target_arguments &= ((options & ETO_GLYPH_INDEX) == 0);
-	//is_target_arguments &= (options == 4102);
-	//is_target_arguments &= (c == 3);
+	bool is_target_spec = true;
+	//is_target_spec &= ((options & ETO_GLYPH_INDEX) != 0);
+	//is_target_spec &= ((options & ETO_GLYPH_INDEX) == 0);
+	//is_target_spec &= (options == 4102);
+	//is_target_spec &= (c == 3);
 	
-	if (!is_target_arguments)
+	if (!is_target_spec)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text))
@@ -370,20 +376,21 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	if (cache_level < GLYPH_RUN)
 		return false;
 
-	lpSize->cx = get_glyph_run_width(&a_glyph_run, false);
+	lpSize->cx = get_glyph_run_width(&a_glyph_run, true);
 	lpSize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
-
+	
+	// for GetTextExtentExPoint series
 	if (lpnFit != NULL || lpnDx != NULL)
 	{
 		INT fit_count = 0;
 
-		for (glyph_run::const_iterator iter = a_glyph_run.begin(); iter != a_glyph_run.end(); iter++, fit_count++)
+		for (list<RECT>::const_iterator box_iter = a_glyph_run.ctrl_boxes.begin(); box_iter != a_glyph_run.ctrl_boxes.end(); box_iter++, fit_count++)
 		{
-			if (iter->ctrl_box.right > nMaxExtent)
+			if (box_iter->right > nMaxExtent)
 				break;
 
 			if (lpnDx != NULL)
-				lpnDx[fit_count] = iter->ctrl_box.right - a_glyph_run.front().ctrl_box.left;
+				lpnDx[fit_count] = box_iter->right - a_glyph_run.ctrl_boxes.front().left;
 		}
 
 		if (lpnFit != NULL)
@@ -397,7 +404,7 @@ BOOL APIENTRY GetTextExtentPoint32A_hook(HDC hdc, LPCSTR lpString, int c, LPSIZE
 {
 	wstring wide_char_str;
 	if (!mb_to_wc(lpString, c, wide_char_str))
-		return GetTextExtentPoint32A(hdc, lpString, c, lpSize);;
+		return GetTextExtentPoint32A(hdc, lpString, c, lpSize);
 
 	if (GetTextExtentPoint32W_hook(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize))
 		return TRUE;
