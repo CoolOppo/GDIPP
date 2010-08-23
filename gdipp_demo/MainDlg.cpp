@@ -162,14 +162,22 @@ bool CMainDlg::load_gdimm()
 {
 	BOOL b_ret;
 
+	if (h_gdimm == NULL)
+	{
 #ifdef _M_X64
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
+		const wchar_t *gdimm_name = L"gdimm_64.dll";
 #else
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
+		const wchar_t *gdimm_name = L"gdimm_32.dll";
 #endif // _M_X64
 
-	if (b_ret)
-		h_gdimm = LoadLibraryW(gdimm_path);
+		h_gdimm = GetModuleHandle(gdimm_name);
+		if (h_gdimm == NULL)
+		{
+			b_ret = gdipp_get_dir_file_path(NULL, gdimm_name, gdimm_path);
+			if (b_ret)
+				h_gdimm = LoadLibraryW(gdimm_path);
+		}
+	}
 
 	update_menu_state();
 

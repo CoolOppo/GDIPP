@@ -46,20 +46,19 @@
 				<Control Id="LoadModeButtons" Type="RadioButtonGroup" X="10" Y="45" Width="350" Height="35" HasBorder="no" Property="LOADMODE">
 					<RadioButtonGroup Property="LOADMODE">
 						<RadioButton X="20" Y="14" Width="100" Height="12" Text="{\WixUI_Font_Bold}!(loc.LoadModeDlg_ServiceText)" Value="0" />
-						<RadioButton X="150" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_RegistryText)" Value="1"></RadioButton>
+						<RadioButton X="150" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_RegistryText)" Value="1" />
 						<RadioButton X="250" Y="14" Width="100" Height="12" Text="!(loc.LoadModeDlg_LoaderText)" Value="2" />
 					</RadioButtonGroup>
 				</Control>
-				<Control Id="DescGroupBox" Type="GroupBox" X="10" Y="85" Width="350" Height="140" Text="!(loc.LoadModeDlg_GroupBoxText)" />
-				<Control Id="ServiceDesc" Type="Text" X="20" Y="90" Width="335" Height="135" Text="!(loc.LoadModeDlg_ServiceDesc)" Transparent="yes" NoPrefix="yes">
+				<Control Id="ServiceDesc" Type="ScrollableText" X="15" Y="80" Width="345" Height="145" Sunken="yes" Text="!(loc.LoadModeDlg_ServiceDesc)">
 					<Condition Action="show"><![CDATA[LOADMODE = 0]]></Condition>
 					<Condition Action="hide"><![CDATA[LOADMODE <> 0]]></Condition>
 				</Control>
-				<Control Id="RegistryDesc" Type="Text" X="20" Y="90" Width="335" Height="135" Text="!(loc.LoadModeDlg_RegistryDesc)" Transparent="yes" NoPrefix="yes">
+				<Control Id="RegistryDesc" Type="ScrollableText" X="15" Y="80" Width="345" Height="145" Sunken="yes" Text="!(loc.LoadModeDlg_RegistryDesc)">
 					<Condition Action="show"><![CDATA[LOADMODE = 1]]></Condition>
 					<Condition Action="hide"><![CDATA[LOADMODE <> 1]]></Condition>
 				</Control>
-				<Control Id="LoaderDesc" Type="Text" X="20" Y="90" Width="335" Height="135" Text="!(loc.LoadModeDlg_LoaderDesc)" Transparent="yes" NoPrefix="yes">
+				<Control Id="LoaderDesc" Type="ScrollableText" X="15" Y="80" Width="345" Height="145" Sunken="yes" Text="!(loc.LoadModeDlg_LoaderDesc)">
 					<Condition Action="show"><![CDATA[LOADMODE = 2]]></Condition>
 					<Condition Action="hide"><![CDATA[LOADMODE <> 2]]></Condition>
 				</Control>

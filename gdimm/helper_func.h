@@ -44,9 +44,7 @@ char get_gdi_weight_class(unsigned short weight);
 
 int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 
-LONG get_glyph_run_height(const glyph_run *a_glyph_run);
-
-LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_actual_width);
+LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_black_width);
 
 LOGFONTW get_log_font(HDC hdc);
 

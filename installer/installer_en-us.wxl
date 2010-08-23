@@ -576,33 +576,33 @@
 	<String Id="LoadModeDlg_LoaderText" Overridable="yes">Program Loader</String>
 	<String Id="LoadModeDlg_GroupBoxText" Overridable="yes">Description</String>
 	<String Id="LoadModeDlg_ServiceDesc" Overridable="yes">
-		This is the default mode. Require Administrator privilege.
-		
-		If you choose this mode, a Windows service is installed, which will be started with Windows, and renders any program spawned when it is running.
-
-		The service will be started after successful installation.
-
-		With this mode, you can pause the rendering by stopping the "gdipp Service" in the Services tool, without reboot.
-
-		Choose this mode if you want system-wide rendering, while still maintain system stability.
+<![CDATA[{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}}\viewkind4\uc1\pard\f0\fs18 This is the default mode. Require Administrator privilege.\par
+\par
+If you choose this mode, a Windows service is installed, which will be started with Windows, and renders any program spawned when it is running.\par
+\par
+The service will be started after successful installation.\par
+\par
+With this mode, you can pause the rendering by stopping the "gdipp Service" in the Services tool, without reboot.\par
+\par
+Choose this mode if you want system-wide rendering, while still maintain system stability.}]]>
 	</String>
 	<String Id="LoadModeDlg_RegistryDesc" Overridable="yes">
-		If you choose this mode, the installer will modify the registry to support system-wide rendering. Require Administrator privilege.
-
-		The rendering replacement in this mode is possibly more thorough than the Windows Service mode, at the cost of system stability. Meanwhile, some functions of gdipp cannot be used with this mode.
-
-		The rendering is effective after reboot. It cannot be stopped until gdipp is uninstalled.
-
-		Choose this mode if you need complete rendering replacement and are capable of troubleshooting.
+<![CDATA[{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}}\viewkind4\uc1\pard\f0\fs18 If you choose this mode, the installer will modify the registry to support system-wide rendering. Require Administrator privilege.\par
+\par
+The rendering replacement in this mode is possibly more thorough than the Windows Service mode, at the cost of system stability. Meanwhile, some functions of gdipp cannot be used with this mode.\par
+\par
+The rendering is effective after reboot. It cannot be stopped until gdipp is uninstalled.\par
+\par
+Choose this mode if you need complete rendering replacement and are capable of troubleshooting.}]]>
 	</String>
 	<String Id="LoadModeDlg_LoaderDesc" Overridable="yes">
-		There will be no system-wide rendering if you choose this mode. Instead, the installer will place the shortcut of a program loader on the desktop.
-
-		In case you need rendering of a specific program, drag the program icon and drop on the program loader shortcut, or pass the program path as an argument to the program loader.
-
-		The program will not be rendered if it is not fed to the loader.
-
-		Choose this mode if you just occasionally need rendering for certain programs.
+<![CDATA[{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fnil\fcharset0 Segoe UI;}}\viewkind4\uc1\pard\f0\fs18 There will be no system-wide rendering if you choose this mode. Instead, the installer will place the shortcut of a program loader on the desktop.\par
+\par
+In case you need rendering of a specific program, drag the program icon and drop on the program loader shortcut, or pass the program path as an argument to the program loader.\par
+\par
+The program will not be rendered if it is not fed to the loader.\par
+\par
+Choose this mode if you just occasionally need rendering for certain programs.}]]>
 	</String>
 
 	<String Id="gdippSvcDesc32" Overridable="yes">gdipp 32-bit coordinator service.</String>

@@ -12,7 +12,7 @@
 <?if $(var.Platform) = x86 ?>
 		<!-- if this is the x86 installer, do not install on 64-bit OS -->
 		<Condition Message="!(loc.VersionFailMsg)">
-			(VersionNT >= 600) AND (NOT VersionNT64 >= 600)
+			(VersionNT >= 600) AND (NOT VersionNT64)
 		</Condition>
 <?else if $(var.Platform) = x64 ?>
 		<Condition Message="!(loc.VersionFailMsg)">

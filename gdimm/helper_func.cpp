@@ -180,24 +180,14 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 		return bitmap.width;
 }
 
-LONG get_glyph_run_height(const glyph_run *a_glyph_run)
-{
-	LONG glyph_run_height = 0;
-
-	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
-		glyph_run_height = max(glyph_run_height, iter->bbox.bottom - iter->bbox.top);
-
-	return glyph_run_height;
-}
-
-LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_actual_width)
+LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_black_width)
 {
 	assert(a_glyph_run != NULL);
-
+ 
 	const glyph_node *start_glyph;
 	const glyph_node *end_glyph;
-
-	if (a_glyph_run->back().bbox.left >= a_glyph_run->front().bbox.left)
+ 
+	if (a_glyph_run->back().ctrl_box.left >= a_glyph_run->front().ctrl_box.left)
 	{
 		start_glyph = &a_glyph_run->front();
 		end_glyph = &a_glyph_run->back();
@@ -207,17 +197,19 @@ LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_actual_width)
 		start_glyph = &a_glyph_run->back();
 		end_glyph = &a_glyph_run->front();
 	}
-
-	const LONG glyph_run_left = start_glyph->bbox.left;
-	LONG glyph_run_right = end_glyph->bbox.right;
-
-	if (is_actual_width && end_glyph->glyph != NULL)
+ 
+	LONG glyph_run_left, glyph_run_right;
+	if (is_black_width)
 	{
-		// actual width is the width including all bitmap content
-		// while logical width only includes the glyph bounding box
-		glyph_run_right = max(glyph_run_right, end_glyph->bbox.left + get_glyph_bmp_width(reinterpret_cast<FT_BitmapGlyph>(end_glyph->glyph)->bitmap));
+		glyph_run_left = start_glyph->black_box.left;
+		glyph_run_right = end_glyph->black_box.right;
 	}
-
+	else
+	{
+		glyph_run_left = start_glyph->ctrl_box.left;
+		glyph_run_right = end_glyph->ctrl_box.right;
+	}
+ 
 	return glyph_run_right - glyph_run_left;
 }
 
@@ -349,11 +341,13 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 	if ((color_ret & 0x01000000) != 0)
 	{
 		const HPALETTE dc_palette = static_cast<const HPALETTE>(GetCurrentObject(hdc, OBJ_PAL));
+
 		PALETTEENTRY pal_entry;
 		const UINT entries = GetPaletteEntries(dc_palette, (color_ret & 0x00ffffff), 1, &pal_entry);
-		assert(entries != 0);
 
-		color_ret = RGB(pal_entry.peRed, pal_entry.peGreen, pal_entry.peBlue);
+		// if the DC has no palette entry, this is an invalid color
+		if (entries != 0)
+			color_ret = RGB(pal_entry.peRed, pal_entry.peGreen, pal_entry.peBlue);
 	}
 
 	return color_ret;

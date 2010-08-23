@@ -4,7 +4,7 @@
 
 class gdimm_renderer
 {
-	virtual int render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
+	virtual bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 
 protected:
 	static gdimm_glyph_cache _glyph_cache;

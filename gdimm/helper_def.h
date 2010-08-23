@@ -54,8 +54,14 @@ struct font_link_node
 
 struct glyph_node
 {
+	// glyph data pointer
 	FT_Glyph glyph;
-	RECT bbox;
+
+	// box encloses the bitmap of the glyph
+	RECT black_box;
+
+	// box indicates the formal position of the glyph
+	RECT ctrl_box;
 };
 
 typedef list<glyph_node> glyph_run;

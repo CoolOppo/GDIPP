@@ -45,7 +45,7 @@
 	
 	<demo>
 		<count>5000</count>
-		<threads>1</threads>
+		<threads>2</threads>
 		<random_text>0</random_text>
 		<font>Arial</font>
 		<font>Consolas</font>

@@ -13,9 +13,9 @@ gdimm_renderer::~gdimm_renderer()
 {
 }
 
-int gdimm_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+bool gdimm_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
-	return 0;
+	return true;
 }
 
 bool gdimm_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)

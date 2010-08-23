@@ -15,10 +15,10 @@ class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 	FLOAT _pixels_per_dip;
 	bool _use_gdi_natural;
 
-	int make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run);
-	int render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
-	int render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
-	int render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
+	bool make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run);
+	bool render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
+	bool render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
+	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 
 	//////////////////////////////////////////////////////////////////////////
 

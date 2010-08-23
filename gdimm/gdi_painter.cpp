@@ -9,6 +9,7 @@ INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpD
 
 	const BYTE dx_skip = (is_pdy ? 2 : 1);
 	INT curr_left = 0;
+	bool first_glyph = true;
 
 	glyph_run::iterator iter;
 	UINT i;
@@ -16,8 +17,18 @@ INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpD
 	{
 		assert(iter != a_glyph_run->end());
 
-		iter->bbox.right = curr_left + (iter->bbox.right - iter->bbox.left);
-		iter->bbox.left = curr_left;
+		if (first_glyph)
+			first_glyph = false;
+		else
+		{
+			const int distance_shift = curr_left - iter->ctrl_box.left;
+
+			iter->ctrl_box.left += distance_shift;
+			iter->ctrl_box.right += distance_shift;
+			iter->black_box.left += distance_shift;
+			iter->black_box.right += distance_shift;
+		}
+
 		curr_left += lpDx[i * dx_skip];
 	}
 
@@ -190,7 +201,7 @@ void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const
+BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	BOOL b_ret, paint_success;
 
@@ -209,7 +220,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	pitch > 0 means the FreeType bitmap is up flow
 	*/
 
-	const SIZE bbox_visible_size = {bbox.visible_rect.right - bbox.visible_rect.left, bbox.visible_rect.bottom - bbox.visible_rect.top};
+	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
 	const BITMAPINFO bmp_info = {sizeof(BITMAPINFOHEADER), bbox_visible_size.cx, -bbox_visible_size.cy, 1, 1, BI_RGB};
 
 	BYTE *mask_bits;
@@ -218,7 +229,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
-		paint_background(_context->hdc, &bbox.visible_rect, _bg_color);
+		paint_background(_context->hdc, &grm.visible_rect, _bg_color);
 
 	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
 	{
@@ -226,26 +237,26 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
 		RECT glyph_rect;
-		glyph_rect.left = bbox.baseline.x + (iter->bbox.left + bmp_glyph->left);
-		glyph_rect.top = bbox.baseline.y - bmp_glyph->top;
-		glyph_rect.right = glyph_rect.left + get_glyph_bmp_width(bmp_glyph->bitmap);
+		glyph_rect.left = grm.baseline.x + iter->black_box.left;
+		glyph_rect.top = grm.baseline.y - bmp_glyph->top;
+		glyph_rect.right = grm.baseline.x + iter->black_box.right;
 		glyph_rect.bottom = glyph_rect.top + bmp_glyph->bitmap.rows;
 
 		RECT glyph_rect_in_bbox;
-		const BOOL is_glyph_in_bbox = IntersectRect(&glyph_rect_in_bbox, &glyph_rect, &bbox.visible_rect);
+		const BOOL is_glyph_in_bbox = IntersectRect(&glyph_rect_in_bbox, &glyph_rect, &grm.visible_rect);
 		if (is_glyph_in_bbox)
 		{
 			const RECT src_rect = {glyph_rect_in_bbox.left - glyph_rect.left,
 				glyph_rect_in_bbox.top - glyph_rect.top,
 				glyph_rect_in_bbox.right - glyph_rect.left,
 				glyph_rect_in_bbox.bottom - glyph_rect.top};
-			const RECT dest_rect = {glyph_rect_in_bbox.left - bbox.visible_rect.left,
-				glyph_rect_in_bbox.top - bbox.visible_rect.top,
-				glyph_rect_in_bbox.right - bbox.visible_rect.left,
-				glyph_rect_in_bbox.bottom - bbox.visible_rect.top};
+			const RECT dest_rect = {glyph_rect_in_bbox.left - grm.visible_rect.left,
+				glyph_rect_in_bbox.top - grm.visible_rect.top,
+				glyph_rect_in_bbox.right - grm.visible_rect.left,
+				glyph_rect_in_bbox.bottom - grm.visible_rect.top};
 			const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 1);
 		
-			set_mono_mask_bits(bmp_glyph, src_rect, mask_bits, dest_rect, dest_pitch, bbox_visible_size.cy == bbox.extent.cy);
+			set_mono_mask_bits(bmp_glyph, src_rect, mask_bits, dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy);
 		}
 	}
 
@@ -258,8 +269,8 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	// foreground ROP: source brush
 	// background ROP: destination color
 	paint_success = MaskBlt(_context->hdc,
-		bbox.visible_rect.left,
-		bbox.visible_rect.top,
+		grm.visible_rect.left,
+		grm.visible_rect.top,
 		bbox_visible_size.cx,
 		bbox_visible_size.cy,
 		_context->hdc,
@@ -279,11 +290,11 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const
+BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	BOOL b_ret, paint_success;
 
-	const SIZE bbox_visible_size = {bbox.visible_rect.right - bbox.visible_rect.left, bbox.visible_rect.bottom - bbox.visible_rect.top};
+	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
 	const BITMAPINFO bmp_info = {sizeof(BITMAPINFOHEADER), bbox_visible_size.cx, -bbox_visible_size.cy, 1, 32, BI_RGB};
 
 	BYTE *text_bits;
@@ -294,7 +305,7 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
-		paint_background(_context->hdc, &bbox.visible_rect, _bg_color);
+		paint_background(_context->hdc, &grm.visible_rect, _bg_color);
 
 	for (glyph_run::const_iterator iter = a_glyph_run->begin(); iter != a_glyph_run->end(); iter++)
 	{
@@ -302,26 +313,26 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
 		RECT glyph_rect;
-		glyph_rect.left = bbox.baseline.x + (iter->bbox.left + bmp_glyph->left);
-		glyph_rect.top = bbox.baseline.y - bmp_glyph->top;
-		glyph_rect.right = glyph_rect.left + get_glyph_bmp_width(bmp_glyph->bitmap);
+		glyph_rect.left = grm.baseline.x + iter->black_box.left;
+		glyph_rect.top = grm.baseline.y - bmp_glyph->top;
+		glyph_rect.right = grm.baseline.x + iter->black_box.right;
 		glyph_rect.bottom = glyph_rect.top + bmp_glyph->bitmap.rows;
 
 		RECT glyph_rect_in_bbox;
-		const BOOL is_glyph_in_bbox = IntersectRect(&glyph_rect_in_bbox, &glyph_rect, &bbox.visible_rect);
+		const BOOL is_glyph_in_bbox = IntersectRect(&glyph_rect_in_bbox, &glyph_rect, &grm.visible_rect);
 		if (is_glyph_in_bbox)
 		{
 			const RECT src_rect = {glyph_rect_in_bbox.left - glyph_rect.left,
 				glyph_rect_in_bbox.top - glyph_rect.top,
 				glyph_rect_in_bbox.right - glyph_rect.left,
 				glyph_rect_in_bbox.bottom - glyph_rect.top};
-			const RECT dest_rect = {glyph_rect_in_bbox.left - bbox.visible_rect.left,
-				glyph_rect_in_bbox.top - bbox.visible_rect.top,
-				glyph_rect_in_bbox.right - bbox.visible_rect.left,
-				glyph_rect_in_bbox.bottom - bbox.visible_rect.top};
+			const RECT dest_rect = {glyph_rect_in_bbox.left - grm.visible_rect.left,
+				glyph_rect_in_bbox.top - grm.visible_rect.top,
+				glyph_rect_in_bbox.right - grm.visible_rect.left,
+				glyph_rect_in_bbox.bottom - grm.visible_rect.top};
 			const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
 
-			set_gray_text_bits(bmp_glyph, src_rect, text_bits, dest_rect, dest_pitch, bbox_visible_size.cy == bbox.extent.cy);
+			set_gray_text_bits(bmp_glyph, src_rect, text_bits, dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy);
 		}
 	}
 
@@ -332,8 +343,8 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	{
 		bf.SourceConstantAlpha = _context->setting_cache->shadow.alpha;
 		b_ret = AlphaBlend(_context->hdc,
-			bbox.visible_rect.left + _context->setting_cache->shadow.offset_x,
-			bbox.visible_rect.top + _context->setting_cache->shadow.offset_y,
+			grm.visible_rect.left + _context->setting_cache->shadow.offset_x,
+			grm.visible_rect.top + _context->setting_cache->shadow.offset_y,
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
 			_hdc_canvas,
@@ -348,8 +359,8 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 
 	bf.SourceConstantAlpha = 255;
 	paint_success = AlphaBlend(_context->hdc,
-		bbox.visible_rect.left,
-		bbox.visible_rect.top,
+		grm.visible_rect.left,
+		grm.visible_rect.top,
 		bbox_visible_size.cx,
 		bbox_visible_size.cy,
 		_hdc_canvas,
@@ -365,12 +376,11 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const
+BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	BOOL b_ret, paint_success;
 
-	const SIZE bbox_visible_size = {bbox.visible_rect.right - bbox.visible_rect.left, bbox.visible_rect.bottom - bbox.visible_rect.top};
-
+	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
 	const BITMAPINFO bmp_info = {sizeof(BITMAPINFOHEADER), bbox_visible_size.cx, -bbox_visible_size.cy, 1, 32, BI_RGB};
 
 	BYTE *text_bits;
@@ -394,8 +404,8 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
 			_context->hdc,
-			bbox.visible_rect.left,
-			bbox.visible_rect.top,
+			grm.visible_rect.left,
+			grm.visible_rect.top,
 			SRCCOPY);
 	}
 
@@ -412,13 +422,13 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			assert(bmp_glyph->bitmap.pitch >= 0);
 
 			RECT solid_glyph_rect;
-			solid_glyph_rect.left = bbox.baseline.x + (iter->bbox.left + bmp_glyph->left);
-			solid_glyph_rect.top = bbox.baseline.y - bmp_glyph->top;
-			solid_glyph_rect.right = solid_glyph_rect.left + get_glyph_bmp_width(bmp_glyph->bitmap);
+			solid_glyph_rect.left = grm.baseline.x + iter->black_box.left;
+			solid_glyph_rect.top = grm.baseline.y - bmp_glyph->top;
+			solid_glyph_rect.right = grm.baseline.x + iter->black_box.right;
 			solid_glyph_rect.bottom = solid_glyph_rect.top + bmp_glyph->bitmap.rows;
-				
+			
 			RECT solid_rect_in_bbox;
-			if (IntersectRect(&solid_rect_in_bbox, &solid_glyph_rect, &bbox.visible_rect))
+			if (IntersectRect(&solid_rect_in_bbox, &solid_glyph_rect, &grm.visible_rect))
 			{
 				if (_context->setting_cache->shadow.alpha > 0)
 				{
@@ -428,16 +438,16 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 						solid_glyph_rect.bottom + _context->setting_cache->shadow.offset_y};
 
 					RECT shadow_rect_in_bbox;
-					if (IntersectRect(&shadow_rect_in_bbox, &solid_glyph_rect, &bbox.visible_rect))
+					if (IntersectRect(&shadow_rect_in_bbox, &solid_glyph_rect, &grm.visible_rect))
 					{
 						const RECT shadow_src_rect = {shadow_rect_in_bbox.left - shadow_glyph_rect.left,
 							shadow_rect_in_bbox.top - shadow_glyph_rect.top,
 							shadow_rect_in_bbox.right - shadow_glyph_rect.left,
 							shadow_rect_in_bbox.bottom - shadow_glyph_rect.top};
-						const RECT shadow_dest_rect = {shadow_rect_in_bbox.left - bbox.visible_rect.left,
-							shadow_rect_in_bbox.top - bbox.visible_rect.top,
-							shadow_rect_in_bbox.right - bbox.visible_rect.left,
-							shadow_rect_in_bbox.bottom - bbox.visible_rect.top};
+						const RECT shadow_dest_rect = {shadow_rect_in_bbox.left - grm.visible_rect.left,
+							shadow_rect_in_bbox.top - grm.visible_rect.top,
+							shadow_rect_in_bbox.right - grm.visible_rect.left,
+							shadow_rect_in_bbox.bottom - grm.visible_rect.top};
 
 						set_lcd_text_bits(bmp_glyph, shadow_src_rect, text_bits, shadow_dest_rect, dest_pitch, false, _context->setting_cache->shadow.alpha);
 					}
@@ -447,18 +457,18 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 					solid_rect_in_bbox.top - solid_glyph_rect.top,
 					solid_rect_in_bbox.right - solid_glyph_rect.left,
 					solid_rect_in_bbox.bottom - solid_glyph_rect.top};
-				const RECT solid_dest_rect = {solid_rect_in_bbox.left - bbox.visible_rect.left,
-					solid_rect_in_bbox.top - bbox.visible_rect.top,
-					solid_rect_in_bbox.right - bbox.visible_rect.left,
-					solid_rect_in_bbox.bottom - bbox.visible_rect.top};
+				const RECT solid_dest_rect = {solid_rect_in_bbox.left - grm.visible_rect.left,
+					solid_rect_in_bbox.top - grm.visible_rect.top,
+					solid_rect_in_bbox.right - grm.visible_rect.left,
+					solid_rect_in_bbox.bottom - grm.visible_rect.top};
 
-				set_lcd_text_bits(bmp_glyph, solid_src_rect, text_bits, solid_dest_rect, dest_pitch, bbox_visible_size.cy == bbox.extent.cy, 255);
+				set_lcd_text_bits(bmp_glyph, solid_src_rect, text_bits, solid_dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy, 255);
 			}
 		}
 
 		paint_success = BitBlt(_context->hdc,
-			bbox.visible_rect.left,
-			bbox.visible_rect.top,
+			grm.visible_rect.left,
+			grm.visible_rect.top,
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
 			_hdc_canvas,
@@ -484,44 +494,45 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 		paint_background(_context->hdc, lprect, _bg_color);
 
 	// actual bounding box occupied by the glyphs
-	text_bbox bbox;
-	bbox.extent.cx = max(get_glyph_run_width(a_glyph_run, true), max_glyph_distance);
-	bbox.extent.cy = _context->outline_metrics->otmTextMetrics.tmHeight;
+	glyph_run_metrics grm;
+	grm.extent.cx = max(get_glyph_run_width(a_glyph_run, true), max_glyph_distance);
+
+	// no bitmap to paint
+	if (grm.extent.cx == 0)
+		return FALSE;
+
+	grm.extent.cy = _context->outline_metrics->otmTextMetrics.tmHeight;
 	const LONG bbox_ascent = _context->outline_metrics->otmTextMetrics.tmAscent;
 	const LONG bbox_descent = _context->outline_metrics->otmTextMetrics.tmDescent;
 
-	// no bitmap to paint
-	if (bbox.extent.cx == 0)
-		return FALSE;
-
 	// adjusted baseline where the bitmap will be finally drawn before applying clipping
-	bbox.baseline = get_baseline(_text_alignment,
+	grm.baseline = get_baseline(_text_alignment,
 		_cursor.x,
 		_cursor.y,
-		bbox.extent.cx,
+		grm.extent.cx,
 		bbox_ascent,
 		bbox_descent);
 
-	bbox.visible_rect.left = bbox.baseline.x;
-	bbox.visible_rect.top = bbox.baseline.y - bbox_ascent;
-	bbox.visible_rect.right = bbox.visible_rect.left + bbox.extent.cx;
-	bbox.visible_rect.bottom = bbox.visible_rect.top + bbox.extent.cy;
+	grm.visible_rect.left = grm.baseline.x + a_glyph_run->front().black_box.left;
+	grm.visible_rect.top = grm.baseline.y - bbox_ascent;
+	grm.visible_rect.right = grm.visible_rect.left + grm.extent.cx;
+	grm.visible_rect.bottom = grm.visible_rect.top + grm.extent.cy;
 
-	_cursor.x += bbox.extent.cx;
+	_cursor.x += max(a_glyph_run->back().ctrl_box.right - a_glyph_run->front().ctrl_box.left, max_glyph_distance);;
 	
 	// apply clipping
-	if (options & ETO_CLIPPED && !IntersectRect(&bbox.visible_rect, &bbox.visible_rect, lprect))
+	if (options & ETO_CLIPPED && !IntersectRect(&grm.visible_rect, &grm.visible_rect, lprect))
 		return FALSE;
 	
 	switch (_render_mode)
 	{
 		case FT_RENDER_MODE_NORMAL:
 		case FT_RENDER_MODE_LIGHT:
-			return paint_gray(options, lprect, a_glyph_run, bbox);
+			return paint_gray(options, lprect, a_glyph_run, grm);
 		case FT_RENDER_MODE_MONO:
-			return paint_mono(options, lprect, a_glyph_run, bbox);
+			return paint_mono(options, lprect, a_glyph_run, grm);
 		case FT_RENDER_MODE_LCD:
-			return paint_lcd(options, lprect, a_glyph_run, bbox);
+			return paint_lcd(options, lprect, a_glyph_run, grm);
 		default:
 			return FALSE;
 	}

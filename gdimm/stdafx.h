@@ -10,15 +10,11 @@
 #include <windows.h>
 #include <atlbase.h>
 #include <mmsystem.h>
-#include <psapi.h>
 
 // C standard header files
 #include <cassert>
-#include <cmath>
-#include <ctime>
 #include <list>
 #include <map>
-#include <process.h>
 #include <set>
 #include <sstream>
 #include <string>

@@ -147,7 +147,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	}
 }
 
-int gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
 {
 	bool b_ret;
 
@@ -170,7 +170,6 @@ int gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	if (_context->setting_cache->hinting == 0)
 		_ggo_format |= GGO_UNHINTED;
 
-	int glyph_run_height = 0;
 	POINT pen_pos = {};
 
 	for (UINT i = 0; i < c; i++)
@@ -199,20 +198,30 @@ int gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 			}
 		}
 
-		if (new_glyph.glyph != NULL)
-			glyph_run_height = max(glyph_run_height, reinterpret_cast<FT_BitmapGlyph>(new_glyph.glyph)->bitmap.rows);
+		FT_Int glyph_left = 0, glyph_width = 0;
 
-		new_glyph.bbox.left = pen_pos.x;
-		new_glyph.bbox.top = pen_pos.y;
+		if (new_glyph.glyph != NULL)
+		{
+			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(new_glyph.glyph);
+			glyph_left = bmp_glyph->left;
+			glyph_width = get_glyph_bmp_width(bmp_glyph->bitmap);
+		}
+
+		new_glyph.ctrl_box.left = pen_pos.x;
+		new_glyph.ctrl_box.top = pen_pos.y;
+		new_glyph.black_box.left = new_glyph.ctrl_box.left + glyph_left;
+		new_glyph.black_box.top = new_glyph.ctrl_box.top;
 		
 		pen_pos.x += glyph_metrics.gmCellIncX + _char_extra;
 		pen_pos.y += glyph_metrics.gmCellIncY;
 
-		new_glyph.bbox.right = pen_pos.x;
-		new_glyph.bbox.bottom = pen_pos.x;
+		new_glyph.ctrl_box.right = pen_pos.x;
+		new_glyph.ctrl_box.bottom = pen_pos.y;
+		new_glyph.black_box.right = new_glyph.black_box.left + glyph_width;
+		new_glyph.black_box.bottom = new_glyph.ctrl_box.bottom;
 
 		new_glyph_run.push_back(new_glyph);
 	}
 
-	return glyph_run_height;
+	return true;
 }

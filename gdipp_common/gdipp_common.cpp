@@ -152,9 +152,6 @@ BOOL APIENTRY DllMain(
 		assert(h_ex_handler != NULL);
 
 		break;
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-		break;
 	case DLL_PROCESS_DETACH:
 		ULONG ul_ret = RemoveVectoredExceptionHandler(h_ex_handler);
 		assert(ul_ret != 0);

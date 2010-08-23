@@ -6,7 +6,7 @@ using namespace std;
 
 class gdimm_gdi_painter : public gdimm_painter
 {
-	struct text_bbox
+	struct glyph_run_metrics
 	{
 		/*
 		extent and baseline determine the bounding box before clipping
@@ -44,9 +44,9 @@ class gdimm_gdi_painter : public gdimm_painter
 		bool project_bottom,
 		BYTE alpha) const;
 
-	BOOL paint_mono(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const;
-	BOOL paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const;
-	BOOL paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const text_bbox &bbox) const;
+	BOOL paint_mono(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
+	BOOL paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
+	BOOL paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
 	BOOL paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, INT max_glyph_distance = 0);
 
 public:

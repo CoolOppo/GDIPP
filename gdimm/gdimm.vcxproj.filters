@@ -167,9 +167,6 @@
     <ClCompile Include="hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ggo_renderer.cpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClCompile>
     <ClCompile Include="font_store.cpp">
       <Filter>Source Files\font</Filter>
     </ClCompile>
@@ -188,9 +185,6 @@
     <ClCompile Include="ft_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
     </ClCompile>
-    <ClCompile Include="dw_renderer.cpp">
-      <Filter>Source Files\renderer</Filter>
-    </ClCompile>
     <ClCompile Include="obj_reg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -201,6 +195,12 @@
       <Filter>Source Files\painter</Filter>
     </ClCompile>
     <ClCompile Include="wic_renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="dw_renderer.cpp">
+      <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="ggo_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
     </ClCompile>
   </ItemGroup>
