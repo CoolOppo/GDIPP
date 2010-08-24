@@ -55,6 +55,7 @@
 	</demo>
 	
 	<exclude>
+		<process>conhost\.exe</process>
 		<process>dwm\.exe</process>
 		<process>logonui\.exe</process>
 		<process>service\.exe</process>
