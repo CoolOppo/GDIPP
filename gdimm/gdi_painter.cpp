@@ -249,7 +249,9 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 		glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 	{
 		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
-		assert(bmp_glyph != NULL);
+		if (bmp_glyph == NULL)
+			continue;
+
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
 		// the bounding box of the current glyph in the DC bitmap
@@ -334,7 +336,9 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 		glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 	{
 		FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
-		assert(bmp_glyph != NULL);
+		if (bmp_glyph == NULL)
+			continue;
+
 		assert(bmp_glyph->bitmap.pitch >= 0);
 
 		RECT glyph_rect;
@@ -448,7 +452,9 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			glyph_iter != a_glyph_run->glyphs.end(); glyph_iter++, black_iter++)
 		{
 			FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(*glyph_iter);
-			assert(bmp_glyph != NULL);
+			if (bmp_glyph == NULL)
+				continue;
+			
 			assert(bmp_glyph->bitmap.pitch >= 0);
 
 			RECT solid_glyph_rect;
