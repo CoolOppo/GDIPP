@@ -30,7 +30,22 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	if (b_ret)
 	{
-		eh_ret = gdipp_inject_process(pi.dwProcessId, pi.dwThreadId);
+#ifdef _M_X64
+		const wchar_t *gdimm_name = L"gdimm_64.dll";
+#else
+		const wchar_t *gdimm_name = L"gdimm_32.dll";
+#endif
+
+		wchar_t _gdimm_path[MAX_PATH];
+		b_ret = gdipp_get_dir_file_path(NULL, gdimm_name, _gdimm_path);
+		assert(b_ret);
+
+#ifdef _M_X64
+		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path, NULL, 0);
+#else
+		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, _gdimm_path, NULL, NULL, 0);
+#endif
+
 		if (eh_ret == 0)
 		{
 			WaitForSingleObject(pi.hProcess, INFINITE);

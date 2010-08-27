@@ -116,7 +116,7 @@ const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, con
 			// check next font if optional attributes match
 			// easy checks come first
 
-			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->weight_class > 0)))
+			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->weight_class > 1)))
 				continue;
 
 			if ((list_iter->italic >= 0) && (!list_iter->italic == setting_trait->italic))

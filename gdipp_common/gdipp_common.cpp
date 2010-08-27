@@ -1,11 +1,9 @@
 #include "stdafx.h"
 #include "gdipp_common.h"
 #include "setting.h"
-#include "injector.h"
 #include "minidump.h"
 
 gdipp_setting setting_instance;
-gdipp_injector injector_instance;
 
 bool wstring_ci_less::operator()(const wstring &string1, const wstring &string2) const
 {
@@ -79,11 +77,6 @@ const vector<const wstring> &gdipp_get_demo_fonts()
 bool gdipp_is_process_excluded(const wchar_t *proc_name)
 {
 	return setting_instance.is_process_excluded(proc_name);
-}
-
-NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id)
-{
-	return injector_instance.inject_process(process_id, thread_id);
 }
 
 void gdipp_register_minidump_module(HMODULE h_module)

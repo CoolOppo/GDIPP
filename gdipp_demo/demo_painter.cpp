@@ -4,7 +4,7 @@
 #include <gdipp_common.h>
 
 gdipp_demo_painter::gdipp_demo_painter()
-	: _total_count(5000),
+	: _total_count(total_count),
 	_painted_count(0),
 	_result_prepared(false),
 	_result_font(NULL)

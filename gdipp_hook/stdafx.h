@@ -11,5 +11,6 @@
 
 // C RunTime Header Files
 #include <cassert>
+#include <sstream>
 #include <string>
 #include <vector>

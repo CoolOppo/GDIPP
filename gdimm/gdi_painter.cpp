@@ -474,7 +474,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 						solid_glyph_rect.bottom + _context->setting_cache->shadow.offset_y};
 
 					RECT shadow_rect_in_bbox;
-					if (IntersectRect(&shadow_rect_in_bbox, &solid_glyph_rect, &grm.visible_rect))
+					if (IntersectRect(&shadow_rect_in_bbox, &shadow_glyph_rect, &grm.visible_rect))
 					{
 						const RECT shadow_src_rect = {shadow_rect_in_bbox.left - shadow_glyph_rect.left,
 							shadow_rect_in_bbox.top - shadow_glyph_rect.top,

@@ -53,14 +53,6 @@ void wcs_convert(const wchar_t *str, T *converted)
 typedef LONG NTSTATUS;
 GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id = 0);
 
-// service related definitions
-
-#ifdef _M_X64
-#define GDIPP_SVC_EVENT_NAME L"Global\\gdipp_svc_event_64"
-#else
-#define GDIPP_SVC_EVENT_NAME L"Global\\gdipp_svc_event_32"
-#endif // _M_X64
-
 // debug APIs
 GDIPP_API void gdipp_register_minidump_module(HMODULE h_module);
 
