@@ -7,20 +7,20 @@ using namespace std;
 
 const double pi = acos(-1.0);
 
+// convert 26.6 fixed float type to 16.16 fixed point
+FIXED fixed_from_26dot6(FT_Pos x);
+
 // convert 16.16 fixed point to 26.6 format
-FT_F26Dot6 to_26dot6(const FIXED &x);
-
-// convert floating point to 26.6 fixed point format
-FT_F26Dot6 to_26dot6(FLOAT x);
-
-// convert 26.6 fixed float type to integer
-LONG from_26dot6(FT_Pos x);
-
-// convert 16.16 fixed float type to integer
-LONG from_16dot16(FT_Pos x);
+FT_F26Dot6 fixed_to_26dot6(const FIXED &x);
 
 // convert floating point to 16.16 format
-FT_Pos to_16dot16(double x);
+FT_Pos float_to_16dot16(double x);
+
+// convert 16.16 fixed float type to integer
+LONG int_from_16dot16(FT_Pos x);
+
+// convert 26.6 fixed float type to integer
+LONG int_from_26dot6(FT_Pos x);
 
 DWORD create_tls_index();
 BOOL free_tls_index(DWORD tls_index);

@@ -3,7 +3,7 @@
 #include "gdimm.h"
 #include "helper_func.h"
 
-INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
+void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
 {
 	/*
 	the DX array stores the distance from the left border of the current glyph to the next glyph
@@ -19,6 +19,7 @@ INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpD
 
 	const BYTE dx_skip = (is_pdy ? 2 : 1);
 	INT curr_left = 0;
+	INT last_right;
 
 	list<RECT>::iterator ctrl_iter, black_iter;
 	UINT i;
@@ -29,7 +30,7 @@ INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpD
 
 		if (i != 0)
 		{
-			
+			// distance to shift right
 			const int distance_shift = curr_left - ctrl_iter->left;
 
 			ctrl_iter->left += distance_shift;
@@ -39,9 +40,17 @@ INT gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpD
 		}
 
 		curr_left += lpDx[i * dx_skip];
+		last_right = black_iter->right;
 	}
 
-	return curr_left;
+	a_glyph_run->glyphs.push_back(NULL);
+
+	const RECT ctrl_right = {curr_left, 0, curr_left, 0};
+	a_glyph_run->ctrl_boxes.push_back(ctrl_right);
+
+	last_right = max(last_right, curr_left);
+	const RECT black_right = {last_right, 0, last_right, 0};
+	a_glyph_run->black_boxes.push_back(black_right);
 }
 
 void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
@@ -519,7 +528,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, INT max_glyph_distance)
+BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run)
 {
 	/*
 	both ETO_OPAQUE and OPAQUE background mode need background filled
@@ -531,7 +540,7 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 
 	glyph_run_metrics grm;
 	// actual bounding box occupied by the glyphs
-	grm.extent.cx = max(get_glyph_run_width(a_glyph_run, false), max_glyph_distance);
+	grm.extent.cx = get_glyph_run_width(a_glyph_run, false);
 
 	// nothing to paint
 	if (grm.extent.cx == 0)
@@ -555,7 +564,7 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 	grm.visible_rect.bottom = grm.visible_rect.top + grm.extent.cy;
 
 	// advance cursor by the width of the control box of the glyph run
-	_cursor.x += max(a_glyph_run->ctrl_boxes.back().right - a_glyph_run->ctrl_boxes.front().left, max_glyph_distance);
+	_cursor.x += a_glyph_run->ctrl_boxes.back().right - a_glyph_run->ctrl_boxes.front().left;
 	
 	// apply clipping
 	if (options & ETO_CLIPPED && !IntersectRect(&grm.visible_rect, &grm.visible_rect, lprect))
@@ -632,8 +641,8 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 	else
 	{
 		glyph_run adjusted_glyph_run = *a_glyph_run;
-		const INT max_glyph_distance = adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
-		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run, max_glyph_distance);
+		adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
+		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run);
 	}
 
 	// if TA_UPDATECP is set, update current position after text out

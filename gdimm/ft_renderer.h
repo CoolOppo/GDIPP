@@ -28,5 +28,5 @@ class gdimm_ft_renderer : public gdimm_renderer
 	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 
 public:
-	bool get_glyph_metrics(wchar_t glyph_char, bool is_glyph_index, LPGLYPHMETRICS lpgm);
+	const FT_OutlineGlyph get_outline_glyph(wchar_t glyph_char, bool is_glyph_index);
 };

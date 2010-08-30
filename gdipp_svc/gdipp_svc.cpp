@@ -168,6 +168,9 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
+	// report running status when initialization is complete
+	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
+
 #ifdef _M_X64
 	const wchar_t *gdipp_hook_name = L"gdipp_hook_64.exe";
 #else
@@ -188,9 +191,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
-
-	// report running status when initialization is complete
-	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 
 	b_ret = RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_event, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
 	assert(b_ret);

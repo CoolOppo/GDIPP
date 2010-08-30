@@ -4,30 +4,30 @@
 #include "gdimm.h"
 #include "lock.h"
 
-FT_F26Dot6 to_26dot6(const FIXED &x)
+FIXED fixed_from_26dot6(FT_Pos x)
+{
+	FT_Pos y = (x << 10);
+	return *(reinterpret_cast<FIXED *>(&y));
+}
+
+FT_F26Dot6 fixed_to_26dot6(const FIXED &x)
 {
 	return *(reinterpret_cast<const FT_F26Dot6 *>(&x)) >> 10;
 }
 
-FT_F26Dot6 to_26dot6(FLOAT x)
+FT_Pos float_to_16dot16(double x)
 {
-	return static_cast<FT_F26Dot6>(x * 64);
+	return static_cast<FT_Pos>(x * 65536);
 }
 
-LONG from_26dot6(FT_Pos x)
-{
-	return x >> 6;
-}
-
-LONG from_16dot16(FT_Pos x)
+LONG int_from_16dot16(FT_Pos x)
 {
 	return x >> 16;
 }
 
-// convert floating point to 16.16 format
-FT_Pos to_16dot16(double x)
+LONG int_from_26dot6(FT_Pos x)
 {
-	return static_cast<FT_Pos>(x * 65536);
+	return x >> 6;
 }
 
 DWORD create_tls_index()

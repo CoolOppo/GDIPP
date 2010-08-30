@@ -96,7 +96,7 @@ FT_ULong gdimm_ft_renderer::make_load_flags(const font_setting_cache *setting_ca
 void gdimm_ft_renderer::oblique_outline(const FT_Outline *outline, double slant_adv)
 {
 	// advance of slant on x-axis
-	FT_Matrix oblique_mat = {to_16dot16(1), to_16dot16(slant_adv), 0, to_16dot16(1)};
+	FT_Matrix oblique_mat = {float_to_16dot16(1), float_to_16dot16(slant_adv), 0, float_to_16dot16(1)};
 	FT_Outline_Transform(outline, &oblique_mat);
 }
 
@@ -403,8 +403,8 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 		black_iter->left = ctrl_iter->left + glyph_left;
 		black_iter->top = ctrl_iter->top;
 
-		pen_pos.x += from_16dot16(glyph_advance.x) + _char_extra;
-		pen_pos.y += from_16dot16(glyph_advance.y);
+		pen_pos.x += int_from_16dot16(glyph_advance.x) + _char_extra;
+		pen_pos.y += int_from_16dot16(glyph_advance.y);
 
 		ctrl_iter->right += pen_pos.x;
 		ctrl_iter->bottom += pen_pos.y;
@@ -415,30 +415,21 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	return true;
 }
 
-bool gdimm_ft_renderer::get_glyph_metrics(wchar_t glyph_char, bool is_glyph_index, LPGLYPHMETRICS lpgm)
+const FT_OutlineGlyph gdimm_ft_renderer::get_outline_glyph(wchar_t glyph_char, bool is_glyph_index)
 {
 	bool b_ret;
-	FT_Error ft_error;
 
 	glyph_run new_glyph_run;
 	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
 	if (b_ret)
 	{
 		assert(new_glyph_run.glyphs.size() == 1);
+		
+		const FT_Glyph new_glyph = new_glyph_run.glyphs.front();
+		assert(new_glyph->format == FT_GLYPH_FORMAT_OUTLINE);
 
-		const FT_Glyph target_glyph = new_glyph_run.glyphs.front();
-
-		FT_BBox glyph_bbox;
-		ft_error = FT_Outline_Get_BBox(&(reinterpret_cast<FT_OutlineGlyph>(target_glyph)->outline), &glyph_bbox);
-		assert(ft_error == 0);
-
-		lpgm->gmBlackBoxX = from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
-		lpgm->gmBlackBoxY = from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
-		lpgm->gmptGlyphOrigin.x = from_26dot6(glyph_bbox.xMin);
-		lpgm->gmptGlyphOrigin.y = from_26dot6(glyph_bbox.yMax);
-		lpgm->gmCellIncX = static_cast<short>(from_16dot16(target_glyph->advance.x));
-		lpgm->gmCellIncY = static_cast<short>(from_16dot16(target_glyph->advance.y));
+		return reinterpret_cast<const FT_OutlineGlyph>(new_glyph);
 	}
 
-	return b_ret;
+	return NULL;
 }

@@ -81,7 +81,7 @@ int gdimm_font_man::lookup_kern(const FTC_Scaler scaler, WORD left_glyph, WORD r
 	ft_error = FT_Get_Kerning(size->face, left_glyph, right_glyph, FT_KERNING_DEFAULT, &delta);
 	assert(ft_error == 0);
 
-	return from_26dot6(delta.x);
+	return int_from_26dot6(delta.x);
 }
 
 long gdimm_font_man::register_font(HDC font_holder, const wchar_t *font_face)

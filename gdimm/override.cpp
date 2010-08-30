@@ -7,6 +7,7 @@
 #include "ggo_renderer.h"
 #include "helper_def.h"
 #include "helper_func.h"
+#include "outline.h"
 #include "wic_renderer.h"
 #include "wic_painter.h"
 
@@ -147,10 +148,12 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 
 #ifdef _DEBUG
 	bool is_target_spec = true;
+	//is_target_spec &= (x > 0);
+	//is_target_spec &= (y > 0);
 	//is_target_spec &= ((options & ETO_GLYPH_INDEX) != 0);
 	//is_target_spec &= ((options & ETO_GLYPH_INDEX) == 0);
 	//is_target_spec &= (options == 4102);
-	//is_target_spec &= (c == 3);
+	//is_target_spec &= (c == 1);
 	
 	if (!is_target_spec)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -382,19 +385,16 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	// for GetTextExtentExPoint series
 	if (lpnFit != NULL || lpnDx != NULL)
 	{
-		INT fit_count = 0;
-
-		for (list<RECT>::const_iterator box_iter = a_glyph_run.ctrl_boxes.begin(); box_iter != a_glyph_run.ctrl_boxes.end(); box_iter++, fit_count++)
+		list<RECT>::const_iterator box_iter;
+		INT curr_index;
+		for (box_iter = a_glyph_run.ctrl_boxes.begin(), curr_index = 0; box_iter != a_glyph_run.ctrl_boxes.end(); box_iter++, curr_index++)
 		{
-			if (box_iter->right > nMaxExtent)
-				break;
+			if (lpnFit != NULL && box_iter->right <= nMaxExtent)
+				*lpnFit = curr_index + 1;
 
 			if (lpnDx != NULL)
-				lpnDx[fit_count] = box_iter->right - a_glyph_run.ctrl_boxes.front().left;
+				lpnDx[curr_index] = box_iter->right - a_glyph_run.ctrl_boxes.front().left;
 		}
-
-		if (lpnFit != NULL)
-			*lpnFit = fit_count;
 	}
 
 	return true;
@@ -403,13 +403,13 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 BOOL APIENTRY GetTextExtentPoint32A_hook(HDC hdc, LPCSTR lpString, int c, LPSIZE lpSize)
 {
 	wstring wide_char_str;
-	if (!mb_to_wc(lpString, c, wide_char_str))
-		return GetTextExtentPoint32A(hdc, lpString, c, lpSize);
+	if (mb_to_wc(lpString, c, wide_char_str))
+	{
+		if (get_text_extent(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize, false))
+			return TRUE;
+	}
 
-	if (GetTextExtentPoint32W_hook(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize))
-		return TRUE;
-	else
-		return GetTextExtentPoint32A(hdc, lpString, c, lpSize);
+	return GetTextExtentPoint32A(hdc, lpString, c, lpSize);
 }
 
 BOOL APIENTRY GetTextExtentPoint32W_hook(HDC hdc, LPCWSTR lpString, int c, LPSIZE lpSize)
@@ -431,13 +431,13 @@ BOOL WINAPI GetTextExtentPointI_hook(HDC hdc, LPWORD pgiIn, int cgi, LPSIZE lpSi
 BOOL APIENTRY GetTextExtentExPointA_hook(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize)
 {
 	wstring wide_char_str;
-	if (!mb_to_wc(lpszString, cchString, wide_char_str))
-		return GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
+	if (mb_to_wc(lpszString, cchString, wide_char_str))
+	{
+		if (get_text_extent(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize, false, nMaxExtent, lpnFit, lpnDx))
+			return TRUE;
+	}
 
-	if (GetTextExtentExPointW_hook(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), nMaxExtent, lpnFit, lpnDx, lpSize))
-		return TRUE;
-	else
-		return GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
+	return GetTextExtentExPointA(hdc, lpszString, cchString, nMaxExtent, lpnFit, lpnDx, lpSize);
 }
 
 BOOL APIENTRY GetTextExtentExPointW_hook(HDC hdc, LPCWSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize)
@@ -456,73 +456,102 @@ BOOL WINAPI GetTextExtentExPointI_hook(HDC hdc, LPWORD lpwszString, int cwchStri
 		return GetTextExtentExPointI(hdc, lpwszString, cwchString, nMaxExtent, lpnFit, lpnDx, lpSize);
 }
 
-bool get_glyph_metrics(HDC hdc, wchar_t glyph_char, bool is_glyph_index, LPGLYPHMETRICS lpgm)
+DWORD get_ggo_outline(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
 	bool b_ret;
 
-	if (lpgm == NULL)
-		return false;
+	if (lpgm == NULL || lpmat2 == NULL)
+		return GDI_ERROR;
 
-	if (!is_valid_dc(hdc))
-		return false;
+	const bool metrics_only = ((fuFormat & GGO_METRICS) != 0);
 
-	dc_context context;
-	if (!context.init(hdc))
-		return false;
+	if (!metrics_only && (cjBuffer != 0 && pvBuffer == NULL))
+		return GDI_ERROR;
 
-	// use custom glyph metrics only when rendered with FreeType
-	if (context.setting_cache->renderer == RENDERER_FREETYPE)
+	gdimm_ft_renderer ft_renderer;
+	FT_OutlineGlyph new_glyph = NULL;
+
+	b_ret = ft_renderer.begin(context, FT_RENDER_MODE_NORMAL);
+	if (b_ret)
 	{
-		gdimm_ft_renderer ft_renderer;
-		
-		b_ret = ft_renderer.begin(&context, FT_RENDER_MODE_NORMAL);
-		if (b_ret)
-		{
-			b_ret = ft_renderer.get_glyph_metrics(glyph_char, is_glyph_index, lpgm);
-			ft_renderer.end();
-		}
-
-		return b_ret;
+		new_glyph = ft_renderer.get_outline_glyph(uChar, (fuFormat & GGO_GLYPH_INDEX) != 0);
+		ft_renderer.end();
 	}
 
-	return true;
+	if (new_glyph == NULL)
+		return GDI_ERROR;
+
+	/*
+	FT_BBox glyph_bbox;
+	ft_error = FT_Outline_Get_BBox(&(reinterpret_cast<FT_OutlineGlyph>(target_glyph)->outline), &glyph_bbox);
+	assert(ft_error == 0);
+
+	lpgm->gmBlackBoxX = from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
+	lpgm->gmBlackBoxY = from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
+	lpgm->gmptGlyphOrigin.x = from_26dot6(glyph_bbox.xMin);
+	lpgm->gmptGlyphOrigin.y = from_26dot6(glyph_bbox.yMax);
+	lpgm->gmCellIncX = static_cast<short>(from_16dot16(target_glyph->advance.x));
+	lpgm->gmCellIncY = static_cast<short>(from_16dot16(target_glyph->advance.y));
+	*/
+
+	if (cjBuffer == 0)
+		return get_ggo_outline_size(new_glyph->outline);
+	else
+		return outline_ft_to_ggo(new_glyph->outline, pvBuffer);
 }
 
 DWORD WINAPI GetGlyphOutlineA_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
 	bool b_ret;
 
-	const DWORD ggo_ret = GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-	if (ggo_ret == GDI_ERROR)
-		return GDI_ERROR;
+	if (!is_valid_dc(hdc))
+		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 
+	dc_context context;
+	if (!context.init(hdc))
+		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+
+	if (context.setting_cache->renderer != RENDERER_FREETYPE)
+		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+
+	b_ret = true;
 	const bool is_glyph_index = !!(fuFormat & GGO_GLYPH_INDEX);
 	if (!is_glyph_index)
 	{
-		const char multi_byte_char = uChar;
 		wstring wide_char_str;
-		b_ret = mb_to_wc(&multi_byte_char, 1, wide_char_str);
-		assert(b_ret);
-		assert(wide_char_str.size() == 1);
-
-		uChar = wide_char_str.front();
+		b_ret = mb_to_wc(reinterpret_cast<const char *>(&uChar), 1, wide_char_str);
+		
+		if (b_ret)
+			assert(wide_char_str.size() == 1);
 	}
 
-	// not support transformation matrix
-	get_glyph_metrics(hdc, uChar, is_glyph_index, lpgm);
-
-	return ggo_ret;
+	if (b_ret)
+	{
+		const DWORD ggo_ret = get_ggo_outline(&context, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		if (ggo_ret != GDI_ERROR)
+			return ggo_ret;
+	}
+	
+	return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 }
 
 DWORD WINAPI GetGlyphOutlineW_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
-	const DWORD ggo_ret = GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-	if (ggo_ret == GDI_ERROR)
-		return GDI_ERROR;
+	if (!is_valid_dc(hdc))
+		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 
-	get_glyph_metrics(hdc, uChar, !!(fuFormat & GGO_GLYPH_INDEX), lpgm);
+	dc_context context;
+	if (!context.init(hdc))
+		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 
-	return ggo_ret;
+	if (context.setting_cache->renderer != RENDERER_FREETYPE)
+		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+
+	const DWORD ggo_ret = get_ggo_outline(&context, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	if (ggo_ret != GDI_ERROR)
+		return ggo_ret;
+	
+	return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 }
 
 BOOL WINAPI AbortPath_hook(HDC hdc)

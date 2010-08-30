@@ -4,6 +4,7 @@
 #include "helper_def.h"
 #include "helper_func.h"
 #include "lock.h"
+#include "outline.h"
 
 FT_Glyph gdimm_ggo_renderer::empty_outline_glyph;
 
@@ -23,10 +24,6 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 {
 	bool b_ret;
 	FT_Error ft_error;
-
-	vector<FT_Vector> curve_points;
-	vector<char> curve_tags;
-	vector<short> contour_indices;
 
 	FT_OutlineGlyphRec outline_glyph = {*empty_outline_glyph, {}};
 	outline_glyph.root.format = FT_GLYPH_FORMAT_OUTLINE;
@@ -48,61 +45,12 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 		outline_buf_len = GetGlyphOutline(_context->hdc, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
 		assert(outline_buf_len != GDI_ERROR);
 
-		// parse outline coutours
-		DWORD header_off = 0;
-		do
-		{
-			const BYTE *header_ptr = outline_buf + header_off;
-			const TTPOLYGONHEADER *header = reinterpret_cast<const TTPOLYGONHEADER *>(header_ptr);
-
-			// FreeType uses 26.6 format, while Windows gives logical units
-			const FT_Vector start_point = {to_26dot6(header->pfxStart.x), to_26dot6(header->pfxStart.y)};
-
-			DWORD curve_off = sizeof(TTPOLYGONHEADER);
-			while (curve_off < header->cb)
-			{
-				// the starting point of each curve is the last point of the previous curve or the starting point of the contour
-				if (curve_off == sizeof(TTPOLYGONHEADER))
-					curve_points.push_back(start_point);
-				else
-					curve_points.push_back(curve_points[curve_points.size() - 1]);
-				// the first point is on the curve
-				curve_tags.push_back(FT_CURVE_TAG_ON);
-
-				const TTPOLYCURVE *curve = reinterpret_cast<const TTPOLYCURVE *>(header_ptr + curve_off);
-				char curr_tag;
-				switch (curve->wType)
-				{
-				case TT_PRIM_LINE:
-					curr_tag = FT_CURVE_TAG_ON;
-					break;
-				case TT_PRIM_QSPLINE:
-					curr_tag = FT_CURVE_TAG_CONIC;
-					break;
-				case TT_PRIM_CSPLINE:
-					curr_tag = FT_CURVE_TAG_CUBIC;
-					break;
-				}
-
-				for (int j = 0; j < curve->cpfx; j++)
-				{
-					const FT_Vector curr_point = {to_26dot6(curve->apfx[j].x), to_26dot6(curve->apfx[j].y)};
-					curve_points.push_back(curr_point);
-					curve_tags.push_back(curr_tag);
-				}
-				// the last point is on the curve
-				curve_tags[curve_tags.size() - 1] = FT_CURVE_TAG_ON;
-
-				curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
-			}
-
-			contour_indices.push_back(static_cast<short>(curve_points.size() - 1));
-			header_off += header->cb;
-		} while (header_off < outline_buf_len);
+		vector<FT_Vector> curve_points;
+		vector<char> curve_tags;
+		vector<short> contour_indices;
+		outline_ggo_to_ft(outline_buf_len, outline_buf, curve_points, curve_tags, contour_indices);
 
 		delete[] outline_buf;
-
-		assert(curve_points.size() <= FT_OUTLINE_POINTS_MAX);
 
 		outline_glyph.outline.n_contours = static_cast<short>(contour_indices.size());
 		outline_glyph.outline.n_points = static_cast<short>(curve_points.size());
@@ -110,7 +58,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 		outline_glyph.outline.tags = &curve_tags[0];
 		outline_glyph.outline.contours = &contour_indices[0];
 		outline_glyph.outline.flags = FT_OUTLINE_NONE;
-
+		
 		/*
 		once in possess of FT_Outline, there are several way to get FT_Bitmap
 
