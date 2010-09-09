@@ -85,47 +85,35 @@ void gdipp_register_minidump_module(HMODULE h_module)
 }
 
 const wchar_t *debug_file_name = L"C:\\gdipp_debug.log";
-FILE *f = NULL;
 
 void gdipp_debug_buffer(const void *ptr, unsigned int size)
 {
-	if (f == NULL)
-		_wfopen_s(&f, debug_file_name, L"a+");
+	FILE *f;
+	_wfopen_s(&f, debug_file_name, L"a+");
 
 	fwrite(ptr, 1, size, f);
 
-	fflush(f);
+	fclose(f);
 }
 
 void gdipp_debug_number(size_t num)
 {
-	if (f == NULL)
-		_wfopen_s(&f, debug_file_name, L"a+");
+	FILE *f;
+	_wfopen_s(&f, debug_file_name, L"a+");
 
 	fwprintf(f, L"%u\n", num);
 
-	fflush(f);
+	fclose(f);
 }
 
 void gdipp_debug_string(const wchar_t *str)
 {
-	if (f == NULL)
-		_wfopen_s(&f, debug_file_name, L"a+");
+	FILE *f;
+	_wfopen_s(&f, debug_file_name, L"a+");
 
 	fwprintf(f, L"%s\n", str);
 
-	fflush(f);
-}
-
-void gdipp_debug_string(const wchar_t *str, unsigned int c)
-{
-	if (f == NULL)
-		_wfopen_s(&f, debug_file_name, L"a+");
-
-	fwrite(str, sizeof(wchar_t), c, f);
-	fwprintf(f, L"\n");
-
-	fflush(f);
+	fclose(f);
 }
 
 BOOL APIENTRY DllMain(

@@ -8,14 +8,10 @@
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 // Windows Header Files:
 #include <windows.h>
-#include <atlbase.h>
-#include <comutil.h>
-#include <objbase.h>
-#include <wbemidl.h>
 #include <wtsapi32.h>
 
 // C RunTime Header Files
-#include <process.h>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>

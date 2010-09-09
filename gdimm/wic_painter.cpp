@@ -48,14 +48,14 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	dw_glyph_run.fontEmSize = _em_size;
 	dw_glyph_run.glyphCount = c;
 	dw_glyph_run.glyphIndices = reinterpret_cast<const UINT16 *>(lpString);
-	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
+	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : _advances.data());
 	dw_glyph_run.glyphOffsets = NULL;
 	dw_glyph_run.isSideways = FALSE;
 	dw_glyph_run.bidiLevel = 0;
 
 	vector<DWRITE_GLYPH_METRICS> glyph_metrics(c);
 	if (_dw_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
-		hr = (*dw_font_face)->GetDesignGlyphMetrics(reinterpret_cast<const UINT16 *>(lpString), c, &glyph_metrics[0]);
+		hr = (*dw_font_face)->GetDesignGlyphMetrics(reinterpret_cast<const UINT16 *>(lpString), c, glyph_metrics.data());
 	else
 		hr = (*dw_font_face)->GetGdiCompatibleGlyphMetrics(_em_size,
 			_pixels_per_dip,
@@ -63,7 +63,7 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 			_use_gdi_natural,
 			reinterpret_cast<const UINT16 *>(lpString),
 			c,
-			&glyph_metrics[0]);
+			glyph_metrics.data());
 	assert(hr == S_OK);
 
 	UINT32 glyph_run_width = 0;
@@ -413,7 +413,7 @@ bool gdimm_wic_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 		update_cursor = false;
 	}
 
-	const bool paint_success = draw_text(options, lprect, static_cast<LPCWCHAR>(text), c, lpDx);
+	const bool paint_success = draw_text(options, lprect, static_cast<LPCWSTR>(text), c, lpDx);
 
 	// if TA_UPDATECP is set, update current position after text out
 	if (update_cursor && paint_success)

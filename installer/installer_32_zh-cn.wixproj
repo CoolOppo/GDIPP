@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
@@ -19,7 +20,6 @@ del $(Cultures).mst</PostBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <LinkerAdditionalOptions>-ext WixUIExtension -ext WixUtilExtension</LinkerAdditionalOptions>
     <SuppressValidation>True</SuppressValidation>
     <Cultures>zh-cn</Cultures>
     <DefineConstants>codepage=936</DefineConstants>
@@ -34,6 +34,16 @@ del $(Cultures).mst</PostBuildEvent>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="installer_zh-cn.wxl" />
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUtilExtension">
+      <HintPath>$(WIX)bin\WixUtilExtension.dll</HintPath>
+      <Name>WixUtilExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WIX)bin\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <!--

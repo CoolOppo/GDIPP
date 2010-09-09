@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <atlbase.h>
 #include <mmsystem.h>
+#include <usp10.h>
 
 // C standard header files
 #include <cassert>

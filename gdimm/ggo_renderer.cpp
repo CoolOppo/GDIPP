@@ -54,9 +54,9 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 
 		outline_glyph.outline.n_contours = static_cast<short>(contour_indices.size());
 		outline_glyph.outline.n_points = static_cast<short>(curve_points.size());
-		outline_glyph.outline.points = &curve_points[0];
-		outline_glyph.outline.tags = &curve_tags[0];
-		outline_glyph.outline.contours = &contour_indices[0];
+		outline_glyph.outline.points = curve_points.data();
+		outline_glyph.outline.tags = curve_tags.data();
+		outline_glyph.outline.contours = contour_indices.data();
 		outline_glyph.outline.flags = FT_OUTLINE_NONE;
 		
 		/*

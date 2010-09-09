@@ -160,7 +160,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>EasyHook64.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)EasyHook</AdditionalLibraryDirectories>
       <DelayLoadDLLs>gdipp_common_64.dll</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
@@ -207,7 +207,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>EasyHook64.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)EasyHook;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)EasyHook</AdditionalLibraryDirectories>
       <DelayLoadDLLs>gdipp_common_64.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>

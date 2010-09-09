@@ -56,7 +56,6 @@ GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id = 0);
 // debug APIs
 GDIPP_API void gdipp_register_minidump_module(HMODULE h_module);
 
-GDIPP_API void gdipp_debug_string(const wchar_t *str = L"");
-GDIPP_API void gdipp_debug_string(const wchar_t *str, unsigned int c);
 GDIPP_API void gdipp_debug_buffer(const void *ptr, unsigned int size);
 GDIPP_API void gdipp_debug_number(size_t num);
+GDIPP_API void gdipp_debug_string(const wchar_t *str = L"");

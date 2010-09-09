@@ -144,7 +144,7 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 		return NULL;
 
 	metric_buf.resize(metric_size);
-	OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<OUTLINETEXTMETRICW *>(&metric_buf[0]);
+	OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<OUTLINETEXTMETRICW *>(metric_buf.data());
 	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
 	assert(metric_size != 0);
 
@@ -333,7 +333,7 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 
 	// if the high-order byte is odd, use the selected palette whose index is specified in the low-order bytes
 	// see PALETTEINDEX()
-	if ((color_ret & 0x01000000) != 0)
+	if (!!(color_ret & 0x01000000))
 	{
 		const HPALETTE dc_palette = static_cast<const HPALETTE>(GetCurrentObject(hdc, OBJ_PAL));
 

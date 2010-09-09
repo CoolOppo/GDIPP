@@ -23,13 +23,13 @@
 
 			<Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg">1</Publish>
 
-			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1">Installed</Publish>
-			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">NOT Installed</Publish>
-			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed</Publish>
-			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="LoadModeDlg">NOT Installed</Publish>
+			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="1"><![CDATA[Installed]]></Publish>
+			<Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2"><![CDATA[NOT Installed]]></Publish>
+			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg"><![CDATA[Installed]]></Publish>
+			<Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="LoadModeDlg"><![CDATA[NOT Installed]]></Publish>
 
-			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="LoadModeDlg" Order="1">NOT Installed OR WixUI_InstallMode = "Change"</Publish>
-			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed</Publish>
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="LoadModeDlg" Order="1"><![CDATA[NOT Installed OR WixUI_InstallMode = "Change"]]></Publish>
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2"><![CDATA[Installed]]></Publish>
 
 			<Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
 
@@ -42,7 +42,7 @@
 				<Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
 				<Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Text="{\WixUI_Font_Title}!(loc.LoadModeDlg_Title)" Transparent="yes" NoPrefix="yes" />
 				<Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Text="!(loc.LoadModeDlg_Description)" Transparent="yes" NoPrefix="yes" />
-				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="372" Height="0" />
+				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 				<Control Id="LoadModeButtons" Type="RadioButtonGroup" X="10" Y="45" Width="350" Height="35" HasBorder="no" Property="LOADMODE">
 					<RadioButtonGroup Property="LOADMODE">
 						<RadioButton X="20" Y="14" Width="100" Height="12" Text="{\WixUI_Font_Bold}!(loc.LoadModeDlg_ServiceText)" Value="0" />
@@ -62,7 +62,7 @@
 					<Condition Action="show"><![CDATA[LOADMODE = 2]]></Condition>
 					<Condition Action="hide"><![CDATA[LOADMODE <> 2]]></Condition>
 				</Control>
-				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="372" Height="0" />
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
 				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
 					<Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
 				</Control>
@@ -72,9 +72,11 @@
 					<Condition Action="disable"><![CDATA[(NOT Privileged) AND (LOADMODE <> 2)]]></Condition>
 				</Control>
 				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
-					<Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+					<Publish Event="SpawnDialog" Value="CancelDlg"><![CDATA[1]]></Publish>
 				</Control>
 			</Dialog>
+			
+			<Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
 		</UI>
 
 		<UIRef Id="WixUI_Common" />

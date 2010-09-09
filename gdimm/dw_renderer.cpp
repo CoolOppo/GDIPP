@@ -92,7 +92,7 @@ bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_
 
 	const LONG texture_width = texture_rect.right - texture_rect.left;
 	const LONG texture_height = texture_rect.bottom - texture_rect.top;
-	
+
 	FT_BitmapGlyph new_bmp_glyph = new FT_BitmapGlyphRec();
 	new_bmp_glyph->left = texture_rect.left;
 	new_bmp_glyph->top = -texture_rect.top;
@@ -136,7 +136,7 @@ bool gdimm_dw_renderer::render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_gl
 	dw_glyph_run.fontEmSize = _em_size;
 	dw_glyph_run.glyphCount = c;
 	dw_glyph_run.glyphIndices = reinterpret_cast<const UINT16 *>(lpString);
-	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : &_advances[0]);
+	dw_glyph_run.glyphAdvances = (_advances.empty() ? NULL : _advances.data());
 	dw_glyph_run.glyphOffsets = NULL;
 	dw_glyph_run.isSideways = FALSE;
 	dw_glyph_run.bidiLevel = 0;
@@ -170,7 +170,7 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 		L"",
 		&dw_text_format);
 	assert(hr == S_OK);
-	
+
 	hr = dw_text_format->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
 	assert(hr == S_OK);
 
@@ -204,7 +204,7 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 	hr = dw_text_layout->Draw(drawing_context, this, 0, 0);
 	assert(hr == S_OK);
 	assert(glyph_run_start == c);
-	
+
 	return draw_success;
 }
 
@@ -334,7 +334,7 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawGlyphRun(
 	{
 		DWRITE_GLYPH_RUN final_glyph_run = *glyphRun;
 		final_glyph_run.glyphAdvances = &_advances[*glyph_run_start];
-		
+
 		*draw_success &= make_glyph_texture(baselineOriginX, 0, &final_glyph_run, new_glyph_run);
 	}
 
@@ -411,7 +411,7 @@ bool gdimm_dw_renderer::begin(const dc_context *context, FT_Render_Mode render_m
 {
 	if (!gdimm_renderer::begin(context, render_mode))
 		return false;
-	
+
 	// ignore rotated DC
 	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;

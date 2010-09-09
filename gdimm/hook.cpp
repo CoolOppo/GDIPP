@@ -2,13 +2,8 @@
 #include "hook.h"
 #include "override.h"
 
-// empty exported function to help static linking gdimm against other projects
-__declspec(dllexport) void gdimm_empty_proc()
-{
-}
-
 // exported function for SetWindowsHookEx
-EXTERN_C __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
+__declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
@@ -54,6 +49,9 @@ bool gdimm_hook::hook()
 	{
 		// hook other GDI APIs only if ExtTextOut is successfully hooked
 
+// 		b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
+// 		b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
+
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
@@ -61,6 +59,8 @@ bool gdimm_hook::hook()
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointA", GetTextExtentExPointA_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
+
+//		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
 
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);

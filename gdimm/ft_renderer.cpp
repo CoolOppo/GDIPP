@@ -272,7 +272,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 		while (true)
 		{
-			font_man.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), &final_string[0], c, &glyph_indices[0]);
+			font_man.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), final_string.data(), c, &glyph_indices[0]);
 
 			list<FT_Glyph>::iterator glyph_iter;
 			list<RECT>::iterator ctrl_iter, black_iter;

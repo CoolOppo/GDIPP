@@ -79,7 +79,7 @@ void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 			const BYTE src_bit_pos = 7 - src_curr_column % 8;
 			const BYTE dest_bit_pos = 7 - dest_curr_column % 8;
 
-			const bool is_bit_set = ((glyph->bitmap.buffer[src_px_ptr] & (1 << src_bit_pos)) != 0);
+			const bool is_bit_set = !!(glyph->bitmap.buffer[src_px_ptr] & (1 << src_bit_pos));
 
 			if (is_bit_set)
 				dest_bits[dest_px_ptr] |= (1 << dest_bit_pos);
