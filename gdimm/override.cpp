@@ -21,6 +21,9 @@ set<HDC> hdc_in_path;
 
 bool is_valid_dc(HDC hdc)
 {
+	if (hdc == NULL)
+		return false;
+
 	// probably a printer
 	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
 		return false;
@@ -41,7 +44,7 @@ bool is_valid_dc(HDC hdc)
 	return true;
 }
 
-bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_t *target_text, int start_index = 0)
+bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_t *target_text, int start_index)
 {
 	/*
 	return true if the current string is the target text (string or glyph index array)
@@ -49,7 +52,7 @@ bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_
 	always return true if the target is invalid
 	*/
 
-	bool is_target = false;
+	bool is_target;
 
 	if (target_text == NULL)
 		return true;
@@ -63,8 +66,7 @@ bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_
 		WORD *gi = new WORD[target_len];
 		GetGlyphIndicesW(hdc, target_text, static_cast<int>(target_len), gi, 0);
 
-		if (memcmp(reinterpret_cast<const WORD *>(lpString) + start_index, gi, sizeof(WORD) * target_len) == 0)
-			is_target = true;
+		is_target = (wmemcmp(lpString + start_index, reinterpret_cast<const wchar_t *>(gi), target_len) == 0);
 
 		delete[] gi;
 	}
@@ -85,12 +87,14 @@ bool fetch_glyph_run(bool is_glyph_index,
 	GLYPH_CACHE_LEVEL &cache_level)
 {
 	bool b_ret;
+	gdimm_renderer *renderer = NULL;
 
-	gdimm_renderer *renderer;
 	switch (context.setting_cache->renderer)
 	{
-	case RENDERER_CLEARTYPE:
-		return false;
+	case RENDERER_FREETYPE:
+		renderer = new gdimm_ft_renderer;
+		cache_level = SINGLE_GLYPH;
+		break;
 	case RENDERER_GETGLYPHOUTLINE:
 		renderer = new gdimm_ggo_renderer;
 		cache_level = SINGLE_GLYPH;
@@ -103,11 +107,10 @@ bool fetch_glyph_run(bool is_glyph_index,
 		renderer = new gdimm_wic_renderer;
 		cache_level = NONE;
 		break;
-	default:
-		renderer = new gdimm_ft_renderer;
-		cache_level = SINGLE_GLYPH;
-		break;
 	}
+
+	if (renderer == NULL)
+		return false;
 
 	b_ret = renderer->begin(&context, render_mode);
 	if (b_ret)
@@ -155,12 +158,12 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	//is_target_spec &= !!(options & ETO_GLYPH_INDEX));
 	//is_target_spec &= !(options & ETO_GLYPH_INDEX);
 	//is_target_spec &= (options == 4102);
-	//is_target_spec &= (c == 1);
+	//is_target_spec &= (c > 3);
 	
 	if (!is_target_spec)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text))
+	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text, 1))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 #endif // _DEBUG
 
@@ -233,7 +236,7 @@ int WINAPI DrawTextExW_hook(HDC hdc, LPWSTR lpchText, int cchText, LPRECT lprc, 
 	return i_ret;
 }
 
-bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool is_glyph_index, int nMaxExtent = 0, LPINT lpnFit = NULL, LPINT lpnDx = NULL)
+bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool is_glyph_index, int nMaxExtent, LPINT lpnFit, LPINT lpnDx)
 {
 	bool b_ret;
 
@@ -244,7 +247,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 		return false;
 
 #ifdef _DEBUG
-	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text))
+	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text, 1))
 		return false;
 #endif // _DEBUG
 
@@ -254,7 +257,10 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 
 	FT_Render_Mode render_mode;
 	if (!get_render_mode(context.setting_cache, context.bmp_header.biBitCount, context.log_font.lfQuality, render_mode))
-		return false;
+	{
+		if (!get_render_mode(context.setting_cache, GetDeviceCaps(hdc, BITSPIXEL), context.log_font.lfQuality, render_mode))
+			return false;
+	}
 
 	glyph_run a_glyph_run;
 	GLYPH_CACHE_LEVEL cache_level;
@@ -265,8 +271,11 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	if (cache_level < GLYPH_RUN)
 		return false;
 
-	lpSize->cx = get_glyph_run_width(&a_glyph_run, true);
-	lpSize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
+	if (lpSize != NULL)
+	{
+		lpSize->cx = get_glyph_run_width(&a_glyph_run, true);
+		lpSize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
+	}
 	
 	// for GetTextExtentExPoint series
 	if (lpnFit != NULL || lpnDx != NULL)
@@ -340,28 +349,6 @@ BOOL WINAPI GetTextExtentExPointI_hook(HDC hdc, LPWORD lpwszString, int cwchStri
 		return TRUE;
 	else
 		return GetTextExtentExPointI(hdc, lpwszString, cwchString, nMaxExtent, lpnFit, lpnDx, lpSize);
-}
-
-HRESULT WINAPI ScriptPlace_hook(
-	HDC                  hdc,        // In    Optional (see under caching)
-	SCRIPT_CACHE         *psc,       // InOut Cache handle
-	const WORD           *pwGlyphs,  // In    Glyph buffer from prior ScriptShape call
-	int                  cGlyphs,    // In    Number of glyphs
-	const SCRIPT_VISATTR *psva,      // In    Visual glyph attributes
-	SCRIPT_ANALYSIS      *psa,       // InOut Result of ScriptItemize (may have fNoGlyphIndex set)
-	int                  *piAdvance, // Out   Advance wdiths
-	GOFFSET              *pGoffset,  // Out   x,y offset for combining glyph
-	ABC                  *pABC)      // Out   Composite ABC for the whole run (Optional)
-{
-	const HRESULT hr = ScriptPlace(hdc, psc, pwGlyphs, cGlyphs, psva, psa, piAdvance, pGoffset, pABC);
-
-	SIZE text_extent;
-	get_text_extent(hdc, reinterpret_cast<LPCWSTR>(pwGlyphs), cGlyphs, &text_extent, !psa->fNoGlyphIndex, 0, 0, piAdvance);
-
-	for (int i = cGlyphs - 1; i > 0; i--)
-		piAdvance[i] -= piAdvance[i - 1];
-
-	return hr;
 }
 
 DWORD get_ggo_outline(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
@@ -487,6 +474,47 @@ BOOL WINAPI EndPath_hook(HDC hdc)
 		hdc_in_path.erase(hdc);
 
 	return b_ret;
+}
+
+HRESULT WINAPI ScriptPlace_hook(
+	HDC                  hdc,        // In    Optional (see under caching)
+	SCRIPT_CACHE         *psc,       // InOut Cache handle
+	const WORD           *pwGlyphs,  // In    Glyph buffer from prior ScriptShape call
+	int                  cGlyphs,    // In    Number of glyphs
+	const SCRIPT_VISATTR *psva,      // In    Visual glyph attributes
+	SCRIPT_ANALYSIS      *psa,       // InOut Result of ScriptItemize (may have fNoGlyphIndex set)
+	int                  *piAdvance, // Out   Advance wdiths
+	GOFFSET              *pGoffset,  // Out   x,y offset for combining glyph
+	ABC                  *pABC)      // Out   Composite ABC for the whole run (Optional)
+{
+	SIZE text_extent;
+	if (!get_text_extent(hdc, reinterpret_cast<LPCWSTR>(pwGlyphs), cGlyphs, (pABC == NULL ? NULL : &text_extent), !psa->fNoGlyphIndex, NULL, NULL, piAdvance))
+		return ScriptPlace(hdc, psc, pwGlyphs, cGlyphs, psva, psa, piAdvance, pGoffset, pABC);
+
+	int width_adjust = 0;
+	if (piAdvance != NULL)
+	{
+		for (int i = cGlyphs - 1; i >= 0; i--)
+		{
+			if (i != 0)
+				piAdvance[i] -= piAdvance[i - 1];
+
+			if (psva[i].fZeroWidth)
+			{
+				width_adjust += -piAdvance[i];
+				piAdvance[i] = 0;
+			}
+		}
+	}
+
+	if (pABC != NULL)
+	{
+		pABC->abcA = 0;
+		pABC->abcB = text_extent.cx + width_adjust;
+		pABC->abcC = 0;
+	}
+
+	return S_OK;
 }
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64

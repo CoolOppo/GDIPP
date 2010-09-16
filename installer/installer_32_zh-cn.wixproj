@@ -8,16 +8,10 @@
     <SchemaVersion>2.0</SchemaVersion>
     <OutputName>gdipp_$(Platform)</OutputName>
     <OutputType>Package</OutputType>
-    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Wix2010.targets</WixTargetsPath>
-    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix2010.targets</WixTargetsPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <Name>installer_32_zh-cn</Name>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>"E:\Windows Installer XML\bin\torch.exe" -p -t language en-us\$(OutputName)$(TargetExt) $(Cultures)\$(OutputName)$(TargetExt) -out $(Cultures).mst
-"E:\Windows Installer XML\bin\EmbedTransform.exe" en-us\$(OutputName)$(TargetExt) $(Cultures).mst
-del $(Cultures).mst</PostBuildEvent>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <SuppressValidation>True</SuppressValidation>
@@ -29,11 +23,8 @@ del $(Cultures).mst</PostBuildEvent>
     <Pedantic>False</Pedantic>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="gdipp_WixUI_FeatureTree.wxs" />
+    <Compile Include="gdipp_ExitDialog.wxs" />
     <Compile Include="installer.wxs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="installer_zh-cn.wxl" />
   </ItemGroup>
   <ItemGroup>
     <WixExtension Include="WixUtilExtension">
@@ -45,7 +36,13 @@ del $(Cultures).mst</PostBuildEvent>
       <Name>WixUIExtension</Name>
     </WixExtension>
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="installer_zh-cn.wxl" />
+  </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
+  <PropertyGroup>
+    <PostBuildEvent />
+  </PropertyGroup>
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.
 	Other similar extension points exist, see Wix.targets.
@@ -54,9 +51,4 @@ del $(Cultures).mst</PostBuildEvent>
 	<Target Name="AfterBuild">
 	</Target>
 	-->
-  <PropertyGroup>
-    <PostBuildEvent>"$(WIX)bin\torch.exe" -p -t language en-us\$(TargetFileName) $(Cultures)\$(TargetFileName) -out $(Cultures).mst
-"$(WIX)bin\EmbedTransform.exe" en-us\$(TargetFileName) $(Cultures).mst
-del $(Cultures).mst</PostBuildEvent>
-  </PropertyGroup>
 </Project>

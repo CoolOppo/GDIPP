@@ -174,7 +174,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	use CreateProcessAsUser to create process in the active user's session
 	*/
 	const DWORD active_session_id = WTSGetActiveConsoleSessionId();
-	if (active_session_id != 0 && active_session_id != 0xFFFFFFFF)
+	if (active_session_id != 0xFFFFFFFF)
 		start_hook(active_session_id);
 
 	// report running status when initialization is complete

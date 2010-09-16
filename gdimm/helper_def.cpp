@@ -24,5 +24,8 @@ bool dc_context::init(HDC hdc)
 		point_size};
 	setting_cache = setting_cache_instance.lookup(&setting_trait);
 
+	if (setting_cache->renderer >= RENDERER_DIRECTWRITE && !os_support_directwrite)
+		return false;
+
 	return true;
 }

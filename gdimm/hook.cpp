@@ -60,14 +60,14 @@ bool gdimm_hook::hook()
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
 
-//		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
-
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
  
 		b_ret &= install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
 		b_ret &= install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
 		b_ret &= install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
+
+		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
 	}
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64

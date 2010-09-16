@@ -7,6 +7,7 @@
 #include "setting_cache.h"
 
 extern HMODULE h_self;
+extern bool os_support_directwrite;
 
 extern gdimm_font_link font_link_instance;
 extern gdimm_font_store font_store_instance;

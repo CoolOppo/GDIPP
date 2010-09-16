@@ -15,7 +15,8 @@ bool gdimm_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
 	assert(_text_alignment != GDI_ERROR);
 
 	_text_color = parse_palette_color(_context->hdc, GetTextColor(_context->hdc));
-	assert(_text_color != CLR_INVALID);
+	if (_text_color == CLR_INVALID)
+		_text_color = 0;
 
 	// transparent DC may not have background color
 	_bg_color = parse_palette_color(_context->hdc, GetBkColor(_context->hdc));

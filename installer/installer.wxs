@@ -8,22 +8,17 @@
 		UpgradeCode="6ED4EDF5-2D99-4B02-AD98-D58B1884CD9B"
 		Version="!(bind.FileVersion.gdimm_dll)">
 		<Package Compressed="yes" InstallerVersion="200" />
-		<WixVariable Id="WixUICostingPopupOptOut" Overridable="yes" Value="1" />
 
 <?if $(var.Platform) = x86 ?>
 	<!-- if this is the x86 installer, do not install on 64-bit OS -->
-	<Condition Message="!(loc.VersionFailMsg)">
+	<Condition Message="!(loc.version_fail_msg)">
 		<![CDATA[(VersionNT >= 501) AND (NOT VersionNT64)]]>
 	</Condition>
 <?else if $(var.Platform) = x64 ?>
-	<Condition Message="!(loc.VersionFailMsg)">
+	<Condition Message="!(loc.version_fail_msg)">
 		<![CDATA[VersionNT64 >= 501]]>
 	</Condition>
 <?endif ?>
-
-		<Property Id="LOADMODE" Value="0">
-			<RegistrySearch Id="load_mode_registry" Root="HKCU" Key="Software\[ProductName]" Type="raw" />
-		</Property>
 
 		<Media Id="1" Cabinet="gdipp.cab" EmbedCab="yes" />
 
@@ -31,7 +26,7 @@
 			<Directory Id="ProgramFilesFolder">
 				<!-- install both 32-bit and 64-bit files in same directory -->
 				<Directory Id="INSTALLDIR" Name="gdipp">
-					<Component Id="gdipp_32" Guid="B94E958C-1843-4AEB-BB12-DEE8032CE0C8" Win64="no">
+					<Component Id="comp_32_bit_file" Guid="B94E958C-1843-4AEB-BB12-DEE8032CE0C8" Win64="no">
 						<File Id="gdimm_dll" Name="gdimm_32.dll" Source="$(var.SolutionDir)Win32\Release\gdimm_32.dll" Vital="yes"  KeyPath="yes"/>
 						<File Name="gdipp_common_32.dll" Source="$(var.SolutionDir)Win32\Release\gdipp_common_32.dll" Vital="yes" />
 						<File Name="gdipp_demo_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_demo_32.exe" />
@@ -42,12 +37,12 @@
 						<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" />
 					</Component>
 
-					<Component Id="install_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
+					<Component Id="comp_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
 						<File Id="gdipp_svc_32_cond" Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_svc_32.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_32_inst"
 							Name="gdipp_svc_32"
-							Description="!(loc.gdippSvcDesc32)"
-							DisplayName="gdipp Service (32 bit)"
+							Description="!(loc.gdipp_service_desc_32)"
+							DisplayName="gdipp Service (32-bit)"
 							ErrorControl="normal"
 							Start="auto"
 							Type="ownProcess">
@@ -55,14 +50,12 @@
 						<ServiceControl Id="gdipp_svc_32_ctrl"
 							Name="gdipp_svc_32"
 							Remove="uninstall"
-							Start="install"
 							Stop="uninstall"
 							Wait="no" />
-						<Condition><![CDATA[LOADMODE = 0]]></Condition>
 					</Component>
 
 <?if $(var.Platform) = x64 ?>
-					<Component Id="gdipp_64" Guid="A7D01189-D404-4E93-B080-8E1687D328A1" Win64="yes">
+					<Component Id="comp_64_bit_file" Guid="A7D01189-D404-4E93-B080-8E1687D328A1" Win64="yes">
 						<File Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" Vital="yes"  KeyPath="yes"/>
 						<File Name="gdipp_common_64.dll" Source="$(var.SolutionDir)x64\Release\gdipp_common_64.dll" Vital="yes" />
 						<File Name="gdipp_demo_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_demo_64.exe" />
@@ -73,12 +66,12 @@
 						<File Name="EasyHook64.dll" Source="$(var.SolutionDir)EasyHook\EasyHook64.dll" Vital="yes" />
 					</Component>
 
-					<Component Id="install_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">
+					<Component Id="comp_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">
 						<File Id="gdipp_svc_64_cond" Name="gdipp_svc_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_svc_64.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_64_inst"
 							Name="gdipp_svc_64"
-							Description="!(loc.gdippSvcDesc64)"
-							DisplayName="gdipp Service (64 bit)"
+							Description="!(loc.gdipp_service_desc_64)"
+							DisplayName="gdipp Service (64-bit)"
 							ErrorControl="normal"
 							Start="auto"
 							Type="ownProcess">
@@ -86,14 +79,12 @@
 						<ServiceControl Id="gdipp_svc_64_ctrl"
 							Name="gdipp_svc_64"
 							Remove="uninstall"
-							Start="install"
 							Stop="uninstall"
 							Wait="no" />
-						<Condition><![CDATA[LOADMODE = 0]]></Condition>
 					</Component>
 <?endif ?>
 
-					<Component Id="gdipp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462" Permanent="yes" Win64="no">
+					<Component Id="comp_setting" Guid="470FEEC1-6828-45F3-8663-4C154FDFF462" Permanent="yes" Win64="no">
 						<!-- backup setting file -->
 						<CopyFile Id="backup_setting"
 							SourceProperty="INSTALLDIR" SourceName="setting.xml"
@@ -103,7 +94,7 @@
 					</Component>
 
 					<Directory Id="script_dir" Name="Script">
-						<Component Id="gdipp_script" Guid="06AB9C26-C535-43C0-B215-4485AC234A9E" Win64="no">
+						<Component Id="comp_script" Guid="06AB9C26-C535-43C0-B215-4485AC234A9E" Win64="no">
 							<File Name="Create_Services.bat" Source="Script\Create_Services.bat" />
 							<File Name="Delete_Services.bat" Source="Script\Delete_Services.bat" />
 							<File Name="Registry_Disable_32.bat" Source="Script\Registry_Disable_32.bat" />
@@ -117,13 +108,15 @@
 						</Component>
 					</Directory>
 
-					<Component Id="gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
+					<Component Id="comp_gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
+						<File Id="gdipp_readme" Name="README.txt" Source="README.txt" />
+						<File Id="gdipp_license" Name="License.txt" Source="License.txt" />
 						<File Name="gdipp_preview.txt" Source="gdipp_preview.txt" />
-						<File Name="documentation.url" Source="documentation.url" />
+						<util:InternetShortcut Id="documentation_url" Name="documentation" Target="http://code.google.com/p/gdipp/w/list" Type="url" />
 					</Component>
 
 					<Directory Id="freetype_dir" Name="FreeType">
-						<Component Id="freetype_doc" Guid="E7D7F0FD-F6A0-4BE8-9230-0BA86461C975" Win64="no">
+						<Component Id="comp_freetype_doc" Guid="E7D7F0FD-F6A0-4BE8-9230-0BA86461C975" Win64="no">
 							<File Id="freetype_readme" Name="README" Source="FreeType\README" KeyPath="yes" />
 							<File Name="FTL.TXT" Source="FreeType\FTL.TXT" />
 							<File Name="GPL.TXT" Source="FreeType\GPL.TXT" />
@@ -132,288 +125,120 @@
 					</Directory>
 
 					<Directory Id="easyhook_dir" Name="EasyHook">
-						<Component Id="easyhook_doc" Guid="63BE47ED-8547-42F4-86D6-773B99098DAF" Win64="no">
-							<File Name="README.txt" Source="EasyHook\README.txt" KeyPath="yes" />
+						<Component Id="comp_easyhook_doc" Guid="63BE47ED-8547-42F4-86D6-773B99098DAF" Win64="no">
+							<File Id="easyhook_readme" Name="README.txt" Source="EasyHook\README.txt" KeyPath="yes" />
 							<File Id="easyhook_license" Name="LICENSE.txt" Source="EasyHook\LICENSE.txt" />
 						</Component>
 					</Directory>
 				</Directory>
 			</Directory>
 
-			<!-- set registry if registry load mode -->
-			<Component Id="set_appinit_dlls_32" Guid="4426EDCA-B420-46EC-B437-32B768DA2C4E" Permanent="yes" Win64="no">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Name="AppInit_DLLs" Type="string" Value="[!gdimm_dll]" KeyPath="yes" />
-				<Condition><![CDATA[LOADMODE = 1]]></Condition>
-			</Component>
-
-			<Component Id="set_loadappinit_dlls_32" Guid="C712E1E1-2AEB-4A6C-B474-B45DFEB349FF" Permanent="yes" Win64="no">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Name="LoadAppInit_DLLs" Type="integer" Value="1" KeyPath="yes" />
-				<Condition><![CDATA[LOADMODE = 1]]></Condition>
-			</Component>
+			<Directory Id="DesktopFolder">
+				<Component Id="comp_shortcut_32" Guid="E7ECF638-8F20-4965-BC37-6EA384C59E47" Win64="no">
+					<Shortcut Id="desktop_gdipp_loader_32" Directory="DesktopFolder" Name="!(loc.gdipp_loader_desc_32)" Target="[!gdipp_loader_32.exe]" WorkingDirectory="INSTALLDIR" />
+				</Component>
 
 <?if $(var.Platform) = x64 ?>
-			<Component Id="set_appinit_dlls_64" Guid="0AE1E07B-10E8-4A72-BB1F-71DF3DF1DBAC" Permanent="yes" Win64="yes">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Name="AppInit_DLLs" Type="string" Value="[!gdimm_64.dll]" KeyPath="yes" />
-				<Condition><![CDATA[LOADMODE = 1]]></Condition>
-			</Component>
-
-			<Component Id="set_loadappinit_dlls_64" Guid="F6357385-87C1-4E49-A8EE-C505B7A93871" Permanent="yes" Win64="yes">
-				<RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" Name="LoadAppInit_DLLs" Type="integer" Value="1" KeyPath="yes" />
-				<Condition><![CDATA[LOADMODE = 1]]></Condition>
-			</Component>
+				<Component Id="comp_shortcut_64" Guid="CD22D39C-4236-4D37-8583-319D02A809A2" Win64="yes">
+					<Shortcut Id="desktop_gdipp_loader_64" Directory="DesktopFolder" Name="!(loc.gdipp_loader_desc_64)" Target="[!gdipp_loader_64.exe]" WorkingDirectory="INSTALLDIR" />
+				</Component>
 <?endif ?>
-
-			<!-- create loader shortcut if loader load mode -->
-			<Directory Id="DesktopFolder" />
-			<Component Id="loader_shortcut_32" Guid="E7ECF638-8F20-4965-BC37-6EA384C59E47" Win64="no">
-				<!-- The registry value is to make ICE43 and ICE57 happy -->
-				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
-				<Shortcut Id="desktop_gdipp_loader_32" Directory="DesktopFolder" Name="gdipp Loader 32" Target="[!gdipp_loader_32.exe]" WorkingDirectory="INSTALLDIR" />
-				<Condition><![CDATA[LOADMODE = 2]]></Condition>
-			</Component>
-
-<?if $(var.Platform) = x64 ?>
-			<Component Id="loader_shortcut_64" Guid="CD22D39C-4236-4D37-8583-319D02A809A2" Win64="yes">
-				<!-- The registry value is to make ICE43 and ICE57 happy -->
-				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
-				<Shortcut Id="desktop_gdipp_loader_64" Directory="DesktopFolder" Name="gdipp Loader 64" Target="[!gdipp_loader_64.exe]" WorkingDirectory="INSTALLDIR" />
-				<Condition><![CDATA[LOADMODE = 2]]></Condition>
-			</Component>
-<?endif ?>
-
-			<!-- record the load mode in registry -->
-			<Component Id="set_load_mode" Guid="6A61B1BF-5927-463A-9FC6-7EB3ED7E3CB0" Win64="no">
-				<RegistryValue Root="HKCU" Key="Software\[ProductName]" Type="string" Value="[LOADMODE]" KeyPath="yes" />
-			</Component>
+			</Directory>
 		</Directory>
 
-		<!-- 32-bit custom action command lines -->
-		<!--
-		<CustomAction Id="make_link_gdipp_common_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]gdipp_common_32.dll" "[INSTALLDIR]gdipp_common_32.dll"' />
-		<CustomAction Id="del_link_gdipp_common_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]gdipp_common_32.dll"' />
-		<CustomAction Id="make_link_gdipp_setting_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
-		<CustomAction Id="del_link_gdipp_setting_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]gdipp_setting.xml"' />
-		<CustomAction Id="make_link_EasyHook32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c mklink "[SystemFolder]EasyHook32.dll" "[INSTALLDIR]EasyHook32.dll"' />
-		<CustomAction Id="del_link_EasyHook32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]cmd.exe" /c del "[SystemFolder]EasyHook32.dll"' />
-		<CustomAction Id="reset_appinit_dlls_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
-		<CustomAction Id="reset_loadappinit_dlls_32_cmdline" Property="QtExecCmdLine"
-									Value='"[SystemFolder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
-		-->
-		
-		<!-- 32-bit custom action execution -->
-		<!--
-		<CustomAction Id="make_link_gdipp_common_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="del_link_gdipp_common_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="make_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="del_link_gdipp_setting_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="make_link_EasyHook32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="del_link_EasyHook32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="reset_appinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		<CustomAction Id="reset_loadappinit_dlls_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
-		-->
-		
-<?if $(var.Platform) = x64 ?>
-		<!-- 64-bit custom action command lines-->
-		<!--
-		<CustomAction Id="make_link_gdipp_common_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]gdipp_common_64.dll" "[INSTALLDIR]gdipp_common_64.dll"' />
-		<CustomAction Id="del_link_gdipp_common_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]gdipp_common_64.dll"' />
-		<CustomAction Id="make_link_gdipp_setting_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]gdipp_setting.xml" "[INSTALLDIR]gdipp_setting.xml"' />
-		<CustomAction Id="del_link_gdipp_setting_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]gdipp_setting.xml"' />
-		<CustomAction Id="make_link_EasyHook64_cmdline" Property="QtExec64CmdLine"
-							Value='"[System64Folder]cmd.exe" /c mklink "[System64Folder]EasyHook64.dll" "[INSTALLDIR]EasyHook64.dll"' />
-		<CustomAction Id="del_link_EasyHook64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]cmd.exe" /c del "[System64Folder]EasyHook64.dll"' />
-		<CustomAction Id="reset_appinit_dlls_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v AppInit_DLLs /d "" /f' />
-		<CustomAction Id="reset_loadappinit_dlls_64_cmdline" Property="QtExec64CmdLine"
-									Value='"[System64Folder]reg.exe" ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows" /v LoadAppInit_DLLs /t REG_DWORD /d 0 /f' />
-		-->
-		
-		<!-- 64-bit custom action execution -->
-		<!--
-		<CustomAction Id="make_link_gdipp_common_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="del_link_gdipp_common_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="make_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="del_link_gdipp_setting_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="make_link_EasyHook64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="del_link_EasyHook64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="reset_appinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		<CustomAction Id="reset_loadappinit_dlls_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
-		-->
-<?endif ?>
-
-		<!--
-		<InstallExecuteSequence>
-			<Custom Action="make_link_gdipp_common_32_cmdline" Before="make_link_gdipp_common_32_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_gdipp_common_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="del_link_gdipp_common_32_cmdline" Before="del_link_gdipp_common_32_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_gdipp_common_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-
-			<Custom Action="make_link_gdipp_setting_32_cmdline" Before="make_link_gdipp_setting_32_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_gdipp_setting_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="del_link_gdipp_setting_32_cmdline" Before="del_link_gdipp_setting_32_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_gdipp_setting_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="make_link_EasyHook32_cmdline" Before="make_link_EasyHook32_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_EasyHook32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-
-			<Custom Action="del_link_EasyHook32_cmdline" Before="del_link_EasyHook32_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_EasyHook32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="reset_appinit_dlls_32_cmdline" Before="reset_appinit_dlls_32_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			<Custom Action="reset_appinit_dlls_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			
-			<Custom Action="reset_loadappinit_dlls_32_cmdline" Before="reset_loadappinit_dlls_32_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			<Custom Action="reset_loadappinit_dlls_32_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-
-<?if $(var.Platform) = x64 ?>
-			<Custom Action="make_link_gdipp_common_64_cmdline" Before="make_link_gdipp_common_64_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_gdipp_common_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="del_link_gdipp_common_64_cmdline" Before="del_link_gdipp_common_64_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_gdipp_common_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-
-			<Custom Action="make_link_gdipp_setting_64_cmdline" Before="make_link_gdipp_setting_64_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_gdipp_setting_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-
-			<Custom Action="del_link_gdipp_setting_64_cmdline" Before="del_link_gdipp_setting_64_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_gdipp_setting_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="make_link_EasyHook64_cmdline" Before="make_link_EasyHook64_exec">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="make_link_EasyHook64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE <> "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-
-			<Custom Action="del_link_EasyHook64_cmdline" Before="del_link_EasyHook64_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			<Custom Action="del_link_EasyHook64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE)]]>
-			</Custom>
-			
-			<Custom Action="reset_appinit_dlls_64_cmdline" Before="reset_appinit_dlls_64_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			<Custom Action="reset_appinit_dlls_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			
-			<Custom Action="reset_loadappinit_dlls_64_cmdline" Before="reset_loadappinit_dlls_64_exec">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-			<Custom Action="reset_loadappinit_dlls_64_exec" Before="InstallFinalize">
-				<![CDATA[(REMOVE = "ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (LOADMODE = 1)]]>
-			</Custom>
-<?endif ?>
-		</InstallExecuteSequence>
-		-->
-
-		<Feature Id="gdipp_all"
+		<Feature Id="feature_files"
 			Absent="disallow"
 			AllowAdvertise="no"
 			ConfigurableDirectory="INSTALLDIR"
-			Description="!(loc.gdippCompleteDesc)"
+			Description="!(loc.install_files_desc)"
 			Display="expand"
 			Level="1"
-			Title="!(loc.gdippCompleteTitle)">
-			<Feature Id="gdipp_32bit"
-				AllowAdvertise="no"
-				Description="!(loc.gdipp32bitDesc)"
-				Level="1"
-				Title="!(loc.gdipp32bitTitle)">
-				<ComponentRef Id="gdipp_32" />
-				<ComponentRef Id="install_service_32" />
-				<ComponentRef Id="set_appinit_dlls_32" />
-				<ComponentRef Id="set_loadappinit_dlls_32" />
-				<ComponentRef Id="loader_shortcut_32" />
-			</Feature>
+			Title="!(loc.install_files_title)">
+			<ComponentRef Id="comp_32_bit_file" />
 			
 <?if $(var.Platform) = x64 ?>
-			<Feature Id="gdipp_64bit"
-				AllowAdvertise="no"
-				Description="!(loc.gdipp64bitDesc)"
-				Level="1"
-				Title="!(loc.gdipp64bitTitle)">
-				<ComponentRef Id="gdipp_64" />
-				<ComponentRef Id="install_service_64" />
-				<ComponentRef Id="set_appinit_dlls_64" />
-				<ComponentRef Id="set_loadappinit_dlls_64" />
-				<ComponentRef Id="loader_shortcut_64" />
-			</Feature>
+			<ComponentRef Id="comp_64_bit_file" />
 <?endif ?>
 
-			<ComponentRef Id="gdipp_setting" />
-			<ComponentRef Id="gdipp_script" />
-			<ComponentRef Id="gdipp_doc" />
-			<ComponentRef Id="freetype_doc" />
-			<ComponentRef Id="easyhook_doc" />
-			<ComponentRef Id="set_load_mode" />
+			<ComponentRef Id="comp_setting" />
+			<ComponentRef Id="comp_script" />
+			<ComponentRef Id="comp_gdipp_doc" />
+			<ComponentRef Id="comp_freetype_doc" />
+			<ComponentRef Id="comp_easyhook_doc" />
+		</Feature>
+		<Feature Id="feature_misc"
+			AllowAdvertise="no"
+			Description="!(loc.install_misc_desc)"
+			Display="expand"
+			Level="1"
+			Title="!(loc.install_misc_title)">
+			<Feature Id="feature_service"
+				AllowAdvertise="no"
+				Description="!(loc.install_service_desc)"
+				Level="1"
+				Title="!(loc.install_service_title)">
+				<ComponentRef Id="comp_service_32" />
+			
+<?if $(var.Platform) = x64 ?>
+				<ComponentRef Id="comp_service_64" />
+<?endif ?>
+			</Feature>
+			<Feature Id="feature_shortcut"
+				AllowAdvertise="no"
+				Description="!(loc.install_shortcut_desc)"
+				Level="2"
+				Title="!(loc.install_shortcut_title)">
+				<ComponentRef Id="comp_shortcut_32" />
+			
+<?if $(var.Platform) = x64 ?>
+				<ComponentRef Id="comp_shortcut_64" />
+<?endif ?>
+			</Feature>
 		</Feature>
 
-		<UIRef Id="gdipp_WixUI_FeatureTree" />
-		<UIRef Id="WixUI_ErrorProgressText" />
+		<WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+		
+		<CustomAction Id="start_svc_32_cmdline" Property="QtExecCmdLine" Value='"[SystemFolder]cmd.exe" /c sc start gdipp_svc_32' />
+		<CustomAction Id="start_svc_32_exec" BinaryKey="WixCA" DllEntry="CAQuietExec" Return="ignore" />
+
+<?if $(var.Platform) = x64 ?>
+		<CustomAction Id="start_svc_64_cmdline" Property="QtExec64CmdLine" Value='"[System64Folder]cmd.exe" /c sc start gdipp_svc_64' />
+		<CustomAction Id="start_svc_64_exec" BinaryKey="WixCA" DllEntry="CAQuietExec64" Return="ignore" />
+<?endif ?>
+
+		<Property Id="START_SERVICE" Value="1" />
+		
+		<UI>
+			<UIRef Id="WixUI_FeatureTree" />
+			<DialogRef Id="gdipp_ExitDialog" />
+			
+			<Publish Dialog="gdipp_ExitDialog"
+				Control="Finish"
+				Event="DoAction"
+				Value="start_svc_32_cmdline" Order="1">
+				<![CDATA[START_SERVICE = 1 AND &feature_service >= 3]]>
+			</Publish>
+			<Publish Dialog="gdipp_ExitDialog"
+				Control="Finish"
+				Event="DoAction"
+				Value="start_svc_32_exec" Order="2">
+				<![CDATA[START_SERVICE = 1 AND &feature_service >= 3]]>
+			</Publish> 
+
+<?if $(var.Platform) = x64 ?>
+			<Publish Dialog="gdipp_ExitDialog"
+				Control="Finish"
+				Event="DoAction"
+				Value="start_svc_64_cmdline" Order="3">
+				<![CDATA[START_SERVICE = 1 AND &feature_service >= 3]]>
+			</Publish>
+			<Publish Dialog="gdipp_ExitDialog"
+				Control="Finish"
+				Event="DoAction"
+				Value="start_svc_64_exec" Order="4">
+				<![CDATA[START_SERVICE = 1 AND &feature_service >= 3]]>
+			</Publish>
+<?endif ?>
+		</UI>
 	</Product>
 </Wix>
