@@ -44,14 +44,17 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 		const xml_node curr_proc = node_iter->node();
 		const xml_attribute name_attr = curr_proc.attribute(L"name");
 
-		if (!name_attr.empty())
+		bool process_matched = name_attr.empty();
+		if (!process_matched)
 		{
 			const wregex name_ex(name_attr.value(), regex_flags);
-			if (regex_match(_process_name, name_ex))
-			{
-				for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
-					parse_gdimm_setting_node(*set_iter, _process_setting);
-			}
+			process_matched = regex_match(_process_name, name_ex);
+		}
+
+		if (process_matched)
+		{
+			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+				parse_gdimm_setting_node(*set_iter, _process_setting);
 		}
 	}
 }

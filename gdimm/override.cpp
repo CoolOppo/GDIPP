@@ -86,14 +86,12 @@ bool fetch_glyph_run(bool is_glyph_index,
 	GLYPH_CACHE_LEVEL &cache_level)
 {
 	bool b_ret;
-	gdimm_renderer *renderer = NULL;
+	gdimm_renderer *renderer;
 
 	switch (context.setting_cache->renderer)
 	{
-	case RENDERER_FREETYPE:
-		renderer = new gdimm_ft_renderer;
-		cache_level = SINGLE_GLYPH;
-		break;
+	case RENDERER_CLEARTYPE:
+		return false;
 	case RENDERER_GETGLYPHOUTLINE:
 		renderer = new gdimm_ggo_renderer;
 		cache_level = SINGLE_GLYPH;
@@ -106,10 +104,11 @@ bool fetch_glyph_run(bool is_glyph_index,
 		renderer = new gdimm_wic_renderer;
 		cache_level = NONE;
 		break;
+	default:
+		renderer = new gdimm_ft_renderer;
+		cache_level = SINGLE_GLYPH;
+		break;
 	}
-
-	if (renderer == NULL)
-		return false;
 
 	b_ret = renderer->begin(&context, render_mode);
 	if (b_ret)
@@ -503,6 +502,9 @@ HRESULT WINAPI ScriptPlace_hook(
 			}
 		}
 	}
+
+	// not support the offset for combining glyphs
+	ZeroMemory(pGoffset, sizeof(GOFFSET) * cGlyphs);
 
 	if (pABC != NULL)
 	{
