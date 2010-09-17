@@ -49,6 +49,7 @@ bool gdimm_hook::hook()
 	{
 		// hook other GDI APIs only if ExtTextOut is successfully hooked
 
+		// reserve for future use
 // 		b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
 // 		b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
 
@@ -60,8 +61,8 @@ bool gdimm_hook::hook()
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
 
-// 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
-// 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
+		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
  
 		b_ret &= install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
 		b_ret &= install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);

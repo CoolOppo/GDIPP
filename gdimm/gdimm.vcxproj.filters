@@ -123,9 +123,6 @@
     <ClInclude Include="wic_renderer.h">
       <Filter>Header Files\renderer</Filter>
     </ClInclude>
-    <ClInclude Include="outline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gamma.cpp">
@@ -205,9 +202,6 @@
     </ClCompile>
     <ClCompile Include="ggo_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="outline.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

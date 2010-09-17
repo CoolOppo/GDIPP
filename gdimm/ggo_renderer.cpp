@@ -4,9 +4,65 @@
 #include "helper_def.h"
 #include "helper_func.h"
 #include "lock.h"
-#include "outline.h"
 
 FT_Glyph gdimm_ggo_renderer::empty_outline_glyph;
+
+void gdimm_ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE *ggo_outline_buf, vector<FT_Vector> &curve_points, vector<char> &curve_tags, vector<short> &contour_indices)
+{
+	// parse outline coutours
+	DWORD header_off = 0;
+	do
+	{
+		const BYTE *header_ptr = ggo_outline_buf + header_off;
+		const TTPOLYGONHEADER *header = reinterpret_cast<const TTPOLYGONHEADER *>(header_ptr);
+
+		// FreeType uses 26.6 format, while Windows gives logical units
+		const FT_Vector start_point = {fixed_to_26dot6(header->pfxStart.x), fixed_to_26dot6(header->pfxStart.y)};
+
+		DWORD curve_off = sizeof(TTPOLYGONHEADER);
+		while (curve_off < header->cb)
+		{
+			// the starting point of each curve is the last point of the previous curve or the starting point of the contour
+			if (curve_off == sizeof(TTPOLYGONHEADER))
+			{
+				curve_points.push_back(start_point);
+				// the first point is on the curve
+				curve_tags.push_back(FT_CURVE_TAG_ON);
+			}
+
+			const TTPOLYCURVE *curve = reinterpret_cast<const TTPOLYCURVE *>(header_ptr + curve_off);
+			char curve_tag;
+			switch (curve->wType)
+			{
+			case TT_PRIM_LINE:
+				curve_tag = FT_CURVE_TAG_ON;
+				break;
+			case TT_PRIM_QSPLINE:
+				curve_tag = FT_CURVE_TAG_CONIC;
+				break;
+			case TT_PRIM_CSPLINE:
+				curve_tag = FT_CURVE_TAG_CUBIC;
+				break;
+			}
+
+			for (int j = 0; j < curve->cpfx; j++)
+			{
+				const FT_Vector curr_point = {fixed_to_26dot6(curve->apfx[j].x), fixed_to_26dot6(curve->apfx[j].y)};
+				curve_points.push_back(curr_point);
+				curve_tags.push_back(curve_tag);
+			}
+			// the last point is on the curve
+			curve_tags[curve_tags.size() - 1] = FT_CURVE_TAG_ON;
+
+			curve_off += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
+		}
+
+		contour_indices.push_back(static_cast<short>(curve_points.size() - 1));
+		header_off += header->cb;
+	} while (header_off < ggo_outline_buf_len);
+
+	assert(curve_points.size() <= FT_OUTLINE_POINTS_MAX);
+}
 
 gdimm_ggo_renderer::gdimm_ggo_renderer()
 {

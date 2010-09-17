@@ -7,7 +7,6 @@
 #include "ggo_renderer.h"
 #include "helper_def.h"
 #include "helper_func.h"
-#include "outline.h"
 #include "wic_renderer.h"
 #include "wic_painter.h"
 
@@ -351,102 +350,100 @@ BOOL WINAPI GetTextExtentExPointI_hook(HDC hdc, LPWORD lpwszString, int cwchStri
 		return GetTextExtentExPointI(hdc, lpwszString, cwchString, nMaxExtent, lpnFit, lpnDx, lpSize);
 }
 
-DWORD get_ggo_outline(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
+void adjust_ggo_metrics(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, CONST MAT2 *lpmat2)
 {
 	bool b_ret;
+	FT_Error ft_error;
 
-	if (lpgm == NULL || lpmat2 == NULL)
-		return GDI_ERROR;
-
-	const bool metrics_only = !!(fuFormat & GGO_METRICS);
-
-	if (!metrics_only && (cjBuffer != 0 && pvBuffer == NULL))
-		return GDI_ERROR;
-
-	gdimm_ft_renderer ft_renderer;
-	FT_OutlineGlyph new_glyph = NULL;
-
-	b_ret = ft_renderer.begin(context, FT_RENDER_MODE_NORMAL);
-	if (b_ret)
+	const MAT2 identity_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+	if (memcmp(lpmat2, &identity_mat, sizeof(MAT2)) != 0)
 	{
-		new_glyph = ft_renderer.get_outline_glyph(uChar, !!(fuFormat & GGO_GLYPH_INDEX));
-		ft_renderer.end();
+		// current not support transformation matrices other than identity
+		return;
 	}
 
-	if (new_glyph == NULL)
-		return GDI_ERROR;
+	gdimm_ft_renderer ft_renderer;
+	FT_OutlineGlyph target_glyph = NULL;
 
-	/*
+	b_ret = ft_renderer.begin(context, FT_RENDER_MODE_NORMAL);
+	if (!b_ret)
+		return;
+
+	target_glyph = ft_renderer.get_outline_glyph(uChar, !!(fuFormat & GGO_GLYPH_INDEX));
+	ft_renderer.end();
+
+	if (target_glyph == NULL)
+		return;
+
 	FT_BBox glyph_bbox;
-	ft_error = FT_Outline_Get_BBox(&(reinterpret_cast<FT_OutlineGlyph>(target_glyph)->outline), &glyph_bbox);
-	assert(ft_error == 0);
+	ft_error = FT_Outline_Get_BBox(&target_glyph->outline, &glyph_bbox);
+	if (ft_error != 0)
+		return;
 
-	lpgm->gmBlackBoxX = from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
-	lpgm->gmBlackBoxY = from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
-	lpgm->gmptGlyphOrigin.x = from_26dot6(glyph_bbox.xMin);
-	lpgm->gmptGlyphOrigin.y = from_26dot6(glyph_bbox.yMax);
-	lpgm->gmCellIncX = static_cast<short>(from_16dot16(target_glyph->advance.x));
-	lpgm->gmCellIncY = static_cast<short>(from_16dot16(target_glyph->advance.y));
-	*/
-
-	if (cjBuffer == 0)
-		return get_ggo_outline_size(new_glyph->outline);
-	else
-		return outline_ft_to_ggo(new_glyph->outline, pvBuffer);
+	lpgm->gmBlackBoxX = int_from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
+	lpgm->gmBlackBoxY = int_from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
+	lpgm->gmptGlyphOrigin.x = int_from_26dot6(glyph_bbox.xMin);
+	lpgm->gmptGlyphOrigin.y = int_from_26dot6(glyph_bbox.yMax);
+	lpgm->gmCellIncX = static_cast<short>(int_from_16dot16(target_glyph->root.advance.x));
+	lpgm->gmCellIncY = static_cast<short>(int_from_16dot16(target_glyph->root.advance.y));
 }
 
 DWORD WINAPI GetGlyphOutlineA_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
-	bool b_ret;
+	const DWORD ggo_ret = GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	if (ggo_ret == GDI_ERROR)
+		return ggo_ret;
+
+	if (!!(fuFormat & (GGO_BITMAP | GGO_NATIVE)))
+	{
+		// do not adjust metrics if not only the glyph metrics are requested
+		return ggo_ret;
+	}
 
 	if (!is_valid_dc(hdc))
-		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		return ggo_ret;
 
 	dc_context context;
 	if (!context.init(hdc))
-		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		return ggo_ret;
 
 	if (context.setting_cache->renderer != RENDERER_FREETYPE)
-		return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		return ggo_ret;
 
-	b_ret = true;
-	const bool is_glyph_index = !!(fuFormat & GGO_GLYPH_INDEX);
-	if (!is_glyph_index)
-	{
-		wstring wide_char_str;
-		b_ret = mb_to_wc(reinterpret_cast<const char *>(&uChar), 1, wide_char_str);
-		
-		if (b_ret)
-			assert(wide_char_str.size() == 1);
-	}
+	adjust_ggo_metrics(&context, uChar, fuFormat, lpgm, lpmat2);
 
-	if (b_ret)
-	{
-		const DWORD ggo_ret = get_ggo_outline(&context, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-		if (ggo_ret != GDI_ERROR)
-			return ggo_ret;
-	}
-	
-	return GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	return ggo_ret;
 }
 
 DWORD WINAPI GetGlyphOutlineW_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
+	const DWORD ggo_ret = GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	if (ggo_ret == GDI_ERROR)
+		return ggo_ret;
+
+	if (!!(fuFormat & (GGO_BITMAP | GGO_NATIVE)))
+		return ggo_ret;
+
+	const MAT2 identity_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+	if (memcmp(lpmat2, &identity_mat, sizeof(MAT2)) != 0)
+	{
+		// do not adjust if the transformation matrix is not identical
+		return ggo_ret;
+	}
+
 	if (!is_valid_dc(hdc))
-		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		return ggo_ret;
 
 	dc_context context;
 	if (!context.init(hdc))
-		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+		return ggo_ret;
 
 	if (context.setting_cache->renderer != RENDERER_FREETYPE)
-		return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-
-	const DWORD ggo_ret = get_ggo_outline(&context, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
-	if (ggo_ret != GDI_ERROR)
 		return ggo_ret;
-	
-	return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+
+	adjust_ggo_metrics(&context, uChar, fuFormat, lpgm, lpmat2);
+
+	return ggo_ret;
 }
 
 BOOL WINAPI AbortPath_hook(HDC hdc)

@@ -22,7 +22,6 @@
     <ClInclude Include="dw_renderer.h" />
     <ClInclude Include="font_store.h" />
     <ClInclude Include="obj_reg.h" />
-    <ClInclude Include="outline.h" />
     <ClInclude Include="type_enum.h" />
     <ClInclude Include="font_link.h" />
     <ClInclude Include="font_man.h" />
@@ -73,7 +72,6 @@
     </ClCompile>
     <ClCompile Include="obj_reg.cpp" />
     <ClCompile Include="os2_metrics.cpp" />
-    <ClCompile Include="outline.cpp" />
     <ClCompile Include="override.cpp" />
     <ClCompile Include="painter.cpp" />
     <ClCompile Include="renderer.cpp" />
