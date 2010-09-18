@@ -24,24 +24,28 @@ map<ULONG, PROCESS_INFORMATION> pi_hooks;
 BOOL start_hook(ULONG session_id)
 {
 	BOOL b_ret;
+	HANDLE h_hook_event, h_user_token;
 
-	h_user_tokens.insert(pair<ULONG, HANDLE>(session_id, HANDLE()));
-	b_ret = WTSQueryUserToken(session_id, &h_user_tokens[session_id]);
+	b_ret = WTSQueryUserToken(session_id, &h_user_token);
 	if (!b_ret)
 		return FALSE;
 
 	// this event handle is inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
-	h_hook_events[session_id] = CreateEvent(&inheritable_sa, TRUE, FALSE, NULL);
-	if (h_hook_events[session_id] == NULL)
+	h_hook_event = CreateEvent(&inheritable_sa, TRUE, FALSE, NULL);
+	if (h_hook_event == NULL)
 		return FALSE;
 
-	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_events[session_id], 0);
-
+	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_event, 0);
 	STARTUPINFOW si = {sizeof(STARTUPINFO)};
+	PROCESS_INFORMATION pi;
+	b_ret = CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, hook_env_str, NULL, &si, &pi);
 
-	pi_hooks.insert(pair<ULONG, PROCESS_INFORMATION>(session_id, PROCESS_INFORMATION()));
-	return CreateProcessAsUserW(h_user_tokens[session_id], gdipp_hook_path, NULL, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, hook_env_str, NULL, &si, &pi_hooks[session_id]);
+	h_hook_events[session_id] = h_hook_event;
+	h_user_tokens[session_id] = h_user_token;
+	pi_hooks[session_id] = pi;
+
+	return b_ret;
 }
 
 void stop_hook(ULONG session_id)
