@@ -52,7 +52,6 @@
 							Remove="uninstall"
 							Stop="uninstall"
 							Wait="no" />
-						<Environment Id="add_to_path_env_var" Action="set" Name="PATH" Part="last" Permanent="no" System="yes" Value="[INSTALLDIR]" />
 					</Component>
 
 <?if $(var.Platform) = x64 ?>
@@ -92,6 +91,7 @@
 							DestinationProperty="INSTALLDIR" DestinationName="setting.xml.bak"
 							SourceProperty="INSTALLDIR" SourceName="setting.xml" />
 						<File Name="gdipp_setting.xml" Source="gdipp_setting.xml" KeyPath="yes" Vital="yes" />
+						<Environment Id="add_to_path_env_var" Action="set" Name="PATH" Part="last" Permanent="no" System="yes" Value="[INSTALLDIR]" />
 					</Component>
 
 					<Directory Id="script_dir" Name="Script">
