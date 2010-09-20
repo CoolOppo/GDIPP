@@ -110,8 +110,8 @@
 					</Directory>
 
 					<Component Id="comp_gdipp_doc" Guid="E4A5F563-5087-461B-9051-65A226087D3E" Win64="no">
-						<File Id="gdipp_readme" Name="README.txt" Source="README.txt" />
-						<File Id="gdipp_license" Name="License.txt" Source="License.txt" />
+						<File Id="GPL" Name="COPYING" Source="COPYING" />
+						<File Id="LGPL" Name="COPYING.LESSER" Source="COPYING.LESSER" />
 						<File Name="gdipp_preview.txt" Source="gdipp_preview.txt" />
 						<util:InternetShortcut Id="documentation_url" Name="documentation" Target="http://code.google.com/p/gdipp/w/list" Type="url" />
 					</Component>
