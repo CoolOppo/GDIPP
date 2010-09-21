@@ -450,6 +450,8 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			grm.visible_rect.top,
 			SRCCOPY);
 	}
+	else
+		paint_success = FALSE;
 
 	if (paint_success)
 	{
