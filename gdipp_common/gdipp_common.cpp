@@ -90,30 +90,48 @@ void gdipp_debug_buffer(const void *ptr, unsigned int size)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
-
-	fwrite(ptr, 1, size, f);
-
-	fclose(f);
+	
+	if (f != NULL)
+	{
+		fwrite(ptr, 1, size, f);
+		fclose(f);
+	}
 }
 
-void gdipp_debug_number(size_t num)
+void gdipp_debug_decimal(double num)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
+	
+	if (f != NULL)
+	{
+		fwprintf(f, L"%f\n", num);
+		fclose(f);
+	}
+}
 
-	fwprintf(f, L"%u\n", num);
-
-	fclose(f);
+void gdipp_debug_integer(size_t num)
+{
+	FILE *f;
+	_wfopen_s(&f, debug_file_name, L"a+");
+	
+	if (f != NULL)
+	{
+		fwprintf(f, L"%u\n", num);
+		fclose(f);
+	}
 }
 
 void gdipp_debug_string(const wchar_t *str)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
-
-	fwprintf(f, L"%s\n", str);
-
-	fclose(f);
+	
+	if (f != NULL)
+	{
+		fwprintf(f, L"%s\n", str);
+		fclose(f);
+	}
 }
 
 BOOL APIENTRY DllMain(

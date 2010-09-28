@@ -36,6 +36,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_hook", "gdipp_hook\gd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\scripts\pugixml_vs2010_static.vcxproj", "{89A1E353-E2DC-495C-B403-742BE206ACED}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "sqlite3\sqlite3.vcxproj", "{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -132,6 +134,14 @@ Global
 		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|Win32.Build.0 = Release|Win32
 		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|x64.ActiveCfg = Release|x64
 		{89A1E353-E2DC-495C-B403-742BE206ACED}.Release|x64.Build.0 = Release|x64
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Debug|Win32.Build.0 = Debug|Win32
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Debug|x64.ActiveCfg = Debug|x64
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Debug|x64.Build.0 = Debug|x64
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Release|Win32.ActiveCfg = Release|Win32
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Release|Win32.Build.0 = Release|Win32
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Release|x64.ActiveCfg = Release|x64
+		{E1BBF20A-5CD7-4D63-BBDC-0BA9B001B5AB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "hook.h"
-#include "override.h"
+#include "api_override.h"
+#include "com_override.h"
 
 // exported function for SetWindowsHookEx
 __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -15,14 +16,20 @@ EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_E
 	RhWakeUpProcess();
 }
 
-bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_proc)
+bool char_str_ci_less::operator()(const char *string1, const char *string2) const
+{
+	// filename is insensitive in Windows
+	return _stricmp(string1, string2) < 0;
+}
+
+bool wchar_str_ci_less::operator()(const wchar_t *string1, const wchar_t *string2) const
+{
+	return _wcsicmp(string1, string2) < 0;
+}
+
+bool gdimm_hook::install_hook(HMODULE h_lib, LPCSTR proc_name, void *hook_proc)
 {
 	NTSTATUS eh_ret;
-
-	// the target library module must have been loaded in this process before hooking
-	const HMODULE h_lib = GetModuleHandleW(lib_name);
-	if (h_lib == NULL)
-		return false;
 
 	const FARPROC proc_addr = GetProcAddress(h_lib, proc_name);
 	assert(proc_addr != NULL);
@@ -40,6 +47,42 @@ bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_pro
 	return true;
 }
 
+void gdimm_hook::register_delayed_hook(LPCSTR lib_name_a, LPCWSTR lib_name_w, LPCSTR proc_name, void *hook_proc)
+{
+	lib_hook_map_a::const_iterator lib_iter = _delayed_hooks_a.find(lib_name_a);
+	if (lib_iter == _delayed_hooks_a.end())
+	{
+		_delayed_hook_registry.push_back(hook_proc_map());
+		hook_proc_map *curr_hook_map = &_delayed_hook_registry.back();
+
+		(*curr_hook_map)[proc_name] = hook_proc;
+		_delayed_hooks_a[lib_name_a] = curr_hook_map;
+		_delayed_hooks_w[lib_name_w] = curr_hook_map;
+	}
+	else
+		(*lib_iter->second)[proc_name] = hook_proc;
+}
+
+bool gdimm_hook::install_hook(LPCSTR lib_name, LPCSTR proc_name, void *hook_proc)
+{
+	// the target library module must have been loaded in this process before hooking
+	const HMODULE h_lib = GetModuleHandleA(lib_name);
+	if (h_lib == NULL)
+		return false;
+
+	return install_hook(h_lib, proc_name, hook_proc);
+}
+
+bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_proc)
+{
+	// the target library module must have been loaded in this process before hooking
+	const HMODULE h_lib = GetModuleHandleW(lib_name);
+	if (h_lib == NULL)
+		return false;
+
+	return install_hook(h_lib, proc_name, hook_proc);
+}
+
 bool gdimm_hook::hook()
 {
 	bool b_ret;
@@ -50,8 +93,8 @@ bool gdimm_hook::hook()
 		// hook other GDI APIs only if ExtTextOut is successfully hooked
 
 		// reserve for future use
-// 		b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
-// 		b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
+		// b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
+		// b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
 
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
@@ -69,12 +112,59 @@ bool gdimm_hook::hook()
 		b_ret &= install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
 
 		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
+
+		// register hooks whose libraries are dynamically loaded by LoadLibrary
+		register_delayed_hook("d2d1.dll", L"d2d1.dll", "D2D1CreateFactory", D2D1CreateFactory_hook);
+
+		if (!_delayed_hook_registry.empty())
+		{
+			install_hook(L"kernel32.dll", "LoadLibraryA", LoadLibraryA_hook);
+			install_hook(L"kernel32.dll", "LoadLibraryExA", LoadLibraryExA_hook);
+			install_hook(L"kernel32.dll", "LoadLibraryW", LoadLibraryW_hook);
+			install_hook(L"kernel32.dll", "LoadLibraryExW", LoadLibraryExW_hook);
+		}
 	}
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
 	// currently not support inject at EIP for 64-bit processes
 	b_ret &= install_hook(L"advapi32.dll", "CreateProcessAsUserW", CreateProcessAsUserW_hook);
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
+
+	return b_ret;
+}
+
+bool gdimm_hook::install_delayed_hook(LPCSTR lib_name, HMODULE h_lib)
+{
+	bool b_ret = true;
+
+	lib_hook_map_a::const_iterator lib_iter = _delayed_hooks_a.find(lib_name);
+	if (lib_iter != _delayed_hooks_a.end())
+	{
+		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); proc_iter++)
+		{
+			b_ret &= install_hook(h_lib, proc_iter->first, proc_iter->second);
+			if (!b_ret)
+				break;
+		}
+	}
+
+	return b_ret;
+}
+
+bool gdimm_hook::install_delayed_hook(LPCWSTR lib_name, HMODULE h_lib)
+{
+	bool b_ret = true;
+
+	lib_hook_map_w::const_iterator lib_iter = _delayed_hooks_w.find(lib_name);
+	if (lib_iter != _delayed_hooks_w.end())
+	{
+		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); proc_iter++)
+		{
+			b_ret &= install_hook(h_lib, proc_iter->first, proc_iter->second);
+			if (!b_ret)
+				break;
+		}
+	}
 
 	return b_ret;
 }

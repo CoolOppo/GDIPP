@@ -24,6 +24,7 @@ enum LOCK_TYPE
 {
 	// lock with same type will be blocked
 
+	LOCK_COM_HOOK,
 	LOCK_FREETYPE,
 	LOCK_GAMMA,
 	LOCK_GLYPH_CACHE,

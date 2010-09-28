@@ -99,9 +99,6 @@
     <ClInclude Include="lru.h">
       <Filter>Header Files\cache</Filter>
     </ClInclude>
-    <ClInclude Include="override.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="painter.h">
       <Filter>Header Files\painter</Filter>
     </ClInclude>
@@ -122,6 +119,12 @@
     </ClInclude>
     <ClInclude Include="wic_renderer.h">
       <Filter>Header Files\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="api_override.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="com_override.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -161,9 +164,6 @@
     <ClCompile Include="gdi_painter.cpp">
       <Filter>Source Files\painter</Filter>
     </ClCompile>
-    <ClCompile Include="override.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -202,6 +202,12 @@
     </ClCompile>
     <ClCompile Include="ggo_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="com_override.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="api_override.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

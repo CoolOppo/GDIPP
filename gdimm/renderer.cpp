@@ -53,7 +53,11 @@ bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 	const uint64_t str_hash = MurmurHash64B(lpString, c * sizeof(WCHAR), is_glyph_index);
 #endif // _M_X64
 
-	b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
+	static int total = 0;
+	static int cached = 0;
+
+	//b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
+	b_ret = false;
 	if (!b_ret)
 	{
 		// double-check lock
@@ -66,9 +70,14 @@ bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 			if (glyph_run_height == 0)
 				return false;
 
-			_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
+			//_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
 		}
 	}
+	/*else
+		cached += 1;
+	total += 1;
+
+	gdipp_debug_decimal(static_cast<double>(cached) / total);*/
 
 	return true;
 }

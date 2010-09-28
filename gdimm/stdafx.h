@@ -36,6 +36,8 @@
 
 #include <easyhook.h>
 
+#include <sqlite3.h>
+
 #include <d2d1.h>
 #include <dwrite.h>
 #include <wincodec.h>

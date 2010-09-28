@@ -4,6 +4,12 @@
 #include "os2_metrics.h"
 #include "setting_cache.h"
 
+#ifndef GDIPP_INJECT_SANDBOX
+	// define if injection into restricted processes is desired
+	// defined to inject into Google Chrome render processes
+	#define GDIPP_INJECT_SANDBOX
+#endif
+
 class dc_context
 {
 	// data structures and metrics retrieved from HDC commonly used by multiple gdipp components
