@@ -18,12 +18,65 @@ GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_nam
 // setting wrapper APIs
 // gdipp_setting uses STL templates, which makes it frustrating to export
 
-struct gdimm_setting_trait
+class gdimm_setting_trait
 {
-	const wchar_t *font_name;
+/*
 	char weight_class;
 	bool italic;
 	LONG height;
+	const wchar_t *font_name;
+*/
+
+	BYTE *_setting_data;
+	size_t _setting_size;
+
+public:
+	gdimm_setting_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
+	{
+		const size_t font_name_len = wcslen(font_name) + 1;
+		_setting_size = sizeof(weight_class) + sizeof(italic) + sizeof(height) + font_name_len * sizeof(wchar_t);
+		_setting_data = new BYTE[_setting_size];
+
+		*reinterpret_cast<char *>(_setting_data) = weight_class;
+		*reinterpret_cast<bool *>(_setting_data + sizeof(char)) = italic;
+		*reinterpret_cast<LONG *>(_setting_data + sizeof(char) + sizeof(bool)) = height;
+		wcscpy_s(reinterpret_cast<wchar_t *>(_setting_data + sizeof(char) + sizeof(bool) + sizeof(LONG)), font_name_len, font_name);
+	}
+
+	~gdimm_setting_trait()
+	{
+		delete[] _setting_data;
+	}
+
+	char get_weight_class() const
+	{
+		return *reinterpret_cast<char *>(_setting_data);
+	}
+
+	bool get_italic() const
+	{
+		return *reinterpret_cast<bool *>(_setting_data + sizeof(char));
+	}
+
+	LONG get_height() const
+	{
+		return *reinterpret_cast<LONG *>(_setting_data + sizeof(char) + sizeof(bool));
+	}
+
+	const wchar_t *get_font_name() const
+	{
+		return reinterpret_cast<const wchar_t *>(_setting_data + sizeof(char) + sizeof(bool) + sizeof(LONG));
+	}
+
+	const BYTE *get_data() const
+	{
+		return _setting_data;
+	}
+
+	size_t get_size() const
+	{
+		return _setting_size;
+	}
 };
 
 GDIPP_API void gdipp_init_setting();

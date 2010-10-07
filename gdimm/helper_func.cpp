@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "freetype.h"
 #include "helper_func.h"
+#include "MurmurHash2.h"
+#include "freetype.h"
 #include "gdimm.h"
 #include "lock.h"
 
@@ -22,12 +23,22 @@ FT_Pos float_to_16dot16(double x)
 
 LONG int_from_16dot16(FT_Pos x)
 {
-	return x >> 16;
+	const LONG ret = (x >> 16);
+
+	if (ret == 0 && x > 0)
+		return 1;
+	else
+		return ret;
 }
 
 LONG int_from_26dot6(FT_Pos x)
 {
-	return x >> 6;
+	const LONG ret = (x >> 6);
+	
+	if (ret == 0 && x > 0)
+		return 1;
+	else
+		return ret;
 }
 
 DWORD create_tls_index()
@@ -52,7 +63,7 @@ BYTE division_by_255(short number, short numerator)
 	return (((t + 255) >> 8) + t) >> 8;
 }
 
-uint64_t generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
+unsigned int generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode)
 {
 	// the LOGFONTW structure and render mode are the minimal set that uniquely determine font metrics used by any renderer
 
@@ -61,11 +72,7 @@ uint64_t generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mod
 	const int lf_facename_size = static_cast<const int>((wcslen(log_font.lfFaceName) * sizeof(wchar_t)));
 	const int lf_total_size = lf_metric_size + lf_facename_size;
 
-#ifdef _M_X64
-	return MurmurHash64A(&log_font, lf_total_size, render_mode);
-#else
-	return MurmurHash64B(&log_font, lf_total_size, render_mode);
-#endif // _M_X64
+	return MurmurHash2(&log_font, lf_total_size, render_mode);
 }
 
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)

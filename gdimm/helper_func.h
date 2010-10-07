@@ -28,7 +28,7 @@ BOOL free_tls_index(DWORD tls_index);
 // high-performance division method to approximate number * numerator / 255
 BYTE division_by_255(short number, short numerator);
 
-uint64_t generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode);
+unsigned int generate_font_trait(const LOGFONTW &log_font, FT_Render_Mode render_mode);
 
 // apply alignment on the reference point and use it to calculate the baseline
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent);

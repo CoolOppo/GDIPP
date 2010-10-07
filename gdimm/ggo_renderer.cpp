@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
 #include "freetype.h"
+#include "gdimm.h"
 #include "helper_def.h"
 #include "helper_func.h"
 #include "lock.h"
@@ -145,7 +146,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 				return NULL;
 		}
 
-		_glyph_cache.store_glyph(_font_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), generic_glyph);
+		glyph_cache_instance.store_glyph(_font_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), generic_glyph);
 
 		return generic_glyph;
 	}
@@ -185,12 +186,12 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStri
 		// solution for Windows Vista/7 Date
 		if (is_glyph_index || !iswcntrl(lpString[i]))
 		{
-			new_glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+			new_glyph = glyph_cache_instance.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
 			if (new_glyph == NULL)
 			{
 				// double-check lock
 				gdimm_lock lock(LOCK_GLYPH_CACHE);
-				new_glyph = _glyph_cache.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
+				new_glyph = glyph_cache_instance.lookup_glyph(_font_trait, lpString[i], is_glyph_index);
 				if (new_glyph == NULL)
 					new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
 			}

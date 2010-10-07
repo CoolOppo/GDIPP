@@ -1,13 +1,9 @@
 #include "stdafx.h"
 #include "renderer.h"
+#include "MurmurHash2_64.h"
+#include "helper_func.h"
+#include "gdimm.h"
 #include "freetype.h"
-
-gdimm_glyph_cache gdimm_renderer::_glyph_cache;
-
-gdimm_renderer::gdimm_renderer()
-{
-	_glyph_cache._glyph_run_lru.resize(ft_cache_max_faces * ft_cache_max_sizes);
-}
 
 gdimm_renderer::~gdimm_renderer()
 {
@@ -39,38 +35,29 @@ bool gdimm_renderer::fetch_glyph_run(bool is_glyph_index, bool is_pdy, LPCWSTR l
 {
 	bool b_ret;
 
-	uint64_t erased_trait;
-	const bool overflow = _glyph_cache._glyph_run_lru.access(_font_trait, erased_trait);
-	if (overflow)
-	{
-		// erasing font trait may fail, in case that no glyph was successfully rendered
-		b_ret = _glyph_cache.erase_font_trait(erased_trait);
-	}
-
 #ifdef _M_X64
-	const uint64_t str_hash = MurmurHash64A(lpString, c * sizeof(WCHAR), is_glyph_index);
+	const unsigned __int64 string_id = MurmurHash64A(lpString, c * sizeof(WCHAR), is_glyph_index);
 #else
-	const uint64_t str_hash = MurmurHash64B(lpString, c * sizeof(WCHAR), is_glyph_index);
+	const unsigned __int64 string_id = MurmurHash64B(lpString, c * sizeof(WCHAR), is_glyph_index);
 #endif // _M_X64
 
-	static int total = 0;
-	static int cached = 0;
+	//static int total = 0;
+	//static int cached = 0;
 
-	//b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
-	b_ret = false;
+	b_ret = glyph_cache_instance.lookup_glyph_run(_font_trait, string_id, a_glyph_run);
 	if (!b_ret)
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
 
-		b_ret = _glyph_cache.lookup_glyph_run(_font_trait, str_hash, a_glyph_run);
+		b_ret = glyph_cache_instance.lookup_glyph_run(_font_trait, string_id, a_glyph_run);
 		if (!b_ret)
 		{
 			const int glyph_run_height = render(is_glyph_index, is_pdy, lpString, c, lpDx, a_glyph_run);
 			if (glyph_run_height == 0)
 				return false;
 
-			//_glyph_cache.store_glyph_run(_font_trait, str_hash, a_glyph_run);
+			glyph_cache_instance.store_glyph_run(_font_trait, string_id, a_glyph_run);
 		}
 	}
 	/*else

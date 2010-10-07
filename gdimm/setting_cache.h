@@ -1,7 +1,6 @@
 #pragma once
 
 #include "type_enum.h"
-#include "MurmurHash2_64.h"
 #include <gdipp_common.h>
 
 using namespace std;
@@ -52,7 +51,7 @@ struct font_setting_cache
 
 class gdimm_setting_cache
 {
-	map<uint64_t, font_setting_cache> _cache;
+	map<unsigned int, font_setting_cache> _cache;
 
 public:
 	const font_setting_cache *lookup(const gdimm_setting_trait *setting_trait);

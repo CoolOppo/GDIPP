@@ -18,10 +18,10 @@ bool dc_context::init(HDC hdc)
 	log_font.lfWeight = get_gdi_weight_class(static_cast<unsigned short>(log_font.lfWeight));
 
 	const LONG point_size = (log_font.lfHeight > 0 ? log_font.lfHeight : -MulDiv(log_font.lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
-	const gdimm_setting_trait setting_trait = {metric_face_name(outline_metrics),
-		get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight)),
+	const gdimm_setting_trait setting_trait(get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight)),
 		!!outline_metrics->otmTextMetrics.tmItalic,
-		point_size};
+		point_size,
+		metric_face_name(outline_metrics));
 	setting_cache = setting_cache_instance.lookup(&setting_trait);
 
 	if (setting_cache->renderer >= RENDERER_DIRECTWRITE && !os_support_directwrite)

@@ -10,66 +10,9 @@ bool os_support_directwrite;
 gdimm_font_link font_link_instance;
 gdimm_font_store font_store_instance;
 gdimm_gamma gamma_instance;
+gdimm_glyph_cache glyph_cache_instance;
 gdimm_hook hook_instance;
 gdimm_setting_cache setting_cache_instance;
-
-sqlite3 *glyph_cache_db = NULL;
-sqlite3 *glyph_run_cache_db = NULL;
-
-bool initialize_cache_db()
-{
-	int i_ret;
-
-	if (glyph_cache_db == NULL && glyph_run_cache_db == NULL)
-	{
-		wchar_t base_db_path[MAX_PATH], curr_db_path[MAX_PATH];
-		if (!gdipp_get_dir_file_path(h_self, L"cache", base_db_path))
-			return false;
-
-		i_ret = sqlite3_initialize();
-		assert(i_ret == SQLITE_OK);
-
-		wcscpy_s(curr_db_path, base_db_path);
-		PathAppendW(curr_db_path, L"glyph.sqlite");
-		i_ret = sqlite3_open16(curr_db_path, &glyph_cache_db);
-		if (i_ret != SQLITE_OK)
-			glyph_cache_db = NULL;
-		
-		wcscpy_s(curr_db_path, base_db_path);
-		PathAppendW(curr_db_path, L"glyph_run.sqlite");
-		i_ret = sqlite3_open16(curr_db_path, &glyph_run_cache_db);
-		if (i_ret != SQLITE_OK)
-			glyph_run_cache_db = NULL;
-
-		if (glyph_cache_db != NULL || glyph_run_cache_db != NULL)
-			return true;
-		else
-			sqlite3_shutdown();
-	}
-
-	return false;
-}
-
-bool destroy_cache_db()
-{
-	int i_ret;
-	bool b_ret = true;
-
-	if (glyph_cache_db != NULL)
-	{
-		i_ret = sqlite3_close(glyph_cache_db);
-		b_ret &= (i_ret == SQLITE_OK);
-	}
-
-	if (glyph_run_cache_db != NULL)
-	{
-		i_ret = sqlite3_close(glyph_run_cache_db);
-		b_ret &= (i_ret == SQLITE_OK);
-	}
-
-	i_ret = sqlite3_shutdown();
-	return b_ret & (i_ret == SQLITE_OK);
-}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -101,7 +44,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				return FALSE;
 			os_support_directwrite = (ver_info.dwMajorVersion >= 6);
 
-			//initialize_cache_db();
 			gdimm_lock::initialize();
 			initialize_freetype();
 
@@ -114,7 +56,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			hook_instance.unhook();
 			destroy_freetype();
 			gdimm_lock::finalize();
-			//destroy_cache_db();
 
 			break;
 	}

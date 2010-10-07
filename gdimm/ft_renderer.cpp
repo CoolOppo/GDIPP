@@ -157,7 +157,7 @@ const FT_Glyph gdimm_ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 	FT_ULong load_flags,
 	bool is_italic,
 	bool request_outline,
-	uint64_t font_trait) const
+	unsigned int font_trait) const
 {
 	FT_Error ft_error;
 
@@ -169,12 +169,12 @@ const FT_Glyph gdimm_ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 		return glyph;
 	}
 
-	glyph = _glyph_cache.lookup_glyph(font_trait, glyph_index, true);
+	glyph = glyph_cache_instance.lookup_glyph(font_trait, glyph_index, true);
 	if (glyph == NULL)
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_GLYPH_CACHE);
-		glyph = _glyph_cache.lookup_glyph(font_trait, glyph_index, true);
+		glyph = glyph_cache_instance.lookup_glyph(font_trait, glyph_index, true);
 		if (glyph == NULL)
 		{
 			// no cached glyph, or outline glyph is requested, generate outline
@@ -189,7 +189,7 @@ const FT_Glyph gdimm_ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 					return NULL;
 			}
 
-			_glyph_cache.store_glyph(font_trait, glyph_index, true, glyph);
+			glyph_cache_instance.store_glyph(font_trait, glyph_index, true, glyph);
 		}
 	}
 
@@ -203,7 +203,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 	wstring curr_font_face = metric_face_name(_context->outline_metrics);
 	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
-	uint64_t curr_font_trait = _font_trait;
+	unsigned int curr_font_trait = _font_trait;
 
 	long font_id = font_man.register_font(_context->hdc, curr_font_face.c_str());
 	if (font_id < 0)
@@ -353,7 +353,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 			os2_metrics = font_man.lookup_os2_metrics(font_id);
 			
-			const gdimm_setting_trait setting_trait = {curr_font_face.c_str(), os2_metrics->get_weight_class(), os2_metrics->is_italic()};
+			const gdimm_setting_trait setting_trait(os2_metrics->get_weight_class(), os2_metrics->is_italic(), 0, curr_font_face.c_str());
 			curr_setting_cache = setting_cache_instance.lookup(&setting_trait);
 
 			if (!get_render_mode(curr_setting_cache, _context->bmp_header.biBitCount, _context->log_font.lfQuality, curr_render_mode))
@@ -363,7 +363,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 			curr_embolden = 0;
 			if (linked_log_font.lfWeight != FW_DONTCARE)
-				curr_embolden = get_embolden(curr_setting_cache, setting_trait.weight_class, static_cast<char>(linked_log_font.lfWeight));
+				curr_embolden = get_embolden(curr_setting_cache, setting_trait.get_weight_class(), static_cast<char>(linked_log_font.lfWeight));
 
 			curr_load_flags = make_load_flags(curr_setting_cache, _render_mode);
 		}

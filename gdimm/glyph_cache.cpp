@@ -1,72 +1,61 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
 
-const FT_Glyph gdimm_glyph_cache::lookup_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index)
+unsigned __int64 gdimm_glyph_cache::get_char_id(unsigned int font_trait, FT_UInt index, bool is_glyph_index)
 {
-	map<uint64_t, index_to_glyph_map>::const_iterator trait_iter = _glyph_store.find(font_trait);
-	if (trait_iter == _glyph_store.end())
-		return NULL;
-
-	const FT_Int internal_index = index * (is_glyph_index ? 1 : -1);
-	index_to_glyph_map::const_iterator index_iter = trait_iter->second.find(internal_index);
-	if (index_iter == trait_iter->second.end())
-		return NULL;
-
-	return index_iter->second;
+	return (((static_cast<unsigned __int64>(font_trait) << 1) | static_cast<char>(is_glyph_index)) << 31) | index;
 }
 
-bool gdimm_glyph_cache::store_glyph(uint64_t font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
+gdimm_glyph_cache::gdimm_glyph_cache()
 {
-	// if the specified font trait does not exist in the map, insert new map
-	// otherwise nothing is changed
-	const pair<map<uint64_t, index_to_glyph_map>::iterator, bool> trait_insert_ret = _glyph_store.insert(pair<uint64_t, index_to_glyph_map>(font_trait, index_to_glyph_map()));
-
-	const FT_Int internal_index = index * (is_glyph_index ? 1 : -1);
-	const pair<index_to_glyph_map::const_iterator, bool> index_insert_ret = trait_insert_ret.first->second.insert(pair<FT_Int, const FT_Glyph>(internal_index, glyph));
-
-	return index_insert_ret.second;
+	_glyph_run_lru.resize(10);
 }
 
-bool gdimm_glyph_cache::lookup_glyph_run(uint64_t font_trait, uint64_t str_hash, glyph_run &a_glyph_run)
+const FT_Glyph gdimm_glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const
 {
-	map<uint64_t, hash_to_run_map>::const_iterator trait_iter = _glyph_run_store.find(font_trait);
-	if (trait_iter == _glyph_run_store.end())
+	const unsigned __int64 char_id = get_char_id(font_trait, index, is_glyph_index);
+
+	map<unsigned __int64, const FT_Glyph>::const_iterator glyph_iter = _glyph_store.find(char_id);
+	if (glyph_iter == _glyph_store.end())
+		return NULL;
+	else
+		return glyph_iter->second;
+}
+
+bool gdimm_glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
+{
+	const unsigned __int64 char_id = get_char_id(font_trait, index, is_glyph_index);
+
+	const pair<map<unsigned __int64, const FT_Glyph>::const_iterator, bool> glyph_insert_ret = _glyph_store.insert(pair<unsigned __int64, const FT_Glyph>(char_id, glyph));
+
+	return glyph_insert_ret.second;
+}
+
+bool gdimm_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int64 string_id, glyph_run &a_glyph_run) const
+{
+	map<unsigned __int64, hash_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
+	if (str_iter == _glyph_run_store.end())
 		return false;
 
-	hash_to_run_map::const_iterator hash_iter = trait_iter->second.find(str_hash);
-	if (hash_iter == trait_iter->second.end())
+	hash_to_run_map::const_iterator trait_iter = str_iter->second.find(font_trait);
+	if (trait_iter == str_iter->second.end())
 		return false;
 
-	a_glyph_run = hash_iter->second;
-
+	a_glyph_run = trait_iter->second;
 	return true;
 }
 
-bool gdimm_glyph_cache::store_glyph_run(uint64_t font_trait, uint64_t str_hash, const glyph_run &a_glyph_run)
+bool gdimm_glyph_cache::store_glyph_run(unsigned int font_trait, unsigned __int64 string_id, const glyph_run &a_glyph_run)
 {
-	const pair<map<uint64_t, hash_to_run_map>::iterator, bool> trait_insert_ret = _glyph_run_store.insert(pair<uint64_t, hash_to_run_map>(font_trait, hash_to_run_map()));
-	const pair<hash_to_run_map::const_iterator, bool> hash_insert_ret = trait_insert_ret.first->second.insert(pair<uint64_t, glyph_run>(str_hash, a_glyph_run));
+	bool b_ret;
+	unsigned __int64 erased_str;
 
-	return hash_insert_ret.second;
-}
+	b_ret = _glyph_run_lru.access(string_id, erased_str);
+	if (b_ret)
+		_glyph_run_store.erase(erased_str);
 
-bool gdimm_glyph_cache::erase_font_trait(uint64_t font_trait)
-{
-	// erase the glyph run from its store
-	// then free and erase the contained glyphs
-	
-	const size_t del_count = _glyph_run_store.erase(font_trait);
-	if (del_count == 0)
-		return false;
+	const pair<map<unsigned __int64, hash_to_run_map>::iterator, bool> str_insert_ret = _glyph_run_store.insert(pair<unsigned __int64, hash_to_run_map>(string_id, hash_to_run_map()));
+	const pair<hash_to_run_map::const_iterator, bool> trait_insert_ret = str_insert_ret.first->second.insert(pair<unsigned int, glyph_run>(font_trait, a_glyph_run));
 
-	map<uint64_t, index_to_glyph_map>::iterator bmp_trait_iter = _glyph_store.find(font_trait);
-	if (bmp_trait_iter != _glyph_store.end())
-	{
-		for (index_to_glyph_map::const_iterator index_iter = bmp_trait_iter->second.begin(); index_iter != bmp_trait_iter->second.end(); index_iter++)
-			FT_Done_Glyph(index_iter->second);
-
-		_glyph_store.erase(font_trait);
-	}
-
-	return true;
+	return trait_insert_ret.second;
 }

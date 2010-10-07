@@ -8,19 +8,19 @@
 
 // 64-bit hash for 64-bit platforms
 
-uint64_t MurmurHash64A ( const void * key, int len, unsigned int seed )
+unsigned __int64 MurmurHash64A ( const void * key, int len, unsigned int seed )
 {
-	const uint64_t m = 0xc6a4a7935bd1e995;
+	const unsigned __int64 m = 0xc6a4a7935bd1e995;
 	const int r = 47;
 
-	uint64_t h = seed ^ (len * m);
+	unsigned __int64 h = seed ^ (len * m);
 
-	const uint64_t * data = (const uint64_t *)key;
-	const uint64_t * end = data + (len/8);
+	const unsigned __int64 * data = (const unsigned __int64 *)key;
+	const unsigned __int64 * end = data + (len/8);
 
 	while(data != end)
 	{
-		uint64_t k = *data++;
+		unsigned __int64 k = *data++;
 
 		k *= m; 
 		k ^= k >> r; 
@@ -34,13 +34,13 @@ uint64_t MurmurHash64A ( const void * key, int len, unsigned int seed )
 
 	switch(len & 7)
 	{
-	case 7: h ^= uint64_t(data2[6]) << 48;
-	case 6: h ^= uint64_t(data2[5]) << 40;
-	case 5: h ^= uint64_t(data2[4]) << 32;
-	case 4: h ^= uint64_t(data2[3]) << 24;
-	case 3: h ^= uint64_t(data2[2]) << 16;
-	case 2: h ^= uint64_t(data2[1]) << 8;
-	case 1: h ^= uint64_t(data2[0]);
+	case 7: h ^= unsigned __int64(data2[6]) << 48;
+	case 6: h ^= unsigned __int64(data2[5]) << 40;
+	case 5: h ^= unsigned __int64(data2[4]) << 32;
+	case 4: h ^= unsigned __int64(data2[3]) << 24;
+	case 3: h ^= unsigned __int64(data2[2]) << 16;
+	case 2: h ^= unsigned __int64(data2[1]) << 8;
+	case 1: h ^= unsigned __int64(data2[0]);
 	        h *= m;
 	};
  
@@ -54,7 +54,7 @@ uint64_t MurmurHash64A ( const void * key, int len, unsigned int seed )
 
 // 64-bit hash for 32-bit platforms
 
-uint64_t MurmurHash64B ( const void * key, int len, unsigned int seed )
+unsigned __int64 MurmurHash64B ( const void * key, int len, unsigned int seed )
 {
 	const unsigned int m = 0x5bd1e995;
 	const int r = 24;
@@ -98,7 +98,7 @@ uint64_t MurmurHash64B ( const void * key, int len, unsigned int seed )
 	h1 ^= h2 >> 17; h1 *= m;
 	h2 ^= h1 >> 19; h2 *= m;
 
-	uint64_t h = h1;
+	unsigned __int64 h = h1;
 
 	h = (h << 32) | h2;
 

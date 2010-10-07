@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "setting_cache.h"
+#include "MurmurHash2.h"
 #include "gdimm.h"
 #include "lock.h"
 
@@ -17,7 +18,7 @@ font_setting_cache::font_render_mode::font_render_mode()
 	pixel_geometry(PIXEL_GEOMETRY_RGB),
 	aliased_text(0)
 {
-};
+}
 
 font_setting_cache::font_shadow::font_shadow()
 	: offset_x(0),
@@ -38,20 +39,16 @@ font_setting_cache::font_setting_cache()
 
 const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait *setting_trait)
 {
-#ifdef _M_X64
-	uint64_t cache_trait = MurmurHash64A(setting_trait, sizeof(gdimm_setting_trait), 0);
-#else
-	uint64_t cache_trait = MurmurHash64B(setting_trait, sizeof(gdimm_setting_trait), 0);
-#endif // _M_X64
+	const unsigned int setting_id = MurmurHash2(setting_trait->get_data(), setting_trait->get_size(), 0);
 
 	// if the setting for the specified font is not found
 	// construct setting cache for the font and return
-	map<uint64_t, font_setting_cache>::const_iterator iter = _cache.find(cache_trait);
+	map<unsigned int, font_setting_cache>::const_iterator iter = _cache.find(setting_id);
 	if (iter == _cache.end())
 	{
 		// double-check lock
 		gdimm_lock lock(LOCK_SETTING_CACHE);
-		iter = _cache.find(cache_trait);
+		iter = _cache.find(setting_id);
 		if (iter == _cache.end())
 		{
 			font_setting_cache new_cache;
@@ -78,9 +75,9 @@ const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait 
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/offset_x", setting_trait), &new_cache.shadow.offset_y);
 			wcs_convert(gdipp_get_gdimm_setting(L"shadow/alpha", setting_trait), reinterpret_cast<WORD *>(&new_cache.shadow.alpha));
 
-			_cache[cache_trait] = new_cache;
+			_cache[setting_id] = new_cache;
 		}
 	}
 
-	return &_cache[cache_trait];
+	return &_cache[setting_id];
 }

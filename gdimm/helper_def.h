@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MurmurHash2_64.h"
 #include "os2_metrics.h"
 #include "setting_cache.h"
 

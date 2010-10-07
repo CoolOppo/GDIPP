@@ -43,7 +43,7 @@ bool is_valid_dc(HDC hdc)
 	return true;
 }
 
-bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_t *target_text, int start_index)
+bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, size_t c, const wchar_t *target_text, int start_index)
 {
 	/*
 	return true if the current string is the target text (string or glyph index array)
@@ -56,21 +56,25 @@ bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_
 	if (target_text == NULL)
 		return true;
 
-	const size_t target_len = wcslen(target_text);
-	if (target_len == 0)
+	if (c == 0)
+		c = wcslen(lpString);
+	c -= start_index;
+
+	const size_t cmp_len = min(c, wcslen(target_text));
+	if (cmp_len == 0)
 		return true;
 
 	if (is_glyph_index)
 	{
-		WORD *gi = new WORD[target_len];
-		GetGlyphIndicesW(hdc, target_text, static_cast<int>(target_len), gi, 0);
+		WORD *gi = new WORD[cmp_len];
+		GetGlyphIndicesW(hdc, target_text, static_cast<int>(cmp_len), gi, 0);
 
-		is_target = (wmemcmp(lpString + start_index, reinterpret_cast<const wchar_t *>(gi), target_len) == 0);
+		is_target = (wmemcmp(lpString + start_index, reinterpret_cast<const wchar_t *>(gi), cmp_len) == 0);
 
 		delete[] gi;
 	}
 	else
-		is_target = (wcsncmp(lpString + start_index, target_text, target_len) == 0);
+		is_target = (wcsncmp(lpString + start_index, target_text, cmp_len) == 0);
 
 	return is_target;
 }
@@ -156,12 +160,12 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	//is_target_spec &= !!(options & ETO_GLYPH_INDEX));
 	//is_target_spec &= !(options & ETO_GLYPH_INDEX);
 	//is_target_spec &= (options == 4102);
-	//is_target_spec &= (c > 3);
+	//is_target_spec &= (c < 1);
 	
 	if (!is_target_spec)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text, 1))
+	if (!is_target_text(hdc, is_glyph_index, lpString, 0, debug_text, 0))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 #endif // _DEBUG
 
@@ -245,7 +249,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 		return false;
 
 #ifdef _DEBUG
-	if (!is_target_text(hdc, is_glyph_index, lpString, debug_text, 1))
+	if (!is_target_text(hdc, is_glyph_index, lpString, 0, debug_text, 0))
 		return false;
 #endif // _DEBUG
 
@@ -352,7 +356,6 @@ BOOL WINAPI GetTextExtentExPointI_hook(HDC hdc, LPWORD lpwszString, int cwchStri
 void adjust_ggo_metrics(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, CONST MAT2 *lpmat2)
 {
 	bool b_ret;
-	FT_Error ft_error;
 
 	const MAT2 identity_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
 	if (memcmp(lpmat2, &identity_mat, sizeof(MAT2)) != 0)
@@ -375,9 +378,7 @@ void adjust_ggo_metrics(const dc_context *context, UINT uChar, UINT fuFormat, LP
 		return;
 
 	FT_BBox glyph_bbox;
-	ft_error = FT_Outline_Get_BBox(&target_glyph->outline, &glyph_bbox);
-	if (ft_error != 0)
-		return;
+	FT_Outline_Get_CBox(&target_glyph->outline, &glyph_bbox);
 
 	lpgm->gmBlackBoxX = int_from_26dot6(glyph_bbox.xMax - glyph_bbox.xMin);
 	lpgm->gmBlackBoxY = int_from_26dot6(glyph_bbox.yMax - glyph_bbox.yMin);
@@ -419,6 +420,11 @@ DWORD WINAPI GetGlyphOutlineW_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHME
 	const DWORD ggo_ret = GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 	if (ggo_ret == GDI_ERROR)
 		return ggo_ret;
+
+#ifdef _DEBUG
+	if (!is_target_text(hdc, !!(fuFormat & GGO_GLYPH_INDEX), reinterpret_cast<wchar_t *>(&uChar), 1, debug_text, 0))
+		return ggo_ret;
+#endif // _DEBUG
 
 	if (!!(fuFormat & (GGO_BITMAP | GGO_NATIVE)))
 		return ggo_ret;

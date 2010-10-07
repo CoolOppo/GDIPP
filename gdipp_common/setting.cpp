@@ -119,20 +119,20 @@ const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, con
 			// check next font if optional attributes match
 			// easy checks come first
 
-			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->weight_class > 1)))
+			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->get_weight_class() > 1)))
 				continue;
 
-			if ((list_iter->italic >= 0) && (!list_iter->italic == setting_trait->italic))
+			if ((list_iter->italic >= 0) && (!list_iter->italic == setting_trait->get_italic()))
 				continue;
 
-			if ((list_iter->max_height >= 0) && (list_iter->max_height < setting_trait->height))
+			if ((list_iter->max_height >= 0) && (list_iter->max_height < setting_trait->get_height()))
 				continue;
 
 			if (!list_iter->name.empty())
 			{
 				const wregex name_ex(list_iter->name.data(), regex_flags);
 				// check next font if font name match
-				if (!regex_match(setting_trait->font_name, name_ex))
+				if (!regex_match(setting_trait->get_font_name(), name_ex))
 					continue;
 			}
 
