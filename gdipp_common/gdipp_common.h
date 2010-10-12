@@ -28,12 +28,12 @@ class gdimm_setting_trait
 */
 
 	BYTE *_setting_data;
-	size_t _setting_size;
+	int _setting_size;
 
 public:
 	gdimm_setting_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
 	{
-		const size_t font_name_len = wcslen(font_name) + 1;
+		const int font_name_len = static_cast<int>(wcslen(font_name) + 1);
 		_setting_size = sizeof(weight_class) + sizeof(italic) + sizeof(height) + font_name_len * sizeof(wchar_t);
 		_setting_data = new BYTE[_setting_size];
 
@@ -73,7 +73,7 @@ public:
 		return _setting_data;
 	}
 
-	size_t get_size() const
+	int get_size() const
 	{
 		return _setting_size;
 	}

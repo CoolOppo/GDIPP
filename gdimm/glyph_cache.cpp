@@ -7,8 +7,8 @@ unsigned __int64 gdimm_glyph_cache::get_char_id(unsigned int font_trait, FT_UInt
 }
 
 gdimm_glyph_cache::gdimm_glyph_cache()
+	: _glyph_run_lru(10)
 {
-	_glyph_run_lru.resize(10);
 }
 
 const FT_Glyph gdimm_glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const
@@ -33,6 +33,8 @@ bool gdimm_glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool
 
 bool gdimm_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int64 string_id, glyph_run &a_glyph_run) const
 {
+	gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
+
 	map<unsigned __int64, hash_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
 	if (str_iter == _glyph_run_store.end())
 		return false;
@@ -42,6 +44,7 @@ bool gdimm_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int
 		return false;
 
 	a_glyph_run = trait_iter->second;
+
 	return true;
 }
 
@@ -49,6 +52,8 @@ bool gdimm_glyph_cache::store_glyph_run(unsigned int font_trait, unsigned __int6
 {
 	bool b_ret;
 	unsigned __int64 erased_str;
+
+	gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
 
 	b_ret = _glyph_run_lru.access(string_id, erased_str);
 	if (b_ret)

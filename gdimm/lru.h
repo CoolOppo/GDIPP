@@ -29,8 +29,7 @@ public:
 
 	void resize(size_t new_capacity)
 	{
-		if (_capacity == 0)
-			_capacity = new_capacity;
+		_capacity = new_capacity;
 	}
 
 	bool access(const T data, T &erased)
