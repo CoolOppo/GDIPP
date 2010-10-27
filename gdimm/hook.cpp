@@ -93,28 +93,28 @@ bool gdimm_hook::hook()
 		// hook other GDI APIs only if ExtTextOut is successfully hooked
 
 		// reserve for future use
-		// b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
-		// b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
+// 		b_ret &= install_hook(L"user32.dll", "DrawTextExA", DrawTextExA_hook);
+// 		b_ret &= install_hook(L"user32.dll", "DrawTextExW", DrawTextExW_hook);
 
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
-
+ 
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointA", GetTextExtentExPointA_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
-
+ 
 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
  
 		b_ret &= install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
 		b_ret &= install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
 		b_ret &= install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
-
+ 
 		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
 
 		// register hooks whose libraries are dynamically loaded by LoadLibrary
-		register_delayed_hook("d2d1.dll", L"d2d1.dll", "D2D1CreateFactory", D2D1CreateFactory_hook);
+		//register_delayed_hook("d2d1.dll", L"d2d1.dll", "D2D1CreateFactory", D2D1CreateFactory_hook);
 
 		if (!_delayed_hook_registry.empty())
 		{

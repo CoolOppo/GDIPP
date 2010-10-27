@@ -110,6 +110,6 @@ GDIPP_API NTSTATUS gdipp_inject_process(ULONG process_id, ULONG thread_id = 0);
 GDIPP_API void gdipp_register_minidump_module(HMODULE h_module);
 
 GDIPP_API void gdipp_debug_buffer(const void *ptr, unsigned int size);
-GDIPP_API void gdipp_debug_decimal(double num);
-GDIPP_API void gdipp_debug_integer(size_t num);
+GDIPP_API void gdipp_debug_decimal(double num, bool new_line = true);
+GDIPP_API void gdipp_debug_integer(size_t num, bool new_line = true);
 GDIPP_API void gdipp_debug_string(const wchar_t *str = L"");

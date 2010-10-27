@@ -38,6 +38,10 @@
 			</shadow>
 		</font>
 
+		<!--
+			 exclude fonts with height larger than 72 points
+			 GTK applications are thus excluded
+		-->
 		<font>
 			<renderer>0</renderer>
 		</font>

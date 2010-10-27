@@ -106,12 +106,11 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 			_result_prepared = true;
 		}
 
-		dc.SetTextColor(RGB(0, 0, 0));
+		dc.SetTextColor(RGB(0x20, 0x80, 0x40));
 		dc.SetBkColor(GetSysColor(COLOR_BTNFACE));
 		dc.SetBkMode(OPAQUE);
 		dc.SetTextAlign(TA_LEFT | TA_TOP);
 		dc.SelectFont(_result_font);
-		dc.SetTextColor(PALETTEINDEX(5));
 		dc.ExtTextOut(10, 10, 0, NULL, _result_str, static_cast<UINT>(wcslen(_result_str)), NULL);
 		
 		ValidateRect(dc.m_hWnd, NULL);

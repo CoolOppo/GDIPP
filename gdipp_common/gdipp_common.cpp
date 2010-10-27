@@ -98,26 +98,32 @@ void gdipp_debug_buffer(const void *ptr, unsigned int size)
 	}
 }
 
-void gdipp_debug_decimal(double num)
+void gdipp_debug_decimal(double num, bool new_line)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
 	
 	if (f != NULL)
 	{
-		fwprintf(f, L"%f\n", num);
+		if (new_line)
+			fwprintf(f, L"%f\n", num);
+		else
+			fwprintf(f, L"%f, ", num);
 		fclose(f);
 	}
 }
 
-void gdipp_debug_integer(size_t num)
+void gdipp_debug_integer(size_t num, bool new_line)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
 	
 	if (f != NULL)
 	{
-		fwprintf(f, L"%u\n", num);
+		if (new_line)
+			fwprintf(f, L"%u\n", num);
+		else
+			fwprintf(f, L"%u, ", num);
 		fclose(f);
 	}
 }

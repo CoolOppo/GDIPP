@@ -134,6 +134,7 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_bmp_header)
 	}
 	else
 	{
+		// do not return the color table
 		dc_bmp_header.biBitCount = 0;
 		const int i_ret = GetDIBits(hdc, dc_bitmap, 0, 0, NULL, reinterpret_cast<LPBITMAPINFO>(&dc_bmp_header), DIB_RGB_COLORS);
 		assert(i_ret != 0);

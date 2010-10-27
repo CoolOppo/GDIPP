@@ -3,6 +3,8 @@
 #include "gdimm.h"
 #include "helper_func.h"
 
+DWORD tls_index = 0;
+
 void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
 {
 	/*
@@ -327,13 +329,14 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	BOOL b_ret, paint_success;
 
 	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
+	
 	const BITMAPINFO bmp_info = {sizeof(BITMAPINFOHEADER), bbox_visible_size.cx, -bbox_visible_size.cy, 1, 32, BI_RGB};
-
-	BYTE *text_bits;
-	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, &bmp_info, DIB_RGB_COLORS, reinterpret_cast<VOID **>(&text_bits), NULL, 0);
+	const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, &bmp_info, DIB_RGB_COLORS, reinterpret_cast<VOID **>(&_tls->text_bits), NULL, 0);
 	assert(text_bitmap != NULL);
-
-	SelectObject(_hdc_canvas, text_bitmap);
+	const HBITMAP prev_bitmap = reinterpret_cast<const HBITMAP>(SelectObject(_tls->hdc_canvas, text_bitmap));
+	b_ret = DeleteObject(prev_bitmap);
+	assert(b_ret);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
@@ -368,9 +371,8 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 				glyph_rect_in_bbox.top - grm.visible_rect.top,
 				glyph_rect_in_bbox.right - grm.visible_rect.left,
 				glyph_rect_in_bbox.bottom - grm.visible_rect.top};
-			const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
 
-			set_gray_text_bits(bmp_glyph, src_rect, text_bits, dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy);
+			set_gray_text_bits(bmp_glyph, src_rect, _tls->text_bits, dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy);
 		}
 	}
 
@@ -385,7 +387,7 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 			grm.visible_rect.top + _context->setting_cache->shadow.offset_y,
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
-			_hdc_canvas,
+			_tls->hdc_canvas,
 			0,
 			0,
 			bbox_visible_size.cx,
@@ -401,15 +403,12 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 		grm.visible_rect.top,
 		bbox_visible_size.cx,
 		bbox_visible_size.cy,
-		_hdc_canvas,
+		_tls->hdc_canvas,
 		0,
 		0,
 		bbox_visible_size.cx,
 		bbox_visible_size.cy,
 		bf);
-
-	b_ret = DeleteObject(text_bitmap);
-	assert(b_ret);
 
 	return paint_success;
 }
@@ -419,44 +418,49 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	// the data source is FreeType bitmap with 256 gray levels in R, G, B channels
 	// create GDI bitmap and optionally copy from DC, then use BitBlt() to paint both solid and shadow text
 	
-	BOOL b_ret, paint_success;
+	BOOL b_ret, paint_success = FALSE;
 
 	const SIZE bbox_visible_size = {grm.visible_rect.right - grm.visible_rect.left, grm.visible_rect.bottom - grm.visible_rect.top};
+	
 	const BITMAPINFO bmp_info = {sizeof(BITMAPINFOHEADER), bbox_visible_size.cx, -bbox_visible_size.cy, 1, 32, BI_RGB};
-
-	BYTE *text_bits;
-	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, &bmp_info, DIB_RGB_COLORS, reinterpret_cast<VOID **>(&text_bits), NULL, 0);
+	const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
+	const HBITMAP text_bitmap = CreateDIBSection(_context->hdc, &bmp_info, DIB_RGB_COLORS, reinterpret_cast<VOID **>(&_tls->text_bits), NULL, 0);
 	assert(text_bitmap != NULL);
-
-	SelectObject(_hdc_canvas, text_bitmap);
+	const HBITMAP prev_bitmap = reinterpret_cast<const HBITMAP>(SelectObject(_tls->hdc_canvas, text_bitmap));
+	b_ret = DeleteObject(prev_bitmap);
+	assert(b_ret);
 
 	const int bk_mode = GetBkMode(_context->hdc);
 	if (bk_mode == OPAQUE)
 	{
 		const RECT bk_rect = {0, 0, bbox_visible_size.cx, bbox_visible_size.cy};
-		paint_success = paint_background(_hdc_canvas, &bk_rect, _bg_color);
+		paint_success = paint_background(_tls->hdc_canvas, &bk_rect, _bg_color);
 	}
 	else if (bk_mode == TRANSPARENT)
 	{
-		// BitBlt overwrites rather than overlays, therefore retrieve the original DC bitmap if transparent
-		// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
-		paint_success = BitBlt(_hdc_canvas,
-			0,
-			0,
-			bbox_visible_size.cx,
-			bbox_visible_size.cy,
-			_context->hdc,
-			grm.visible_rect.left,
-			grm.visible_rect.top,
-			SRCCOPY);
+		if (_update_cp)
+		{
+			const RECT bk_rect = {0, 0, bbox_visible_size.cx, bbox_visible_size.cy};
+			paint_success = paint_background(_tls->hdc_canvas, &bk_rect, GetDCBrushColor(_context->hdc));
+		}
+		else
+		{
+			// BitBlt overwrites rather than overlays, therefore retrieve the original DC bitmap if transparent
+			// "If a rotation or shear transformation is in effect in the source device context, BitBlt returns an error"
+			paint_success = BitBlt(_tls->hdc_canvas,
+				0,
+				0,
+				bbox_visible_size.cx,
+				bbox_visible_size.cy,
+				_context->hdc,
+				grm.visible_rect.left,
+				grm.visible_rect.top,
+				SRCCOPY);
+		}
 	}
-	else
-		paint_success = FALSE;
 
 	if (paint_success)
 	{
-		const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
-
 		list<FT_Glyph>::const_iterator glyph_iter;
 		list<RECT>::const_iterator black_iter;
 		for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
@@ -468,6 +472,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			
 			assert(bmp_glyph->bitmap.pitch >= 0);
 
+			// the rect of the current glyph in the source bitmap
 			RECT solid_glyph_rect;
 			solid_glyph_rect.left = grm.baseline.x + black_iter->left;
 			solid_glyph_rect.top = grm.baseline.y - bmp_glyph->top;
@@ -496,20 +501,23 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 							shadow_rect_in_bbox.right - grm.visible_rect.left,
 							shadow_rect_in_bbox.bottom - grm.visible_rect.top};
 
-						set_lcd_text_bits(bmp_glyph, shadow_src_rect, text_bits, shadow_dest_rect, dest_pitch, false, _context->setting_cache->shadow.alpha);
+						set_lcd_text_bits(bmp_glyph, shadow_src_rect, _tls->text_bits, shadow_dest_rect, dest_pitch, false, _context->setting_cache->shadow.alpha);
 					}
 				}
 
+				// the visible rect part of the current glyph in the source bitmap
 				const RECT solid_src_rect = {solid_rect_in_bbox.left - solid_glyph_rect.left,
 					solid_rect_in_bbox.top - solid_glyph_rect.top,
 					solid_rect_in_bbox.right - solid_glyph_rect.left,
 					solid_rect_in_bbox.bottom - solid_glyph_rect.top};
+
+				// the corresponding rect in the destination bitmap
 				const RECT solid_dest_rect = {solid_rect_in_bbox.left - grm.visible_rect.left,
 					solid_rect_in_bbox.top - grm.visible_rect.top,
 					solid_rect_in_bbox.right - grm.visible_rect.left,
 					solid_rect_in_bbox.bottom - grm.visible_rect.top};
 
-				set_lcd_text_bits(bmp_glyph, solid_src_rect, text_bits, solid_dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy, 255);
+				set_lcd_text_bits(bmp_glyph, solid_src_rect, _tls->text_bits, solid_dest_rect, dest_pitch, bbox_visible_size.cy == grm.extent.cy, 255);
 			}
 		}
 
@@ -518,14 +526,11 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 			grm.visible_rect.top,
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
-			_hdc_canvas,
+			_tls->hdc_canvas,
 			0,
 			0,
 			SRCCOPY);
 	}
-
-	b_ret = DeleteObject(text_bitmap);
-	assert(b_ret);
 
 	return paint_success;
 }
@@ -595,23 +600,25 @@ bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_m
 	if (_context->log_font.lfEscapement % 3600 != 0)
 		return false;
 
-	_hdc_canvas = CreateCompatibleDC(NULL);
-	if (_hdc_canvas == NULL)
-		return false;
+	if (tls_index == 0)
+		tls_index = TlsAlloc();
+
+	_tls = reinterpret_cast<painter_tls *>(TlsGetValue(tls_index));
+	if (_tls == NULL)
+	{
+		_tls = reinterpret_cast<painter_tls *>(calloc(1, sizeof(painter_tls)));
+		TlsSetValue(tls_index, _tls);
+
+		_tls->hdc_canvas = CreateCompatibleDC(NULL);
+	}
 
 	return true;
-}
-
-void gdimm_gdi_painter::end()
-{
-	DeleteDC(_hdc_canvas);
 }
 
 bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret, paint_success = FALSE;
 
-	BOOL update_cursor;
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
 	{
 		POINT cp;
@@ -620,13 +627,13 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 
 		_cursor.x = cp.x;
 		_cursor.y = cp.y;
-		update_cursor = true;
+		_update_cp = true;
 	}
 	else
 	{
 		_cursor.x = x;
 		_cursor.y = y;
-		update_cursor = false;
+		_update_cp = false;
 	}
 
 	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
@@ -648,7 +655,7 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 	}
 
 	// if TA_UPDATECP is set, update current position after text out
-	if (update_cursor && paint_success)
+	if (_update_cp && paint_success)
 	{
 		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
 		assert(b_ret);
