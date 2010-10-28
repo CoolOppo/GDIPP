@@ -8,6 +8,8 @@ struct painter_tls
 {
 	HDC hdc_canvas;
 	BYTE *text_bits;
+	
+	HDC last_hdc;
 };
 
 class gdimm_gdi_painter : public gdimm_painter
