@@ -57,6 +57,11 @@
 		<font>Tahoma</font>
 		<font>Verdana</font>
 	</demo>
+
+	<service>
+		<hook_32_bit>1</hook_32_bit>
+		<hook_64_bit>1</hook_64_bit>
+	</service>
 	
 	<exclude>
 		<process>conhost\.exe</process>

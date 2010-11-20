@@ -21,13 +21,13 @@
     <ClInclude Include="gdipp_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="minidump.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="setting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,13 +38,13 @@
     <ClCompile Include="gdipp_common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="minidump.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="setting.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="minidump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

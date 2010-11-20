@@ -5,7 +5,6 @@
 #include "gdi_painter.h"
 #include "gdimm.h"
 #include "ggo_renderer.h"
-#include "helper_def.h"
 #include "helper_func.h"
 #include "wic_renderer.h"
 #include "wic_painter.h"
@@ -170,7 +169,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 #endif // _DEBUG
 
 	// uncomment this lock to make rendering single-threaded
-	// gdimm_lock lock(LOCK_DEBUG);
+	//gdimm_lock lock(LOCK_DEBUG);
 
 	// initialize the context of the current DC
 	dc_context context;
@@ -523,6 +522,7 @@ HRESULT WINAPI ScriptPlace_hook(
 }
 
 #if defined GDIPP_INJECT_SANDBOX && !defined _M_X64
+
 void inject_at_eip(LPPROCESS_INFORMATION lpProcessInformation)
 {
 	BOOL b_ret;
@@ -658,4 +658,10 @@ CreateProcessAsUserW_hook(
 
 	return TRUE;
 }
+
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
+
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_hook(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
+{
+	return NULL;
+}

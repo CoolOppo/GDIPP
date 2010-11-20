@@ -1,5 +1,11 @@
 #pragma once
 
+#ifndef GDIPP_INJECT_SANDBOX
+// define if injection into restricted processes is desired
+// defined to inject into Google Chrome render processes
+#define GDIPP_INJECT_SANDBOX
+#endif
+
 bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, const wchar_t *target_text, int start_index = 0);
 bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool is_glyph_index, int nMaxExtent = 0, LPINT lpnFit = NULL, LPINT lpnDx = NULL);
 
@@ -50,3 +56,5 @@ BOOL
 	LPSTARTUPINFOW lpStartupInfo,
 	LPPROCESS_INFORMATION lpProcessInformation);
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
+
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_hook(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);

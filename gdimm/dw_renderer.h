@@ -1,13 +1,11 @@
 #pragma once
 
 #include "renderer.h"
-#include "obj_reg.h"
 
 class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 {
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
-	static gdimm_obj_registry _obj_reg;
 
 	vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;

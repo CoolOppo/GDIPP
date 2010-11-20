@@ -43,7 +43,7 @@ gdimm_font_link::gdimm_font_link()
 		return;
 
 	// max_data_len is in BYTE
-	value_data = static_cast<BYTE *>(malloc(max_data_len));
+	value_data = static_cast<BYTE *>(HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, max_data_len));
 	assert(value_data != NULL);
 
 	for (DWORD i = 0; i < value_count; i++)
@@ -70,7 +70,7 @@ gdimm_font_link::gdimm_font_link()
 	if (value_count == 0)
 		return;
 
-	value_data = static_cast<BYTE *>(realloc(value_data, max_data_len));
+	value_data = static_cast<BYTE *>(HeapReAlloc(GetProcessHeap(), 0, value_data, max_data_len));
 	assert(value_data != NULL);
 	
 	for (DWORD i = 0; i < value_count; i++)
@@ -165,7 +165,7 @@ gdimm_font_link::gdimm_font_link()
 		}
 	}
 
-	free(value_data);
+	HeapFree(GetProcessHeap(), 0, value_data);
 
 	l_ret = RegCloseKey(key_ft);
 	l_ret = RegCloseKey(key_fl);

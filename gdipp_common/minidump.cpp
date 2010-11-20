@@ -29,9 +29,8 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 	}
 }
 
-LONG CALLBACK create_minidump(__in struct _EXCEPTION_POINTERS *ExceptionInfo)
-{
-	if (h_minidump_modules.empty())
+LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
+{	if (h_minidump_modules.empty())
 		return 0;
 
 	BOOL b_ret;

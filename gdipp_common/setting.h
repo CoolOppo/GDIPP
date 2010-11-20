@@ -24,6 +24,7 @@ class gdipp_setting
 	setting_map _process_setting;
 	list<gdimm_font_node> _gdimm_font;
 	setting_map _demo_setting;
+	setting_map _service_setting;
 	vector<const wstring> _demo_fonts;
 	list<const wstring> _exclude_process;
 
@@ -33,6 +34,7 @@ class gdipp_setting
 	void load_gdimm_process(const xpath_node_set &process_nodes);
 	void load_gdimm_font(const xpath_node_set &font_nodes);
 	void load_demo(const xml_node &root_node);
+	void load_service(const xml_node &root_node);
 	void load_exclude(const xml_node &root_node);
 
 public:
@@ -42,6 +44,7 @@ public:
 	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const gdimm_setting_trait *setting_trait) const;
 	const wchar_t *get_demo_setting(const wchar_t *setting_name) const;
 	const vector<const wstring> &get_demo_fonts() const;
+	const wchar_t *get_service_setting(const wchar_t *setting_name) const;
 	bool is_process_excluded(const wchar_t *proc_name) const;
 
 	void init_setting();

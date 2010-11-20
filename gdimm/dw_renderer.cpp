@@ -5,7 +5,6 @@
 
 IDWriteFactory *gdimm_dw_renderer::_dw_factory = NULL;
 IDWriteGdiInterop *gdimm_dw_renderer::_dw_gdi_interop = NULL;
-gdimm_obj_registry gdimm_dw_renderer::_obj_reg;
 
 gdimm_dw_renderer::gdimm_dw_renderer()
 {
@@ -16,7 +15,7 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(&_dw_factory));
 		assert(hr == S_OK);
 
-		_obj_reg.register_com_ptr(_dw_factory);
+		mem_man_instance.register_com_ptr(_dw_factory);
 	}
 
 	if (_dw_gdi_interop == NULL)
@@ -24,7 +23,7 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
 		assert(hr == S_OK);
 
-		_obj_reg.register_com_ptr(_dw_gdi_interop);
+		mem_man_instance.register_com_ptr(_dw_gdi_interop);
 	}
 }
 
@@ -148,9 +147,9 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 {
 	HRESULT hr;
 
-	gdimm_font_man font_man;
-	const long font_id = font_man.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
-	const gdimm_os2_metrics *os2_metrics = font_man.lookup_os2_metrics(font_id);
+	const long font_id = font_man_instance.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
+	assert(font_id < 0);
+	const gdimm_os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
 
 	DWRITE_FONT_STYLE dw_font_style;
 	if (!_context->outline_metrics->otmTextMetrics.tmItalic)

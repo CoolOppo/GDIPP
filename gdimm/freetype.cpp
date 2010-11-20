@@ -51,7 +51,7 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 
 	FT_Open_Args args = {};
 	args.flags = FT_OPEN_STREAM;
-	args.stream = gdimm_font_man::lookup_stream(font_id);
+	args.stream = font_man_instance.lookup_stream(font_id);
 
-	return FT_Open_Face(library, &args, gdimm_font_man::lookup_face_index(font_id), aface);
+	return FT_Open_Face(library, &args, font_man_instance.lookup_face_index(font_id), aface);
 }

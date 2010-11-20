@@ -9,10 +9,11 @@
 #include "gdipp_demo.h"
 #include <gdipp_common.h>
 
-void paint_thread(void *context)
+DWORD WINAPI paint_thread(LPVOID context)
 {
 	CPaintDlg dlg;
-	dlg.DoModal(NULL, reinterpret_cast<LPARAM>(context));
+	
+	return (dlg.DoModal(NULL, reinterpret_cast<LPARAM>(context)) != IDOK);
 }
 
 BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
@@ -24,6 +25,8 @@ BOOL CMainDlg::OnIdle()
 {
 	return FALSE;
 }
+
+__declspec(dllimport) void reg();
 
 LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
@@ -58,7 +61,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	assert(b_ret);
 
 	for (int i = 0; i < thread_count; i++)
-		_beginthread(paint_thread, 0, reinterpret_cast<void *>(i));
+		CreateThread(NULL, 0, paint_thread, reinterpret_cast<void *>(i), 0, NULL);
 
 	return TRUE;
 }

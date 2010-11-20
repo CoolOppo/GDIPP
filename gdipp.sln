@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdimm", "gdimm\gdimm.vcxproj", "{13F59647-D2D3-4D41-9C85-6917347686CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_demo", "gdipp_demo\gdipp_demo.vcxproj", "{E44A140A-B4B0-48A8-9D90-8227FE2176A0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{13F59647-D2D3-4D41-9C85-6917347686CC} = {13F59647-D2D3-4D41-9C85-6917347686CC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_pre", "gdipp_pre\gdipp_pre.vcxproj", "{8A35C8F6-BD42-44F7-9434-6F51D063578D}"
 EndProject

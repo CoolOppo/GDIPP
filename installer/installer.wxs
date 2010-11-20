@@ -37,23 +37,25 @@
 						<File Name="EasyHook32.dll" Source="$(var.SolutionDir)EasyHook\EasyHook32.dll" Vital="yes" />
 					</Component>
 
+<?if $(var.Platform) = x86 ?>
 					<Component Id="comp_service_32" Guid="E478FCBC-2485-44A4-AC59-B722879E815A">
 						<File Id="gdipp_svc_32_cond" Name="gdipp_svc_32.exe" Source="$(var.SolutionDir)Win32\Release\gdipp_svc_32.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_32_inst"
-							Description="!(loc.gdipp_service_desc_32)"
-							DisplayName="gdipp Service (32-bit)"
+							Description="!(loc.gdipp_service_desc)"
+							DisplayName="gdipp Service"
 							ErrorControl="normal"
-							Name="gdipp_svc_32"
+							Name="gdipp_svc"
 							Start="auto"
 							Type="ownProcess">
 						</ServiceInstall>
 						<ServiceControl Id="gdipp_svc_32_ctrl"
-							Name="gdipp_svc_32"
+							Name="gdipp_svc"
 							Remove="uninstall"
 							Stop="uninstall"
 							Wait="no" />
 					</Component>
-
+<?endif ?>
+					
 <?if $(var.Platform) = x64 ?>
 					<Component Id="comp_64_bit_file" Guid="A7D01189-D404-4E93-B080-8E1687D328A1" Win64="yes">
 						<File Name="gdimm_64.dll" Source="$(var.SolutionDir)x64\Release\gdimm_64.dll" KeyPath="yes" Vital="yes"/>
@@ -69,15 +71,15 @@
 					<Component Id="comp_service_64" Guid="DB627686-0CBA-4A4D-8492-D9684188D245" Win64="yes">
 						<File Id="gdipp_svc_64_cond" Name="gdipp_svc_64.exe" Source="$(var.SolutionDir)x64\Release\gdipp_svc_64.exe" KeyPath="yes" />
 						<ServiceInstall Id="gdipp_svc_64_inst"
-							Description="!(loc.gdipp_service_desc_64)"
-							DisplayName="gdipp Service (64-bit)"
+							Description="!(loc.gdipp_service_desc)"
+							DisplayName="gdipp Service"
 							ErrorControl="normal"
-							Name="gdipp_svc_64"
+							Name="gdipp_svc"
 							Start="auto"
 							Type="ownProcess">
 						</ServiceInstall>
 						<ServiceControl Id="gdipp_svc_64_ctrl"
-							Name="gdipp_svc_64"
+							Name="gdipp_svc"
 							Remove="uninstall"
 							Stop="uninstall"
 							Wait="no" />

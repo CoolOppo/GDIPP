@@ -108,14 +108,8 @@
     <ClInclude Include="font_link.h">
       <Filter>Header Files\font</Filter>
     </ClInclude>
-    <ClInclude Include="font_store.h">
-      <Filter>Header Files\font</Filter>
-    </ClInclude>
     <ClInclude Include="font_man.h">
       <Filter>Header Files\font</Filter>
-    </ClInclude>
-    <ClInclude Include="obj_reg.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="type_enum.h">
       <Filter>Header Files</Filter>
@@ -134,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="MurmurHash2.h">
       <Filter>Header Files\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="mem_man.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -173,9 +170,6 @@
     <ClCompile Include="hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="font_store.cpp">
-      <Filter>Source Files\font</Filter>
-    </ClCompile>
     <ClCompile Include="font_link.cpp">
       <Filter>Source Files\font</Filter>
     </ClCompile>
@@ -190,9 +184,6 @@
     </ClCompile>
     <ClCompile Include="ft_renderer.cpp">
       <Filter>Source Files\renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="obj_reg.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wic_dib.cpp">
       <Filter>Source Files\painter</Filter>
@@ -220,6 +211,15 @@
     </ClCompile>
     <ClCompile Include="MurmurHash2.cpp">
       <Filter>Source Files\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="mem_man.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gdipp_rpc\Win32\gdipp_rpc_c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gdipp_rpc\Win32\gdipp_rpc.h">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

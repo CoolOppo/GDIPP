@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "gdipp_common.h"
-#include "setting.h"
 #include "minidump.h"
+#include "setting.h"
 
 gdipp_setting setting_instance;
 
@@ -74,9 +74,19 @@ const vector<const wstring> &gdipp_get_demo_fonts()
 	return setting_instance.get_demo_fonts();
 }
 
+const wchar_t *gdipp_get_service_setting(const wchar_t *setting_name)
+{
+	return setting_instance.get_service_setting(setting_name);
+}
+
 bool gdipp_is_process_excluded(const wchar_t *proc_name)
 {
 	return setting_instance.is_process_excluded(proc_name);
+}
+
+void gdipp_init_minidump()
+{
+	SetUnhandledExceptionFilter(minidump_filter);
 }
 
 void gdipp_register_minidump_module(HMODULE h_module)
@@ -139,28 +149,12 @@ void gdipp_debug_string(const wchar_t *str)
 		fclose(f);
 	}
 }
-
-BOOL APIENTRY DllMain(
-	HMODULE hModule,
-	DWORD  ul_reason_for_call,
-	LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-	static PVOID h_ex_handler = NULL;
-
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
 		gdipp_register_minidump_module(hModule);
-
-		// add process-wide vectored exception handler to create minidump
-		h_ex_handler = AddVectoredExceptionHandler(0, create_minidump);
-		assert(h_ex_handler != NULL);
-
-		break;
-	case DLL_PROCESS_DETACH:
-		ULONG ul_ret = RemoveVectoredExceptionHandler(h_ex_handler);
-		assert(ul_ret != 0);
-
 		break;
 	}
 

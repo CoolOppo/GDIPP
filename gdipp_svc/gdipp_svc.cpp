@@ -1,40 +1,51 @@
 #include "stdafx.h"
+#include "font_svc.h"
 #include <gdipp_common.h>
 
 using namespace std;
 
-#ifdef _M_X64
-#define SVC_NAME TEXT("gdipp_svc_64")
-#else
-#define SVC_NAME TEXT("gdipp_svc_32")
-#endif // _M_X64
+#define SVC_NAME L"gdipp_svc"
 
 SERVICE_STATUS svc_status = {};
 SERVICE_STATUS_HANDLE h_svc_status = NULL;
 
-HANDLE h_svc_events, h_wait_cleanup;
+HANDLE h_svc_events, h_wait_cleanup, h_rpc_thread;
 
-wchar_t gdipp_hook_path[MAX_PATH];
 const size_t MAX_ENV_LEN = 64;
 wchar_t hook_env_str[MAX_ENV_LEN];
 
-map<ULONG, HANDLE> h_hook_events, h_user_tokens;
-map<ULONG, PROCESS_INFORMATION> pi_hooks;
+bool hook_32_bit = false;
+bool hook_64_bit = false;
+
+map<ULONG, HANDLE> h_user_tokens, h_hook_events;
+map<ULONG, PROCESS_INFORMATION> pi_hooks_32, pi_hooks_64;
+
+BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_hook_name, PROCESS_INFORMATION &pi)
+{
+	wchar_t gdipp_hook_path[MAX_PATH];
+
+	if (!gdipp_get_dir_file_path(NULL, gdipp_hook_name, gdipp_hook_path))
+		return FALSE;
+
+	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_event, 0);
+	STARTUPINFOW si = {sizeof(STARTUPINFO)};
+
+	return CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, hook_env_str, NULL, &si, &pi);
+}
 
 BOOL start_hook(ULONG session_id)
 {
-	BOOL b_ret;
-	HANDLE h_hook_event, h_user_token;
-
-	// this event handle is inheritable
+	// make the event handle inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
-	h_hook_event = CreateEvent(&inheritable_sa, TRUE, FALSE, NULL);
-	if (h_hook_event == NULL)
-		return FALSE;
+	BOOL b_ret, hook_success = TRUE;
+	HANDLE h_user_token, h_hook_event;
 
 	b_ret = WTSQueryUserToken(session_id, &h_user_token);
 	if (!b_ret)
-		return FALSE;
+	{
+		hook_success = FALSE;
+		goto post_hook;
+	}
 
 	// use the linked token if exists
 	// needed in UAC-enabled scenarios and Run As Administrator
@@ -47,20 +58,48 @@ BOOL start_hook(ULONG session_id)
 		h_user_token = linked_token.LinkedToken;
 	}
 
-	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_event, 0);
-	STARTUPINFOW si = {sizeof(STARTUPINFO)};
-	PROCESS_INFORMATION pi;
-	b_ret = CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, hook_env_str, NULL, &si, &pi);
-	if (b_ret)
+	h_hook_event = CreateEvent(&inheritable_sa, TRUE, FALSE, NULL);
+	if (h_hook_event == NULL)
 	{
-		h_hook_events[session_id] = h_hook_event;
+		hook_success = FALSE;
+		goto post_hook;
+	}
+
+	if (hook_32_bit)
+	{
+		const wchar_t *gdipp_hook_name_32 = L"gdipp_hook_32.exe";
+		PROCESS_INFORMATION pi;
+
+		if (hook_proc(h_user_token, h_hook_event, gdipp_hook_name_32, pi))
+			pi_hooks_32[session_id] = pi;
+		else
+			hook_success = FALSE;
+	}
+
+	if (hook_64_bit)
+	{
+		const wchar_t *gdipp_hook_name_64 = L"gdipp_hook_64.exe";
+		PROCESS_INFORMATION pi;
+
+		if (hook_proc(h_user_token, h_hook_event, gdipp_hook_name_64, pi))
+			pi_hooks_64[session_id] = pi;
+		else
+			hook_success = FALSE;
+	}
+
+post_hook:
+	if (hook_success)
+	{
 		h_user_tokens[session_id] = h_user_token;
-		pi_hooks[session_id] = pi;
+		h_hook_events[session_id] = h_hook_event;
 	}
 	else
 	{
-		CloseHandle(h_hook_event);
-		CloseHandle(h_user_token);
+		if (h_user_token)
+			CloseHandle(h_user_token);
+
+		if (h_hook_event)
+			CloseHandle(h_hook_event);
 	}
 
 	return b_ret;
@@ -68,13 +107,41 @@ BOOL start_hook(ULONG session_id)
 
 void stop_hook(ULONG session_id)
 {
-	SetEvent(h_hook_events[session_id]);
-	WaitForSingleObject(pi_hooks[session_id].hProcess, INFINITE);
+	map<ULONG, PROCESS_INFORMATION>::const_iterator pi_iter_32, pi_iter_64;
+	HANDLE h_hook_processes[2] = {};
 
-	CloseHandle(pi_hooks[session_id].hThread);
-	CloseHandle(pi_hooks[session_id].hProcess);
+	pi_iter_32 = pi_hooks_32.find(session_id);
+	if (pi_iter_32 != pi_hooks_32.end())
+		h_hook_processes[0] = pi_iter_32->second.hProcess;
+
+	pi_iter_64 = pi_hooks_64.find(session_id);
+	if (pi_iter_64 != pi_hooks_64.end())
+		h_hook_processes[1] = pi_iter_64->second.hProcess;
+
+	// notify and wait hook subprocesses to exit
+	SetEvent(h_hook_events[session_id]);
+	WaitForMultipleObjects(2, h_hook_processes, TRUE, INFINITE);
+
+	// clean up
+
+	if (pi_iter_32 != pi_hooks_32.end())
+	{
+		CloseHandle(pi_iter_32->second.hThread);
+		CloseHandle(pi_iter_32->second.hProcess);
+		pi_hooks_32.erase(pi_iter_32);
+	}
+
+	if (pi_iter_64 != pi_hooks_64.end())
+	{
+		CloseHandle(pi_iter_64->second.hThread);
+		CloseHandle(pi_iter_64->second.hProcess);
+		pi_hooks_64.erase(pi_iter_64);
+	}
+
 	CloseHandle(h_user_tokens[session_id]);
 	CloseHandle(h_hook_events[session_id]);
+	h_user_tokens.erase(session_id);
+	h_hook_events.erase(session_id);
 }
 
 VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
@@ -149,6 +216,13 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	for (map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); session_iter++)
 		stop_hook(session_iter->first);
 
+	b_ret = stop_gdipp_rpc_server();
+	if (b_ret)
+	{
+		const DWORD wait_ret = WaitForSingleObject(h_rpc_thread, INFINITE);
+		assert(wait_ret == WAIT_OBJECT_0);
+	}
+
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
@@ -175,35 +249,46 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
+	// clean up when event is set
 	b_ret = RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_events, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
 	assert(b_ret);
 
-#ifdef _M_X64
-	const wchar_t *gdipp_hook_name = L"gdipp_hook_64.exe";
-#else
-	const wchar_t *gdipp_hook_name = L"gdipp_hook_32.exe";
-#endif
+	// initialize RPC for font service
+	h_rpc_thread = CreateThread(NULL, 0, start_gdipp_rpc_server, NULL, 0, NULL);
+	if (h_rpc_thread == NULL)
+	{
+		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
+		return;
+	}
 
-	if (!gdipp_get_dir_file_path(NULL, gdipp_hook_name, gdipp_hook_path))
+	// get setting file path
+	wchar_t setting_path[MAX_PATH];
+	if (!gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path))
+	{
+		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
+		return;
+	}
+
+	gdipp_init_setting();
+
+	// return false if setting file does not exist
+	if (!gdipp_load_setting(setting_path))
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
 	
+	wcs_convert(gdipp_get_service_setting(L"hook_32_bit"), &hook_32_bit);
+	wcs_convert(gdipp_get_service_setting(L"hook_64_bit"), &hook_64_bit);
+
 	/*
 	service process and its child processes run in session 0
-	some functions of gdipp Enumerator may require interactive session (session ID > 0)
+	some functions in gdipp may require interactive session (session ID > 0)
 	use CreateProcessAsUser to create process in the active user's session
 	*/
 	const DWORD active_session_id = WTSGetActiveConsoleSessionId();
 	if (active_session_id != 0xFFFFFFFF)
-	{
-		b_ret = start_hook(active_session_id);
-		if (!b_ret)
-		{
-			// no user is logged into the system
-		}
-	}
+		start_hook(active_session_id);
 
 	// report running status when initialization is complete
 	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
@@ -213,6 +298,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+	//init_gdipp_rpc_server();
+
 #ifdef svc_debug
 	BOOL b_ret;
 
@@ -223,8 +310,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		return EXIT_FAILURE;
 	}
 
-	const size_t MAX_ENV_LEN = 64;
-	wchar_t env_str[MAX_ENV_LEN];
 	swprintf_s(env_str, L"gdipp_wait_handle=%p%c", h_svc_events, 0);
 
 	b_ret = start_hook();

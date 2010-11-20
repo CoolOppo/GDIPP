@@ -6,13 +6,45 @@
 
 HMODULE h_self = NULL;
 bool os_support_directwrite;
+RPC_BINDING_HANDLE h_gdipp_rpc;
 
 gdimm_font_link font_link_instance;
-gdimm_font_store font_store_instance;
+gdimm_font_man font_man_instance;
 gdimm_gamma gamma_instance;
 gdimm_glyph_cache glyph_cache_instance;
 gdimm_hook hook_instance;
+gdimm_mem_man mem_man_instance;
 gdimm_setting_cache setting_cache_instance;
+
+void *__RPC_USER midl_user_allocate(size_t size)
+{
+	return HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, size);
+}
+
+void __RPC_USER midl_user_free(void *ptr)
+{
+	HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+bool init_gdipp_rpc_client()
+{
+	RPC_WSTR binding_str;
+	RPC_STATUS rpc_status;
+	
+	rpc_status = RpcStringBindingCompose(NULL, reinterpret_cast<RPC_WSTR>(L"ncalrpc"), NULL, reinterpret_cast<RPC_WSTR>(L"gdipp"), NULL, &binding_str);
+	if (rpc_status != RPC_S_OK)
+		return false;
+
+	rpc_status = RpcBindingFromStringBinding(binding_str, &h_gdipp_rpc);
+	if (rpc_status != RPC_S_OK)
+		return false;
+
+	rpc_status = RpcStringFree(&binding_str);
+	if (rpc_status != RPC_S_OK)
+		return false;
+
+	return true;
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
@@ -23,7 +55,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		case DLL_PROCESS_ATTACH:
 		{
 			h_self = hModule;
-			gdipp_register_minidump_module(hModule);
 
 			// get setting file path
 			wchar_t setting_path[MAX_PATH];
@@ -33,7 +64,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gdipp_init_setting();
 
 			// return false if setting file does not exist
-			gdipp_load_setting(setting_path);
+			if (!gdipp_load_setting(setting_path))
+				return FALSE;
 
 			if (gdipp_is_process_excluded(NULL))
 				return FALSE;
@@ -46,10 +78,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			gdimm_lock::initialize();
 			initialize_freetype();
-
+			init_gdipp_rpc_client();
+			
 			if (!hook_instance.hook())
 				return FALSE;
-
+			
 			break;
 		}
 		case DLL_PROCESS_DETACH:

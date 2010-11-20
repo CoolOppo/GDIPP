@@ -6,7 +6,6 @@
 ID2D1Factory *gdimm_wic_painter::_d2d_factory = NULL;
 IDWriteFactory *gdimm_wic_painter::_dw_factory = NULL;
 IDWriteGdiInterop *gdimm_wic_painter::_dw_gdi_interop = NULL;
-gdimm_obj_registry gdimm_wic_painter::_obj_reg;
 
 gdimm_wic_painter::gdimm_wic_painter()
 {
@@ -17,7 +16,7 @@ gdimm_wic_painter::gdimm_wic_painter()
 		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &_d2d_factory);
 		assert(hr == S_OK);
 
-		_obj_reg.register_com_ptr(_d2d_factory);
+		mem_man_instance.register_com_ptr(_d2d_factory);
 	}
 
 	if (_dw_factory == NULL)
@@ -25,7 +24,7 @@ gdimm_wic_painter::gdimm_wic_painter()
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(&_dw_factory));
 		assert(hr == S_OK);
 
-		_obj_reg.register_com_ptr(_dw_factory);
+		mem_man_instance.register_com_ptr(_dw_factory);
 	}
 
 	if (_dw_gdi_interop == NULL)
@@ -33,7 +32,7 @@ gdimm_wic_painter::gdimm_wic_painter()
 		hr = _dw_factory->GetGdiInterop(&_dw_gdi_interop);
 		assert(hr == S_OK);
 
-		_obj_reg.register_com_ptr(_dw_gdi_interop);
+		mem_man_instance.register_com_ptr(_dw_gdi_interop);
 	}
 }
 

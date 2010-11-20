@@ -198,18 +198,16 @@ const FT_Glyph gdimm_ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 
 bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline)
 {
-	gdimm_font_man font_man;
-
 	wstring curr_font_face = metric_face_name(_context->outline_metrics);
 	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 	unsigned int curr_font_trait = _font_trait;
 
-	long font_id = font_man.register_font(_context->hdc, curr_font_face.c_str());
-	if (font_id < 0)
+	long font_id = font_man_instance.register_font(_context->hdc, curr_font_face.c_str());
+	if (font_id >= 0)
 		return false;
 
-	const gdimm_os2_metrics *os2_metrics = font_man.lookup_os2_metrics(font_id);
+	const gdimm_os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
 
 	FTC_ScalerRec scaler = {};
 	scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
@@ -248,7 +246,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			}
 			else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 			{
-				ctrl_box.left = font_man.lookup_kern(&scaler, lpString[i-1], lpString[i]);
+				ctrl_box.left = font_man_instance.lookup_kern(&scaler, lpString[i-1], lpString[i]);
 				ctrl_box.right = ctrl_box.left;
 			}
 			
@@ -272,7 +270,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 		while (true)
 		{
-			font_man.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), final_string.data(), c, &glyph_indices[0]);
+			font_man_instance.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), final_string.data(), c, &glyph_indices[0]);
 
 			list<FT_Glyph>::iterator glyph_iter;
 			list<RECT>::iterator ctrl_iter, black_iter;
@@ -304,7 +302,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 					}
 					else if (curr_setting_cache->kerning && i > 0 && !request_outline)
 					{
-						ctrl_iter->left = font_man.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
+						ctrl_iter->left = font_man_instance.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
 						ctrl_iter->right = ctrl_iter->left;
 					}
 				}
@@ -337,8 +335,9 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			linked_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
 			wcsncpy_s(linked_log_font.lfFaceName, curr_link->font_family.c_str(), LF_FACESIZE);
 
-			font_id = font_man.link_font(linked_log_font, curr_font_face);
-			assert(font_id < 0);
+			font_id = font_man_instance.link_font(linked_log_font, curr_font_face);
+			if (font_id < 0)
+				return false;
 
 			// reload metrics for the linked font
 
@@ -351,7 +350,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 				scaler.height = static_cast<FT_UInt>(scaler.height * curr_link->scaling);
 			}
 
-			os2_metrics = font_man.lookup_os2_metrics(font_id);
+			os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
 			
 			const gdimm_setting_trait setting_trait(os2_metrics->get_weight_class(), os2_metrics->is_italic(), 0, curr_font_face.c_str());
 			curr_setting_cache = setting_cache_instance.lookup(&setting_trait);

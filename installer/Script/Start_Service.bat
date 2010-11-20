@@ -1,3 +1,3 @@
-sc stop gdipp_svc_32
+sc start gdipp_svc
 
 ping -n 3 -w 1 localhost > NUL

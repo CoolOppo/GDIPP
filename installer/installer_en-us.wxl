@@ -2,8 +2,7 @@
 <WixLocalization Codepage="1252" Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
 	<String Id="LANGID" Overridable="yes">1033</String>
 	<String Id="version_fail_msg" Overridable="yes">Version or bitness incompatible. The minimum system requirement is Windows XP.</String>
-	<String Id="gdipp_service_desc_32" Overridable="yes">gdipp 32-bit coordinator service.</String>
-	<String Id="gdipp_service_desc_64" Overridable="yes">gdipp 64-bit coordinator service.</String>
+	<String Id="gdipp_service_desc" Overridable="yes">gdipp coordinator service.</String>
 	<String Id="gdipp_loader_desc_32" Overridable="yes">gdipp 32-bit program loader</String>
 	<String Id="gdipp_loader_desc_64" Overridable="yes">gdipp 64-bit program loader</String>
 	<String Id="install_files_title" Overridable="yes">Files</String>

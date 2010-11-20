@@ -632,7 +632,7 @@ bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_m
 	_tls = reinterpret_cast<painter_tls *>(TlsGetValue(tls_index));
 	if (_tls == NULL)
 	{
-		_tls = reinterpret_cast<painter_tls *>(calloc(1, sizeof(painter_tls)));
+		_tls = reinterpret_cast<painter_tls *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(painter_tls)));
 		TlsSetValue(tls_index, _tls);
 
 		_tls->hdc_canvas = CreateCompatibleDC(NULL);

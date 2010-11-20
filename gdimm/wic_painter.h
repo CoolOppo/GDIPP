@@ -1,7 +1,6 @@
 #pragma once
 
 #include "painter.h"
-#include "obj_reg.h"
 #include "wic_dib.h"
 
 using namespace std;
@@ -11,7 +10,6 @@ class gdimm_wic_painter : public gdimm_painter
 	static ID2D1Factory *_d2d_factory;
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
-	static gdimm_obj_registry _obj_reg;
 
 	vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;

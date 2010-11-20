@@ -3,12 +3,6 @@
 #include "os2_metrics.h"
 #include "setting_cache.h"
 
-#ifndef GDIPP_INJECT_SANDBOX
-	// define if injection into restricted processes is desired
-	// defined to inject into Google Chrome render processes
-	#define GDIPP_INJECT_SANDBOX
-#endif
-
 class dc_context
 {
 	// data structures and metrics retrieved from HDC commonly used by multiple gdipp components
@@ -38,14 +32,8 @@ public:
 
 struct font_info
 {
-	// handle of the linked font for destruction
-	// NULL for registered fonts
-	HFONT linked_hfont;
-
-	// used to retrieve font data from GetFontData
 	DWORD table_header;
 	DWORD face_index;
-
 	FT_StreamRec stream;
 	gdimm_os2_metrics os2_metrics;
 };
