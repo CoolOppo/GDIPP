@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "demo_painter.h"
 #include "gdipp_demo.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 gdipp_demo_painter::gdipp_demo_painter()
 	: _total_count(total_count),

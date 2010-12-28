@@ -1,10 +1,12 @@
 [explicit_handle]
 interface gdipp_rpc
 {
-	[comm_status, fault_status] gdipp_rpc_register_font();
-	[comm_status, fault_status] gdipp_rpc_get_font_data_size();
-	[comm_status, fault_status] gdipp_rpc_get_font_data();
-	[comm_status, fault_status] gdipp_rpc_get_font_metrics_size();
-	[comm_status, fault_status] gdipp_rpc_get_font_metrics_data();
-	[comm_status, fault_status] gdipp_rpc_get_glyph_indices();
+	gdipp_rpc_get_font_data_size([context_handle_noserialize] h_session);
+	gdipp_rpc_get_font_data([context_handle_noserialize] h_session);
+	gdipp_rpc_get_font_metrics_size([context_handle_noserialize] h_session);
+	gdipp_rpc_get_font_metrics_data([context_handle_noserialize] h_session);
+	gdipp_rpc_get_glyph_indices([context_handle_noserialize] h_session);
+	gdipp_rpc_make_glyph_run([context_handle_noserialize] h_session);
+	gdipp_rpc_get_glyph_run_size([context_handle_noserialize] h_glyph_run);
+	gdipp_rpc_get_glyph_run([context_handle_noserialize] h_glyph_run);
 }

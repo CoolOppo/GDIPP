@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "font_svc.h"
-#include <gdipp_common.h>
+#include "freetype.h"
+#include <gdipp_lib.h>
+#include <helper.h>
 
 using namespace std;
 
@@ -223,6 +225,8 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 		assert(wait_ret == WAIT_OBJECT_0);
 	}
 
+	destroy_freetype();
+
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
@@ -253,14 +257,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	b_ret = RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_events, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
 	assert(b_ret);
 
-	// initialize RPC for font service
-	h_rpc_thread = CreateThread(NULL, 0, start_gdipp_rpc_server, NULL, 0, NULL);
-	if (h_rpc_thread == NULL)
-	{
-		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		return;
-	}
-
 	// get setting file path
 	wchar_t setting_path[MAX_PATH];
 	if (!gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path))
@@ -273,6 +269,16 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	// return false if setting file does not exist
 	if (!gdipp_load_setting(setting_path))
+	{
+		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
+		return;
+	}
+
+	initialize_freetype();
+
+	// initialize RPC for font service
+	h_rpc_thread = CreateThread(NULL, 0, start_gdipp_rpc_server, NULL, 0, NULL);
+	if (h_rpc_thread == NULL)
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;

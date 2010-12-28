@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "gdimm.h"
-#include "freetype.h"
 #include "lock.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 HMODULE h_self = NULL;
 bool os_support_directwrite;
@@ -16,12 +15,12 @@ gdimm_hook hook_instance;
 gdimm_mem_man mem_man_instance;
 gdimm_setting_cache setting_cache_instance;
 
-void *__RPC_USER midl_user_allocate(size_t size)
+void __RPC_FAR *__RPC_USER MIDL_user_allocate(size_t size)
 {
 	return HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, size);
 }
 
-void __RPC_USER midl_user_free(void *ptr)
+void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 {
 	HeapFree(GetProcessHeap(), 0, ptr);
 }
@@ -77,7 +76,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			os_support_directwrite = (ver_info.dwMajorVersion >= 6);
 
 			gdimm_lock::initialize();
-			initialize_freetype();
 			init_gdipp_rpc_client();
 			
 			if (!hook_instance.hook())
@@ -87,7 +85,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		}
 		case DLL_PROCESS_DETACH:
 			hook_instance.unhook();
-			destroy_freetype();
 			gdimm_lock::finalize();
 
 			break;

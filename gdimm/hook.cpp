@@ -3,7 +3,7 @@
 #include "api_override.h"
 #include "com_override.h"
 #include "gdimm.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 // exported function for SetWindowsHookEx
 __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)

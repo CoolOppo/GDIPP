@@ -1,13 +1,8 @@
 #include "stdafx.h"
 #include "api_override.h"
-#include "dw_renderer.h"
-#include "ft_renderer.h"
-#include "gdi_painter.h"
 #include "gdimm.h"
-#include "ggo_renderer.h"
 #include "helper_func.h"
-#include "wic_renderer.h"
-#include "wic_painter.h"
+#include <gdipp_rpc.h>
 
 using namespace std;
 
@@ -77,8 +72,8 @@ bool is_target_text(HDC hdc, bool is_glyph_index, LPCWSTR lpString, size_t c, co
 
 	return is_target;
 }
-
-bool fetch_glyph_run(bool is_glyph_index,
+/*
+bool fetch_glyph_run (bool is_glyph_index,
 	bool is_pdy,
 	LPCWSTR lpString,
 	UINT c,
@@ -126,7 +121,7 @@ bool fetch_glyph_run(bool is_glyph_index,
 
 	return b_ret;
 }
-
+*/
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	bool b_ret;
@@ -181,12 +176,25 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (!get_render_mode(context.setting_cache, context.bmp_header.biBitCount, context.log_font.lfQuality, render_mode))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	// get glyph run of the string
-	glyph_run a_glyph_run;
-	GLYPH_CACHE_LEVEL cache_level;
-	b_ret = fetch_glyph_run(is_glyph_index, is_pdy, lpString, c, lpDx, context, render_mode, a_glyph_run, cache_level);
-	if (!b_ret)
+	RpcTryExcept
+	{
+		const GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font));
+		const GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run = gdipp_rpc_make_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index);
+		const unsigned long glyph_run_size = gdipp_rpc_get_glyph_run_size(h_gdipp_rpc, h_glyph_run);
+		BYTE *glyph_run_buf = new BYTE[glyph_run_size];
+		b_ret = gdipp_rpc_get_glyph_run(h_gdipp_rpc, h_glyph_run, glyph_run_buf, glyph_run_size);
+		b_ret = gdipp_rpc_release_glyph_run(h_gdipp_rpc, h_glyph_run);
+		b_ret = gdipp_rpc_end_session(h_gdipp_rpc, h_session);
+	}
+	RpcExcept (true)
+	{
+		const unsigned long ex_code = RpcExceptionCode();
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	}
+	RpcEndExcept
+
+	// get glyph run of the string
+	glyph_run *a_glyph_run = reinterpret_cast<glyph_run *>(glyph_run_buf);
 
 	// create painter and paint the glyph run
 

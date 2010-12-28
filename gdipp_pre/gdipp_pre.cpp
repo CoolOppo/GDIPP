@@ -8,7 +8,7 @@
 #include "aboutdlg.h"
 #include "MainDlg.h"
 #include "gdipp_pre.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 CAppModule _Module;
 

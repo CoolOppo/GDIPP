@@ -6,7 +6,7 @@
 #include "MainDlg.h"
 #include "AboutDlg.h"
 #include "resource.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 CAppModule _Module;
 

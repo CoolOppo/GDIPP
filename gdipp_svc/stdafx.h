@@ -12,9 +12,18 @@
 #include <wtsapi32.h>
 
 // C RunTime Header Files
+#include <cmath>
+#include <list>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include <fassert.h>
+
+// 3rd-party dependency
+#include <freetype/ft2build.h>
+#include FT_FREETYPE_H
+#include FT_CACHE_H
+#include FT_LCD_FILTER_H

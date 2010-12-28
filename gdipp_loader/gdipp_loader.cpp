@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {

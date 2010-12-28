@@ -1,0 +1,25 @@
+# reference directories
+^DirectX/
+^EasyHook/
+^Reference/
+^WTL/
+^freetype/
+^gdimm/branch/
+^pugixml/
+^test/
+^tools/
+
+# all unversioned file in the document root
+^[^/]*\.
+
+# object and output directories
+^installer/bin/
+^installer/obj/
+^installer/bootstrapper/
+^ipch/
+^.*Win32/
+^.*x64/
+
+# intermediate project files
+\.vcproj\..+\.user$
+\.aps$

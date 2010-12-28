@@ -1,7 +1,7 @@
 #pragma once
 
 #include "lock.h"
-#include <gdipp_common.h>
+#include <gdipp_lib.h>
 
 using namespace std;
 
