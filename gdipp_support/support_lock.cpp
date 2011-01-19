@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "lock.h"
+#include <map>
+#include "support_lock.h"
 #include "MurmurHash2.h"
 
 using namespace std;

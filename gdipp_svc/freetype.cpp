@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "freetype.h"
 #include "font_man.h"
-#include "font_svc.h"
+#include "rpc_impl.h"
 #include <gdipp_lib.h>
-#include <helper.h>
+#include <support_helper.h>
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;

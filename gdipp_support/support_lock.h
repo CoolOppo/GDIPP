@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 class gdipp_lock
 {
 	CRITICAL_SECTION *_cs;

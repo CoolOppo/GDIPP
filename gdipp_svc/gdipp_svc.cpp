@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "font_svc.h"
 #include "freetype.h"
+#include "rpc_impl.h"
 #include <gdipp_lib.h>
-#include <helper.h>
+#include <support_helper.h>
 
 using namespace std;
 

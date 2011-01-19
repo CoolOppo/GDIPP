@@ -1,25 +1,23 @@
 #include "stdafx.h"
 #include "helper.h"
-#include "MurmurHash2.h"
-#include "lock.h"
 
-FIXED fixed_from_26dot6(FT_Pos x)
+FIXED fixed_from_26dot6(signed long x)
 {
-	FT_Pos y = (x << 10);
+	signed long y = (x << 10);
 	return *(reinterpret_cast<FIXED *>(&y));
 }
 
-FT_F26Dot6 fixed_to_26dot6(const FIXED &x)
+signed long fixed_to_26dot6(const FIXED &x)
 {
-	return *(reinterpret_cast<const FT_F26Dot6 *>(&x)) >> 10;
+	return *(reinterpret_cast<const signed long *>(&x)) >> 10;
 }
 
-FT_Pos float_to_16dot16(double x)
+signed long float_to_16dot16(double x)
 {
 	return static_cast<FT_Pos>(x * 65536);
 }
 
-LONG int_from_16dot16(FT_Pos x)
+LONG int_from_16dot16(signed long x)
 {
 	const LONG ret = (x >> 16);
 
@@ -29,7 +27,7 @@ LONG int_from_16dot16(FT_Pos x)
 		return ret;
 }
 
-LONG int_from_26dot6(FT_Pos x)
+LONG int_from_26dot6(signed long x)
 {
 	const LONG ret = (x >> 6);
 	
@@ -323,39 +321,4 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 	}
 
 	return color_ret;
-}
-
-const wchar_t *metric_family_name(const BYTE *metric_buf)
-{
-	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFamilyName)));
-}
-
-const wchar_t *metric_face_name(const BYTE *metric_buf)
-{
-	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFaceName)));
-}
-
-const wchar_t *metric_style_name(const BYTE *metric_buf)
-{
-	return reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpStyleName)));
-}
-
-const wchar_t *metric_family_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpFamilyName));
-}
-
-const wchar_t *metric_face_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpFaceName));
-}
-
-const wchar_t *metric_style_name(const OUTLINETEXTMETRICW *outline_metric)
-{
-	return reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpStyleName));
-}
-
-bool wstring_ci_less::operator()(const wstring &string1, const wstring &string2) const
-{
-	return (_wcsicmp(string1.c_str(), string2.c_str()) < 0);
 }

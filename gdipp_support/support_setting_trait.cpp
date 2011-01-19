@@ -1,5 +1,4 @@
-#include "stdafx.h"
-#include "setting_trait.h"
+#include "support_setting_trait.h"
 
 gdimm_setting_trait::gdimm_setting_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
 {

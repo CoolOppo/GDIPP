@@ -1,7 +1,7 @@
 #pragma once
 
+#include "support_setting_trait.h"
 #include "type_enum.h"
-#include <setting_trait.h>
 
 using namespace std;
 
@@ -51,6 +51,7 @@ struct font_setting_cache
 
 class gdimm_setting_cache
 {
+	// setting ID : setting cache
 	map<unsigned int, font_setting_cache> _cache;
 
 public:

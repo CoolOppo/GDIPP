@@ -8,6 +8,7 @@
 #include "PaintDlg.h"
 #include "gdipp_demo.h"
 #include <gdipp_lib.h>
+#include <support_helper.h>
 
 DWORD WINAPI paint_thread(LPVOID context)
 {

@@ -44,13 +44,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -203,7 +203,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>
@@ -385,6 +385,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -393,7 +397,7 @@
 			Name="Resource Files"
 			>
 			<File
-				RelativePath=".\gdipp_hook.ico"
+				RelativePath=".\res\gdipp_hook.ico"
 				>
 			</File>
 			<File
@@ -401,14 +405,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\res\gdipp_hook.ico"
-			>
-		</File>
-		<File
-			RelativePath=".\resource"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

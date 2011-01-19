@@ -50,7 +50,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -207,7 +207,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="1"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>
@@ -355,6 +355,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\dc_pool.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\font_link.cpp"
 				>
 			</File>
@@ -363,15 +367,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_svc.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\freetype.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
+				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -407,7 +407,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
+				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -451,7 +451,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\glyph_cache.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\helper.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\renderer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\rpc_impl.cpp"
 				>
 			</File>
 			<File
@@ -513,10 +525,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_svc.h"
-				>
-			</File>
-			<File
 				RelativePath=".\freetype.h"
 				>
 			</File>
@@ -533,7 +541,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\glyph_cache.h"
+				>
+			</File>
+			<File
+				RelativePath=".\helper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\os2_metrics.h"
+				>
+			</File>
+			<File
 				RelativePath=".\renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rpc_impl.h"
 				>
 			</File>
 			<File
@@ -549,7 +577,7 @@
 			Name="Resource Files"
 			>
 			<File
-				RelativePath=".\gdipp_svc.ico"
+				RelativePath=".\res\gdipp_svc.ico"
 				>
 			</File>
 			<File
@@ -557,14 +585,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\res\gdipp_svc.ico"
-			>
-		</File>
-		<File
-			RelativePath=".\resource"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

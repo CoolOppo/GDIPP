@@ -3,7 +3,7 @@
 
 #define MAX_VALUE_NAME 1024
 
-gdimm_font_link::gdimm_font_link()
+gdipp_font_link::gdipp_font_link()
 {
 	// read font linking information from registry, and store in map
 
@@ -171,7 +171,7 @@ gdimm_font_link::gdimm_font_link()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const font_link_node *gdimm_font_link::lookup_link(const wchar_t *font_name, size_t index) const
+const font_link_node *gdipp_font_link::lookup_link(const wchar_t *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 
@@ -186,7 +186,7 @@ const font_link_node *gdimm_font_link::lookup_link(const wchar_t *font_name, siz
 	}
 }
 
-size_t gdimm_font_link::get_link_count(const wchar_t *font_name) const
+size_t gdipp_font_link::get_link_count(const wchar_t *font_name) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 

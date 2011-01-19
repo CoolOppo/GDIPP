@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "gdipp_lib.h"
+#include "setting_cache.h"
 #include "setting.h"
 #include "minidump.h"
 
@@ -22,8 +23,8 @@ BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t
 	return PathAppendW(out_path, file_name);
 }
 
-
 gdipp_setting setting_instance;
+gdimm_setting_cache gdimm_setting_cache_instance;
 
 void gdipp_init_setting()
 {
@@ -58,6 +59,11 @@ BOOL gdipp_remove_setting(const wchar_t *node_xpath)
 const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const gdimm_setting_trait *setting_trait)
 {
 	return setting_instance.get_gdimm_setting(setting_name, setting_trait);
+}
+
+const font_setting_cache *gdipp_get_gdimm_setting_cache(const gdimm_setting_trait *setting_trait)
+{
+	return gdimm_setting_cache_instance.lookup(setting_trait);
 }
 
 const wchar_t *gdipp_get_demo_setting(const wchar_t *setting_name)

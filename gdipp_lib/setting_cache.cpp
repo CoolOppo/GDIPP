@@ -2,8 +2,8 @@
 #include "setting_cache.h"
 #include "gdipp_lib.h"
 #include <MurmurHash2.h>
-#include <helper.h>
-#include <lock.h>
+#include <support_helper.h>
+#include <support_lock.h>
 
 font_setting_cache::font_gamma::font_gamma()
 	: red(1.0),

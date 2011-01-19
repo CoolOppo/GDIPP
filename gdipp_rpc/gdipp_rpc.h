@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Dec 28 02:29:26 2010
+/* at Mon Jan 10 01:24:26 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -59,7 +59,8 @@ typedef /* [context_handle] */ void *GDIPP_RPC_GLYPH_RUN_HANDLE;
 GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [size_is][in] */ const byte *logfont_buf,
-    /* [in] */ unsigned long logfont_size);
+    /* [in] */ unsigned long logfont_size,
+    /* [in] */ int render_mode);
 
 unsigned long gdipp_rpc_get_font_data_size( 
     /* [in] */ handle_t h_gdipp_rpc,

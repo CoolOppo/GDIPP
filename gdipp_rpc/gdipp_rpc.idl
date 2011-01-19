@@ -7,7 +7,7 @@ interface gdipp_rpc
 	typedef [context_handle] void *GDIPP_RPC_SESSION_HANDLE;
 	typedef [context_handle] void *GDIPP_RPC_GLYPH_RUN_HANDLE;
 
-	GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session([in] handle_t h_gdipp_rpc, [in, size_is(logfont_size)] const byte *logfont_buf, [in] unsigned long logfont_size);
+	GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session([in] handle_t h_gdipp_rpc, [in, size_is(logfont_size)] const byte *logfont_buf, [in] unsigned long logfont_size, [in] int render_mode );
 	unsigned long gdipp_rpc_get_font_data_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in] unsigned long table, [in] unsigned long offset);
 	unsigned long gdipp_rpc_get_font_data([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in] unsigned long table, [in] unsigned long offset, [out, size_is(buf_size)] byte *data_buf, [in] unsigned long buf_size);
 	unsigned long gdipp_rpc_get_font_metrics_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session);

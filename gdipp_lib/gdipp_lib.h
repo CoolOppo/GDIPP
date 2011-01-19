@@ -1,7 +1,5 @@
 #pragma once
 
-#include <setting_trait.h>
-
 using namespace std;
 
 #ifdef GDIPP_EXPORTS
@@ -9,6 +7,9 @@ using namespace std;
 #else
 #define GDIPP_API __declspec(dllimport)
 #endif // GDIPP_EXPORTS
+
+struct font_setting_cache;
+class gdimm_setting_trait;
 
 GDIPP_API BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path);
 
@@ -20,6 +21,7 @@ GDIPP_API BOOL gdipp_set_setting_attr(const wchar_t *node_xpath, const wchar_t *
 GDIPP_API BOOL gdipp_remove_setting(const wchar_t *node_xpath);
 
 GDIPP_API const wchar_t *gdipp_get_gdimm_setting(const wchar_t *setting_name, const gdimm_setting_trait *setting_trait);
+GDIPP_API const font_setting_cache *gdipp_get_gdimm_setting_cache(const gdimm_setting_trait *setting_trait);
 GDIPP_API const wchar_t *gdipp_get_demo_setting(const wchar_t *setting_name);
 GDIPP_API const vector<const wstring> &gdipp_get_demo_fonts();
 GDIPP_API const wchar_t *gdipp_get_service_setting(const wchar_t *setting_name);

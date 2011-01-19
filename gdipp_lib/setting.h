@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gdipp_lib.h"
-#include <helper.h>
+#include <support_helper.h>
 
 using namespace std;
 using namespace std::tr1;

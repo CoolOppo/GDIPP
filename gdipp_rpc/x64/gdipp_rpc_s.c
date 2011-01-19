@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Dec 28 02:29:26 2010
+/* at Mon Jan 10 01:24:26 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -32,7 +32,7 @@
 #include "gdipp_rpc.h"
 
 #define TYPE_FORMAT_STRING_SIZE   115                               
-#define PROC_FORMAT_STRING_SIZE   565                               
+#define PROC_FORMAT_STRING_SIZE   571                               
 #define EXPR_FORMAT_STRING_SIZE   1                                 
 #define TRANSMIT_AS_TABLE_SIZE    0            
 #define WIRE_MARSHAL_TABLE_SIZE   0            
@@ -108,14 +108,14 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 			0x48,		/* Old Flags:  */
 /*  2 */	NdrFcLong( 0x0 ),	/* 0 */
 /*  6 */	NdrFcShort( 0x0 ),	/* 0 */
-/*  8 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/*  8 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
 /* 10 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
 /* 12 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 14 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 14 */	NdrFcShort( 0x10 ),	/* 16 */
 /* 16 */	NdrFcShort( 0x24 ),	/* 36 */
 /* 18 */	0x46,		/* Oi2 Flags:  clt must size, has return, has ext, */
-			0x3,		/* 3 */
+			0x4,		/* 4 */
 /* 20 */	0xa,		/* 10 */
 			0x5,		/* Ext Flags:  new corr desc, srv corr check, */
 /* 22 */	NdrFcShort( 0x0 ),	/* 0 */
@@ -138,59 +138,66 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Parameter logfont_size */
 
-/* 42 */	NdrFcShort( 0x30 ),	/* Flags:  out, return, */
+/* 42 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
 /* 44 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 46 */	NdrFcShort( 0x12 ),	/* Type Offset=18 */
+/* 46 */	0x8,		/* FC_LONG */
+			0x0,		/* 0 */
+
+	/* Parameter render_mode */
+
+/* 48 */	NdrFcShort( 0x30 ),	/* Flags:  out, return, */
+/* 50 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 52 */	NdrFcShort( 0x12 ),	/* Type Offset=18 */
 
 	/* Procedure gdipp_rpc_get_font_data_size */
 
 
 	/* Return value */
 
-/* 48 */	0x0,		/* 0 */
+/* 54 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 50 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 54 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 56 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 58 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 56 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 60 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 62 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 64 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 60 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 62 */	NdrFcShort( 0x34 ),	/* 52 */
-/* 64 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 66 */	0x44,		/* Oi2 Flags:  has return, has ext, */
+/* 66 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 68 */	NdrFcShort( 0x34 ),	/* 52 */
+/* 70 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 72 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x4,		/* 4 */
-/* 68 */	0xa,		/* 10 */
+/* 74 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 70 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 72 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 74 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 76 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 78 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 80 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 82 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 78 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 80 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 82 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 84 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 86 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 88 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 84 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 86 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 88 */	0x8,		/* FC_LONG */
+/* 90 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 92 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 94 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter table */
 
-/* 90 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 92 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 94 */	0x8,		/* FC_LONG */
+/* 96 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 98 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 100 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter offset */
 
-/* 96 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 98 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 100 */	0x8,		/* FC_LONG */
+/* 102 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 104 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 106 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_get_font_data */
@@ -198,63 +205,63 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 102 */	0x0,		/* 0 */
+/* 108 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 104 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 108 */	NdrFcShort( 0x2 ),	/* 2 */
-/* 110 */	NdrFcShort( 0x38 ),	/* X64 Stack size/offset = 56 */
-/* 112 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 110 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 114 */	NdrFcShort( 0x2 ),	/* 2 */
+/* 116 */	NdrFcShort( 0x38 ),	/* X64 Stack size/offset = 56 */
+/* 118 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 114 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 116 */	NdrFcShort( 0x3c ),	/* 60 */
-/* 118 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 120 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
+/* 120 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 122 */	NdrFcShort( 0x3c ),	/* 60 */
+/* 124 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 126 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
 			0x6,		/* 6 */
-/* 122 */	0xa,		/* 10 */
+/* 128 */	0xa,		/* 10 */
 			0x3,		/* Ext Flags:  new corr desc, clt corr check, */
-/* 124 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 126 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 128 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 130 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 130 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 132 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 134 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 136 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 132 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 134 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 136 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 138 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 140 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 142 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 138 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 140 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 142 */	0x8,		/* FC_LONG */
+/* 144 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 146 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 148 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter table */
 
-/* 144 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 146 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 148 */	0x8,		/* FC_LONG */
+/* 150 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 152 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 154 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter offset */
 
-/* 150 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
-/* 152 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 154 */	NdrFcShort( 0x1e ),	/* Type Offset=30 */
+/* 156 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
+/* 158 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 160 */	NdrFcShort( 0x1e ),	/* Type Offset=30 */
 
 	/* Parameter data_buf */
 
-/* 156 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 158 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 160 */	0x8,		/* FC_LONG */
+/* 162 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 164 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 166 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter buf_size */
 
-/* 162 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 164 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
-/* 166 */	0x8,		/* FC_LONG */
+/* 168 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 170 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
+/* 172 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_get_font_metrics_size */
@@ -262,36 +269,36 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 168 */	0x0,		/* 0 */
+/* 174 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 170 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 174 */	NdrFcShort( 0x3 ),	/* 3 */
-/* 176 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 178 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 176 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 180 */	NdrFcShort( 0x3 ),	/* 3 */
+/* 182 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 184 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 180 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 182 */	NdrFcShort( 0x24 ),	/* 36 */
-/* 184 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 186 */	0x44,		/* Oi2 Flags:  has return, has ext, */
+/* 186 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 188 */	NdrFcShort( 0x24 ),	/* 36 */
+/* 190 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 192 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x2,		/* 2 */
-/* 188 */	0xa,		/* 10 */
+/* 194 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 190 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 192 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 194 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 196 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 198 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 200 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 202 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 198 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 200 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 202 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 204 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 206 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 208 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 204 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 206 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 208 */	0x8,		/* FC_LONG */
+/* 210 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 212 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 214 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_get_font_metrics_data */
@@ -299,49 +306,49 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 210 */	0x0,		/* 0 */
+/* 216 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 212 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 216 */	NdrFcShort( 0x4 ),	/* 4 */
-/* 218 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 220 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 218 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 222 */	NdrFcShort( 0x4 ),	/* 4 */
+/* 224 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 226 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 222 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 224 */	NdrFcShort( 0x2c ),	/* 44 */
-/* 226 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 228 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
+/* 228 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 230 */	NdrFcShort( 0x2c ),	/* 44 */
+/* 232 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 234 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
 			0x4,		/* 4 */
-/* 230 */	0xa,		/* 10 */
+/* 236 */	0xa,		/* 10 */
 			0x3,		/* Ext Flags:  new corr desc, clt corr check, */
-/* 232 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 234 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 236 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 238 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 238 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 240 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 242 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 244 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 240 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 242 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 244 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 246 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 248 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 250 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 246 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
-/* 248 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 250 */	NdrFcShort( 0x2e ),	/* Type Offset=46 */
+/* 252 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
+/* 254 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 256 */	NdrFcShort( 0x2e ),	/* Type Offset=46 */
 
 	/* Parameter metrics_buf */
 
-/* 252 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 254 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 256 */	0x8,		/* FC_LONG */
+/* 258 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 260 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 262 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter buf_size */
 
-/* 258 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 260 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 262 */	0x8,		/* FC_LONG */
+/* 264 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 266 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 268 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_get_glyph_indices */
@@ -349,55 +356,55 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 264 */	0x0,		/* 0 */
+/* 270 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 266 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 270 */	NdrFcShort( 0x5 ),	/* 5 */
-/* 272 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
-/* 274 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 272 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 276 */	NdrFcShort( 0x5 ),	/* 5 */
+/* 278 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
+/* 280 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 276 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 278 */	NdrFcShort( 0x2c ),	/* 44 */
-/* 280 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 282 */	0x47,		/* Oi2 Flags:  srv must size, clt must size, has return, has ext, */
+/* 282 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 284 */	NdrFcShort( 0x2c ),	/* 44 */
+/* 286 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 288 */	0x47,		/* Oi2 Flags:  srv must size, clt must size, has return, has ext, */
 			0x5,		/* 5 */
-/* 284 */	0xa,		/* 10 */
+/* 290 */	0xa,		/* 10 */
 			0x7,		/* Ext Flags:  new corr desc, clt corr check, srv corr check, */
-/* 286 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 288 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 290 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 292 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 292 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 294 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 296 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 298 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 294 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 296 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 298 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 300 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 302 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 304 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 300 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
-/* 302 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 304 */	NdrFcShort( 0x3e ),	/* Type Offset=62 */
+/* 306 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
+/* 308 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 310 */	NdrFcShort( 0x3e ),	/* Type Offset=62 */
 
 	/* Parameter str */
 
-/* 306 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 308 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 310 */	0x8,		/* FC_LONG */
+/* 312 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 314 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 316 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter count */
 
-/* 312 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
-/* 314 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 316 */	NdrFcShort( 0x4a ),	/* Type Offset=74 */
+/* 318 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
+/* 320 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 322 */	NdrFcShort( 0x4a ),	/* Type Offset=74 */
 
 	/* Parameter gi */
 
-/* 318 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 320 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 322 */	0x8,		/* FC_LONG */
+/* 324 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 326 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 328 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_make_glyph_run */
@@ -405,92 +412,92 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 324 */	0x0,		/* 0 */
+/* 330 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 326 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 330 */	NdrFcShort( 0x6 ),	/* 6 */
-/* 332 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
-/* 334 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 332 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 336 */	NdrFcShort( 0x6 ),	/* 6 */
+/* 338 */	NdrFcShort( 0x30 ),	/* X64 Stack size/offset = 48 */
+/* 340 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 336 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 338 */	NdrFcShort( 0x31 ),	/* 49 */
-/* 340 */	NdrFcShort( 0x24 ),	/* 36 */
-/* 342 */	0x46,		/* Oi2 Flags:  clt must size, has return, has ext, */
+/* 342 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 344 */	NdrFcShort( 0x31 ),	/* 49 */
+/* 346 */	NdrFcShort( 0x24 ),	/* 36 */
+/* 348 */	0x46,		/* Oi2 Flags:  clt must size, has return, has ext, */
 			0x5,		/* 5 */
-/* 344 */	0xa,		/* 10 */
+/* 350 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 346 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 348 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 350 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 352 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 354 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 356 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 358 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 354 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 356 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 358 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
+/* 360 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 362 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 364 */	NdrFcShort( 0x16 ),	/* Type Offset=22 */
 
 	/* Parameter h_session */
 
-/* 360 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
-/* 362 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 364 */	NdrFcShort( 0x58 ),	/* Type Offset=88 */
+/* 366 */	NdrFcShort( 0x10b ),	/* Flags:  must size, must free, in, simple ref, */
+/* 368 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 370 */	NdrFcShort( 0x58 ),	/* Type Offset=88 */
 
 	/* Parameter str */
 
-/* 366 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 368 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 370 */	0x8,		/* FC_LONG */
+/* 372 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 374 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 376 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter count */
 
-/* 372 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 374 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 376 */	0x3,		/* FC_SMALL */
+/* 378 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 380 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 382 */	0x3,		/* FC_SMALL */
 			0x0,		/* 0 */
 
 	/* Parameter is_glyph_index */
 
-/* 378 */	NdrFcShort( 0x30 ),	/* Flags:  out, return, */
-/* 380 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 382 */	NdrFcShort( 0x5a ),	/* Type Offset=90 */
+/* 384 */	NdrFcShort( 0x30 ),	/* Flags:  out, return, */
+/* 386 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 388 */	NdrFcShort( 0x5a ),	/* Type Offset=90 */
 
 	/* Procedure gdipp_rpc_get_glyph_run_size */
 
 
 	/* Return value */
 
-/* 384 */	0x0,		/* 0 */
+/* 390 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 386 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 390 */	NdrFcShort( 0x7 ),	/* 7 */
-/* 392 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 394 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 392 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 396 */	NdrFcShort( 0x7 ),	/* 7 */
+/* 398 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 400 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 396 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 398 */	NdrFcShort( 0x24 ),	/* 36 */
-/* 400 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 402 */	0x44,		/* Oi2 Flags:  has return, has ext, */
+/* 402 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 404 */	NdrFcShort( 0x24 ),	/* 36 */
+/* 406 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 408 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x2,		/* 2 */
-/* 404 */	0xa,		/* 10 */
+/* 410 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 406 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 408 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 410 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 412 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 414 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 416 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 418 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 414 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 416 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 418 */	NdrFcShort( 0x5e ),	/* Type Offset=94 */
+/* 420 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 422 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 424 */	NdrFcShort( 0x5e ),	/* Type Offset=94 */
 
 	/* Parameter h_glyph_run */
 
-/* 420 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 422 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 424 */	0x8,		/* FC_LONG */
+/* 426 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 428 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 430 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_get_glyph_run */
@@ -498,49 +505,49 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 426 */	0x0,		/* 0 */
+/* 432 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 428 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 432 */	NdrFcShort( 0x8 ),	/* 8 */
-/* 434 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
-/* 436 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 434 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 438 */	NdrFcShort( 0x8 ),	/* 8 */
+/* 440 */	NdrFcShort( 0x28 ),	/* X64 Stack size/offset = 40 */
+/* 442 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 438 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 440 */	NdrFcShort( 0x2c ),	/* 44 */
-/* 442 */	NdrFcShort( 0x5 ),	/* 5 */
-/* 444 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
+/* 444 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 446 */	NdrFcShort( 0x2c ),	/* 44 */
+/* 448 */	NdrFcShort( 0x5 ),	/* 5 */
+/* 450 */	0x45,		/* Oi2 Flags:  srv must size, has return, has ext, */
 			0x4,		/* 4 */
-/* 446 */	0xa,		/* 10 */
+/* 452 */	0xa,		/* 10 */
 			0x3,		/* Ext Flags:  new corr desc, clt corr check, */
-/* 448 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 450 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 452 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 454 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 454 */	NdrFcShort( 0x1 ),	/* 1 */
+/* 456 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 458 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 460 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 456 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
-/* 458 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 460 */	NdrFcShort( 0x5e ),	/* Type Offset=94 */
+/* 462 */	NdrFcShort( 0x8 ),	/* Flags:  in, */
+/* 464 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 466 */	NdrFcShort( 0x5e ),	/* Type Offset=94 */
 
 	/* Parameter h_glyph_run */
 
-/* 462 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
-/* 464 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 466 */	NdrFcShort( 0x2e ),	/* Type Offset=46 */
+/* 468 */	NdrFcShort( 0x113 ),	/* Flags:  must size, must free, out, simple ref, */
+/* 470 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 472 */	NdrFcShort( 0x2e ),	/* Type Offset=46 */
 
 	/* Parameter glyph_run_buf */
 
-/* 468 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
-/* 470 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 472 */	0x8,		/* FC_LONG */
+/* 474 */	NdrFcShort( 0x48 ),	/* Flags:  in, base type, */
+/* 476 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 478 */	0x8,		/* FC_LONG */
 			0x0,		/* 0 */
 
 	/* Parameter glyph_run_size */
 
-/* 474 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 476 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
-/* 478 */	0x3,		/* FC_SMALL */
+/* 480 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 482 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
+/* 484 */	0x3,		/* FC_SMALL */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_release_glyph_run */
@@ -548,36 +555,36 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 480 */	0x0,		/* 0 */
+/* 486 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 482 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 486 */	NdrFcShort( 0x9 ),	/* 9 */
-/* 488 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 490 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 488 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 492 */	NdrFcShort( 0x9 ),	/* 9 */
+/* 494 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 496 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 492 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 494 */	NdrFcShort( 0x38 ),	/* 56 */
-/* 496 */	NdrFcShort( 0x3d ),	/* 61 */
-/* 498 */	0x44,		/* Oi2 Flags:  has return, has ext, */
+/* 498 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 500 */	NdrFcShort( 0x38 ),	/* 56 */
+/* 502 */	NdrFcShort( 0x3d ),	/* 61 */
+/* 504 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x2,		/* 2 */
-/* 500 */	0xa,		/* 10 */
+/* 506 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 502 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 504 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 506 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 508 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 510 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 512 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 514 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 510 */	NdrFcShort( 0x118 ),	/* Flags:  in, out, simple ref, */
-/* 512 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 514 */	NdrFcShort( 0x66 ),	/* Type Offset=102 */
+/* 516 */	NdrFcShort( 0x118 ),	/* Flags:  in, out, simple ref, */
+/* 518 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 520 */	NdrFcShort( 0x66 ),	/* Type Offset=102 */
 
 	/* Parameter h_glyph_run */
 
-/* 516 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 518 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 520 */	0x3,		/* FC_SMALL */
+/* 522 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 524 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 526 */	0x3,		/* FC_SMALL */
 			0x0,		/* 0 */
 
 	/* Procedure gdipp_rpc_end_session */
@@ -585,36 +592,36 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 
 	/* Return value */
 
-/* 522 */	0x0,		/* 0 */
+/* 528 */	0x0,		/* 0 */
 			0x48,		/* Old Flags:  */
-/* 524 */	NdrFcLong( 0x0 ),	/* 0 */
-/* 528 */	NdrFcShort( 0xa ),	/* 10 */
-/* 530 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
-/* 532 */	0x32,		/* FC_BIND_PRIMITIVE */
+/* 530 */	NdrFcLong( 0x0 ),	/* 0 */
+/* 534 */	NdrFcShort( 0xa ),	/* 10 */
+/* 536 */	NdrFcShort( 0x18 ),	/* X64 Stack size/offset = 24 */
+/* 538 */	0x32,		/* FC_BIND_PRIMITIVE */
 			0x0,		/* 0 */
-/* 534 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
-/* 536 */	NdrFcShort( 0x38 ),	/* 56 */
-/* 538 */	NdrFcShort( 0x3d ),	/* 61 */
-/* 540 */	0x44,		/* Oi2 Flags:  has return, has ext, */
+/* 540 */	NdrFcShort( 0x0 ),	/* X64 Stack size/offset = 0 */
+/* 542 */	NdrFcShort( 0x38 ),	/* 56 */
+/* 544 */	NdrFcShort( 0x3d ),	/* 61 */
+/* 546 */	0x44,		/* Oi2 Flags:  has return, has ext, */
 			0x2,		/* 2 */
-/* 542 */	0xa,		/* 10 */
+/* 548 */	0xa,		/* 10 */
 			0x1,		/* Ext Flags:  new corr desc, */
-/* 544 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 546 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 548 */	NdrFcShort( 0x0 ),	/* 0 */
 /* 550 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 552 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 554 */	NdrFcShort( 0x0 ),	/* 0 */
+/* 556 */	NdrFcShort( 0x0 ),	/* 0 */
 
 	/* Parameter h_gdipp_rpc */
 
-/* 552 */	NdrFcShort( 0x118 ),	/* Flags:  in, out, simple ref, */
-/* 554 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
-/* 556 */	NdrFcShort( 0x6e ),	/* Type Offset=110 */
+/* 558 */	NdrFcShort( 0x118 ),	/* Flags:  in, out, simple ref, */
+/* 560 */	NdrFcShort( 0x8 ),	/* X64 Stack size/offset = 8 */
+/* 562 */	NdrFcShort( 0x6e ),	/* Type Offset=110 */
 
 	/* Parameter h_session */
 
-/* 558 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
-/* 560 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
-/* 562 */	0x3,		/* FC_SMALL */
+/* 564 */	NdrFcShort( 0x70 ),	/* Flags:  out, return, base type, */
+/* 566 */	NdrFcShort( 0x10 ),	/* X64 Stack size/offset = 16 */
+/* 568 */	0x3,		/* FC_SMALL */
 			0x0,		/* 0 */
 
 			0x0
@@ -738,16 +745,16 @@ static const NDR_RUNDOWN RundownRoutines[] =
 static const unsigned short gdipp_rpc_FormatStringOffsetTable[] =
     {
     0,
-    48,
-    102,
-    168,
-    210,
-    264,
-    324,
-    384,
-    426,
-    480,
-    522
+    54,
+    108,
+    174,
+    216,
+    270,
+    330,
+    390,
+    432,
+    486,
+    528
     };
 
 
@@ -781,7 +788,7 @@ RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable =
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Dec 28 02:29:26 2010
+/* at Mon Jan 10 01:24:26 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -811,13 +818,13 @@ extern const NDR_RUNDOWN RundownRoutines[];
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag70_t;
-extern const __midl_frag70_t __midl_frag70;
+__midl_frag71_t;
+extern const __midl_frag71_t __midl_frag71;
 
 typedef 
 struct _NDR64_POINTER_FORMAT
-__midl_frag69_t;
-extern const __midl_frag69_t __midl_frag69;
+__midl_frag70_t;
+extern const __midl_frag70_t __midl_frag70;
 
 typedef 
 struct 
@@ -827,48 +834,48 @@ struct
     struct _NDR64_PARAM_FORMAT frag3;
     struct _NDR64_PARAM_FORMAT frag4;
 }
-__midl_frag68_t;
-extern const __midl_frag68_t __midl_frag68;
+__midl_frag69_t;
+extern const __midl_frag69_t __midl_frag69;
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
+__midl_frag67_t;
+extern const __midl_frag67_t __midl_frag67;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
 __midl_frag66_t;
 extern const __midl_frag66_t __midl_frag66;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
+struct 
+{
+    struct _NDR64_PROC_FORMAT frag1;
+    struct _NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
+    struct _NDR64_PARAM_FORMAT frag3;
+    struct _NDR64_PARAM_FORMAT frag4;
+}
 __midl_frag65_t;
 extern const __midl_frag65_t __midl_frag65;
 
 typedef 
 struct 
 {
-    struct _NDR64_PROC_FORMAT frag1;
-    struct _NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-    struct _NDR64_PARAM_FORMAT frag3;
-    struct _NDR64_PARAM_FORMAT frag4;
-}
-__midl_frag64_t;
-extern const __midl_frag64_t __midl_frag64;
-
-typedef 
-struct 
-{
     struct _NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
     struct _NDR64_ARRAY_ELEMENT_INFO frag2;
 }
+__midl_frag60_t;
+extern const __midl_frag60_t __midl_frag60;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
 __midl_frag59_t;
 extern const __midl_frag59_t __midl_frag59;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
+struct _NDR64_CONTEXT_HANDLE_FORMAT
 __midl_frag58_t;
 extern const __midl_frag58_t __midl_frag58;
-
-typedef 
-struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag57_t;
-extern const __midl_frag57_t __midl_frag57;
 
 typedef 
 struct 
@@ -880,13 +887,13 @@ struct
     struct _NDR64_PARAM_FORMAT frag5;
     struct _NDR64_PARAM_FORMAT frag6;
 }
-__midl_frag56_t;
-extern const __midl_frag56_t __midl_frag56;
+__midl_frag57_t;
+extern const __midl_frag57_t __midl_frag57;
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag54_t;
-extern const __midl_frag54_t __midl_frag54;
+__midl_frag55_t;
+extern const __midl_frag55_t __midl_frag55;
 
 typedef 
 struct 
@@ -896,28 +903,28 @@ struct
     struct _NDR64_PARAM_FORMAT frag3;
     struct _NDR64_PARAM_FORMAT frag4;
 }
+__midl_frag54_t;
+extern const __midl_frag54_t __midl_frag54;
+
+typedef 
+struct _NDR64_CONTEXT_HANDLE_FORMAT
 __midl_frag53_t;
 extern const __midl_frag53_t __midl_frag53;
 
 typedef 
-struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag52_t;
-extern const __midl_frag52_t __midl_frag52;
+struct _NDR64_CONFORMANT_STRING_FORMAT
+__midl_frag50_t;
+extern const __midl_frag50_t __midl_frag50;
 
 typedef 
-struct _NDR64_CONFORMANT_STRING_FORMAT
+struct _NDR64_POINTER_FORMAT
 __midl_frag49_t;
 extern const __midl_frag49_t __midl_frag49;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
+struct _NDR64_CONTEXT_HANDLE_FORMAT
 __midl_frag48_t;
 extern const __midl_frag48_t __midl_frag48;
-
-typedef 
-struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag47_t;
-extern const __midl_frag47_t __midl_frag47;
 
 typedef 
 struct 
@@ -930,43 +937,43 @@ struct
     struct _NDR64_PARAM_FORMAT frag6;
     struct _NDR64_PARAM_FORMAT frag7;
 }
-__midl_frag46_t;
-extern const __midl_frag46_t __midl_frag46;
+__midl_frag47_t;
+extern const __midl_frag47_t __midl_frag47;
 
 typedef 
 NDR64_FORMAT_CHAR
+__midl_frag45_t;
+extern const __midl_frag45_t __midl_frag45;
+
+typedef 
+struct 
+{
+    NDR64_FORMAT_UINT32 frag1;
+    struct _NDR64_EXPR_OPERATOR frag2;
+    struct _NDR64_EXPR_VAR frag3;
+    struct _NDR64_EXPR_CONST64 frag4;
+}
 __midl_frag44_t;
 extern const __midl_frag44_t __midl_frag44;
 
 typedef 
 struct 
 {
-    NDR64_FORMAT_UINT32 frag1;
-    struct _NDR64_EXPR_OPERATOR frag2;
-    struct _NDR64_EXPR_VAR frag3;
-    struct _NDR64_EXPR_CONST64 frag4;
+    struct _NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
+    struct _NDR64_ARRAY_ELEMENT_INFO frag2;
 }
 __midl_frag43_t;
 extern const __midl_frag43_t __midl_frag43;
 
 typedef 
-struct 
-{
-    struct _NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
-    struct _NDR64_ARRAY_ELEMENT_INFO frag2;
-}
+struct _NDR64_POINTER_FORMAT
 __midl_frag42_t;
 extern const __midl_frag42_t __midl_frag42;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
-__midl_frag41_t;
-extern const __midl_frag41_t __midl_frag41;
-
-typedef 
 struct NDR64_SIZED_CONFORMANT_STRING_FORMAT
-__midl_frag39_t;
-extern const __midl_frag39_t __midl_frag39;
+__midl_frag40_t;
+extern const __midl_frag40_t __midl_frag40;
 
 typedef 
 struct 
@@ -976,18 +983,18 @@ struct
     struct _NDR64_EXPR_VAR frag3;
     struct _NDR64_EXPR_CONST64 frag4;
 }
+__midl_frag39_t;
+extern const __midl_frag39_t __midl_frag39;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
 __midl_frag38_t;
 extern const __midl_frag38_t __midl_frag38;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
+struct _NDR64_CONTEXT_HANDLE_FORMAT
 __midl_frag37_t;
 extern const __midl_frag37_t __midl_frag37;
-
-typedef 
-struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag36_t;
-extern const __midl_frag36_t __midl_frag36;
 
 typedef 
 struct 
@@ -1000,8 +1007,8 @@ struct
     struct _NDR64_PARAM_FORMAT frag6;
     struct _NDR64_PARAM_FORMAT frag7;
 }
-__midl_frag35_t;
-extern const __midl_frag35_t __midl_frag35;
+__midl_frag36_t;
+extern const __midl_frag36_t __midl_frag36;
 
 typedef 
 struct 
@@ -1009,8 +1016,8 @@ struct
     NDR64_FORMAT_UINT32 frag1;
     struct _NDR64_EXPR_VAR frag2;
 }
-__midl_frag31_t;
-extern const __midl_frag31_t __midl_frag31;
+__midl_frag32_t;
+extern const __midl_frag32_t __midl_frag32;
 
 typedef 
 struct 
@@ -1018,18 +1025,18 @@ struct
     struct _NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
     struct _NDR64_ARRAY_ELEMENT_INFO frag2;
 }
+__midl_frag31_t;
+extern const __midl_frag31_t __midl_frag31;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
 __midl_frag30_t;
 extern const __midl_frag30_t __midl_frag30;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
+struct _NDR64_CONTEXT_HANDLE_FORMAT
 __midl_frag29_t;
 extern const __midl_frag29_t __midl_frag29;
-
-typedef 
-struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag28_t;
-extern const __midl_frag28_t __midl_frag28;
 
 typedef 
 struct 
@@ -1041,13 +1048,13 @@ struct
     struct _NDR64_PARAM_FORMAT frag5;
     struct _NDR64_PARAM_FORMAT frag6;
 }
-__midl_frag27_t;
-extern const __midl_frag27_t __midl_frag27;
+__midl_frag28_t;
+extern const __midl_frag28_t __midl_frag28;
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag25_t;
-extern const __midl_frag25_t __midl_frag25;
+__midl_frag26_t;
+extern const __midl_frag26_t __midl_frag26;
 
 typedef 
 struct 
@@ -1057,8 +1064,8 @@ struct
     struct _NDR64_PARAM_FORMAT frag3;
     struct _NDR64_PARAM_FORMAT frag4;
 }
-__midl_frag24_t;
-extern const __midl_frag24_t __midl_frag24;
+__midl_frag25_t;
+extern const __midl_frag25_t __midl_frag25;
 
 typedef 
 struct 
@@ -1066,8 +1073,8 @@ struct
     NDR64_FORMAT_UINT32 frag1;
     struct _NDR64_EXPR_VAR frag2;
 }
-__midl_frag20_t;
-extern const __midl_frag20_t __midl_frag20;
+__midl_frag21_t;
+extern const __midl_frag21_t __midl_frag21;
 
 typedef 
 struct 
@@ -1075,18 +1082,18 @@ struct
     struct _NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
     struct _NDR64_ARRAY_ELEMENT_INFO frag2;
 }
+__midl_frag20_t;
+extern const __midl_frag20_t __midl_frag20;
+
+typedef 
+struct _NDR64_POINTER_FORMAT
 __midl_frag19_t;
 extern const __midl_frag19_t __midl_frag19;
 
 typedef 
-struct _NDR64_POINTER_FORMAT
-__midl_frag18_t;
-extern const __midl_frag18_t __midl_frag18;
-
-typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag15_t;
-extern const __midl_frag15_t __midl_frag15;
+__midl_frag16_t;
+extern const __midl_frag16_t __midl_frag16;
 
 typedef 
 struct 
@@ -1100,13 +1107,13 @@ struct
     struct _NDR64_PARAM_FORMAT frag7;
     struct _NDR64_PARAM_FORMAT frag8;
 }
-__midl_frag14_t;
-extern const __midl_frag14_t __midl_frag14;
+__midl_frag15_t;
+extern const __midl_frag15_t __midl_frag15;
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag10_t;
-extern const __midl_frag10_t __midl_frag10;
+__midl_frag11_t;
+extern const __midl_frag11_t __midl_frag11;
 
 typedef 
 struct 
@@ -1118,13 +1125,13 @@ struct
     struct _NDR64_PARAM_FORMAT frag5;
     struct _NDR64_PARAM_FORMAT frag6;
 }
-__midl_frag9_t;
-extern const __midl_frag9_t __midl_frag9;
+__midl_frag10_t;
+extern const __midl_frag10_t __midl_frag10;
 
 typedef 
 struct _NDR64_CONTEXT_HANDLE_FORMAT
-__midl_frag8_t;
-extern const __midl_frag8_t __midl_frag8;
+__midl_frag9_t;
+extern const __midl_frag9_t __midl_frag9;
 
 typedef 
 NDR64_FORMAT_CHAR
@@ -1167,6 +1174,7 @@ struct
     struct _NDR64_PARAM_FORMAT frag3;
     struct _NDR64_PARAM_FORMAT frag4;
     struct _NDR64_PARAM_FORMAT frag5;
+    struct _NDR64_PARAM_FORMAT frag6;
 }
 __midl_frag2_t;
 extern const __midl_frag2_t __midl_frag2;
@@ -1176,7 +1184,7 @@ NDR64_FORMAT_UINT32
 __midl_frag1_t;
 extern const __midl_frag1_t __midl_frag1;
 
-static const __midl_frag70_t __midl_frag70 =
+static const __midl_frag71_t __midl_frag71 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1185,16 +1193,16 @@ static const __midl_frag70_t __midl_frag70 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag69_t __midl_frag69 =
+static const __midl_frag70_t __midl_frag70 =
 { 
 /* *struct _NDR64_POINTER_FORMAT */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 4 /* 0x4 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag70
+    &__midl_frag71
 };
 
-static const __midl_frag68_t __midl_frag68 =
+static const __midl_frag69_t __midl_frag69 =
 { 
 /* gdipp_rpc_end_session */
     { 
@@ -1222,7 +1230,7 @@ static const __midl_frag68_t __midl_frag68 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag70,
+        &__midl_frag71,
         { 
         /* h_session */
             0,
@@ -1270,7 +1278,7 @@ static const __midl_frag68_t __midl_frag68 =
     }
 };
 
-static const __midl_frag66_t __midl_frag66 =
+static const __midl_frag67_t __midl_frag67 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1279,16 +1287,16 @@ static const __midl_frag66_t __midl_frag66 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag65_t __midl_frag65 =
+static const __midl_frag66_t __midl_frag66 =
 { 
 /* *struct _NDR64_POINTER_FORMAT */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 4 /* 0x4 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag66
+    &__midl_frag67
 };
 
-static const __midl_frag64_t __midl_frag64 =
+static const __midl_frag65_t __midl_frag65 =
 { 
 /* gdipp_rpc_release_glyph_run */
     { 
@@ -1316,7 +1324,7 @@ static const __midl_frag64_t __midl_frag64 =
     },
     { 
     /* h_glyph_run */      /* parameter h_glyph_run */
-        &__midl_frag66,
+        &__midl_frag67,
         { 
         /* h_glyph_run */
             0,
@@ -1364,7 +1372,7 @@ static const __midl_frag64_t __midl_frag64 =
     }
 };
 
-static const __midl_frag59_t __midl_frag59 =
+static const __midl_frag60_t __midl_frag60 =
 { 
 /* *byte */
     { 
@@ -1384,7 +1392,7 @@ static const __midl_frag59_t __midl_frag59 =
         },
         (NDR64_UINT8) 0 /* 0x0 */,
         (NDR64_UINT32) 1 /* 0x1 */,
-        &__midl_frag31
+        &__midl_frag32
     },
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
@@ -1393,16 +1401,16 @@ static const __midl_frag59_t __midl_frag59 =
     }
 };
 
-static const __midl_frag58_t __midl_frag58 =
+static const __midl_frag59_t __midl_frag59 =
 { 
 /* *byte */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag59
+    &__midl_frag60
 };
 
-static const __midl_frag57_t __midl_frag57 =
+static const __midl_frag58_t __midl_frag58 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1411,7 +1419,7 @@ static const __midl_frag57_t __midl_frag57 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag56_t __midl_frag56 =
+static const __midl_frag57_t __midl_frag57 =
 { 
 /* gdipp_rpc_get_glyph_run */
     { 
@@ -1439,7 +1447,7 @@ static const __midl_frag56_t __midl_frag56 =
     },
     { 
     /* h_glyph_run */      /* parameter h_glyph_run */
-        &__midl_frag57,
+        &__midl_frag58,
         { 
         /* h_glyph_run */
             0,
@@ -1463,7 +1471,7 @@ static const __midl_frag56_t __midl_frag56 =
     },
     { 
     /* glyph_run_buf */      /* parameter glyph_run_buf */
-        &__midl_frag59,
+        &__midl_frag60,
         { 
         /* glyph_run_buf */
             1,
@@ -1535,7 +1543,7 @@ static const __midl_frag56_t __midl_frag56 =
     }
 };
 
-static const __midl_frag54_t __midl_frag54 =
+static const __midl_frag55_t __midl_frag55 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1544,7 +1552,7 @@ static const __midl_frag54_t __midl_frag54 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag53_t __midl_frag53 =
+static const __midl_frag54_t __midl_frag54 =
 { 
 /* gdipp_rpc_get_glyph_run_size */
     { 
@@ -1572,7 +1580,7 @@ static const __midl_frag53_t __midl_frag53 =
     },
     { 
     /* h_glyph_run */      /* parameter h_glyph_run */
-        &__midl_frag54,
+        &__midl_frag55,
         { 
         /* h_glyph_run */
             0,
@@ -1620,7 +1628,7 @@ static const __midl_frag53_t __midl_frag53 =
     }
 };
 
-static const __midl_frag52_t __midl_frag52 =
+static const __midl_frag53_t __midl_frag53 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1629,7 +1637,7 @@ static const __midl_frag52_t __midl_frag52 =
     (NDR64_UINT8) 3 /* 0x3 */
 };
 
-static const __midl_frag49_t __midl_frag49 =
+static const __midl_frag50_t __midl_frag50 =
 { 
 /* *wchar_t */
     { 
@@ -1650,16 +1658,16 @@ static const __midl_frag49_t __midl_frag49 =
     }
 };
 
-static const __midl_frag48_t __midl_frag48 =
+static const __midl_frag49_t __midl_frag49 =
 { 
 /* *wchar_t */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag49
+    &__midl_frag50
 };
 
-static const __midl_frag47_t __midl_frag47 =
+static const __midl_frag48_t __midl_frag48 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1668,7 +1676,7 @@ static const __midl_frag47_t __midl_frag47 =
     (NDR64_UINT8) 2 /* 0x2 */
 };
 
-static const __midl_frag46_t __midl_frag46 =
+static const __midl_frag47_t __midl_frag47 =
 { 
 /* gdipp_rpc_make_glyph_run */
     { 
@@ -1696,7 +1704,7 @@ static const __midl_frag46_t __midl_frag46 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag47,
+        &__midl_frag48,
         { 
         /* h_session */
             0,
@@ -1720,7 +1728,7 @@ static const __midl_frag46_t __midl_frag46 =
     },
     { 
     /* str */      /* parameter str */
-        &__midl_frag49,
+        &__midl_frag50,
         { 
         /* str */
             1,
@@ -1792,7 +1800,7 @@ static const __midl_frag46_t __midl_frag46 =
     },
     { 
     /* GDIPP_RPC_GLYPH_RUN_HANDLE */      /* parameter GDIPP_RPC_GLYPH_RUN_HANDLE */
-        &__midl_frag52,
+        &__midl_frag53,
         { 
         /* GDIPP_RPC_GLYPH_RUN_HANDLE */
             0,
@@ -1816,10 +1824,10 @@ static const __midl_frag46_t __midl_frag46 =
     }
 };
 
-static const __midl_frag44_t __midl_frag44 =
+static const __midl_frag45_t __midl_frag45 =
 0x4    /* FC64_INT16 */;
 
-static const __midl_frag43_t __midl_frag43 =
+static const __midl_frag44_t __midl_frag44 =
 { 
 /*  */
     (NDR64_UINT32) 1 /* 0x1 */,
@@ -1846,7 +1854,7 @@ static const __midl_frag43_t __midl_frag43 =
     }
 };
 
-static const __midl_frag42_t __midl_frag42 =
+static const __midl_frag43_t __midl_frag43 =
 { 
 /* *short */
     { 
@@ -1866,25 +1874,25 @@ static const __midl_frag42_t __midl_frag42 =
         },
         (NDR64_UINT8) 0 /* 0x0 */,
         (NDR64_UINT32) 2 /* 0x2 */,
-        &__midl_frag43
+        &__midl_frag44
     },
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
         (NDR64_UINT32) 2 /* 0x2 */,
-        &__midl_frag44
+        &__midl_frag45
     }
 };
 
-static const __midl_frag41_t __midl_frag41 =
+static const __midl_frag42_t __midl_frag42 =
 { 
 /* *short */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag42
+    &__midl_frag43
 };
 
-static const __midl_frag39_t __midl_frag39 =
+static const __midl_frag40_t __midl_frag40 =
 { 
 /* *wchar_t */
     { 
@@ -1903,10 +1911,10 @@ static const __midl_frag39_t __midl_frag39 =
         },
         (NDR64_UINT16) 2 /* 0x2 */
     },
-    &__midl_frag38
+    &__midl_frag39
 };
 
-static const __midl_frag38_t __midl_frag38 =
+static const __midl_frag39_t __midl_frag39 =
 { 
 /*  */
     (NDR64_UINT32) 0 /* 0x0 */,
@@ -1933,16 +1941,16 @@ static const __midl_frag38_t __midl_frag38 =
     }
 };
 
-static const __midl_frag37_t __midl_frag37 =
+static const __midl_frag38_t __midl_frag38 =
 { 
 /* *wchar_t */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag39
+    &__midl_frag40
 };
 
-static const __midl_frag36_t __midl_frag36 =
+static const __midl_frag37_t __midl_frag37 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -1951,7 +1959,7 @@ static const __midl_frag36_t __midl_frag36 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag35_t __midl_frag35 =
+static const __midl_frag36_t __midl_frag36 =
 { 
 /* gdipp_rpc_get_glyph_indices */
     { 
@@ -1979,7 +1987,7 @@ static const __midl_frag35_t __midl_frag35 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag36,
+        &__midl_frag37,
         { 
         /* h_session */
             0,
@@ -2003,7 +2011,7 @@ static const __midl_frag35_t __midl_frag35 =
     },
     { 
     /* str */      /* parameter str */
-        &__midl_frag39,
+        &__midl_frag40,
         { 
         /* str */
             1,
@@ -2051,7 +2059,7 @@ static const __midl_frag35_t __midl_frag35 =
     },
     { 
     /* gi */      /* parameter gi */
-        &__midl_frag42,
+        &__midl_frag43,
         { 
         /* gi */
             1,
@@ -2099,7 +2107,7 @@ static const __midl_frag35_t __midl_frag35 =
     }
 };
 
-static const __midl_frag31_t __midl_frag31 =
+static const __midl_frag32_t __midl_frag32 =
 { 
 /* ,  */
     (NDR64_UINT32) 0 /* 0x0 */,
@@ -2112,7 +2120,7 @@ static const __midl_frag31_t __midl_frag31 =
     }
 };
 
-static const __midl_frag30_t __midl_frag30 =
+static const __midl_frag31_t __midl_frag31 =
 { 
 /* *byte */
     { 
@@ -2132,7 +2140,7 @@ static const __midl_frag30_t __midl_frag30 =
         },
         (NDR64_UINT8) 0 /* 0x0 */,
         (NDR64_UINT32) 1 /* 0x1 */,
-        &__midl_frag31
+        &__midl_frag32
     },
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
@@ -2141,16 +2149,16 @@ static const __midl_frag30_t __midl_frag30 =
     }
 };
 
-static const __midl_frag29_t __midl_frag29 =
+static const __midl_frag30_t __midl_frag30 =
 { 
 /* *byte */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag30
+    &__midl_frag31
 };
 
-static const __midl_frag28_t __midl_frag28 =
+static const __midl_frag29_t __midl_frag29 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -2159,7 +2167,7 @@ static const __midl_frag28_t __midl_frag28 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag27_t __midl_frag27 =
+static const __midl_frag28_t __midl_frag28 =
 { 
 /* gdipp_rpc_get_font_metrics_data */
     { 
@@ -2187,7 +2195,7 @@ static const __midl_frag27_t __midl_frag27 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag28,
+        &__midl_frag29,
         { 
         /* h_session */
             0,
@@ -2211,7 +2219,7 @@ static const __midl_frag27_t __midl_frag27 =
     },
     { 
     /* metrics_buf */      /* parameter metrics_buf */
-        &__midl_frag30,
+        &__midl_frag31,
         { 
         /* metrics_buf */
             1,
@@ -2283,7 +2291,7 @@ static const __midl_frag27_t __midl_frag27 =
     }
 };
 
-static const __midl_frag25_t __midl_frag25 =
+static const __midl_frag26_t __midl_frag26 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -2292,7 +2300,7 @@ static const __midl_frag25_t __midl_frag25 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag24_t __midl_frag24 =
+static const __midl_frag25_t __midl_frag25 =
 { 
 /* gdipp_rpc_get_font_metrics_size */
     { 
@@ -2320,7 +2328,7 @@ static const __midl_frag24_t __midl_frag24 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag25,
+        &__midl_frag26,
         { 
         /* h_session */
             0,
@@ -2368,7 +2376,7 @@ static const __midl_frag24_t __midl_frag24 =
     }
 };
 
-static const __midl_frag20_t __midl_frag20 =
+static const __midl_frag21_t __midl_frag21 =
 { 
 /*  */
     (NDR64_UINT32) 0 /* 0x0 */,
@@ -2381,7 +2389,7 @@ static const __midl_frag20_t __midl_frag20 =
     }
 };
 
-static const __midl_frag19_t __midl_frag19 =
+static const __midl_frag20_t __midl_frag20 =
 { 
 /* *byte */
     { 
@@ -2401,7 +2409,7 @@ static const __midl_frag19_t __midl_frag19 =
         },
         (NDR64_UINT8) 0 /* 0x0 */,
         (NDR64_UINT32) 1 /* 0x1 */,
-        &__midl_frag20
+        &__midl_frag21
     },
     { 
     /* struct _NDR64_ARRAY_ELEMENT_INFO */
@@ -2410,16 +2418,16 @@ static const __midl_frag19_t __midl_frag19 =
     }
 };
 
-static const __midl_frag18_t __midl_frag18 =
+static const __midl_frag19_t __midl_frag19 =
 { 
 /* *byte */
     0x20,    /* FC64_RP */
     (NDR64_UINT8) 0 /* 0x0 */,
     (NDR64_UINT16) 0 /* 0x0 */,
-    &__midl_frag19
+    &__midl_frag20
 };
 
-static const __midl_frag15_t __midl_frag15 =
+static const __midl_frag16_t __midl_frag16 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -2428,7 +2436,7 @@ static const __midl_frag15_t __midl_frag15 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag14_t __midl_frag14 =
+static const __midl_frag15_t __midl_frag15 =
 { 
 /* gdipp_rpc_get_font_data */
     { 
@@ -2456,7 +2464,7 @@ static const __midl_frag14_t __midl_frag14 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag15,
+        &__midl_frag16,
         { 
         /* h_session */
             0,
@@ -2528,7 +2536,7 @@ static const __midl_frag14_t __midl_frag14 =
     },
     { 
     /* data_buf */      /* parameter data_buf */
-        &__midl_frag19,
+        &__midl_frag20,
         { 
         /* data_buf */
             1,
@@ -2600,7 +2608,7 @@ static const __midl_frag14_t __midl_frag14 =
     }
 };
 
-static const __midl_frag10_t __midl_frag10 =
+static const __midl_frag11_t __midl_frag11 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -2609,7 +2617,7 @@ static const __midl_frag10_t __midl_frag10 =
     (NDR64_UINT8) 1 /* 0x1 */
 };
 
-static const __midl_frag9_t __midl_frag9 =
+static const __midl_frag10_t __midl_frag10 =
 { 
 /* gdipp_rpc_get_font_data_size */
     { 
@@ -2637,7 +2645,7 @@ static const __midl_frag9_t __midl_frag9 =
     },
     { 
     /* h_session */      /* parameter h_session */
-        &__midl_frag10,
+        &__midl_frag11,
         { 
         /* h_session */
             0,
@@ -2733,7 +2741,7 @@ static const __midl_frag9_t __midl_frag9 =
     }
 };
 
-static const __midl_frag8_t __midl_frag8 =
+static const __midl_frag9_t __midl_frag9 =
 { 
 /* struct _NDR64_CONTEXT_HANDLE_FORMAT */
     0x70,    /* FC64_BIND_CONTEXT */
@@ -2805,12 +2813,12 @@ static const __midl_frag2_t __midl_frag2 =
     { 
     /* gdipp_rpc_begin_session */      /* procedure gdipp_rpc_begin_session */
         (NDR64_UINT32) 19660864 /* 0x12c0040 */,    /* explicit handle */ /* IsIntrepreted, ClientMustSize, HasReturn, ServerCorrelation, HasExtensions */
-        (NDR64_UINT32) 32 /* 0x20 */ ,  /* Stack size */
-        (NDR64_UINT32) 8 /* 0x8 */,
+        (NDR64_UINT32) 40 /* 0x28 */ ,  /* Stack size */
+        (NDR64_UINT32) 16 /* 0x10 */,
         (NDR64_UINT32) 36 /* 0x24 */,
         (NDR64_UINT16) 0 /* 0x0 */,
         (NDR64_UINT16) 0 /* 0x0 */,
-        (NDR64_UINT16) 3 /* 0x3 */,
+        (NDR64_UINT16) 4 /* 0x4 */,
         (NDR64_UINT16) 8 /* 0x8 */
     },
     { 
@@ -2874,8 +2882,32 @@ static const __midl_frag2_t __midl_frag2 =
         16 /* 0x10 */,   /* Stack offset */
     },
     { 
+    /* render_mode */      /* parameter render_mode */
+        &__midl_frag7,
+        { 
+        /* render_mode */
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            (NDR64_UINT16) 0 /* 0x0 */,
+            0
+        },    /* [in], Basetype, ByValue */
+        (NDR64_UINT16) 0 /* 0x0 */,
+        24 /* 0x18 */,   /* Stack offset */
+    },
+    { 
     /* GDIPP_RPC_SESSION_HANDLE */      /* parameter GDIPP_RPC_SESSION_HANDLE */
-        &__midl_frag8,
+        &__midl_frag9,
         { 
         /* GDIPP_RPC_SESSION_HANDLE */
             0,
@@ -2895,7 +2927,7 @@ static const __midl_frag2_t __midl_frag2 =
             0
         },    /* [out], IsReturn */
         (NDR64_UINT16) 0 /* 0x0 */,
-        24 /* 0x18 */,   /* Stack offset */
+        32 /* 0x20 */,   /* Stack offset */
     }
 };
 
@@ -2909,16 +2941,16 @@ static const __midl_frag1_t __midl_frag1 =
 static const FormatInfoRef gdipp_rpc_Ndr64ProcTable[] =
     {
     &__midl_frag2,
-    &__midl_frag9,
-    &__midl_frag14,
-    &__midl_frag24,
-    &__midl_frag27,
-    &__midl_frag35,
-    &__midl_frag46,
-    &__midl_frag53,
-    &__midl_frag56,
-    &__midl_frag64,
-    &__midl_frag68
+    &__midl_frag10,
+    &__midl_frag15,
+    &__midl_frag25,
+    &__midl_frag28,
+    &__midl_frag36,
+    &__midl_frag47,
+    &__midl_frag54,
+    &__midl_frag57,
+    &__midl_frag65,
+    &__midl_frag69
     };
 
 

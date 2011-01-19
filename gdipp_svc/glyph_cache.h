@@ -1,11 +1,11 @@
 #pragma once
 
-#include "helper_def.h"
-#include "lru.h"
+#include <support_lru.h>
+#include <support_rpc.h>
 
 using namespace std;
 
-class gdimm_glyph_cache
+class gdipp_glyph_cache
 {	
 	// map from string hash to glyph run
 	typedef map<unsigned int, glyph_run> hash_to_run_map;
@@ -20,7 +20,7 @@ class gdimm_glyph_cache
 	static unsigned __int64 get_char_id(unsigned int font_trait, FT_UInt index, bool is_glyph_index);
 
 public:
-	gdimm_glyph_cache();
+	gdipp_glyph_cache();
 
 	const FT_Glyph lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const;
 	bool store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph);

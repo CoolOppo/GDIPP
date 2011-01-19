@@ -1,7 +1,6 @@
 #pragma once
 
-#include "lock.h"
-#include <gdipp_lib.h>
+#include "support_lock.h"
 
 using namespace std;
 
@@ -34,7 +33,7 @@ public:
 
 	bool access(const T data, T &erased)
 	{
-		gdimm_lock lock(LOCK_LRU);
+		gdipp_lock lock("lru");
 
 		bool overflow = false;
 

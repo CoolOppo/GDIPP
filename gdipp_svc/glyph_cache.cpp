@@ -1,17 +1,17 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
 
-unsigned __int64 gdimm_glyph_cache::get_char_id(unsigned int font_trait, FT_UInt index, bool is_glyph_index)
+unsigned __int64 gdipp_glyph_cache::get_char_id(unsigned int font_trait, FT_UInt index, bool is_glyph_index)
 {
 	return (((static_cast<unsigned __int64>(font_trait) << 1) | static_cast<char>(is_glyph_index)) << 31) | index;
 }
 
-gdimm_glyph_cache::gdimm_glyph_cache()
+gdipp_glyph_cache::gdipp_glyph_cache()
 	: _glyph_run_lru(10)
 {
 }
 
-const FT_Glyph gdimm_glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const
+const FT_Glyph gdipp_glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const
 {
 	const unsigned __int64 char_id = get_char_id(font_trait, index, is_glyph_index);
 
@@ -22,7 +22,7 @@ const FT_Glyph gdimm_glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt 
 		return glyph_iter->second;
 }
 
-bool gdimm_glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
+bool gdipp_glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
 {
 	const unsigned __int64 char_id = get_char_id(font_trait, index, is_glyph_index);
 
@@ -31,9 +31,9 @@ bool gdimm_glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool
 	return glyph_insert_ret.second;
 }
 
-bool gdimm_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int64 string_id, glyph_run &a_glyph_run) const
+bool gdipp_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int64 string_id, glyph_run &a_glyph_run) const
 {
-	gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
+	gdipp_lock lock("glyph_run_cache");
 
 	map<unsigned __int64, hash_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
 	if (str_iter == _glyph_run_store.end())
@@ -48,12 +48,12 @@ bool gdimm_glyph_cache::lookup_glyph_run(unsigned int font_trait, unsigned __int
 	return true;
 }
 
-bool gdimm_glyph_cache::store_glyph_run(unsigned int font_trait, unsigned __int64 string_id, const glyph_run &a_glyph_run)
+bool gdipp_glyph_cache::store_glyph_run(unsigned int font_trait, unsigned __int64 string_id, const glyph_run &a_glyph_run)
 {
 	bool b_ret;
 	unsigned __int64 erased_str;
 
-	gdimm_lock lock(LOCK_GLYPH_RUN_CACHE);
+	gdipp_lock lock("glyph_run_cache");
 
 	b_ret = _glyph_run_lru.access(string_id, erased_str);
 	if (b_ret)

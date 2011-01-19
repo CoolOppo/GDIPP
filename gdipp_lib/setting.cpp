@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "setting.h"
+#include <support_setting_trait.h>
 
 const std::tr1::regex_constants::syntax_option_type regex_flags = std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize;
 
