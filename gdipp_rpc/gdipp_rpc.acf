@@ -1,7 +1,7 @@
 [explicit_handle]
 interface gdipp_rpc
 {
-	gdipp_rpc_get_font_data_size([context_handle_noserialize] h_session);
+	gdipp_rpc_get_font_size([context_handle_noserialize] h_session);
 	gdipp_rpc_get_font_data([context_handle_noserialize] h_session);
 	gdipp_rpc_get_font_metrics_size([context_handle_noserialize] h_session);
 	gdipp_rpc_get_font_metrics_data([context_handle_noserialize] h_session);

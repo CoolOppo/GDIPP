@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="gdipp_svc"
 	ProjectGUID="{D8F37991-4EE8-43F0-BFC7-3FCD7393D3BF}"
-	RootNamespace="svc"
+	RootNamespace="gdipp_svc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -123,7 +123,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -202,7 +202,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -282,7 +282,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -347,6 +347,10 @@
 			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
 			RelativePathToProject=".\gdipp_support\gdipp_support.vcproj"
 		/>
+		<ProjectReference
+			ReferencedProjectIdentifier="{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}"
+			RelativePathToProject=".\sqlite3\sqlite3.vcproj"
+		/>
 	</References>
 	<Files>
 		<Filter
@@ -371,10 +375,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
+				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -391,6 +396,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -407,7 +413,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
+				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -419,6 +425,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -435,6 +442,7 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -518,10 +526,6 @@
 			</File>
 			<File
 				RelativePath=".\font_man.h"
-				>
-			</File>
-			<File
-				RelativePath=".\font_proxy.h"
 				>
 			</File>
 			<File

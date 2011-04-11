@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="gdipp_loader"
 	ProjectGUID="{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}"
-	RootNamespace="notepad"
+	RootNamespace="gdipp_loader"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>

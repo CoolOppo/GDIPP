@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="gdipp_hook"
 	ProjectGUID="{2F543B2D-A10E-4607-B427-CF66A61D3872}"
-	RootNamespace="notepad"
+	RootNamespace="gdipp_hook"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>

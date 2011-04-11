@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_lib", "gdipp_lib\gdip
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_support", "gdipp_support\gdipp_support.vcproj", "{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "sqlite3\sqlite3.vcproj", "{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -149,6 +151,14 @@ Global
 		{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}.Release|Win32.Build.0 = Release|Win32
 		{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}.Release|x64.ActiveCfg = Release|x64
 		{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}.Release|x64.Build.0 = Release|x64
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Debug|Win32.Build.0 = Debug|Win32
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Debug|x64.ActiveCfg = Debug|x64
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Debug|x64.Build.0 = Debug|x64
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Release|Win32.ActiveCfg = Release|Win32
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Release|Win32.Build.0 = Release|Win32
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Release|x64.ActiveCfg = Release|x64
+		{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

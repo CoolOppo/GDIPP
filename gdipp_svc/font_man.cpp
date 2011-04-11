@@ -30,7 +30,7 @@ void gdipp_font_man::stream_close(FT_Stream stream)
 	// GetFontData() needs no close
 }
 
-unsigned long gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
+void *gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 {
 	const HFONT linked_hfont = CreateFontIndirectW(attr_buf);
 	if (linked_hfont == NULL)
@@ -47,75 +47,66 @@ unsigned long gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_
 		return 0;
 
 	wstring font_face = metric_face_name(outline_metrics);
-	map<wstring, unsigned long>::const_iterator iter = _font_name_to_id.find(font_face);
-	if (iter == _font_name_to_id.end())
+	map<wstring, font_entry>::const_iterator font_iter = _font_registry.find(font_face);
+	if (font_iter == _font_registry.end())
 	{
-		const unsigned long new_font_id = _id_to_info.size();
+		const font_entry new_font_data = {linked_hfont, metric_buf};
+		_font_registry[font_face] = new_font_data;
+		dc_pool_instance.free(font_holder);
 
-		const font_info new_font_data = {linked_hfont, metric_buf};
-		_font_name_to_id[font_face] = new_font_id;
-		_id_to_info[new_font_id] = new_font_data;
-
-		DeleteDC(font_holder);
-		return new_font_id;
+		return &_font_registry[font_face];
 	}
 
 	// font existed, use existing font
 	DeleteObject(linked_hfont);
-	DeleteDC(font_holder);
+	dc_pool_instance.free(font_holder);
 
-	return iter->second;
+	return const_cast<font_entry *>(&font_iter->second);
 }
 
-DWORD gdipp_font_man::get_font_raw_data(unsigned long font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const
+DWORD gdipp_font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const
 {
-	map<unsigned long, font_info>::const_iterator font_iter = _id_to_info.find(font_id);
-	if (font_iter == _id_to_info.end())
-		return 0;
+	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
 	HDC font_holder = reinterpret_cast<HDC>(dc_pool_instance.claim());
 	assert(font_holder != NULL);
-	SelectObject(font_holder, font_iter->second.font_handle);
+	SelectObject(font_holder, curr_font->font_handle);
 
 	const DWORD data_size = GetFontData(font_holder, table, offset, data_buf, buf_size);
 	
-	DeleteDC(font_holder);
+	dc_pool_instance.free(font_holder);
 	
 	return data_size;
 }
 
-const vector<BYTE> *gdipp_font_man::get_font_metrics(unsigned long font_id) const
+const vector<BYTE> *gdipp_font_man::get_font_metrics(void *font_id) const
 {
-	map<unsigned long, font_info>::const_iterator font_iter = _id_to_info.find(font_id);
-	if (font_iter == _id_to_info.end())
-		return NULL;
+	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
-	return &font_iter->second.metric_buf;
+	return &curr_font->metric_buf;
 }
 
-DWORD gdipp_font_man::get_glyph_indices(unsigned long font_id, const wchar_t *str, int count, unsigned short *gi) const
+DWORD gdipp_font_man::get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi) const
 {
-	map<unsigned long, font_info>::const_iterator font_iter = _id_to_info.find(font_id);
-	if (font_iter == _id_to_info.end())
-		return 0;
+	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
 	HDC font_holder = reinterpret_cast<HDC>(dc_pool_instance.claim());
 	assert(font_holder != NULL);
-	SelectObject(font_holder, font_iter->second.font_handle);
+	SelectObject(font_holder, curr_font->font_handle);
 
 	const DWORD converted = GetGlyphIndices(font_holder, str, count, gi, GGI_MARK_NONEXISTING_GLYPHS);
 
-	DeleteDC(font_holder);
+	dc_pool_instance.free(font_holder);
 
 	return converted;
 }
 
-FT_Stream gdipp_font_man::lookup_stream(long font_id) const
+FT_Stream gdipp_font_man::lookup_stream(void *font_id) const
 {
 	return NULL;
 }
 
-ULONG gdipp_font_man::lookup_face_index(long font_id) const
+ULONG gdipp_font_man::lookup_face_index(void *font_id) const
 {
 	return 0;
 }

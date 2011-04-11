@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Mon Jan 10 01:24:26 2011
+/* at Tue Feb 01 20:18:53 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -119,7 +119,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 }
 
 
-unsigned long gdipp_rpc_get_font_data_size( 
+unsigned long gdipp_rpc_get_font_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
@@ -387,7 +387,7 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 /* 50 */	NdrFcShort( 0x20 ),	/* X64 Stack size/offset = 32 */
 /* 52 */	NdrFcShort( 0x12 ),	/* Type Offset=18 */
 
-	/* Procedure gdipp_rpc_get_font_data_size */
+	/* Procedure gdipp_rpc_get_font_size */
 
 
 	/* Return value */
@@ -998,7 +998,7 @@ static const unsigned short gdipp_rpc_FormatStringOffsetTable[] =
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Mon Jan 10 01:24:26 2011
+/* at Tue Feb 01 20:18:53 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -2828,9 +2828,9 @@ static const __midl_frag11_t __midl_frag11 =
 
 static const __midl_frag10_t __midl_frag10 =
 { 
-/* gdipp_rpc_get_font_data_size */
+/* gdipp_rpc_get_font_size */
     { 
-    /* gdipp_rpc_get_font_data_size */      /* procedure gdipp_rpc_get_font_data_size */
+    /* gdipp_rpc_get_font_size */      /* procedure gdipp_rpc_get_font_size */
         (NDR64_UINT32) 17301568 /* 0x1080040 */,    /* explicit handle */ /* IsIntrepreted, HasReturn, HasExtensions */
         (NDR64_UINT32) 40 /* 0x28 */ ,  /* Stack size */
         (NDR64_UINT32) 52 /* 0x34 */,

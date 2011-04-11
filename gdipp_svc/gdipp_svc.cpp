@@ -304,7 +304,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	//init_gdipp_rpc_server();
+	//Sleep(5000);
 
 #ifdef svc_debug
 	BOOL b_ret;

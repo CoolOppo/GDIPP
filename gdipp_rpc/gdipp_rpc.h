@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Mon Jan 10 01:24:26 2011
+/* at Tue Feb 01 20:18:53 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run)
@@ -52,6 +52,32 @@ extern "C"{
 /* interface gdipp_rpc */
 /* [explicit_handle][version][uuid] */ 
 
+typedef struct gdipp_vector
+    {
+    long x;
+    long y;
+    } 	gdipp_vector;
+
+typedef struct gdipp_bitmap_glyph
+    {
+    int left;
+    int top;
+    int rows;
+    int width;
+    int pitch;
+    byte *buffer;
+    unsigned char pixel_mode;
+    } 	gdipp_bitmap_glyph;
+
+typedef struct gdipp_outline_glyph
+    {
+    short n_contours;
+    short n_points;
+    gdipp_vector *points;
+    unsigned char *tags;
+    unsigned char *contours;
+    } 	gdipp_outline_glyph;
+
 typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 
 typedef /* [context_handle] */ void *GDIPP_RPC_GLYPH_RUN_HANDLE;
@@ -62,7 +88,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
     /* [in] */ unsigned long logfont_size,
     /* [in] */ int render_mode);
 
-unsigned long gdipp_rpc_get_font_data_size( 
+unsigned long gdipp_rpc_get_font_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,

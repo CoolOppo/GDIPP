@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0500 */
-/* at Mon Jan 10 01:24:26 2011
+/* at Tue Feb 01 20:18:53 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win32 (32b run)
@@ -153,7 +153,7 @@ static const gdipp_rpc_MIDL_PROC_FORMAT_STRING gdipp_rpc__MIDL_ProcFormatString 
 /* 48 */	NdrFcShort( 0x10 ),	/* x86 Stack size/offset = 16 */
 /* 50 */	NdrFcShort( 0x12 ),	/* Type Offset=18 */
 
-	/* Procedure gdipp_rpc_get_font_data_size */
+	/* Procedure gdipp_rpc_get_font_size */
 
 
 	/* Return value */
@@ -800,7 +800,7 @@ RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable =
 static const SERVER_ROUTINE gdipp_rpc_ServerRoutineTable[] = 
     {
     (SERVER_ROUTINE)gdipp_rpc_begin_session,
-    (SERVER_ROUTINE)gdipp_rpc_get_font_data_size,
+    (SERVER_ROUTINE)gdipp_rpc_get_font_size,
     (SERVER_ROUTINE)gdipp_rpc_get_font_data,
     (SERVER_ROUTINE)gdipp_rpc_get_font_metrics_size,
     (SERVER_ROUTINE)gdipp_rpc_get_font_metrics_data,

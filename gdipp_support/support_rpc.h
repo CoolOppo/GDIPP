@@ -15,7 +15,7 @@ struct glyph_run
 	// glyph data pointers
 	// different glyph runs could share same glyph, therefore each glyph is the minimum units in the glyph cache
 	list<void *> glyphs;
-
+ 
 	/*
 	the bounding boxes are dependent to specific glyph run
 	control box is the formal positioning according to the glyph's advance vector

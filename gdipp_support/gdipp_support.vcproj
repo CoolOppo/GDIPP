@@ -4,7 +4,7 @@
 	Version="9.00"
 	Name="gdipp_support"
 	ProjectGUID="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
-	RootNamespace="notepad"
+	RootNamespace="gdipp_support"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -281,14 +281,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\MurmurHash2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MurmurHash2_64.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\support_helper.cpp"
 				>
 			</File>
@@ -300,20 +292,20 @@
 				RelativePath=".\support_setting_trait.cpp"
 				>
 			</File>
+			<Filter
+				Name="MurmurHash"
+				>
+				<File
+					RelativePath=".\MurmurHash\MurmurHash3.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\MurmurHash2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MurmurHash2_64.h"
-				>
-			</File>
 			<File
 				RelativePath=".\support_helper.h"
 				>
@@ -338,6 +330,18 @@
 				RelativePath=".\support_setting_trait.h"
 				>
 			</File>
+			<Filter
+				Name="MurmurHash"
+				>
+				<File
+					RelativePath=".\MurmurHash\bigint.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MurmurHash\MurmurHash3.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

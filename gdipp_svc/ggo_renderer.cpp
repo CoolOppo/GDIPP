@@ -169,7 +169,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	}
 }
 
-bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run)
+bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run)
 {
 	bool b_ret;
 
@@ -243,9 +243,9 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, g
 		black_box.right = black_box.left + glyph_width;
 		black_box.bottom = ctrl_box.bottom;
 
-		new_glyph_run.glyphs.push_back(new_glyph);
-		new_glyph_run.ctrl_boxes.push_back(ctrl_box);
-		new_glyph_run.black_boxes.push_back(black_box);
+		new_glyph_run->glyphs.push_back(new_glyph);
+		new_glyph_run->ctrl_boxes.push_back(ctrl_box);
+		new_glyph_run->black_boxes.push_back(black_box);
 	}
 
 	return true;

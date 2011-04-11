@@ -13,7 +13,7 @@ class gdimm_ggo_renderer : public gdimm_renderer
 
 	bool get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
 	const FT_Glyph outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
-	bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
+	bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
 
 public:
 	gdimm_ggo_renderer(gdipp_rpc_session *render_session);

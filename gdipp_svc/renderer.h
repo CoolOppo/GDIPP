@@ -5,7 +5,7 @@
 
 class gdimm_renderer
 {
-	virtual bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
+	virtual bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
 
 protected:
 	gdipp_rpc_session *_render_session;
@@ -13,6 +13,4 @@ protected:
 public:
 	gdimm_renderer(gdipp_rpc_session *render_session);
 	virtual ~gdimm_renderer();
-
-	bool fetch_glyph_run(bool is_glyph_index, LPCWSTR lpString, int c, glyph_run &a_glyph_run);
 };
