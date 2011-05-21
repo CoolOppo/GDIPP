@@ -1,9 +1,9 @@
 #pragma once
 
-#include "font_man.h"
-#include "glyph_cache.h"
-#include <setting_cache.h>
-#include <support_pool.h>
+#include "gdipp_lib/setting_cache.h"
+#include "gdipp_support/gs_pool.h"
+#include "gdipp_svc/font_man.h"
+#include "gdipp_svc/glyph_cache.h"
 
 class gdimm_renderer;
 

@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "PaintDlg.h"
-#include "gdipp_demo.h"
+#include "gdipp_demo/gdipp_demo.h"
 
 LRESULT CPaintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
@@ -24,7 +24,7 @@ LRESULT CPaintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 LRESULT CPaintDlg::OnClose(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	EndDialog((int) wParam);
+	EndDialog(static_cast<int>(wParam));
 	return 0;
 }
 

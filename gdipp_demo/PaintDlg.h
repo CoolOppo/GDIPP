@@ -5,13 +5,11 @@
 #pragma once
 #include <atlcrack.h>
 
-#include "demo_painter.h"
-#include "resource.h"
+#include "gdipp_demo/resource.h"
+#include "gdipp_demo/demo_painter.h"
 
 class CPaintDlg : public CDialogImpl<CPaintDlg>
 {
-	gdipp_demo_painter _painter;
-
 public:
 	enum { IDD = IDD_PAINTDLG };
 
@@ -31,4 +29,7 @@ public:
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnToolsStop(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+
+private:
+	gdipp_demo_painter _painter;
 };

@@ -13,7 +13,7 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 
 LRESULT CAboutDlg::OnClose(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	EndDialog((int) wParam);
+	EndDialog(static_cast<int>(wParam));
 	return 0;
 }
 

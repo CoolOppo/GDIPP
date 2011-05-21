@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer.h"
+#include "gdipp_svc/renderer.h"
 
 // WIC painter renders glyphs itself
 // this renderer is simply a stub

@@ -54,6 +54,7 @@
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				DisableLanguageExtensions="true"
 				CompileAs="0"
 			/>
 			<Tool
@@ -123,6 +124,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				DisableLanguageExtensions="true"
 				DebugInformationFormat="0"
 				CompileAs="0"
 			/>
@@ -192,6 +194,7 @@
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				DisableLanguageExtensions="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
@@ -262,6 +265,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
+				DisableLanguageExtensions="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
@@ -332,6 +336,38 @@
 			<File
 				RelativePath="..\ftdebug.c"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableLanguageExtensions="false"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableLanguageExtensions="false"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableLanguageExtensions="false"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableLanguageExtensions="false"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\src\base\ftfstype.c"

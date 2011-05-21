@@ -66,7 +66,7 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	assert(hr == S_OK);
 
 	UINT32 glyph_run_width = 0;
-	for (UINT i = 0; i < c; i++)
+	for (UINT i = 0; i < c; ++i)
 		glyph_run_width += glyph_metrics[i].advanceWidth;
 	bbox_width = max(bbox_width, static_cast<LONG>(glyph_run_width * _em_size / _context->outline_metrics->otmEMSquare));
 
@@ -219,7 +219,7 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 	if (lpDx != NULL)
 	{
 		_advances.resize(c);
-		for (UINT i = 0; i < c; i++)
+		for (UINT i = 0; i < c; ++i)
 		{
 			_advances[i] = static_cast<FLOAT>(lpDx[i * dx_skip]);
 			bbox_width += lpDx[i * dx_skip];
@@ -313,7 +313,7 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 			bbox_origin.y,
 			SRCCOPY);
 	}
-	
+
 	if (paint_success)
 	{
 		CComPtr<ID2D1SolidColorBrush> text_brush;
@@ -325,9 +325,9 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 		else
 			wic_render_target->DrawTextLayout(D2D1::Point2F(static_cast<FLOAT>(canvas_origin.x), static_cast<FLOAT>(canvas_origin.y)), dw_text_layout, text_brush);
 	}
-	
+
 	hr = wic_render_target->EndDraw();
-	
+
 	paint_success = (hr == S_OK);
 	if (paint_success)
 	{

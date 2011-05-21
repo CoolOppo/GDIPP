@@ -2,7 +2,7 @@
 #include "gdimm.h"
 #include "os2_metrics.h"
 #include "helper_func.h"
-#include <gdipp_rpc.h>
+#include "gdipp_rpc/gdipp_rpc.h"
 
 #define OS2_TABLE_TAG mmioFOURCC('O', 'S', '/', '2')
 
@@ -31,7 +31,7 @@ bool gdimm_os2_metrics::init(HDC hdc)
 	font_data_size = GetFontData(hdc, OS2_TABLE_TAG, offsetof(TT_OS2, fsSelection), &_fsSelection, sizeof(_fsSelection));
 	if (font_data_size == GDI_ERROR)
 		return false;
-	
+
 	_xAvgCharWidth = SWAPWORD(_xAvgCharWidth);
 	_usWeightClass = SWAPWORD(_usWeightClass);
 	_usWidthClass = SWAPWORD(_usWidthClass);

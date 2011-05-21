@@ -2,7 +2,7 @@
 #include "wic_dib.h"
 #include "helper_func.h"
 
-IFACEMETHODIMP gdimm_wic_dib_lock::QueryInterface( 
+IFACEMETHODIMP gdimm_wic_dib_lock::QueryInterface(
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject)
 {
@@ -19,7 +19,7 @@ IFACEMETHODIMP_(ULONG) gdimm_wic_dib_lock::Release( void)
 	return 0;
 }
 
-IFACEMETHODIMP gdimm_wic_dib_lock::GetSize( 
+IFACEMETHODIMP gdimm_wic_dib_lock::GetSize(
 	/* [out] */ __RPC__out UINT *puiWidth,
 	/* [out] */ __RPC__out UINT *puiHeight)
 {
@@ -29,7 +29,7 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetSize(
 	return S_OK;
 }
 
-IFACEMETHODIMP gdimm_wic_dib_lock::GetStride( 
+IFACEMETHODIMP gdimm_wic_dib_lock::GetStride(
 	/* [out] */ __RPC__out UINT *pcbStride)
 {
 	*pcbStride = get_bmp_pitch(_lock_rect->Width, _bmp_info->bmiHeader.biBitCount);
@@ -37,7 +37,7 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetStride(
 	return S_OK;
 }
 
-/* [local] */ IFACEMETHODIMP gdimm_wic_dib_lock::GetDataPointer( 
+/* [local] */ IFACEMETHODIMP gdimm_wic_dib_lock::GetDataPointer(
 	/* [out] */ UINT *pcbBufferSize,
 	/* [out] */ BYTE **ppbData)
 {
@@ -47,11 +47,11 @@ IFACEMETHODIMP gdimm_wic_dib_lock::GetStride(
 	return S_OK;
 }
 
-IFACEMETHODIMP gdimm_wic_dib_lock::GetPixelFormat( 
+IFACEMETHODIMP gdimm_wic_dib_lock::GetPixelFormat(
 	/* [out] */ __RPC__out WICPixelFormatGUID *pPixelFormat)
 {
 	*pPixelFormat = GUID_WICPixelFormat32bppBGR;
-	
+
 	return S_OK;
 }
 
@@ -66,7 +66,7 @@ void gdimm_wic_dib_lock::set_rect(const WICRect *lock_rect)
 	_lock_rect = lock_rect;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::QueryInterface( 
+IFACEMETHODIMP gdimm_wic_dib::QueryInterface(
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject)
 {
@@ -83,7 +83,7 @@ IFACEMETHODIMP_(ULONG) gdimm_wic_dib::Release( void)
 	return 0;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::GetSize( 
+IFACEMETHODIMP gdimm_wic_dib::GetSize(
 	/* [out] */ __RPC__out UINT *puiWidth,
 	/* [out] */ __RPC__out UINT *puiHeight)
 {
@@ -93,7 +93,7 @@ IFACEMETHODIMP gdimm_wic_dib::GetSize(
 	return S_OK;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::GetPixelFormat( 
+IFACEMETHODIMP gdimm_wic_dib::GetPixelFormat(
 	/* [out] */ __RPC__out WICPixelFormatGUID *pPixelFormat)
 {
 	switch (_bmp_info->bmiHeader.biBitCount)
@@ -111,21 +111,21 @@ IFACEMETHODIMP gdimm_wic_dib::GetPixelFormat(
 	return S_OK;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::GetResolution( 
+IFACEMETHODIMP gdimm_wic_dib::GetResolution(
 	/* [out] */ __RPC__out double *pDpiX,
 	/* [out] */ __RPC__out double *pDpiY)
 {
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::CopyPalette( 
+IFACEMETHODIMP gdimm_wic_dib::CopyPalette(
 	/* [in] */ __RPC__in_opt IWICPalette *pIPalette)
 {
 	// we do not use palette
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::CopyPixels( 
+IFACEMETHODIMP gdimm_wic_dib::CopyPixels(
 	/* [unique][in] */ __RPC__in_opt const WICRect *prc,
 	/* [in] */ UINT cbStride,
 	/* [in] */ UINT cbBufferSize,
@@ -135,7 +135,7 @@ IFACEMETHODIMP gdimm_wic_dib::CopyPixels(
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::Lock( 
+IFACEMETHODIMP gdimm_wic_dib::Lock(
 	/* [in] */ __RPC__in const WICRect *prcLock,
 	/* [in] */ DWORD flags,
 	/* [out] */ __RPC__deref_out_opt IWICBitmapLock **ppILock)
@@ -146,14 +146,14 @@ IFACEMETHODIMP gdimm_wic_dib::Lock(
 	return S_OK;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::SetPalette( 
+IFACEMETHODIMP gdimm_wic_dib::SetPalette(
 	/* [in] */ __RPC__in_opt IWICPalette *pIPalette)
 {
 	// we do not use palette
 	return E_NOTIMPL;
 }
 
-IFACEMETHODIMP gdimm_wic_dib::SetResolution( 
+IFACEMETHODIMP gdimm_wic_dib::SetResolution(
 	/* [in] */ double dpiX,
 	/* [in] */ double dpiY)
 {

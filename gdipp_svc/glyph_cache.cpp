@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
+#include <utility>
+
+using std::pair;
 
 uint64_t gdipp_glyph_cache::get_char_id(unsigned int font_trait, FT_UInt index, bool is_glyph_index)
 {

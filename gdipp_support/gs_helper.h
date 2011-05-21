@@ -2,7 +2,8 @@
 
 #include <sstream>
 
-using namespace std;
+using std::wistringstream;
+using std::wstring;
 
 // convert a string to template value if possible
 // helper function to convert raw setting strings to values

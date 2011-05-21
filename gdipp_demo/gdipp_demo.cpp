@@ -3,10 +3,9 @@
 
 #include "stdafx.h"
 #include "gdipp_demo.h"
-#include "MainDlg.h"
-#include "AboutDlg.h"
-#include "resource.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_demo/resource.h"
+#include "gdipp_demo/MainDlg.h"
 
 CAppModule _Module;
 
@@ -42,7 +41,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int nCmdShow)
 {
-	// If you are running on NT 4.0 or higher you can use the following call instead to 
+	// If you are running on NT 4.0 or higher you can use the following call instead to
 	// make the EXE free threaded. This means that calls come in on a random RPC thread.
 	HRESULT hRes = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	ATLASSERT(SUCCEEDED(hRes));
@@ -50,7 +49,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
 	::DefWindowProc(NULL, 0, 0, 0L);
 
-	AtlInitCommonControls(ICC_BAR_CLASSES);	// add flags to support other controls
+	AtlInitCommonControls(ICC_BAR_CLASSES); // add flags to support other controls
 
 	hRes = _Module.Init(NULL, hInstance);
 	ATLASSERT(SUCCEEDED(hRes));

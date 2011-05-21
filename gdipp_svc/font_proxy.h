@@ -1,6 +1,8 @@
 #pragma once
 
-using namespace std;
+#include <map>
+
+using std::map;
 
 class gdimm_font_man
 {
@@ -15,19 +17,6 @@ class gdimm_font_man
 	every linked font are kept alive until the font storage is destructed
 	linked fonts have negative font id
 	*/
-
-	// face name -> font id
-	// we use this map because FreeType callback only have face id
-	map<wstring, long> _name_to_id;
-	// font id -> font info
-	// we use this map because vector internally free and re-allocate existing entries
-	// pointers become invalid
-	map<long, font_info> _id_to_info;
-
-	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
-	static DWORD get_font_size(long font_id, DWORD &table_header);
-	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
-	static ULONG get_ttc_face_index(long font_id, DWORD ttc_file_size);
 
 public:
 	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
@@ -45,4 +34,18 @@ public:
 	long register_font(HDC font_holder, const wchar_t *font_face);
 	long link_font(const LOGFONTW &linked_font_attr, wstring &linked_font_face);
 	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
+
+private:
+	static DWORD get_font_size(HDC font_holder, DWORD &table_header);
+	static DWORD get_font_size(long font_id, DWORD &table_header);
+	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
+	static ULONG get_ttc_face_index(long font_id, DWORD ttc_file_size);
+
+	// face name -> font id
+	// we use this map because FreeType callback only have face id
+	map<wstring, long> _name_to_id;
+	// font id -> font info
+	// we use this map because vector internally free and re-allocate existing entries
+	// pointers become invalid
+	map<long, font_info> _id_to_info;
 };

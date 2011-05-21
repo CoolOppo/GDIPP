@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -108,7 +108,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -172,7 +172,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -236,7 +236,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -281,25 +281,17 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\support_helper.cpp"
+				RelativePath=".\gs_helper.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\support_lock.cpp"
+				RelativePath=".\gs_lock.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\support_setting_trait.cpp"
+				RelativePath=".\gs_setting_trait.cpp"
 				>
 			</File>
-			<Filter
-				Name="MurmurHash"
-				>
-				<File
-					RelativePath=".\MurmurHash\MurmurHash3.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -307,41 +299,29 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\support_helper.h"
+				RelativePath=".\gs_helper.h"
 				>
 			</File>
 			<File
-				RelativePath=".\support_lock.h"
+				RelativePath=".\gs_lock.h"
 				>
 			</File>
 			<File
-				RelativePath=".\support_lru.h"
+				RelativePath=".\gs_lru.h"
 				>
 			</File>
 			<File
-				RelativePath=".\support_pool.h"
+				RelativePath=".\gs_pool.h"
 				>
 			</File>
 			<File
-				RelativePath=".\support_rpc.h"
+				RelativePath=".\gs_rpc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\support_setting_trait.h"
+				RelativePath=".\gs_setting_trait.h"
 				>
 			</File>
-			<Filter
-				Name="MurmurHash"
-				>
-				<File
-					RelativePath=".\MurmurHash\bigint.h"
-					>
-				</File>
-				<File
-					RelativePath=".\MurmurHash\MurmurHash3.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

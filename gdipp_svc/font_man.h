@@ -1,6 +1,11 @@
 #pragma once
 
-using namespace std;
+#include <map>
+#include <vector>
+
+using std::map;
+using std::vector;
+using std::wstring;
 
 #define buf_family_name(metric_buf) (reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFamilyName))))
 #define buf_face_name(metric_buf) (reinterpret_cast<const wchar_t *>(metric_buf + reinterpret_cast<const UINT>((reinterpret_cast<const OUTLINETEXTMETRICW *>(metric_buf)->otmpFaceName))))
@@ -11,18 +16,6 @@ using namespace std;
 
 class gdipp_font_man
 {
-	struct font_entry
-	{
-		HFONT font_handle;
-		vector<BYTE> metric_buf;
-	};
-
-	map<wstring, font_entry> _font_registry;
-
-	static OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
-	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
-	static void stream_close(FT_Stream stream);
-	
 public:
 	void *register_font(const LOGFONTW *attr_buf, DWORD buf_size);
 	DWORD get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const;
@@ -31,4 +24,17 @@ public:
 
 	FT_Stream lookup_stream(void *font_id) const;
 	ULONG lookup_face_index(void *font_id) const;
+
+private:
+	struct font_entry
+	{
+		HFONT font_handle;
+		vector<BYTE> metric_buf;
+	};
+
+	static OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
+	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
+	static void stream_close(FT_Stream stream);
+
+	map<wstring, font_entry> _font_registry;
 };

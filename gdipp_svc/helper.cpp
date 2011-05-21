@@ -30,7 +30,7 @@ LONG int_from_16dot16(signed long x)
 LONG int_from_26dot6(signed long x)
 {
 	const LONG ret = (x >> 6);
-	
+
 	if (ret == 0 && x > 0)
 		return 1;
 	else
@@ -157,7 +157,7 @@ char get_gdi_weight_class(unsigned short weight)
 	const LONG weight_class_max[] = {0, 550, 611};
 	const char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
 
-	for (char i = 0; i < max_weight_class; i++)
+	for (char i = 0; i < max_weight_class; ++i)
 	{
 		if (weight <= weight_class_max[i])
 			return i;
@@ -177,7 +177,7 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 /*LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width)
 {
 	assert(a_glyph_run != NULL);
- 
+
 	list<RECT>::const_iterator first_box_iter;
 	list<RECT>::const_reverse_iterator last_box_iter;
 

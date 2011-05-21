@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <support_pool.h>
+#include "gdipp_support/gs_pool.h"
 
 HDC gdipp_pool<HDC>::create() const
 {

@@ -1,5 +1,9 @@
 #include "stdafx.h"
 #include "font_link.h"
+#include <set>
+
+using std::set;
+using std::wstringstream;
 
 #define MAX_VALUE_NAME 1024
 
@@ -46,7 +50,7 @@ gdipp_font_link::gdipp_font_link()
 	value_data = static_cast<BYTE *>(HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, max_data_len));
 	assert(value_data != NULL);
 
-	for (DWORD i = 0; i < value_count; i++)
+	for (DWORD i = 0; i < value_count; ++i)
 	{
 		DWORD name_len = MAX_VALUE_NAME;
 		DWORD data_len = max_data_len;
@@ -72,8 +76,8 @@ gdipp_font_link::gdipp_font_link()
 
 	value_data = static_cast<BYTE *>(HeapReAlloc(GetProcessHeap(), 0, value_data, max_data_len));
 	assert(value_data != NULL);
-	
-	for (DWORD i = 0; i < value_count; i++)
+
+	for (DWORD i = 0; i < value_count; ++i)
 	{
 		DWORD name_len = MAX_VALUE_NAME;
 		DWORD data_len = max_data_len;
@@ -101,7 +105,7 @@ gdipp_font_link::gdipp_font_link()
 			while (curr_comma != NULL)
 			{
 				wchar_t *next_comma = wcschr(curr_comma + 1, L',');
-				
+
 				if (next_comma != NULL)
 				{
 					*next_comma = L'\0';

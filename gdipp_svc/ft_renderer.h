@@ -1,10 +1,14 @@
 #pragma once
 
-#include "renderer.h"
-#include "setting_cache.h"
+#include "gdipp_lib/setting_cache.h"
+#include "gdipp_svc/renderer.h"
 
 class gdimm_ft_renderer : public gdimm_renderer
 {
+public:
+	const FT_OutlineGlyph get_outline_glyph(wchar_t glyph_char, bool is_glyph_index);
+
+private:
 	FT_F26Dot6 get_embolden(const font_setting_cache *setting_cache, char font_weight_class, char text_weight_class);
 	static void get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
 	static FT_ULong make_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode);
@@ -27,7 +31,4 @@ class gdimm_ft_renderer : public gdimm_renderer
 	bool generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline);
 
 	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
-
-public:
-	const FT_OutlineGlyph get_outline_glyph(wchar_t glyph_char, bool is_glyph_index);
 };

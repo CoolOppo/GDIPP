@@ -4,7 +4,7 @@
 #define GDIPP_API __declspec(dllexport)
 #else
 #define GDIPP_API __declspec(dllimport)
-#endif // GDIPP_EXPORTS
+#endif  // GDIPP_EXPORTS
 
 #include <crtdefs.h>
 

@@ -1,6 +1,9 @@
 #pragma once
 
-using namespace std;
+#include <vector>
+
+using std::vector;
+using std::wstring;
 
 const double pi = acos(-1.0);
 

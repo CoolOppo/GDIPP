@@ -1,6 +1,9 @@
 #pragma once
 
-using namespace std;
+#include <list>
+
+using std::list;
+using std::wstring;
 
 struct font_link_node
 {
@@ -11,11 +14,11 @@ struct font_link_node
 struct glyph_run
 {
 	// information for a glyph run, minimum units in the glyph run cache
-	
+
 	// glyph data pointers
 	// different glyph runs could share same glyph, therefore each glyph is the minimum units in the glyph cache
 	list<void *> glyphs;
- 
+
 	/*
 	the bounding boxes are dependent to specific glyph run
 	control box is the formal positioning according to the glyph's advance vector

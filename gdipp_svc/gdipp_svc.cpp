@@ -1,10 +1,9 @@
 #include "stdafx.h"
-#include "freetype.h"
-#include "rpc_impl.h"
-#include <gdipp_lib.h>
-#include <support_helper.h>
-
-using namespace std;
+#include <map>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_support/gs_helper.h"
+#include "gdipp_svc/freetype.h"
+#include "gdipp_svc/rpc_impl.h"
 
 #define SVC_NAME L"gdipp_svc"
 
@@ -163,7 +162,7 @@ VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHin
 	if (dwCurrentState == SERVICE_RUNNING || dwCurrentState == SERVICE_STOPPED)
 		svc_status.dwCheckPoint = 0;
 	else
-		svc_status.dwCheckPoint = dwCheckPoint++;
+		svc_status.dwCheckPoint = ++dwCheckPoint;
 
 	// report the status of the service to the SCM
 	SetServiceStatus(h_svc_status, &svc_status);
@@ -174,11 +173,11 @@ DWORD WINAPI svc_ctrl_handler(DWORD dwCtrl, DWORD dwEventType, LPVOID lpEventDat
 	BOOL b_ret;
 
 	// handle the requested control code
-	switch (dwCtrl) 
+	switch (dwCtrl)
 	{
 	case SERVICE_CONTROL_STOP:
 		set_svc_status(SERVICE_STOP_PENDING, NO_ERROR, 0);
-		
+
 		b_ret = SetEvent(h_svc_events);
 		assert(b_ret);
 
@@ -198,7 +197,7 @@ DWORD WINAPI svc_ctrl_handler(DWORD dwCtrl, DWORD dwEventType, LPVOID lpEventDat
 		else if (dwEventType == WTS_SESSION_LOGOFF)
 		{
 			stop_hook(reinterpret_cast<WTSSESSION_NOTIFICATION *>(lpEventData)->dwSessionId);
-			
+
 			return NO_ERROR;
 		}
 		else
@@ -215,7 +214,7 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	b_ret = UnregisterWait(h_wait_cleanup);
 	assert(b_ret || GetLastError() == ERROR_IO_PENDING);
 
-	for (map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); session_iter++)
+	for (map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); ++session_iter)
 		stop_hook(session_iter->first);
 
 	b_ret = stop_gdipp_rpc_server();
@@ -283,7 +282,7 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
-	
+
 	wcs_convert(gdipp_get_service_setting(L"hook_32_bit"), &hook_32_bit);
 	wcs_convert(gdipp_get_service_setting(L"hook_64_bit"), &hook_64_bit);
 
@@ -300,11 +299,11 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 }
 
- // #define svc_debug
+// #define svc_debug
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	//Sleep(5000);
+	// Sleep(5000);
 
 #ifdef svc_debug
 	BOOL b_ret;
@@ -331,7 +330,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	};
 
 	StartServiceCtrlDispatcherW(dispatch_table);
-#endif // svc_debug
+#endif  // svc_debug
 
 	return EXIT_SUCCESS;
 }

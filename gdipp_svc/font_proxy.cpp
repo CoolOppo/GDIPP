@@ -95,7 +95,7 @@ ULONG gdimm_font_man::get_ttc_face_index(HDC font_holder, DWORD ttc_file_size)
 	face_count = SWAPLONG(face_count);
 	read_offset += buffer_len;
 
-	for (ULONG i = 0; i < face_count; i++)
+	for (ULONG i = 0; i < face_count; ++i)
 	{
 		// start offset of the current record
 		DWORD curr_start;
@@ -140,7 +140,7 @@ ULONG gdimm_font_man::get_ttc_face_index(long font_id, DWORD ttc_file_size)
 	face_count = SWAPLONG(face_count);
 	read_offset += buffer_len;
 
-	for (ULONG i = 0; i < face_count; i++)
+	for (ULONG i = 0; i < face_count; ++i)
 	{
 		// start offset of the current record
 		DWORD curr_start;

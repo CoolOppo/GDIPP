@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "demo_painter.h"
-#include "gdipp_demo.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_demo/gdipp_demo.h"
 
 gdipp_demo_painter::gdipp_demo_painter()
 	: _total_count(total_count),
@@ -55,10 +55,10 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 			const int max_text_len = 10;
 			paint_str.resize(rand() % max_text_len + 1);
 
-			for (size_t i = 0; i < paint_str.size(); i++)
+			for (size_t i = 0; i < paint_str.size(); ++i)
 			{
-				unsigned short chr;
-				do 
+				int chr;
+				do
 				{
 					chr = rand();
 				} while (iswcntrl(chr));
@@ -112,7 +112,7 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 		dc.SetTextAlign(TA_LEFT | TA_TOP);
 		dc.SelectFont(_result_font);
 		dc.ExtTextOut(10, 10, 0, NULL, _result_str, static_cast<UINT>(wcslen(_result_str)), NULL);
-		
+
 		ValidateRect(dc.m_hWnd, NULL);
 	}
 }

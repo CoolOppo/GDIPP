@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "setting.h"
-#include <support_setting_trait.h>
+#include "gdipp_support/gs_setting_trait.h"
+
+using std::tr1::wregex;
+using pugi::string_t;
+using pugi::xml_attribute;
 
 const std::tr1::regex_constants::syntax_option_type regex_flags = std::tr1::regex_constants::icase | std::tr1::regex_constants::nosubs | std::tr1::regex_constants::optimize;
 
@@ -24,7 +28,7 @@ void gdipp_setting::parse_gdimm_setting_node(const xml_node &setting_node, setti
 	if (name == L"freetype" || name == L"gamma" || name == L"render_mode" || name == L"shadow")
 	{
 		// these settings have nested items
-		for (xml_node::iterator iter = setting_node.begin(); iter != setting_node.end(); iter++)
+		for (xml_node::iterator iter = setting_node.begin(); iter != setting_node.end(); ++iter)
 			setting_store[name + L"/" + iter->name()] = iter->first_child().value();
 	}
 	else
@@ -38,7 +42,7 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 	xpath_node_set::const_iterator node_iter = process_nodes.end();
 	node_iter--;
 
-	for (size_t i = 0; i < process_nodes.size(); i++, node_iter--)
+	for (size_t i = 0; i < process_nodes.size(); ++i, node_iter--)
 	{
 		// only store the setting items which match the current process name
 
@@ -54,7 +58,7 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 
 		if (process_matched)
 		{
-			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+			for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); ++set_iter)
 				parse_gdimm_setting_node(*set_iter, _process_setting);
 		}
 	}
@@ -62,11 +66,11 @@ void gdipp_setting::load_gdimm_process(const xpath_node_set &process_nodes)
 
 void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 {
-	for (xpath_node_set::const_iterator node_iter = font_node.begin(); node_iter != font_node.end(); node_iter++)
+	for (xpath_node_set::const_iterator node_iter = font_node.begin(); node_iter != font_node.end(); ++node_iter)
 	{
 		setting_map curr_settings;
 
-		for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); set_iter++)
+		for (xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); ++set_iter)
 			parse_gdimm_setting_node(*set_iter, curr_settings);
 
 		const xml_node curr_font = node_iter->node();
@@ -87,7 +91,7 @@ void gdipp_setting::load_gdimm_font(const xpath_node_set &font_node)
 
 void gdipp_setting::load_demo(const xml_node &root_node)
 {
-	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); ++iter)
 	{
 		const wstring node_name = iter->name();
 		const wstring curr_value = iter->first_child().value();
@@ -101,7 +105,7 @@ void gdipp_setting::load_demo(const xml_node &root_node)
 
 void gdipp_setting::load_service(const xml_node &root_node)
 {
-	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); ++iter)
 	{
 		const wstring node_name = iter->name();
 		const wstring curr_value = iter->first_child().value();
@@ -112,7 +116,7 @@ void gdipp_setting::load_service(const xml_node &root_node)
 
 void gdipp_setting::load_exclude(const xml_node &root_node)
 {
-	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); iter++)
+	for (xml_node::iterator iter = root_node.begin(); iter != root_node.end(); ++iter)
 		_exclude_process.push_back(iter->first_child().value());
 }
 
@@ -126,7 +130,7 @@ const wchar_t *gdipp_setting::get_gdimm_setting(const wchar_t *setting_name, con
 	if (setting_trait != NULL)
 	{
 		// check setting for the specified font
-		for (list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); list_iter++)
+		for (list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); ++list_iter)
 		{
 			// check next font if optional attributes match
 			// easy checks come first
@@ -193,7 +197,7 @@ bool gdipp_setting::is_process_excluded(const wchar_t *proc_name) const
 	else
 		final_name = proc_name;
 
-	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); iter++)
+	for (list<const wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); ++iter)
 	{
 		const wregex name_ex(iter->data(), regex_flags);
 		if (regex_match(final_name, name_ex))
@@ -220,7 +224,7 @@ void gdipp_setting::init_setting()
 
 BOOL gdipp_setting::load_setting(const wchar_t *setting_path)
 {
-	if (!_xml_doc->load_file(as_utf8(setting_path).c_str()))
+	if (!_xml_doc->load_file(pugi::as_utf8(setting_path).c_str()))
 		return FALSE;
 
 	const xpath_node_set proc_list = _xml_doc->select_nodes(L"/gdipp/gdimm/process");
@@ -248,7 +252,7 @@ BOOL gdipp_setting::load_setting(const wchar_t *setting_path)
 
 BOOL gdipp_setting::save_setting(const wchar_t *setting_path)
 {
-	return _xml_doc->save_file(as_utf8(setting_path).c_str());
+	return _xml_doc->save_file(pugi::as_utf8(setting_path).c_str());
 }
 
 BOOL gdipp_setting::insert_setting(const wchar_t *node_name, const wchar_t *node_text, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath, wstring &new_node_xpath)
@@ -265,11 +269,11 @@ BOOL gdipp_setting::insert_setting(const wchar_t *node_name, const wchar_t *node
 	if (ref_node.empty())
 		return FALSE;
 
-	xml_node new_node = parent_node.insert_child_before(node_element, ref_node);
+	xml_node new_node = parent_node.insert_child_before(pugi::node_element, ref_node);
 	if (new_node.empty())
 		return FALSE;
 
-	xml_node text_node = new_node.append_child(node_pcdata);
+	xml_node text_node = new_node.append_child(pugi::node_pcdata);
 	if (text_node.empty())
 		return FALSE;
 

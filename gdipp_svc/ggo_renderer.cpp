@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
-#include "freetype.h"
-#include "helper.h"
-#include <support_helper.h>
-#include <support_lock.h>
+#include "gdipp_support/gs_helper.h"
+#include "gdipp_support/gs_lock.h"
+#include "gdipp_svc/freetype.h"
+#include "gdipp_svc/helper.h"
 
 FT_Glyph gdimm_ggo_renderer::empty_outline_glyph;
 
@@ -62,7 +62,7 @@ void gdimm_ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE
 				break;
 			}
 
-			for (int j = 0; j < curve->cpfx; j++)
+			for (int j = 0; j < curve->cpfx; ++j)
 			{
 				const FT_Vector curr_point = {fixed_to_26dot6(curve->apfx[j].x), fixed_to_26dot6(curve->apfx[j].y)};
 				curve_points.push_back(curr_point);
@@ -132,7 +132,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 		outline_glyph.outline.tags = &curve_tags[0];
 		outline_glyph.outline.contours = &contour_indices[0];
 		outline_glyph.outline.flags = FT_OUTLINE_NONE;
-		
+
 		/*
 		once in possess of FT_Outline, there are several way to get FT_Bitmap
 
@@ -194,7 +194,7 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, g
 
 	POINT pen_pos = {};
 
-	for (UINT i = 0; i < c; i++)
+	for (UINT i = 0; i < c; ++i)
 	{
 		GLYPHMETRICS glyph_metrics = {};
 		FT_Glyph new_glyph;
@@ -234,7 +234,7 @@ bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, g
 		ctrl_box.top = pen_pos.y;
 		black_box.left = ctrl_box.left + glyph_left;
 		black_box.top = ctrl_box.top;
-		
+
 		pen_pos.x += glyph_metrics.gmCellIncX;
 		pen_pos.y += glyph_metrics.gmCellIncY;
 

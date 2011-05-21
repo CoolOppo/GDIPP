@@ -1,18 +1,18 @@
 #pragma once
 
-#include "renderer.h"
+#include <vector>
+#include "gdipp_svc/renderer.h"
+
+using std::vector;
 
 class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 {
-	static IDWriteFactory *_dw_factory;
-	static IDWriteGdiInterop *_dw_gdi_interop;
+public:
+	gdimm_dw_renderer();
 
-	vector<FLOAT> _advances;
-	DWRITE_MEASURING_MODE _dw_measuring_mode;
-	FLOAT _em_size;
-	FLOAT _pixels_per_dip;
-	bool _use_gdi_natural;
+	bool begin(const dc_context *context, FT_Render_Mode render_mode);
 
+private:
 	bool make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run);
 	bool render_glyph(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
 	bool render_text(LPCWSTR lpString, UINT c, glyph_run &new_glyph_run);
@@ -20,7 +20,7 @@ class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 
 	//////////////////////////////////////////////////////////////////////////
 
-	IFACEMETHOD(QueryInterface)( 
+	IFACEMETHOD(QueryInterface)(
 		/* [in] */ REFIID riid,
 		/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject);
 	IFACEMETHOD_(ULONG, AddRef)( void);
@@ -76,8 +76,12 @@ class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 		__maybenull IUnknown* clientDrawingEffect
 		);
 
-public:
-	gdimm_dw_renderer();
+	static IDWriteFactory *_dw_factory;
+	static IDWriteGdiInterop *_dw_gdi_interop;
 
-	bool begin(const dc_context *context, FT_Render_Mode render_mode);
+	vector<FLOAT> _advances;
+	DWRITE_MEASURING_MODE _dw_measuring_mode;
+	FLOAT _em_size;
+	FLOAT _pixels_per_dip;
+	bool _use_gdi_natural;
 };

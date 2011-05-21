@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "font_man.h"
-#include "rpc_impl.h"
+#include "gdipp_svc/rpc_impl.h"
 
 OUTLINETEXTMETRICW *gdipp_font_man::get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
 {
@@ -73,9 +73,9 @@ DWORD gdipp_font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LP
 	SelectObject(font_holder, curr_font->font_handle);
 
 	const DWORD data_size = GetFontData(font_holder, table, offset, data_buf, buf_size);
-	
+
 	dc_pool_instance.free(font_holder);
-	
+
 	return data_size;
 }
 

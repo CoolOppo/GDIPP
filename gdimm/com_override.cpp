@@ -45,14 +45,14 @@ typedef HRESULT (STDMETHODCALLTYPE *CreateDxgiSurfaceRenderTarget_type)(
 	ID2D1Factory *,
 	IDXGISurface *,
 	CONST D2D1_RENDER_TARGET_PROPERTIES &,
-	ID2D1RenderTarget ** 
+	ID2D1RenderTarget **
 	);
 typedef void (STDMETHODCALLTYPE *DrawGlyphRun_type)(
 	ID2D1RenderTarget *,
 	D2D1_POINT_2F,
 	CONST DWRITE_GLYPH_RUN *,
 	ID2D1Brush *,
-	DWRITE_MEASURING_MODE 
+	DWRITE_MEASURING_MODE
 	);
 
 CreateDxgiSurfaceRenderTarget_type CreateDxgiSurfaceRenderTarget_orig = NULL;
@@ -63,7 +63,7 @@ IFACEMETHODIMP_(void) DrawGlyphRun_hook(
 	D2D1_POINT_2F baselineOrigin,
 	CONST DWRITE_GLYPH_RUN *glyphRun,
 	ID2D1Brush *foregroundBrush,
-	DWRITE_MEASURING_MODE measuringMode 
+	DWRITE_MEASURING_MODE measuringMode
 	)
 {
 
@@ -73,7 +73,7 @@ IFACEMETHODIMP CreateDxgiSurfaceRenderTarget_hook(
 	ID2D1Factory *pIFactory,
 	IDXGISurface *dxgiSurface,
 	CONST D2D1_RENDER_TARGET_PROPERTIES &renderTargetProperties,
-	ID2D1RenderTarget **renderTarget 
+	ID2D1RenderTarget **renderTarget
 	)
 {
 	BOOL b_ret;

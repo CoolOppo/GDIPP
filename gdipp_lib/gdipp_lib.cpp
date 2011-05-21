@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "gdipp_lib.h"
-#include "setting_cache.h"
-#include "setting.h"
-#include "minidump.h"
+#include "gdipp_lib/minidump.h"
+#include "gdipp_lib/setting_cache.h"
+#include "gdipp_lib/setting.h"
 
 BOOL gdipp_get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path)
 {

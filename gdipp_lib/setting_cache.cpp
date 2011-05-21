@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "setting_cache.h"
-#include "gdipp_lib.h"
-#include <MurmurHash/MurmurHash3.h>
-#include <support_helper.h>
-#include <support_lock.h>
+#include <MurmurHash3.h>
+#include "gdipp_support/gs_helper.h"
+#include "gdipp_support/gs_lock.h"
+#include "gdipp_lib/gdipp_lib.h"
 
 font_setting_cache::font_gamma::font_gamma()
 	: red(1.0),
@@ -41,11 +41,7 @@ font_setting_cache::font_setting_cache()
 const font_setting_cache *gdimm_setting_cache::lookup(const gdimm_setting_trait *setting_trait)
 {
 	uint32_t setting_id;
-#ifdef _M_X64
-	MurmurHash3_x64_32(setting_trait->get_data(), setting_trait->get_size(), 0, &setting_id);
-#else
 	MurmurHash3_x86_32(setting_trait->get_data(), setting_trait->get_size(), 0, &setting_id);
-#endif
 
 	// if the setting for the specified font is not found
 	// construct setting cache for the font and return

@@ -1,6 +1,7 @@
 #pragma once
 
-using namespace std;
+using std::vector;
+using std::wstring;
 
 #ifdef GDIPP_EXPORTS
 #define GDIPP_API __declspec(dllexport)

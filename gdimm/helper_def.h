@@ -5,11 +5,8 @@
 
 class dc_context
 {
-	// data structures and metrics retrieved from HDC commonly used by multiple gdipp components
+	// data structures and metrics retrieved from HDC are commonly used by multiple gdipp components
 	// since gdipp does not alter state of the DC except its selected bitmap during painting, all members are considered constant
-	
-	// actual data buffer of the OUTLINETEXTMETRICW structure
-	vector<BYTE> _metric_buf;
 
 public:
 	// metrics of the selected bitmap in the DC
@@ -28,6 +25,10 @@ public:
 	const font_setting_cache *setting_cache;
 
 	bool init(HDC hdc);
+
+private:
+	// actual data buffer of the OUTLINETEXTMETRICW structure
+	vector<BYTE> _metric_buf;
 };
 
 struct font_info

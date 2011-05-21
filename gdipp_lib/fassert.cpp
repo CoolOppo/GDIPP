@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "fassert.h"
-#include "debug_helper.h"
+#include "gdipp_lib/debug_helper.h"
 
-using namespace std;
+using std::wostringstream;
 
 void __cdecl _fassert(_In_z_ const wchar_t * _Message, _In_z_ const wchar_t *_File, _In_ unsigned _Line)
 {

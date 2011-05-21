@@ -1,27 +1,22 @@
 #pragma once
 
-#include "support_lock.h"
+#include <list>
+#include <map>
+#include "gdipp_support/gs_lock.h"
 
-using namespace std;
+using std::list;
+using std::map;
 
 template <typename T>
 class lru_list
 {
-	typedef typename list<T> _list_type;
-	typedef typename _list_type::iterator _list_iter_type;
-	typedef typename map<T, _list_iter_type> _map_type;
-
-	_list_type _access_list;
-	_map_type _data_map;
-	size_t _capacity;
-
 public:
 	lru_list()
 		: _capacity(0)
 	{
 	}
 
-	lru_list(size_t capacity)
+	explicit lru_list(size_t capacity)
 		: _capacity(capacity)
 	{
 	}
@@ -60,7 +55,7 @@ public:
 		{
 			// data accessed before
 			// move it to the most recent position
-			// 
+			//
 			_list_iter_type node = iter->second;
 
 			if (node != _access_list.begin())
@@ -69,4 +64,13 @@ public:
 
 		return overflow;
 	}
+
+private:
+	typedef typename list<T> _list_type;
+	typedef typename _list_type::iterator _list_iter_type;
+	typedef typename map<T, _list_iter_type> _map_type;
+
+	_list_type _access_list;
+	_map_type _data_map;
+	size_t _capacity;
 };

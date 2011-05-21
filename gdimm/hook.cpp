@@ -3,7 +3,7 @@
 #include "api_override.h"
 #include "com_override.h"
 #include "gdimm.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
 
 // exported function for SetWindowsHookEx
 __declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -91,7 +91,7 @@ bool gdimm_hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_pro
 bool gdimm_hook::hook()
 {
 	bool b_ret;
-	
+
 	b_ret = install_hook(L"gdi32.dll", "ExtTextOutW", ExtTextOutW_hook);
 	if (b_ret)
 	{
@@ -104,18 +104,18 @@ bool gdimm_hook::hook()
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32A", GetTextExtentPoint32A_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPoint32W", GetTextExtentPoint32W_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentPointI", GetTextExtentPointI_hook);
-//  
+//
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointA", GetTextExtentExPointA_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointW", GetTextExtentExPointW_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetTextExtentExPointI", GetTextExtentExPointI_hook);
-//  
+//
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineA", GetGlyphOutlineA_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "GetGlyphOutlineW", GetGlyphOutlineW_hook);
-//  
+//
 // 		b_ret &= install_hook(L"gdi32.dll", "AbortPath", AbortPath_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "BeginPath", BeginPath_hook);
 // 		b_ret &= install_hook(L"gdi32.dll", "EndPath", EndPath_hook);
-//  
+//
 // 		install_hook(L"usp10.dll", "ScriptPlace", ScriptPlace_hook);
 
 		// register hooks whose libraries are dynamically loaded by LoadLibrary
@@ -145,7 +145,7 @@ bool gdimm_hook::install_delayed_hook(LPCSTR lib_name, HMODULE h_lib)
 	lib_hook_map_a::const_iterator lib_iter = _delayed_hooks_a.find(lib_name);
 	if (lib_iter != _delayed_hooks_a.end())
 	{
-		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); proc_iter++)
+		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); ++proc_iter)
 		{
 			b_ret &= install_hook(h_lib, proc_iter->first, proc_iter->second);
 			if (!b_ret)
@@ -163,7 +163,7 @@ bool gdimm_hook::install_delayed_hook(LPCWSTR lib_name, HMODULE h_lib)
 	lib_hook_map_w::const_iterator lib_iter = _delayed_hooks_w.find(lib_name);
 	if (lib_iter != _delayed_hooks_w.end())
 	{
-		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); proc_iter++)
+		for (hook_proc_map::const_iterator proc_iter = lib_iter->second->begin(); proc_iter != lib_iter->second->end(); ++proc_iter)
 		{
 			b_ret &= install_hook(h_lib, proc_iter->first, proc_iter->second);
 			if (!b_ret)
@@ -184,6 +184,6 @@ void gdimm_hook::unhook()
 	eh_ret = LhWaitForPendingRemovals();
 	assert(eh_ret == 0);
 
-	for (list<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); iter++)
+	for (list<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); ++iter)
 		delete *iter;
 }

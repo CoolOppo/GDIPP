@@ -213,7 +213,7 @@ bool gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	{
 		const BYTE dx_skip = (is_pdy ? 2 : 1);
 		_advances.resize(c);
-		for (UINT i = 0; i < c; i++)
+		for (UINT i = 0; i < c; ++i)
 			_advances[i] = static_cast<FLOAT>(lpDx[i * dx_skip]);// - 0.1f;	// small adjustment to emulate GDI metrics
 	}
 
@@ -229,7 +229,7 @@ bool gdimm_dw_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 //      These methods are never called in this scenario so we just use stub
 //      implementations.
 //
-IFACEMETHODIMP gdimm_dw_renderer::QueryInterface( 
+IFACEMETHODIMP gdimm_dw_renderer::QueryInterface(
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ __RPC__deref_out void __RPC_FAR *__RPC_FAR *ppvObject
 	)

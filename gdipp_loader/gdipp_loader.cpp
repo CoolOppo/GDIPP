@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -24,7 +24,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	STARTUPINFO si = {};
 	si.cb = sizeof(STARTUPINFO);
 	PROCESS_INFORMATION pi;
-	
+
 	b_ret = CreateProcessW(argv[0], lpCmdLine, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, working_dir, &si, &pi);
 	LocalFree(argv);
 

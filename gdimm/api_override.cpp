@@ -2,9 +2,9 @@
 #include "api_override.h"
 #include "gdimm.h"
 #include "helper_func.h"
-#include <gdipp_rpc.h>
+#include "gdipp_rpc/gdipp_rpc.h"
 
-using namespace std;
+//using std::;
 
 #ifdef _DEBUG
 const wchar_t *debug_text = L"";
@@ -136,7 +136,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	// invalid call
 	if (((options & ETO_OPAQUE) || (options & ETO_CLIPPED)) && (lprect == NULL))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-	
+
 	// completely clipped
 	if ((options & ETO_CLIPPED) && IsRectEmpty(lprect))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
@@ -155,7 +155,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	//is_target_spec &= !(options & ETO_GLYPH_INDEX);
 	//is_target_spec &= (options == 4102);
 	//is_target_spec &= (c < 1);
-	
+
 	if (!is_target_spec)
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
@@ -276,7 +276,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	b_ret = fetch_glyph_run(is_glyph_index, false, lpString, count, NULL, context, render_mode, a_glyph_run, cache_level);
 	if (!b_ret)
 		return false;
-	
+
 	if (cache_level < GLYPH_RUN)
 		return false;
 
@@ -285,13 +285,13 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 		lpSize->cx = get_glyph_run_width(&a_glyph_run, true);
 		lpSize->cy = context.outline_metrics->otmTextMetrics.tmHeight;
 	}
-	
+
 	// for GetTextExtentExPoint series
 	if (lpnFit != NULL || lpnDx != NULL)
 	{
 		list<RECT>::const_iterator box_iter;
 		INT curr_index;
-		for (box_iter = a_glyph_run.ctrl_boxes.begin(), curr_index = 0; box_iter != a_glyph_run.ctrl_boxes.end(); box_iter++, curr_index++)
+		for (box_iter = a_glyph_run.ctrl_boxes.begin(), curr_index = 0; box_iter != a_glyph_run.ctrl_boxes.end(); ++box_iter, ++curr_index)
 		{
 			if (lpnFit != NULL && box_iter->right <= nMaxExtent)
 				*lpnFit = curr_index + 1;

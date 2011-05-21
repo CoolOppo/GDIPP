@@ -1,8 +1,9 @@
 #pragma once
 
-#include "gdipp_lib.h"
+#include <vector>
+#include "gdipp_lib/gdipp_lib.h"
 
-using namespace std;
+using std::vector;
 
 extern vector<HMODULE> h_minidump_modules;
 

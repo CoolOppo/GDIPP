@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -123,7 +123,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -202,7 +202,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -282,7 +282,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gdipp_support&quot;;&quot;$(SolutionDir)gdipp_lib&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)sqlite3&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -338,10 +338,6 @@
 		<ProjectReference
 			ReferencedProjectIdentifier="{9A32E343-D465-42C2-B313-17E1FB328016}"
 			RelativePathToProject=".\gdipp_lib\gdipp_lib.vcproj"
-		/>
-		<ProjectReference
-			ReferencedProjectIdentifier="{78B079BD-9FC7-4B9E-B4A6-96DA0F00248B}"
-			RelativePathToProject=".\freetype\builds\win32\vc2008\freetype.vcproj"
 		/>
 		<ProjectReference
 			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
@@ -526,6 +522,10 @@
 			</File>
 			<File
 				RelativePath=".\font_man.h"
+				>
+			</File>
+			<File
+				RelativePath=".\font_proxy.h"
 				>
 			</File>
 			<File

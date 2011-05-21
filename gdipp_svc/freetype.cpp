@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "freetype.h"
-#include "font_man.h"
-#include "rpc_impl.h"
-#include <gdipp_lib.h>
-#include <support_helper.h>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_support/gs_helper.h"
+#include "gdipp_svc/font_man.h"
+#include "gdipp_svc/rpc_impl.h"
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
@@ -41,7 +41,7 @@ void destroy_freetype()
 	FT_Error ft_error;
 
 	FTC_Manager_Done(ft_cache_man);
-	
+
 	ft_error = FT_Done_FreeType(ft_lib);
 	assert(ft_error == 0);
 }

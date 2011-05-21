@@ -4,16 +4,16 @@
 
 #include "stdafx.h"
 #include "MainDlg.h"
-#include "AboutDlg.h"
-#include "PaintDlg.h"
-#include "gdipp_demo.h"
-#include <gdipp_lib.h>
-#include <support_helper.h>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_support/gs_helper.h"
+#include "gdipp_demo/gdipp_demo.h"
+#include "gdipp_demo/AboutDlg.h"
+#include "gdipp_demo/PaintDlg.h"
 
 DWORD WINAPI paint_thread(LPVOID context)
 {
 	CPaintDlg dlg;
-	
+
 	return (dlg.DoModal(NULL, reinterpret_cast<LPARAM>(context)) != IDOK);
 }
 
@@ -38,10 +38,10 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
 
 	// set icons
-	HICON hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINMENU), 
+	HICON hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINMENU),
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR);
 	SetIcon(hIcon, TRUE);
-	HICON hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINMENU), 
+	HICON hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINMENU),
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 	SetIcon(hIconSmall, FALSE);
 
@@ -61,7 +61,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	b_ret = load_demo_setting();
 	assert(b_ret);
 
-	for (int i = 0; i < thread_count; i++)
+	for (int i = 0; i < thread_count; ++i)
 		CreateThread(NULL, 0, paint_thread, reinterpret_cast<void *>(i), 0, NULL);
 
 	return TRUE;
@@ -69,10 +69,10 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 LRESULT CMainDlg::OnClose(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	for (size_t i = 0; i < paint_hwnd.size(); i++)
-		::EndDialog(paint_hwnd[i], (int) wParam);
+	for (size_t i = 0; i < paint_hwnd.size(); ++i)
+		::EndDialog(paint_hwnd[i], static_cast<int>(wParam));
 
-	CloseDialog((int) wParam);
+	CloseDialog(static_cast<int>(wParam));
 	return 0;
 }
 
@@ -89,7 +89,7 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 LRESULT CMainDlg::OnFileExit(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	// TODO: Add validation code 
+	// TODO: Add validation code
 	CloseDialog(wID);
 	return 0;
 }

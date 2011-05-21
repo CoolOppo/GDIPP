@@ -1,10 +1,14 @@
 #include "stdafx.h"
 #include "rpc_impl.h"
-#include "ggo_renderer.h"
-#include "helper.h"
-#include <MurmurHash/MurmurHash3.h>
-#include <gdipp_lib.h>
-#include <gdipp_rpc.h>
+#include <algorithm>
+#include <vector>
+#include <MurmurHash3.h>
+#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_rpc/gdipp_rpc.h"
+#include "gdipp_svc/ggo_renderer.h"
+#include "gdipp_svc/helper.h"
+
+using std::vector;
 
 gdipp_pool<HDC> dc_pool_instance;
 gdipp_font_man font_man_instance;
@@ -126,7 +130,7 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	//b_ret = rpc_index_initialize();
 	//if (!b_ret)
 	//	return 1;
-	
+
 	rpc_status = RpcServerUseProtseqEpW(reinterpret_cast<RPC_WSTR>(L"ncalrpc"), RPC_C_PROTSEQ_MAX_REQS_DEFAULT, reinterpret_cast<RPC_WSTR>(L"gdipp"), NULL);
 	if (rpc_status != RPC_S_OK)
 		return 1;
@@ -157,7 +161,7 @@ bool stop_gdipp_rpc_server()
 
 	//b_ret = rpc_index_shutdown();
 	//return b_ret;
-	
+
 	return true;
 }
 
@@ -179,7 +183,7 @@ uint32_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
 	return render_trait;
 }
 
-GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session( 
+GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	/* [in] */ handle_t h_gdipp_rpc,
 	/* [size_is][in] */ const byte *logfont_buf,
 	/* [in] */ unsigned long logfont_size,
@@ -190,7 +194,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	void *font_id = font_man_instance.register_font(logfont, logfont_size);
 	if (font_id == 0)
 		return NULL;
-	
+
 	HDC hdc = reinterpret_cast<HDC>(dc_pool_instance.claim());
 	assert(hdc != NULL);
 
@@ -225,7 +229,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	return new_session;
 }
 
-unsigned long gdipp_rpc_get_font_size( 
+unsigned long gdipp_rpc_get_font_size(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
@@ -236,7 +240,7 @@ unsigned long gdipp_rpc_get_font_size(
 	return font_man_instance.get_font_data(curr_session->font_id, table, offset, NULL, 0);
 }
 
-unsigned long gdipp_rpc_get_font_data( 
+unsigned long gdipp_rpc_get_font_data(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
@@ -249,7 +253,7 @@ unsigned long gdipp_rpc_get_font_data(
 	return font_man_instance.get_font_data(curr_session->font_id, table, offset, data_buf, buf_size);
 }
 
-unsigned long gdipp_rpc_get_font_metrics_size( 
+unsigned long gdipp_rpc_get_font_metrics_size(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session)
 {
@@ -260,7 +264,7 @@ unsigned long gdipp_rpc_get_font_metrics_size(
 	return static_cast<unsigned long>(metric_buf->size());
 }
 
-unsigned long gdipp_rpc_get_font_metrics_data( 
+unsigned long gdipp_rpc_get_font_metrics_data(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][out] */ byte *metrics_buf,
@@ -276,7 +280,7 @@ unsigned long gdipp_rpc_get_font_metrics_data(
 	return copy_size;
 }
 
-unsigned long gdipp_rpc_get_glyph_indices( 
+unsigned long gdipp_rpc_get_glyph_indices(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][string][in] */ const wchar_t *str,
@@ -288,7 +292,7 @@ unsigned long gdipp_rpc_get_glyph_indices(
 	return font_man_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
 }
 
-GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run( 
+GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [string][in] */ wchar_t *str,
@@ -298,7 +302,7 @@ GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run(
 	const gdipp_rpc_session *curr_session = reinterpret_cast<const gdipp_rpc_session *>(h_session);
 
 	glyph_run *new_glyph_run = reinterpret_cast<glyph_run *>(MIDL_user_allocate(sizeof(glyph_run)));
-	
+
 	bool b_ret;
 
 	uint128_t string_id;
@@ -319,7 +323,7 @@ GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run(
 	}
 }
 
-unsigned long gdipp_rpc_get_glyph_run_size( 
+unsigned long gdipp_rpc_get_glyph_run_size(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run)
 {
@@ -328,7 +332,7 @@ unsigned long gdipp_rpc_get_glyph_run_size(
 	return 0;
 }
 
-boolean gdipp_rpc_get_glyph_run( 
+boolean gdipp_rpc_get_glyph_run(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run,
     /* [size_is][out] */ byte *glyph_run_buf,
@@ -339,7 +343,7 @@ boolean gdipp_rpc_get_glyph_run(
 	return false;
 }
 
-boolean gdipp_rpc_release_glyph_run( 
+boolean gdipp_rpc_release_glyph_run(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE *h_glyph_run)
 {
@@ -348,7 +352,7 @@ boolean gdipp_rpc_release_glyph_run(
 	return false;
 }
 
-boolean gdipp_rpc_end_session( 
+boolean gdipp_rpc_end_session(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_SESSION_HANDLE *h_session)
 {

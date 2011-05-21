@@ -1,4 +1,4 @@
-#include "support_helper.h"
+#include "gs_helper.h"
 
 bool wstring_ci_less::operator()(const wstring &string1, const wstring &string2) const
 {

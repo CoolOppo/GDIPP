@@ -226,7 +226,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 	{
 		// directly render glyph indices with the current DC font
 
-		for (UINT i = 0; i < c; i++)
+		for (UINT i = 0; i < c; ++i)
 		{
 			const FT_Glyph new_glyph = generate_bitmap_glyph(lpString[i],
 				&scaler,
@@ -248,7 +248,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 				ctrl_box.left = font_man_instance.lookup_kern(&scaler, lpString[i-1], lpString[i]);
 				ctrl_box.right = ctrl_box.left;
 			}
-			
+
 			new_glyph_run.glyphs.push_back(new_glyph);
 			new_glyph_run.ctrl_boxes.push_back(ctrl_box);
 			new_glyph_run.black_boxes.push_back(black_box);
@@ -275,7 +275,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			list<RECT>::iterator ctrl_iter, black_iter;
 			UINT i;
 			for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin(), i = 0;
-				i < c; i++, glyph_iter++, ctrl_iter++, black_iter++)
+				i < c; ++i, ++glyph_iter, ++ctrl_iter, ++black_iter)
 			{
 				if (final_string[i] == L'\0')
 					continue;
@@ -289,7 +289,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 						&scaler,
 						curr_render_mode,
 						curr_embolden,
-						curr_load_flags, 
+						curr_load_flags,
 						os2_metrics->is_italic(),
 						request_outline,
 						curr_font_trait);
@@ -307,7 +307,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 				}
 				else
 					continue;
-					
+
 				final_string[i] = L'\0';
 				rendered_count += 1;
 			}
@@ -324,7 +324,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			if (curr_link == NULL)
 				return false;
 			font_link_index += 1;
-			
+
 			LOGFONTW linked_log_font = _context->log_font;
 			/*
 			this reset is essential to make GetGlyphIndices work correctly
@@ -350,7 +350,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 			}
 
 			os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
-			
+
 			const gdimm_setting_trait setting_trait(os2_metrics->get_weight_class(), os2_metrics->is_italic(), 0, curr_font_face.c_str());
 			curr_setting_cache = setting_cache_instance.lookup(&setting_trait);
 
@@ -383,7 +383,7 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	list<FT_Glyph>::iterator glyph_iter;
 	list<RECT>::iterator ctrl_iter, black_iter;
 	for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin();
-		glyph_iter != new_glyph_run.glyphs.end(); glyph_iter++, ctrl_iter++, black_iter++)
+		glyph_iter != new_glyph_run.glyphs.end(); ++glyph_iter, ++ctrl_iter, ++black_iter)
 	{
 		FT_Int glyph_left = 0, glyph_width = 0;
 		FT_Vector glyph_advance = {};
@@ -422,7 +422,7 @@ const FT_OutlineGlyph gdimm_ft_renderer::get_outline_glyph(wchar_t glyph_char, b
 	if (b_ret)
 	{
 		assert(new_glyph_run.glyphs.size() == 1);
-		
+
 		const FT_Glyph new_glyph = new_glyph_run.glyphs.front();
 		assert(new_glyph->format == FT_GLYPH_FORMAT_OUTLINE);
 

@@ -4,18 +4,11 @@
 
 #pragma once
 
-#include "resource.h"
-
-using namespace std;
+#include "gdipp_demo/resource.h"
 
 class CMainDlg : public CDialogImpl<CMainDlg>, public CUpdateUI<CMainDlg>,
 		public CMessageFilter, public CIdleHandler
 {
-	bool load_demo_setting();
-	void update_menu_state();
-	bool load_gdimm();
-	bool unload_gdimm();
-
 public:
 	enum { IDD = IDD_MAINDLG };
 
@@ -49,4 +42,10 @@ public:
 	LRESULT OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 	void CloseDialog(int nVal);
+
+private:
+	bool load_demo_setting();
+	void update_menu_state();
+	bool load_gdimm();
+	bool unload_gdimm();
 };

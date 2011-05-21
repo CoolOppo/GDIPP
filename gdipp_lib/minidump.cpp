@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "minidump.h"
-#include "gdipp_lib.h"
+#include "gdipp_lib/gdipp_lib.h"
 
 vector<HMODULE> h_minidump_modules;
 
@@ -12,7 +12,7 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 	{
 	case IncludeModuleCallback:
 		{
-			for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); iter++)
+			for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
 			{
 				if (*iter == reinterpret_cast<HMODULE>(CallbackInput->IncludeModule.BaseOfImage))
 					return TRUE;
@@ -36,7 +36,7 @@ LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
 	BOOL b_ret;
 
 	bool ex_in_module = false;
-	for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); iter++)
+	for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
 	{
 		MODULEINFO mod_info;
 		b_ret = GetModuleInformation(GetCurrentProcess(), *iter, &mod_info, sizeof(MODULEINFO));

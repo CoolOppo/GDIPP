@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "gdimm.h"
 #include "lock.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
 
 HMODULE h_self = NULL;
 bool os_support_directwrite;
@@ -29,7 +29,7 @@ bool init_gdipp_rpc_client()
 {
 	RPC_WSTR binding_str;
 	RPC_STATUS rpc_status;
-	
+
 	rpc_status = RpcStringBindingCompose(NULL, reinterpret_cast<RPC_WSTR>(L"ncalrpc"), NULL, reinterpret_cast<RPC_WSTR>(L"gdipp"), NULL, &binding_str);
 	if (rpc_status != RPC_S_OK)
 		return false;
@@ -77,10 +77,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			gdimm_lock::initialize();
 			init_gdipp_rpc_client();
-			
+
 			if (!hook_instance.hook())
 				return FALSE;
-			
+
 			break;
 		}
 		case DLL_PROCESS_DETACH:

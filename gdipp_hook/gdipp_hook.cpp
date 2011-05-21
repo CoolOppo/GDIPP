@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <gdipp_lib.h>
+#include "gdipp_lib/gdipp_lib.h"
 
 __declspec(dllimport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam);
 

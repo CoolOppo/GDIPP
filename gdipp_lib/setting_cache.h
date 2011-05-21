@@ -1,40 +1,43 @@
 #pragma once
 
-#include "support_setting_trait.h"
-#include "type_enum.h"
+#include <map>
+#include "gdipp_support/gs_setting_trait.h"
+#include "gdipp_lib/type_enum.h"
 
-using namespace std;
+using std::map;
 
 struct font_setting_cache
 {
 	struct font_gamma
 	{
+		font_gamma();
+
 		double red;
 		double green;
 		double blue;
-
-		font_gamma();
 	};
 
 	struct font_render_mode
 	{
+		font_render_mode();
+
 		BYTE mono;
 		BYTE gray;
 		BYTE subpixel;
 		PIXEL_GEOMETRY_TYPE pixel_geometry;
 		bool aliased_text;
-
-		font_render_mode();
 	};
 
 	struct font_shadow
 	{
+		font_shadow();
+
 		LONG offset_x;
 		LONG offset_y;
 		BYTE alpha;
-
-		font_shadow();
 	};
+
+	font_setting_cache();
 
 	BYTE auto_hinting;
 	bool embedded_bitmap;
@@ -45,15 +48,14 @@ struct font_setting_cache
 	font_render_mode render_mode;
 	RENDERER_TYPE renderer;
 	font_shadow shadow;
-
-	font_setting_cache();
 };
 
 class gdimm_setting_cache
 {
-	// setting ID : setting cache
-	map<unsigned int, font_setting_cache> _cache;
-
 public:
 	const font_setting_cache *lookup(const gdimm_setting_trait *setting_trait);
+
+private:
+	// setting ID : setting cache
+	map<unsigned int, font_setting_cache> _cache;
 };
