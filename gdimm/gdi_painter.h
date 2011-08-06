@@ -2,8 +2,6 @@
 
 #include "painter.h"
 
-//using std::;
-
 struct painter_tls
 {
 	HDC hdc_canvas;

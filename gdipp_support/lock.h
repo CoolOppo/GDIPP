@@ -2,12 +2,17 @@
 
 #include <windows.h>
 
-class gdipp_lock
+namespace gdipp
+{
+
+class lock
 {
 public:
-	explicit gdipp_lock(char *lock_sig);
-	~gdipp_lock();
+	explicit lock(char *lock_sig);
+	~lock();
 
 private:
 	CRITICAL_SECTION *_cs;
 };
+
+}

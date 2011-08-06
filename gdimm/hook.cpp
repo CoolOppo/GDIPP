@@ -32,42 +32,6 @@ bool wchar_str_ci_less::operator()(const wchar_t *string1, const wchar_t *string
 	return _wcsicmp(string1, string2) < 0;
 }
 
-bool gdimm_hook::install_hook(HMODULE h_lib, LPCSTR proc_name, void *hook_proc)
-{
-	NTSTATUS eh_ret;
-
-	const FARPROC proc_addr = GetProcAddress(h_lib, proc_name);
-	assert(proc_addr != NULL);
-
-	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
-	eh_ret = LhInstallHook(proc_addr, hook_proc, NULL, h_hook);
-	assert(eh_ret == 0);
-
-	ULONG thread_id_list = 0;
-	eh_ret = LhSetExclusiveACL(&thread_id_list, 0, h_hook);
-	assert(eh_ret == 0);
-
-	_hooks.push_back(h_hook);
-
-	return true;
-}
-
-void gdimm_hook::register_delayed_hook(LPCSTR lib_name_a, LPCWSTR lib_name_w, LPCSTR proc_name, void *hook_proc)
-{
-	lib_hook_map_a::const_iterator lib_iter = _delayed_hooks_a.find(lib_name_a);
-	if (lib_iter == _delayed_hooks_a.end())
-	{
-		_delayed_hook_registry.push_back(hook_proc_map());
-		hook_proc_map *curr_hook_map = &_delayed_hook_registry.back();
-
-		(*curr_hook_map)[proc_name] = hook_proc;
-		_delayed_hooks_a[lib_name_a] = curr_hook_map;
-		_delayed_hooks_w[lib_name_w] = curr_hook_map;
-	}
-	else
-		(*lib_iter->second)[proc_name] = hook_proc;
-}
-
 bool gdimm_hook::install_hook(LPCSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
 	// the target library module must have been loaded in this process before hooking
@@ -184,6 +148,42 @@ void gdimm_hook::unhook()
 	eh_ret = LhWaitForPendingRemovals();
 	assert(eh_ret == 0);
 
-	for (list<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); ++iter)
+	for (std::list<TRACED_HOOK_HANDLE>::const_iterator iter = _hooks.begin(); iter != _hooks.end(); ++iter)
 		delete *iter;
+}
+
+bool gdimm_hook::install_hook(HMODULE h_lib, LPCSTR proc_name, void *hook_proc)
+{
+	NTSTATUS eh_ret;
+
+	const FARPROC proc_addr = GetProcAddress(h_lib, proc_name);
+	assert(proc_addr != NULL);
+
+	TRACED_HOOK_HANDLE h_hook = new HOOK_TRACE_INFO();
+	eh_ret = LhInstallHook(proc_addr, hook_proc, NULL, h_hook);
+	assert(eh_ret == 0);
+
+	ULONG thread_id_list = 0;
+	eh_ret = LhSetExclusiveACL(&thread_id_list, 0, h_hook);
+	assert(eh_ret == 0);
+
+	_hooks.push_back(h_hook);
+
+	return true;
+}
+
+void gdimm_hook::register_delayed_hook(LPCSTR lib_name_a, LPCWSTR lib_name_w, LPCSTR proc_name, void *hook_proc)
+{
+	lib_hook_map_a::const_iterator lib_iter = _delayed_hooks_a.find(lib_name_a);
+	if (lib_iter == _delayed_hooks_a.end())
+	{
+		_delayed_hook_registry.push_back(hook_proc_map());
+		hook_proc_map *curr_hook_map = &_delayed_hook_registry.back();
+
+		(*curr_hook_map)[proc_name] = hook_proc;
+		_delayed_hooks_a[lib_name_a] = curr_hook_map;
+		_delayed_hooks_w[lib_name_w] = curr_hook_map;
+	}
+	else
+		(*lib_iter->second)[proc_name] = hook_proc;
 }

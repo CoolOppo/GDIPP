@@ -1,7 +1,5 @@
 #pragma once
 
-//using std::;
-
 class gdimm_gamma
 {
 public:
@@ -12,5 +10,5 @@ public:
 private:
 	void init_ramp(double gamma);
 
-	map<double, BYTE *> _gamma_ramps;
+	std::map<double, BYTE *> _gamma_ramps;
 };

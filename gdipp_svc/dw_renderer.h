@@ -3,8 +3,6 @@
 #include <vector>
 #include "gdipp_svc/renderer.h"
 
-using std::vector;
-
 class gdimm_dw_renderer : public gdimm_renderer, public IDWriteTextRenderer
 {
 public:
@@ -79,7 +77,7 @@ private:
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
 
-	vector<FLOAT> _advances;
+	std::vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;
 	FLOAT _em_size;
 	FLOAT _pixels_per_dip;

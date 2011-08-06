@@ -2,8 +2,6 @@
 
 #include <map>
 
-using std::map;
-
 class gdimm_font_man
 {
 	/*
@@ -29,10 +27,10 @@ public:
 	const font_info *get_font_info(long font_id);
 	FT_Stream lookup_stream(long font_id);
 	ULONG lookup_face_index(long font_id);
-	const gdimm_os2_metrics *lookup_os2_metrics(long font_id);
+	const os2_metrics *lookup_os2_metrics(long font_id);
 
 	long register_font(HDC font_holder, const wchar_t *font_face);
-	long link_font(const LOGFONTW &linked_font_attr, wstring &linked_font_face);
+	long link_font(const LOGFONTW &linked_font_attr, std::wstring &linked_font_face);
 	void get_glyph_indices(long font_id, const wchar_t *str, int count, wchar_t *gi);
 
 private:
@@ -42,10 +40,10 @@ private:
 	static ULONG get_ttc_face_index(long font_id, DWORD ttc_file_size);
 
 	// face name -> font id
-	// we use this map because FreeType callback only have face id
-	map<wstring, long> _name_to_id;
+	// we use this std::map because FreeType callback only have face id
+	std::map<std::wstring, long> _name_to_id;
 	// font id -> font info
-	// we use this map because vector internally free and re-allocate existing entries
+	// we use this std::map because std::vector internally free and re-allocate existing entries
 	// pointers become invalid
-	map<long, font_info> _id_to_info;
+	std::map<long, font_info> _id_to_info;
 };

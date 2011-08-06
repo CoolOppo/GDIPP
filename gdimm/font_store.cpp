@@ -13,7 +13,7 @@ gdimm_font_store::~gdimm_font_store()
 {
 	BOOL b_ret;
 
-	for (map<long, font_info>::const_iterator iter = _id_to_info.begin(); iter != _id_to_info.upper_bound(-1); iter++)
+	for (std::map<long, font_info>::const_iterator iter = _id_to_info.begin(); iter != _id_to_info.upper_bound(-1); ++iter)
 	{
 		// unregister linked fonts
 		//DeleteObject(iter->second.linked_hfont);
@@ -25,7 +25,7 @@ gdimm_font_store::~gdimm_font_store()
 
 font_info *gdimm_font_store::lookup_font(long font_id)
 {
-	map<long, font_info>::iterator iter = _id_to_info.find(font_id);
+	std::map<long, font_info>::iterator iter = _id_to_info.find(font_id);
 	if (iter == _id_to_info.end())
 		return NULL;
 

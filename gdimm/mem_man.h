@@ -1,7 +1,5 @@
 #pragma once
 
-//using std::;
-
 class gdimm_mem_man
 {
 	// helper class to free static memory pointers
@@ -14,6 +12,6 @@ public:
 	void register_heap_ptr(LPVOID mem_ptr);
 
 private:
-	list<IUnknown *> _com_ptr_store;
-	list<void *> _mem_ptr_store;
+	std::list<IUnknown *> _com_ptr_store;
+	std::list<void *> _mem_ptr_store;
 };

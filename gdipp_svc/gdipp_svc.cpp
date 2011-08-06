@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include <map>
 #include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/gs_helper.h"
+#include "gdipp_support/helper.h"
 #include "gdipp_svc/freetype.h"
 #include "gdipp_svc/rpc_impl.h"
+
+namespace gdipp
+{
 
 #define SVC_NAME L"gdipp_svc"
 
@@ -18,14 +21,14 @@ wchar_t hook_env_str[MAX_ENV_LEN];
 bool hook_32_bit = false;
 bool hook_64_bit = false;
 
-map<ULONG, HANDLE> h_user_tokens, h_hook_events;
-map<ULONG, PROCESS_INFORMATION> pi_hooks_32, pi_hooks_64;
+std::map<ULONG, HANDLE> h_user_tokens, h_hook_events;
+std::map<ULONG, PROCESS_INFORMATION> pi_hooks_32, pi_hooks_64;
 
 BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_hook_name, PROCESS_INFORMATION &pi)
 {
 	wchar_t gdipp_hook_path[MAX_PATH];
 
-	if (!gdipp_get_dir_file_path(NULL, gdipp_hook_name, gdipp_hook_path))
+	if (!get_dir_file_path(NULL, gdipp_hook_name, gdipp_hook_path))
 		return FALSE;
 
 	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_event, 0);
@@ -108,7 +111,7 @@ post_hook:
 
 void stop_hook(ULONG session_id)
 {
-	map<ULONG, PROCESS_INFORMATION>::const_iterator pi_iter_32, pi_iter_64;
+	std::map<ULONG, PROCESS_INFORMATION>::const_iterator pi_iter_32, pi_iter_64;
 	HANDLE h_hook_processes[2] = {};
 
 	pi_iter_32 = pi_hooks_32.find(session_id);
@@ -214,7 +217,7 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	b_ret = UnregisterWait(h_wait_cleanup);
 	assert(b_ret || GetLastError() == ERROR_IO_PENDING);
 
-	for (map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); ++session_iter)
+	for (std::map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); ++session_iter)
 		stop_hook(session_iter->first);
 
 	b_ret = stop_gdipp_rpc_server();
@@ -257,17 +260,17 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	assert(b_ret);
 
 	// get setting file path
-	wchar_t setting_path[MAX_PATH];
-	if (!gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path))
+	wchar_t config_path[MAX_PATH];
+	if (!get_dir_file_path(NULL, L"gdipp_config.xml", config_path))
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
 
-	gdipp_init_setting();
+	gdipp::init_config();
 
 	// return false if setting file does not exist
-	if (!gdipp_load_setting(setting_path))
+	if (!gdipp::load_config(config_path))
 	{
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
@@ -283,8 +286,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		return;
 	}
 
-	wcs_convert(gdipp_get_service_setting(L"hook_32_bit"), &hook_32_bit);
-	wcs_convert(gdipp_get_service_setting(L"hook_64_bit"), &hook_64_bit);
+	wcs_convert(gdipp::get_service_setting(L"hook_32_bit"), &hook_32_bit);
+	wcs_convert(gdipp::get_service_setting(L"hook_64_bit"), &hook_64_bit);
 
 	/*
 	service process and its child processes run in session 0
@@ -297,6 +300,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	// report running status when initialization is complete
 	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
+}
+
 }
 
 // #define svc_debug
@@ -325,7 +330,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 #else
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
-		{ SVC_NAME, svc_main },
+		{ SVC_NAME, gdipp::svc_main },
 		{ NULL, NULL },
 	};
 

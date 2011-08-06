@@ -1,10 +1,11 @@
 #pragma once
 
 #include <map>
-#include "gdipp_support/gs_setting_trait.h"
+#include "gdipp_support/config_trait.h"
 #include "gdipp_lib/type_enum.h"
 
-using std::map;
+namespace gdipp
+{
 
 struct font_setting_cache
 {
@@ -50,12 +51,14 @@ struct font_setting_cache
 	font_shadow shadow;
 };
 
-class gdimm_setting_cache
+class config_cache
 {
 public:
-	const font_setting_cache *lookup(const gdimm_setting_trait *setting_trait);
+	const font_setting_cache *lookup(const config_trait *setting_trait);
 
 private:
 	// setting ID : setting cache
-	map<unsigned int, font_setting_cache> _cache;
+	std::map<unsigned int, font_setting_cache> _cache;
 };
+
+}

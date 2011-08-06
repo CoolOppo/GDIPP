@@ -4,13 +4,11 @@
 #include "helper_func.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
-//using std::;
-
 #ifdef _DEBUG
 const wchar_t *debug_text = L"";
 #endif // _DEBUG
 
-set<HDC> hdc_in_path;
+std::set<HDC> hdc_in_path;
 
 bool is_valid_dc(HDC hdc)
 {
@@ -21,7 +19,7 @@ bool is_valid_dc(HDC hdc)
 	if (GetDeviceCaps(hdc, TECHNOLOGY) != DT_RASDISPLAY)
 		return false;
 
-	// the DC use another map mode, which transform the GDI coordination space
+	// the DC use another std::map mode, which transform the GDI coordination space
 	// we tried to implement MM_ANISOTROPIC, and found that the text looks worse than the native API
 	if (GetMapMode(hdc) != MM_TEXT)
 		return false;
@@ -178,7 +176,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 
 	RpcTryExcept
 	{
-		const GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font));
+		const rpc_session_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font));
 		const GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run = gdipp_rpc_make_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index);
 		const unsigned long glyph_run_size = gdipp_rpc_get_glyph_run_size(h_gdipp_rpc, h_glyph_run);
 		BYTE *glyph_run_buf = new BYTE[glyph_run_size];
@@ -289,7 +287,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 	// for GetTextExtentExPoint series
 	if (lpnFit != NULL || lpnDx != NULL)
 	{
-		list<RECT>::const_iterator box_iter;
+		std::list<RECT>::const_iterator box_iter;
 		INT curr_index;
 		for (box_iter = a_glyph_run.ctrl_boxes.begin(), curr_index = 0; box_iter != a_glyph_run.ctrl_boxes.end(); ++box_iter, ++curr_index)
 		{
@@ -306,7 +304,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 
 BOOL APIENTRY GetTextExtentPoint32A_hook(HDC hdc, LPCSTR lpString, int c, LPSIZE lpSize)
 {
-	wstring wide_char_str;
+	std::wstring wide_char_str;
 	if (mb_to_wc(lpString, c, wide_char_str))
 	{
 		if (get_text_extent(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize, false))
@@ -334,7 +332,7 @@ BOOL WINAPI GetTextExtentPointI_hook(HDC hdc, LPWORD pgiIn, int cgi, LPSIZE lpSi
 
 BOOL APIENTRY GetTextExtentExPointA_hook(HDC hdc, LPCSTR lpszString, int cchString, int nMaxExtent, LPINT lpnFit, LPINT lpnDx, LPSIZE lpSize)
 {
-	wstring wide_char_str;
+	std::wstring wide_char_str;
 	if (mb_to_wc(lpszString, cchString, wide_char_str))
 	{
 		if (get_text_extent(hdc, wide_char_str.c_str(), static_cast<int>(wide_char_str.size()), lpSize, false, nMaxExtent, lpnFit, lpnDx))

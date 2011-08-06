@@ -2,35 +2,10 @@
 #include "font_man.h"
 #include "gdipp_svc/rpc_impl.h"
 
-OUTLINETEXTMETRICW *gdipp_font_man::get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
+namespace gdipp
 {
-	// get outline metrics of the DC, which also include the text metrics
 
-	UINT metric_size = GetOutlineTextMetricsW(hdc, 0, NULL);
-	if (metric_size == 0)
-		return NULL;
-
-	metric_buf.resize(metric_size);
-	OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<OUTLINETEXTMETRICW *>(&metric_buf[0]);
-	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
-	assert(metric_size != 0);
-
-	return outline_metrics;
-}
-
-unsigned long gdipp_font_man::stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
-{
-	// callback function, called when freetype requests font data
-
-	return 0;
-}
-
-void gdipp_font_man::stream_close(FT_Stream stream)
-{
-	// GetFontData() needs no close
-}
-
-void *gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
+void *font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 {
 	const HFONT linked_hfont = CreateFontIndirectW(attr_buf);
 	if (linked_hfont == NULL)
@@ -40,14 +15,14 @@ void *gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 	assert(font_holder != NULL);
 	SelectObject(font_holder, linked_hfont);
 
-	vector<BYTE> metric_buf;
+	std::vector<BYTE> metric_buf;
 	OUTLINETEXTMETRICW *outline_metrics;
 	outline_metrics = get_dc_metrics(font_holder, metric_buf);
 	if (outline_metrics == NULL)
 		return 0;
 
-	wstring font_face = metric_face_name(outline_metrics);
-	map<wstring, font_entry>::const_iterator font_iter = _font_registry.find(font_face);
+	std::wstring font_face = metric_face_name(outline_metrics);
+	std::map<std::wstring, font_entry>::const_iterator font_iter = _font_registry.find(font_face);
 	if (font_iter == _font_registry.end())
 	{
 		const font_entry new_font_data = {linked_hfont, metric_buf};
@@ -64,7 +39,7 @@ void *gdipp_font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 	return const_cast<font_entry *>(&font_iter->second);
 }
 
-DWORD gdipp_font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const
+DWORD font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
@@ -79,14 +54,14 @@ DWORD gdipp_font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LP
 	return data_size;
 }
 
-const vector<BYTE> *gdipp_font_man::get_font_metrics(void *font_id) const
+const std::vector<BYTE> *font_man::get_font_metrics(void *font_id) const
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
 	return &curr_font->metric_buf;
 }
 
-DWORD gdipp_font_man::get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi) const
+DWORD font_man::get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi) const
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
@@ -101,12 +76,42 @@ DWORD gdipp_font_man::get_glyph_indices(void *font_id, const wchar_t *str, int c
 	return converted;
 }
 
-FT_Stream gdipp_font_man::lookup_stream(void *font_id) const
+FT_Stream font_man::lookup_stream(void *font_id) const
 {
 	return NULL;
 }
 
-ULONG gdipp_font_man::lookup_face_index(void *font_id) const
+ULONG font_man::lookup_face_index(void *font_id) const
 {
 	return 0;
+}
+
+OUTLINETEXTMETRICW *font_man::get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf)
+{
+	// get outline metrics of the DC, which also include the text metrics
+
+	UINT metric_size = GetOutlineTextMetricsW(hdc, 0, NULL);
+	if (metric_size == 0)
+		return NULL;
+
+	metric_buf.resize(metric_size);
+	OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<OUTLINETEXTMETRICW *>(&metric_buf[0]);
+	metric_size = GetOutlineTextMetricsW(hdc, metric_size, outline_metrics);
+	assert(metric_size != 0);
+
+	return outline_metrics;
+}
+
+unsigned long font_man::stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count)
+{
+	// callback function, called when freetype requests font data
+
+	return 0;
+}
+
+void font_man::stream_close(FT_Stream stream)
+{
+	// GetFontData() needs no close
+}
+
 }

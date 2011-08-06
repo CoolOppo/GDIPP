@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "MainDlg.h"
 #include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/gs_helper.h"
+#include "gdipp_support/helper.h"
 #include "gdipp_demo/gdipp_demo.h"
 #include "gdipp_demo/AboutDlg.h"
 #include "gdipp_demo/PaintDlg.h"
@@ -128,23 +128,23 @@ bool CMainDlg::load_demo_setting()
 	if (h_gdimm == NULL)
 	{
 		// get setting file path
-		wchar_t setting_path[MAX_PATH];
-		b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
+		wchar_t config_path[MAX_PATH];
+		b_ret = gdipp::get_dir_file_path(NULL, L"gdipp_config.xml", config_path);
 		if (!b_ret)
 			return false;
 
-		gdipp_init_setting();
+		gdipp::init_config();
 
-		b_ret = gdipp_load_setting(setting_path);
+		b_ret = gdipp::load_config(config_path);
 		if (!b_ret)
 			return false;
 	}
 
-	wcs_convert(gdipp_get_demo_setting(L"count"), &total_count);
-	wcs_convert(gdipp_get_demo_setting(L"threads"), &thread_count);
-	wcs_convert(gdipp_get_demo_setting(L"random_text"), &random_text);
+	gdipp::wcs_convert(gdipp::get_demo_setting(L"count"), &total_count);
+	gdipp::wcs_convert(gdipp::get_demo_setting(L"threads"), &thread_count);
+	gdipp::wcs_convert(gdipp::get_demo_setting(L"random_text"), &random_text);
 
-	paint_fonts = gdipp_get_demo_fonts();
+	paint_fonts = gdipp::get_demo_fonts();
 
 	// if no font is specified, use Tahoma
 	if (paint_fonts.empty())
@@ -177,7 +177,7 @@ bool CMainDlg::load_gdimm()
 		h_gdimm = GetModuleHandle(gdimm_name);
 		if (h_gdimm == NULL)
 		{
-			b_ret = gdipp_get_dir_file_path(NULL, gdimm_name, gdimm_path);
+			b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, gdimm_path);
 			if (b_ret)
 				h_gdimm = LoadLibraryW(gdimm_path);
 		}

@@ -3,18 +3,18 @@
 /* this ALWAYS GENERATED file contains the RPC server stubs */
 
 
- /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Feb 01 20:18:53 2011
+ /* File created by MIDL compiler version 7.00.0555 */
+/* at Fri Aug 05 23:14:59 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
-    Oicf, W3, Zp8, env=Win32 (32b run)
+    Oicf, W3, Zp8, env=Win32 (32b run), target_arch=X86 7.00.0555 
     protocol : dce , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
          __declspec(uuid()), __declspec(selectany), __declspec(novtable)
          DECLSPEC_UUID(), MIDL_INTERFACE()
 */
-//@@MIDL_FILE_HEADING(  )
+/* @@MIDL_FILE_HEADING(  ) */
 
 #if !defined(_M_IA64) && !defined(_M_AMD64)
 
@@ -59,7 +59,7 @@ typedef struct _gdipp_rpc_MIDL_EXPR_FORMAT_STRING
     } gdipp_rpc_MIDL_EXPR_FORMAT_STRING;
 
 
-static RPC_SYNTAX_IDENTIFIER  _RpcTransferSyntax = 
+static const RPC_SYNTAX_IDENTIFIER  _RpcTransferSyntax = 
 {{0x8A885D04,0x1CEB,0x11C9,{0x9F,0xE8,0x08,0x00,0x2B,0x10,0x48,0x60}},{2,0}};
 
 extern const gdipp_rpc_MIDL_TYPE_FORMAT_STRING gdipp_rpc__MIDL_TypeFormatString;
@@ -72,14 +72,14 @@ extern const gdipp_rpc_MIDL_EXPR_FORMAT_STRING gdipp_rpc__MIDL_ExprFormatString;
 
 extern const MIDL_SERVER_INFO gdipp_rpc_ServerInfo;
 
-extern RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable;
+extern const RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable;
 
 static const RPC_SERVER_INTERFACE gdipp_rpc___RpcServerInterface =
     {
     sizeof(RPC_SERVER_INTERFACE),
     {{0xDA2AAF70,0x7FD7,0x4D0D,{0x97,0x9F,0x20,0x56,0x46,0x3C,0x31,0x0A}},{0,9}},
     {{0x8A885D04,0x1CEB,0x11C9,{0x9F,0xE8,0x08,0x00,0x2B,0x10,0x48,0x60}},{2,0}},
-    &gdipp_rpc_v0_9_DispatchTable,
+    (RPC_DISPATCH_TABLE*)&gdipp_rpc_v0_9_DispatchTable,
     0,
     0,
     0,
@@ -96,8 +96,9 @@ extern const NDR_RUNDOWN RundownRoutines[];
 #error  Invalid build platform for this stub.
 #endif
 #if !(TARGET_IS_NT51_OR_LATER)
-#error You need a Windows XP or later to run this stub because it uses these features:
-#error   #error However, your C/C++ compilation flags indicate you intend to run this app on earlier systems.
+#error You need Windows XP or later to run this stub because it uses these features:
+#error   compiled for Windows XP.
+#error However, your C/C++ compilation flags indicate you intend to run this app on earlier systems.
 #error This app will fail with the RPC_X_WRONG_STUB_VERSION error.
 #endif
 
@@ -766,7 +767,7 @@ static const MIDL_STUB_DESC gdipp_rpc_StubDesc =
     1, /* -error bounds_check flag */
     0x60000, /* Ndr library version */
     0,
-    0x70001f4, /* MIDL Version 7.0.500 */
+    0x700022b, /* MIDL Version 7.0.555 */
     0,
     0,
     0,  /* notify & notify_flag routine table */
@@ -776,7 +777,7 @@ static const MIDL_STUB_DESC gdipp_rpc_StubDesc =
     0
     };
 
-static RPC_DISPATCH_FUNCTION gdipp_rpc_table[] =
+static const RPC_DISPATCH_FUNCTION gdipp_rpc_table[] =
     {
     NdrServerCall2,
     NdrServerCall2,
@@ -791,10 +792,10 @@ static RPC_DISPATCH_FUNCTION gdipp_rpc_table[] =
     NdrServerCall2,
     0
     };
-RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable = 
+static const RPC_DISPATCH_TABLE gdipp_rpc_v0_9_DispatchTable = 
     {
     11,
-    gdipp_rpc_table
+    (RPC_DISPATCH_FUNCTION*)gdipp_rpc_table
     };
 
 static const SERVER_ROUTINE gdipp_rpc_ServerRoutineTable[] = 

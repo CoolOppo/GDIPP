@@ -347,6 +347,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\config_cache.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\debug_helper.cpp"
 				>
 			</File>
@@ -360,14 +368,6 @@
 			</File>
 			<File
 				RelativePath=".\minidump.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\setting.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\setting_cache.cpp"
 				>
 			</File>
 			<File
@@ -413,6 +413,14 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\config_cache.h"
+				>
+			</File>
+			<File
 				RelativePath=".\debug_helper.h"
 				>
 			</File>
@@ -430,14 +438,6 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\setting.h"
-				>
-			</File>
-			<File
-				RelativePath=".\setting_cache.h"
 				>
 			</File>
 			<File

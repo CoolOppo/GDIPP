@@ -281,15 +281,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\gs_helper.cpp"
+				RelativePath=".\config_trait.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_lock.cpp"
+				RelativePath=".\helper.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_setting_trait.cpp"
+				RelativePath=".\lock.cpp"
 				>
 			</File>
 		</Filter>
@@ -299,27 +299,23 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\gs_helper.h"
+				RelativePath=".\config_trait.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_lock.h"
+				RelativePath=".\helper.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_lru.h"
+				RelativePath=".\lock.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_pool.h"
+				RelativePath=".\lru.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gs_rpc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\gs_setting_trait.h"
+				RelativePath=".\rpc.h"
 				>
 			</File>
 		</Filter>

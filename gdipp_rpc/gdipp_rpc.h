@@ -3,18 +3,18 @@
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
 
 
- /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Feb 01 20:18:53 2011
+ /* File created by MIDL compiler version 7.00.0555 */
+/* at Fri Aug 05 23:14:59 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
-    Oicf, W3, Zp8, env=Win64 (32b run)
+    Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
     protocol : all , ms_ext, c_ext, robust
-    error checks: allocation ref bounds_check enum stub_data
-    VC __declspec() decoration level:
+    error checks: allocation ref bounds_check enum stub_data 
+    VC __declspec() decoration level: 
          __declspec(uuid()), __declspec(selectany), __declspec(novtable)
          DECLSPEC_UUID(), MIDL_INTERFACE()
 */
-//@@MIDL_FILE_HEADING(  )
+/* @@MIDL_FILE_HEADING(  ) */
 
 #pragma warning( disable: 4049 )  /* more than 64k source lines */
 
@@ -39,26 +39,23 @@
 #pragma once
 #endif
 
-/* Forward Declarations */
+/* Forward Declarations */ 
+
+/* header files for imported files */
+#include "wtypes.h"
 
 #ifdef __cplusplus
 extern "C"{
-#endif
+#endif 
 
 
 #ifndef __gdipp_rpc_INTERFACE_DEFINED__
 #define __gdipp_rpc_INTERFACE_DEFINED__
 
 /* interface gdipp_rpc */
-/* [explicit_handle][version][uuid] */
+/* [explicit_handle][version][uuid] */ 
 
-typedef struct gdipp_vector
-    {
-    long x;
-    long y;
-    } 	gdipp_vector;
-
-typedef struct gdipp_bitmap_glyph
+typedef /* [public][public] */ struct __MIDL_gdipp_rpc_0001
     {
     int left;
     int top;
@@ -69,32 +66,48 @@ typedef struct gdipp_bitmap_glyph
     unsigned char pixel_mode;
     } 	gdipp_bitmap_glyph;
 
-typedef struct gdipp_outline_glyph
+typedef /* [public][public] */ struct __MIDL_gdipp_rpc_0002
     {
     short n_contours;
     short n_points;
-    gdipp_vector *points;
+    POINT *points;
     unsigned char *tags;
     unsigned char *contours;
     } 	gdipp_outline_glyph;
+
+typedef /* [public] */ struct __MIDL_gdipp_rpc_0003
+    {
+    UINT count;
+    gdipp_bitmap_glyph *glyphs;
+    RECT *ctrl_boxes;
+    RECT *black_boxes;
+    } 	gdipp_bitmap_glyph_run;
+
+typedef /* [public] */ struct __MIDL_gdipp_rpc_0004
+    {
+    UINT count;
+    gdipp_outline_glyph *glyphs;
+    RECT *ctrl_boxes;
+    RECT *black_boxes;
+    } 	gdipp_outline_glyph_run;
 
 typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 
 typedef /* [context_handle] */ void *GDIPP_RPC_GLYPH_RUN_HANDLE;
 
-GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
+GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [size_is][in] */ const byte *logfont_buf,
     /* [in] */ unsigned long logfont_size,
     /* [in] */ int render_mode);
 
-unsigned long gdipp_rpc_get_font_size(
+unsigned long gdipp_rpc_get_font_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
     /* [in] */ unsigned long offset);
 
-unsigned long gdipp_rpc_get_font_data(
+unsigned long gdipp_rpc_get_font_data( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
@@ -102,45 +115,45 @@ unsigned long gdipp_rpc_get_font_data(
     /* [size_is][out] */ byte *data_buf,
     /* [in] */ unsigned long buf_size);
 
-unsigned long gdipp_rpc_get_font_metrics_size(
+unsigned long gdipp_rpc_get_font_metrics_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session);
 
-unsigned long gdipp_rpc_get_font_metrics_data(
+unsigned long gdipp_rpc_get_font_metrics_data( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][out] */ byte *metrics_buf,
     /* [in] */ unsigned long buf_size);
 
-unsigned long gdipp_rpc_get_glyph_indices(
+unsigned long gdipp_rpc_get_glyph_indices( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][string][in] */ const wchar_t *str,
     /* [in] */ int count,
     /* [size_is][out] */ unsigned short *gi);
 
-GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run(
+GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [string][in] */ wchar_t *str,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index);
 
-unsigned long gdipp_rpc_get_glyph_run_size(
+unsigned long gdipp_rpc_get_glyph_run_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run);
 
-boolean gdipp_rpc_get_glyph_run(
+boolean gdipp_rpc_get_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run,
     /* [size_is][out] */ byte *glyph_run_buf,
     /* [in] */ unsigned long glyph_run_size);
 
-boolean gdipp_rpc_release_glyph_run(
+boolean gdipp_rpc_release_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE *h_glyph_run);
 
-boolean gdipp_rpc_end_session(
+boolean gdipp_rpc_end_session( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_SESSION_HANDLE *h_session);
 

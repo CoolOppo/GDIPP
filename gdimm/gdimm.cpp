@@ -56,14 +56,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			h_self = hModule;
 
 			// get setting file path
-			wchar_t setting_path[MAX_PATH];
-			if (!gdipp_get_dir_file_path(hModule, L"gdipp_setting.xml", setting_path))
+			wchar_t config_path[MAX_PATH];
+			if (!get_dir_file_path(hModule, L"gdipp_config.xml", config_path))
 				return FALSE;
 
 			gdipp_init_setting();
 
 			// return false if setting file does not exist
-			if (!gdipp_load_setting(setting_path))
+			if (!gdipp_load_setting(config_path))
 				return FALSE;
 
 			if (gdipp_is_process_excluded(NULL))

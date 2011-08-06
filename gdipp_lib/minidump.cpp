@@ -2,7 +2,10 @@
 #include "minidump.h"
 #include "gdipp_lib/gdipp_lib.h"
 
-vector<HMODULE> h_minidump_modules;
+namespace gdipp
+{
+
+std::vector<HMODULE> h_minidump_modules;
 
 BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 	IN CONST PMINIDUMP_CALLBACK_INPUT CallbackInput,
@@ -12,7 +15,7 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 	{
 	case IncludeModuleCallback:
 		{
-			for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
+			for (std::vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
 			{
 				if (*iter == reinterpret_cast<HMODULE>(CallbackInput->IncludeModule.BaseOfImage))
 					return TRUE;
@@ -36,7 +39,7 @@ LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
 	BOOL b_ret;
 
 	bool ex_in_module = false;
-	for (vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
+	for (std::vector<HMODULE>::const_iterator iter = h_minidump_modules.begin(); iter != h_minidump_modules.end(); ++iter)
 	{
 		MODULEINFO mod_info;
 		b_ret = GetModuleInformation(GetCurrentProcess(), *iter, &mod_info, sizeof(MODULEINFO));
@@ -66,7 +69,7 @@ LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
 
 	const wchar_t *dmp_dir_name = L"crash_dump\\";
 	wchar_t dmp_file_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(h_minidump_modules[0], dmp_dir_name, dmp_file_path);
+	b_ret = get_dir_file_path(h_minidump_modules[0], dmp_dir_name, dmp_file_path);
 	assert(b_ret);
 	const size_t dmp_dir_len = wcslen(dmp_file_path);
 	assert(dmp_dir_len < MAX_PATH);
@@ -98,12 +101,14 @@ LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-void gdipp_init_minidump()
+void init_minidump()
 {
 	SetUnhandledExceptionFilter(minidump_filter);
 }
 
-void gdipp_register_minidump_module(HMODULE h_module)
+void register_minidump_module(HMODULE h_module)
 {
 	h_minidump_modules.push_back(h_module);
+}
+
 }

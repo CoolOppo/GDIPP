@@ -3,18 +3,18 @@
 /* this ALWAYS GENERATED file contains the RPC client stubs */
 
 
- /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Feb 01 20:18:53 2011
+ /* File created by MIDL compiler version 7.00.0555 */
+/* at Fri Aug 05 23:14:59 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
-    Oicf, W3, Zp8, env=Win64 (32b run)
+    Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
     protocol : all , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
          __declspec(uuid()), __declspec(selectany), __declspec(novtable)
          DECLSPEC_UUID(), MIDL_INTERFACE()
 */
-//@@MIDL_FILE_HEADING(  )
+/* @@MIDL_FILE_HEADING(  ) */
 
 #if defined(_M_AMD64)
 
@@ -57,10 +57,10 @@ typedef struct _gdipp_rpc_MIDL_EXPR_FORMAT_STRING
     } gdipp_rpc_MIDL_EXPR_FORMAT_STRING;
 
 
-static RPC_SYNTAX_IDENTIFIER  _RpcTransferSyntax = 
+static const RPC_SYNTAX_IDENTIFIER  _RpcTransferSyntax = 
 {{0x8A885D04,0x1CEB,0x11C9,{0x9F,0xE8,0x08,0x00,0x2B,0x10,0x48,0x60}},{2,0}};
 
-static  RPC_SYNTAX_IDENTIFIER  _NDR64_RpcTransferSyntax = 
+static const RPC_SYNTAX_IDENTIFIER  _NDR64_RpcTransferSyntax = 
 {{0x71710533,0xbeba,0x4937,{0x83,0x19,0xb5,0xdb,0xef,0x9c,0xcc,0x36}},{1,0}};
 
 
@@ -997,18 +997,18 @@ static const unsigned short gdipp_rpc_FormatStringOffsetTable[] =
 /* this ALWAYS GENERATED file contains the RPC client stubs */
 
 
- /* File created by MIDL compiler version 7.00.0500 */
-/* at Tue Feb 01 20:18:53 2011
+ /* File created by MIDL compiler version 7.00.0555 */
+/* at Fri Aug 05 23:14:59 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
-    Oicf, W3, Zp8, env=Win64 (32b run)
+    Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
     protocol : all , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
          __declspec(uuid()), __declspec(selectany), __declspec(novtable)
          DECLSPEC_UUID(), MIDL_INTERFACE()
 */
-//@@MIDL_FILE_HEADING(  )
+/* @@MIDL_FILE_HEADING(  ) */
 
 #if defined(_M_AMD64)
 
@@ -3177,7 +3177,7 @@ static const MIDL_STUB_DESC gdipp_rpc_StubDesc =
     1, /* -error bounds_check flag */
     0x60000, /* Ndr library version */
     0,
-    0x70001f4, /* MIDL Version 7.0.500 */
+    0x700022b, /* MIDL Version 7.0.555 */
     0,
     0,
     0,  /* notify & notify_flag routine table */
@@ -3187,7 +3187,7 @@ static const MIDL_STUB_DESC gdipp_rpc_StubDesc =
     0
     };
 
-static MIDL_SYNTAX_INFO gdipp_rpc_SyntaxInfo [  2 ] = 
+static const MIDL_SYNTAX_INFO gdipp_rpc_SyntaxInfo [  2 ] = 
     {
     {
     {{0x8A885D04,0x1CEB,0x11C9,{0x9F,0xE8,0x08,0x00,0x2B,0x10,0x48,0x60}},{2,0}},
@@ -3216,9 +3216,9 @@ static const MIDL_STUBLESS_PROXY_INFO gdipp_rpc_ProxyInfo =
     &gdipp_rpc_StubDesc,
     gdipp_rpc__MIDL_ProcFormatString.Format,
     gdipp_rpc_FormatStringOffsetTable,
-    &_RpcTransferSyntax,
+    (RPC_SYNTAX_IDENTIFIER*)&_RpcTransferSyntax,
     2,
-    gdipp_rpc_SyntaxInfo
+    (MIDL_SYNTAX_INFO*)gdipp_rpc_SyntaxInfo
     
     };
 

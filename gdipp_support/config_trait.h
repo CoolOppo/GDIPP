@@ -2,11 +2,14 @@
 
 #include <windows.h>
 
-class gdimm_setting_trait
+namespace gdipp
+{
+
+class config_trait
 {
 public:
-	gdimm_setting_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name);
-	~gdimm_setting_trait();
+	config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name);
+	~config_trait();
 
 	char get_weight_class() const;
 	bool get_italic() const;
@@ -26,3 +29,5 @@ private:
 	BYTE *_setting_data;
 	int _setting_size;
 };
+
+}

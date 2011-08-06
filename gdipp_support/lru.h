@@ -2,10 +2,10 @@
 
 #include <list>
 #include <map>
-#include "gdipp_support/gs_lock.h"
+#include "gdipp_support/lock.h"
 
-using std::list;
-using std::map;
+namespace gdipp
+{
 
 template <typename T>
 class lru_list
@@ -28,7 +28,7 @@ public:
 
 	bool access(const T data, T &erased)
 	{
-		gdipp_lock lock("lru");
+		lock l("lru");
 
 		bool overflow = false;
 
@@ -66,11 +66,13 @@ public:
 	}
 
 private:
-	typedef typename list<T> _list_type;
+	typedef typename std::list<T> _list_type;
 	typedef typename _list_type::iterator _list_iter_type;
-	typedef typename map<T, _list_iter_type> _map_type;
+	typedef typename std::map<T, _list_iter_type> _map_type;
 
 	_list_type _access_list;
 	_map_type _data_map;
 	size_t _capacity;
 };
+
+}

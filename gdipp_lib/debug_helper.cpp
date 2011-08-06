@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include "debug_helper.h"
 
+namespace gdipp
+{
+
 const wchar_t *debug_file_name = L"C:\\gdipp_debug.log";
 
-void gdipp_debug_buffer(const void *ptr, unsigned int size)
+void debug_buffer(const void *ptr, unsigned int size)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
@@ -15,7 +18,7 @@ void gdipp_debug_buffer(const void *ptr, unsigned int size)
 	}
 }
 
-void gdipp_debug_decimal(double num, bool new_line)
+void debug_decimal(double num, bool new_line)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
@@ -30,7 +33,7 @@ void gdipp_debug_decimal(double num, bool new_line)
 	}
 }
 
-void gdipp_debug_integer(size_t num, bool new_line)
+void debug_integer(size_t num, bool new_line)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
@@ -45,7 +48,7 @@ void gdipp_debug_integer(size_t num, bool new_line)
 	}
 }
 
-void gdipp_debug_string(const wchar_t *str)
+void debug_string(const wchar_t *str)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
@@ -55,4 +58,6 @@ void gdipp_debug_string(const wchar_t *str)
 		fwprintf(f, L"%s\n", str);
 		fclose(f);
 	}
+}
+
 }

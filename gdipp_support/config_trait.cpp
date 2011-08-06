@@ -1,6 +1,9 @@
-#include "gs_setting_trait.h"
+#include "config_trait.h"
 
-gdimm_setting_trait::gdimm_setting_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
+namespace gdipp
+{
+
+config_trait::config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
 {
 	const int font_name_len = static_cast<int>(wcslen(font_name) + 1);
 	_setting_size = sizeof(weight_class) + sizeof(italic) + sizeof(height) + font_name_len * sizeof(wchar_t);
@@ -12,37 +15,39 @@ gdimm_setting_trait::gdimm_setting_trait(char weight_class, bool italic, LONG he
 	wcscpy_s(reinterpret_cast<wchar_t *>(_setting_data + sizeof(char) + sizeof(bool) + sizeof(LONG)), font_name_len, font_name);
 }
 
-gdimm_setting_trait::~gdimm_setting_trait()
+config_trait::~config_trait()
 {
 	delete[] _setting_data;
 }
 
-char gdimm_setting_trait::get_weight_class() const
+char config_trait::get_weight_class() const
 {
 	return *reinterpret_cast<char *>(_setting_data);
 }
 
-bool gdimm_setting_trait::get_italic() const
+bool config_trait::get_italic() const
 {
 	return *reinterpret_cast<bool *>(_setting_data + sizeof(char));
 }
 
-LONG gdimm_setting_trait::get_height() const
+LONG config_trait::get_height() const
 {
 	return *reinterpret_cast<LONG *>(_setting_data + sizeof(char) + sizeof(bool));
 }
 
-const wchar_t *gdimm_setting_trait::get_font_name() const
+const wchar_t *config_trait::get_font_name() const
 {
 	return reinterpret_cast<const wchar_t *>(_setting_data + sizeof(char) + sizeof(bool) + sizeof(LONG));
 }
 
-const BYTE *gdimm_setting_trait::get_data() const
+const BYTE *config_trait::get_data() const
 {
 	return _setting_data;
 }
 
-int gdimm_setting_trait::get_size() const
+int config_trait::get_size() const
 {
 	return _setting_size;
+}
+
 }

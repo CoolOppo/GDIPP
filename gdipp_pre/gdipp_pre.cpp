@@ -10,7 +10,7 @@
 CAppModule _Module;
 
 HINSTANCE h_instance;
-wchar_t curr_setting_path[MAX_PATH];
+wchar_t config_path[MAX_PATH];
 wchar_t *preview_text = NULL;
 
 BOOL load_setting()
@@ -18,13 +18,13 @@ BOOL load_setting()
 	BOOL b_ret;
 
 	// get setting file path
-	wchar_t setting_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdipp_setting.xml", setting_path);
+	wchar_t config_path[MAX_PATH];
+	b_ret = gdipp::get_dir_file_path(NULL, L"gdipp_config.xml", config_path);
 	if (!b_ret)
 		return FALSE;
 
-	gdipp_init_setting();
-	return gdipp_load_setting(setting_path);
+	gdipp::init_config();
+	return gdipp::load_config(config_path);
 }
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
@@ -54,11 +54,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	h_instance = hInstance;
 
-	b_ret = gdipp_get_dir_file_path(hInstance, L"gdipp_setting.xml", curr_setting_path);
+	b_ret = gdipp::get_dir_file_path(hInstance, L"gdipp_config.xml", config_path);
 	assert(b_ret);
 
 	wchar_t preview_text_path[MAX_PATH];
-	b_ret = gdipp_get_dir_file_path(hInstance, L"gdipp_preview.txt", preview_text_path);
+	b_ret = gdipp::get_dir_file_path(hInstance, L"gdipp_preview.txt", preview_text_path);
 	assert(b_ret);
 
 	FILE *f;
@@ -80,9 +80,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	WCHAR gdimm_path[MAX_PATH];
 
 #ifdef _M_X64
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
+	b_ret = gdipp::get_dir_file_path(NULL, L"gdimm_64.dll", gdimm_path);
 #else
-	b_ret = gdipp_get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
+	b_ret = gdipp::get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
 #endif // _M_X64
 
 	h_gdimm = LoadLibraryW(gdimm_path);

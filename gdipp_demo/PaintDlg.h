@@ -31,5 +31,5 @@ public:
 	LRESULT OnToolsStop(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 private:
-	gdipp_demo_painter _painter;
+	gdipp::demo_painter _painter;
 };

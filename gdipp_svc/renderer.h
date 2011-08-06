@@ -1,17 +1,21 @@
 #pragma once
 
 #include "rpc_impl.h"
-#include "gdipp_support/gs_rpc.h"
+#include "glyph_run.h"
+#include "gdipp_support/rpc.h"
+
+namespace gdipp
+{
 
 class gdimm_renderer
 {
 public:
-	explicit gdimm_renderer(gdipp_rpc_session *render_session);
+	explicit gdimm_renderer(rpc_session *render_session);
 	virtual ~gdimm_renderer();
+	virtual bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
 
 protected:
-	gdipp_rpc_session *_render_session;
-
-private:
-	virtual bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
+	rpc_session *_render_session;
 };
+
+}

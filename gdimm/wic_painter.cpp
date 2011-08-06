@@ -36,6 +36,82 @@ gdimm_wic_painter::gdimm_wic_painter()
 	}
 }
 
+bool gdimm_wic_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
+{
+	if (!gdimm_painter::begin(context, render_mode))
+		return false;
+
+	// ignore rotated DC
+	if (_context->log_font.lfEscapement % 3600 != 0)
+		return false;
+
+	_hdc_canvas = CreateCompatibleDC(NULL);
+	if (_hdc_canvas == NULL)
+		return false;
+
+	switch (_context->setting_cache->hinting)
+	{
+	case 2:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
+		break;
+	case 3:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+		break;
+	default:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
+		break;
+	}
+	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
+
+	// BGR -> RGB
+	_text_color = RGB(GetBValue(_text_color), GetGValue(_text_color), GetRValue(_text_color));
+	_bg_color = RGB(GetBValue(_bg_color), GetGValue(_bg_color), GetRValue(_bg_color));
+
+	_em_size = static_cast<FLOAT>(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading) - 0.3f;	// small adjustment to emulate GDI bbox
+	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
+
+	return true;
+}
+
+void gdimm_wic_painter::end()
+{
+	DeleteDC(_hdc_canvas);
+}
+
+bool gdimm_wic_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
+{
+	BOOL b_ret;
+
+	BOOL update_cursor;
+	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
+	{
+		POINT cp;
+		b_ret = GetCurrentPositionEx(_context->hdc, &cp);
+		assert(b_ret);
+
+		_cursor.x = cp.x;
+		_cursor.y = cp.y;
+		update_cursor = true;
+	}
+	else
+	{
+		_cursor.x = x;
+		_cursor.y = y;
+		update_cursor = false;
+	}
+
+	const bool paint_success = draw_text(options, lprect, static_cast<LPCWSTR>(text), c, lpDx);
+
+	// if TA_UPDATECP is set, update current position after text out
+	if (update_cursor && paint_success)
+	{
+		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
+		assert(b_ret);
+	}
+
+	return paint_success;
+}
+
 bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWriteFontFace **dw_font_face, DWRITE_GLYPH_RUN &dw_glyph_run)
 {
 	HRESULT hr;
@@ -52,17 +128,17 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	dw_glyph_run.isSideways = FALSE;
 	dw_glyph_run.bidiLevel = 0;
 
-	vector<DWRITE_GLYPH_METRICS> glyph_metrics(c);
+	std::vector<DWRITE_GLYPH_METRICS> glyph_metrics(c);
 	if (_dw_measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
 		hr = (*dw_font_face)->GetDesignGlyphMetrics(reinterpret_cast<const UINT16 *>(lpString), c, glyph_metrics.data());
 	else
 		hr = (*dw_font_face)->GetGdiCompatibleGlyphMetrics(_em_size,
-			_pixels_per_dip,
-			NULL,
-			_use_gdi_natural,
-			reinterpret_cast<const UINT16 *>(lpString),
-			c,
-			glyph_metrics.data());
+		_pixels_per_dip,
+		NULL,
+		_use_gdi_natural,
+		reinterpret_cast<const UINT16 *>(lpString),
+		c,
+		glyph_metrics.data());
 	assert(hr == S_OK);
 
 	UINT32 glyph_run_width = 0;
@@ -71,10 +147,10 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	bbox_width = max(bbox_width, static_cast<LONG>(glyph_run_width * _em_size / _context->outline_metrics->otmEMSquare));
 
 	// more accurate width than DirectWrite functions
-// 	SIZE text_extent;
-// 	b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &text_extent);
-// 	assert(b_ret);
-// 	bbox_width = max(bbox_width, (UINT32) text_extent.cx);
+	// 	SIZE text_extent;
+	// 	b_ret = GetTextExtentPointI(_context->hdc, (LPWORD) lpString, c, &text_extent);
+	// 	assert(b_ret);
+	// 	bbox_width = max(bbox_width, (UINT32) text_extent.cx);
 
 	return true;
 }
@@ -84,7 +160,7 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	HRESULT hr;
 	bool b_ret;
 
-	gdimm_os2_metrics os2_metrics;
+	os2_metrics os2;
 	b_ret = os2_metrics.init(_context->hdc);
 	assert(b_ret);
 
@@ -138,11 +214,11 @@ bool gdimm_wic_painter::prepare(LPCWSTR lpString, UINT c, LONG &bbox_width, IDWr
 	assert(hr == S_OK);
 	bbox_width = max(bbox_width, static_cast<LONG>(ceil(text_bbox.width)));
 
-// 	// more accurate width than DirectWrite functions
-// 	SIZE text_extent;
-// 	b_ret = GetTextExtentPoint32W(_context->hdc, lpString, c, &text_extent);
-// 	assert(b_ret);
-// 	bbox_width = max(bbox_width, reinterpret_cast<UINT32>(text_extent.cx));
+	// 	// more accurate width than DirectWrite functions
+	// 	SIZE text_extent;
+	// 	b_ret = GetTextExtentPoint32W(_context->hdc, lpString, c, &text_extent);
+	// 	assert(b_ret);
+	// 	bbox_width = max(bbox_width, reinterpret_cast<UINT32>(text_extent.cx));
 
 	return true;
 }
@@ -346,80 +422,4 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 	assert(b_ret);
 
 	return !!paint_success;
-}
-
-bool gdimm_wic_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
-{
-	if (!gdimm_painter::begin(context, render_mode))
-		return false;
-
-	// ignore rotated DC
-	if (_context->log_font.lfEscapement % 3600 != 0)
-		return false;
-
-	_hdc_canvas = CreateCompatibleDC(NULL);
-	if (_hdc_canvas == NULL)
-		return false;
-
-	switch (_context->setting_cache->hinting)
-	{
-	case 2:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
-		break;
-	case 3:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
-		break;
-	default:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
-		break;
-	}
-	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
-
-	// BGR -> RGB
-	_text_color = RGB(GetBValue(_text_color), GetGValue(_text_color), GetRValue(_text_color));
-	_bg_color = RGB(GetBValue(_bg_color), GetGValue(_bg_color), GetRValue(_bg_color));
-
-	_em_size = static_cast<FLOAT>(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading) - 0.3f;	// small adjustment to emulate GDI bbox
-	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
-
-	return true;
-}
-
-void gdimm_wic_painter::end()
-{
-	DeleteDC(_hdc_canvas);
-}
-
-bool gdimm_wic_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
-{
-	BOOL b_ret;
-
-	BOOL update_cursor;
-	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
-	{
-		POINT cp;
-		b_ret = GetCurrentPositionEx(_context->hdc, &cp);
-		assert(b_ret);
-
-		_cursor.x = cp.x;
-		_cursor.y = cp.y;
-		update_cursor = true;
-	}
-	else
-	{
-		_cursor.x = x;
-		_cursor.y = y;
-		update_cursor = false;
-	}
-
-	const bool paint_success = draw_text(options, lprect, static_cast<LPCWSTR>(text), c, lpDx);
-
-	// if TA_UPDATECP is set, update current position after text out
-	if (update_cursor && paint_success)
-	{
-		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
-		assert(b_ret);
-	}
-
-	return paint_success;
 }

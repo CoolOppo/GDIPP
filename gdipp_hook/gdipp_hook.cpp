@@ -28,7 +28,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		return EXIT_FAILURE;
 
 	HANDLE h_wait;
-	wistringstream(wait_handle_str) >> h_wait;
+	std::wistringstream(wait_handle_str) >> h_wait;
 	WaitForSingleObject(h_wait, INFINITE);
 	UnhookWindowsHookEx(h_hook);
 

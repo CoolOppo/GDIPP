@@ -28,7 +28,7 @@ public:
 
 private:
 	// actual data buffer of the OUTLINETEXTMETRICW structure
-	vector<BYTE> _metric_buf;
+	std::vector<BYTE> _metric_buf;
 };
 
 struct font_info
@@ -36,5 +36,5 @@ struct font_info
 	DWORD table_header;
 	DWORD face_index;
 	FT_StreamRec stream;
-	gdimm_os2_metrics os2_metrics;
+	os2_metrics os2;
 };

@@ -37,7 +37,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 #endif
 
 		wchar_t _gdimm_path[MAX_PATH];
-		b_ret = gdipp_get_dir_file_path(NULL, gdimm_name, _gdimm_path);
+		b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, _gdimm_path);
 		assert(b_ret);
 
 #ifdef _M_X64
@@ -58,7 +58,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 			b_ret = TerminateProcess(pi.hProcess, 0);
 			assert(b_ret);
 
-			wstring error_msg = L"Unable to inject gdimm.dll to the new process";
+			std::wstring error_msg = L"Unable to inject gdimm.dll to the new process";
 
 			// STATUS_WOW_ASSERTION
 			if (eh_ret == 0xC0009898L)

@@ -1,17 +1,18 @@
-#include "gs_lock.h"
+#include "lock.h"
 #include <map>
 #include <MurmurHash3.h>
 
-using std::map;
+namespace gdipp
+{
 
-map<unsigned int, CRITICAL_SECTION *> locks;
+std::map<unsigned int, CRITICAL_SECTION *> locks;
 
-gdipp_lock::gdipp_lock(char *lock_sig)
+lock::lock(char *lock_sig)
 {
 	uint32_t lock_key;
 	MurmurHash3_x86_32(lock_sig, static_cast<int>(strlen(lock_sig)), 0, &lock_key);
 
-	map<unsigned int, CRITICAL_SECTION *>::const_iterator lock_iter = locks.find(lock_key);
+	std::map<unsigned int, CRITICAL_SECTION *>::const_iterator lock_iter = locks.find(lock_key);
 
 	if (lock_iter == locks.end())
 	{
@@ -25,7 +26,9 @@ gdipp_lock::gdipp_lock(char *lock_sig)
 	EnterCriticalSection(_cs);
 }
 
-gdipp_lock::~gdipp_lock()
+lock::~lock()
 {
 	LeaveCriticalSection(_cs);
+}
+
 }

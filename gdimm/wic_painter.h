@@ -3,8 +3,6 @@
 #include "painter.h"
 #include "wic_dib.h"
 
-//using std::;
-
 class gdimm_wic_painter : public gdimm_painter
 {
 public:
@@ -24,7 +22,7 @@ private:
 	static IDWriteFactory *_dw_factory;
 	static IDWriteGdiInterop *_dw_gdi_interop;
 
-	vector<FLOAT> _advances;
+	std::vector<FLOAT> _advances;
 	DWRITE_MEASURING_MODE _dw_measuring_mode;
 	HDC _hdc_canvas;
 	FLOAT _pixels_per_dip;

@@ -5,6 +5,85 @@
 
 DWORD tls_index = 0;
 
+bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
+{
+	if (!gdimm_painter::begin(context, render_mode))
+		return false;
+
+	// ignore rotated DC
+	if (_context->log_font.lfEscapement % 3600 != 0)
+		return false;
+
+	if (tls_index == 0)
+		tls_index = TlsAlloc();
+
+	_tls = reinterpret_cast<painter_tls *>(TlsGetValue(tls_index));
+	if (_tls == NULL)
+	{
+		_tls = reinterpret_cast<painter_tls *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(painter_tls)));
+		TlsSetValue(tls_index, _tls);
+
+		_tls->hdc_canvas = CreateCompatibleDC(NULL);
+		_tls->last_hdc = NULL;
+	}
+
+	return true;
+}
+
+bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
+{
+	BOOL b_ret, paint_success = FALSE;
+
+	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
+	{
+		POINT cp;
+		b_ret = GetCurrentPositionEx(_context->hdc, &cp);
+		assert(b_ret);
+
+		_cursor.x = cp.x;
+		_cursor.y = cp.y;
+		_update_cp = true;
+	}
+	else
+	{
+		_cursor.x = x;
+		_cursor.y = y;
+		_update_cp = false;
+
+		if (_tls->last_hdc != NULL)
+			_tls->last_hdc = NULL;
+	}
+
+	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
+		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
+
+	_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
+	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
+	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
+
+	const glyph_run *a_glyph_run = reinterpret_cast<const glyph_run *>(text);
+	if (lpDx == NULL)
+		paint_success = paint_glyph_run(options, lprect, a_glyph_run);
+	else
+	{
+		glyph_run adjusted_glyph_run = *a_glyph_run;
+		adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
+		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run);
+	}
+
+	// if TA_UPDATECP is set, update current position after text out
+	if (_update_cp && paint_success)
+	{
+		_tls->last_hdc = _context->hdc;
+
+		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
+		assert(b_ret);
+	}
+
+	return !!paint_success;
+}
+
 void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
 {
 	/*
@@ -23,7 +102,7 @@ void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lp
 	INT curr_left = 0;
 	INT last_right;
 
-	list<RECT>::iterator ctrl_iter, black_iter;
+	std::list<RECT>::iterator ctrl_iter, black_iter;
 	UINT i;
 	for (ctrl_iter = a_glyph_run->ctrl_boxes.begin(), black_iter = a_glyph_run->black_boxes.begin(), i = 0;
 		i < count; ++ctrl_iter, ++black_iter, ++i)
@@ -254,8 +333,8 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	if (bk_mode == OPAQUE)
 		paint_background(_context->hdc, &grm.visible_rect, _bg_color);
 
-	list<FT_Glyph>::const_iterator glyph_iter;
-	list<RECT>::const_iterator black_iter;
+	std::list<FT_Glyph>::const_iterator glyph_iter;
+	std::list<RECT>::const_iterator black_iter;
 	for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
 		glyph_iter != a_glyph_run->glyphs.end(); ++glyph_iter, ++black_iter)
 	{
@@ -343,8 +422,8 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 
 	const int dest_pitch = get_bmp_pitch(bbox_visible_size.cx, 32);
 
-	list<FT_Glyph>::const_iterator glyph_iter;
-	list<RECT>::const_iterator black_iter;
+	std::list<FT_Glyph>::const_iterator glyph_iter;
+	std::list<RECT>::const_iterator black_iter;
 	for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
 		glyph_iter != a_glyph_run->glyphs.end(); ++glyph_iter, ++black_iter)
 	{
@@ -487,8 +566,8 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	{
 		const int dest_pitch = get_bmp_pitch(canvas_width, 32);
 
-		list<FT_Glyph>::const_iterator glyph_iter;
-		list<RECT>::const_iterator black_iter;
+		std::list<FT_Glyph>::const_iterator glyph_iter;
+		std::list<RECT>::const_iterator black_iter;
 		for (glyph_iter = a_glyph_run->glyphs.begin(), black_iter = a_glyph_run->black_boxes.begin();
 			glyph_iter != a_glyph_run->glyphs.end(); ++glyph_iter, ++black_iter)
 		{
@@ -615,83 +694,4 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 		default:
 			return FALSE;
 	}
-}
-
-bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
-{
-	if (!gdimm_painter::begin(context, render_mode))
-		return false;
-
-	// ignore rotated DC
-	if (_context->log_font.lfEscapement % 3600 != 0)
-		return false;
-
-	if (tls_index == 0)
-		tls_index = TlsAlloc();
-
-	_tls = reinterpret_cast<painter_tls *>(TlsGetValue(tls_index));
-	if (_tls == NULL)
-	{
-		_tls = reinterpret_cast<painter_tls *>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(painter_tls)));
-		TlsSetValue(tls_index, _tls);
-
-		_tls->hdc_canvas = CreateCompatibleDC(NULL);
-		_tls->last_hdc = NULL;
-	}
-
-	return true;
-}
-
-bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
-{
-	BOOL b_ret, paint_success = FALSE;
-
-	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
-	{
-		POINT cp;
-		b_ret = GetCurrentPositionEx(_context->hdc, &cp);
-		assert(b_ret);
-
-		_cursor.x = cp.x;
-		_cursor.y = cp.y;
-		_update_cp = true;
-	}
-	else
-	{
-		_cursor.x = x;
-		_cursor.y = y;
-		_update_cp = false;
-
-		if (_tls->last_hdc != NULL)
-			_tls->last_hdc = NULL;
-	}
-
-	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
-
-	_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
-	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
-	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
-
-	const glyph_run *a_glyph_run = reinterpret_cast<const glyph_run *>(text);
-	if (lpDx == NULL)
-		paint_success = paint_glyph_run(options, lprect, a_glyph_run);
-	else
-	{
-		glyph_run adjusted_glyph_run = *a_glyph_run;
-		adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
-		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run);
-	}
-
-	// if TA_UPDATECP is set, update current position after text out
-	if (_update_cp && paint_success)
-	{
-		_tls->last_hdc = _context->hdc;
-
-		b_ret = MoveToEx(_context->hdc, _cursor.x, _cursor.y, NULL);
-		assert(b_ret);
-	}
-
-	return !!paint_success;
 }

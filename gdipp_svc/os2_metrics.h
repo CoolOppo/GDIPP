@@ -1,6 +1,9 @@
 #pragma once
 
-class gdimm_os2_metrics
+namespace gdipp
+{
+
+class os2_metrics
 {
 public:
 	bool init(HDC hdc);
@@ -17,3 +20,5 @@ private:
 	FT_UShort _usWidthClass;
 	FT_UShort _fsSelection;
 };
+
+}

@@ -1,16 +1,13 @@
+import "wtypes.idl";
+
 [
 uuid(DA2AAF70-7FD7-4D0D-979F-2056463C310A),
 version(0.9)
 ]
+
 interface gdipp_rpc
 {
-	typedef struct gdipp_vector
-	{
-		long x;
-		long y;
-	} gdipp_vector;
-
-	typedef struct gdipp_bitmap_glyph
+	typedef struct
 	{
 		int left;
 		int top;
@@ -21,14 +18,30 @@ interface gdipp_rpc
 		char pixel_mode;
 	} gdipp_bitmap_glyph;
 
-	typedef struct gdipp_outline_glyph
+	typedef struct
 	{
 		short n_contours;
 		short n_points;
-		[size_is(n_points)] gdipp_vector *points;
+		[size_is(n_points)] POINT *points;
 		[size_is(n_points)] char *tags;
 		[size_is(n_contours)] char *contours;
 	} gdipp_outline_glyph;
+
+	typedef struct
+	{
+		UINT count;
+		[size_is(count)] gdipp_bitmap_glyph *glyphs;
+		[size_is(count)] RECT *ctrl_boxes;
+		[size_is(count)] RECT *black_boxes;
+	} gdipp_bitmap_glyph_run;
+
+	typedef struct
+	{
+		UINT count;
+		[size_is(count)] gdipp_outline_glyph *glyphs;
+		[size_is(count)] RECT *ctrl_boxes;
+		[size_is(count)] RECT *black_boxes;
+	} gdipp_outline_glyph_run;
 
 	typedef [context_handle] void *GDIPP_RPC_SESSION_HANDLE;
 	typedef [context_handle] void *GDIPP_RPC_GLYPH_RUN_HANDLE;

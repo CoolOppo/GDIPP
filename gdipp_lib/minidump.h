@@ -3,9 +3,10 @@
 #include <vector>
 #include "gdipp_lib/gdipp_lib.h"
 
-using std::vector;
+namespace gdipp
+{
 
-extern vector<HMODULE> h_minidump_modules;
+extern std::vector<HMODULE> h_minidump_modules;
 
 BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 	IN CONST PMINIDUMP_CALLBACK_INPUT CallbackInput,
@@ -13,5 +14,7 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 
 LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo);
 
-GDIPP_API void gdipp_init_minidump();
-GDIPP_API void gdipp_register_minidump_module(HMODULE h_module);
+GDIPP_API void init_minidump();
+GDIPP_API void register_minidump_module(HMODULE h_module);
+
+}

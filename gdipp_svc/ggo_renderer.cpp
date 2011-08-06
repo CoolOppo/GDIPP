@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
-#include "gdipp_support/gs_helper.h"
-#include "gdipp_support/gs_lock.h"
+#include "gdipp_support/helper.h"
+#include "gdipp_support/lock.h"
 #include "gdipp_svc/freetype.h"
 #include "gdipp_svc/helper.h"
+
+namespace gdipp
+{
 
 FT_Glyph gdimm_ggo_renderer::empty_outline_glyph;
 
@@ -24,7 +27,96 @@ const FT_Glyph make_empty_outline_glyph()
 	return empty_glyph;
 }
 
-void gdimm_ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE *ggo_outline_buf, vector<FT_Vector> &curve_points, vector<char> &curve_tags, vector<short> &contour_indices)
+gdimm_ggo_renderer::gdimm_ggo_renderer(rpc_session *render_session)
+: gdimm_renderer(render_session)
+{
+	empty_outline_glyph = make_empty_outline_glyph();
+	assert(empty_outline_glyph != NULL);
+}
+
+bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run)
+{
+	bool b_ret;
+
+	// identity matrix
+	memset(&_matrix, 0, sizeof(MAT2));
+	_matrix.eM11.value = 1;
+	_matrix.eM22.value = 1;
+
+	/*
+	GetGlyphOutline is capable of returning cubic B¨¦zier curves
+	although it generally require less points to define a curve with cubic rather than quadratic B¨¦zier curves,
+	TrueType fonts internally store curves with quadratic B¨¦zier curves
+	GetGlyphOutline has to do conversion, which takes time, and generates more points
+	therefore, quadratic B¨¦zier curves are more favored
+	*/
+	_ggo_format = GGO_NATIVE;
+	if (is_glyph_index)
+		_ggo_format |= GGO_GLYPH_INDEX;
+
+	if (_render_session->font_setting->hinting == 0)
+		_ggo_format |= GGO_UNHINTED;
+
+	POINT pen_pos = {};
+
+	for (UINT i = 0; i < c; ++i)
+	{
+		GLYPHMETRICS glyph_metrics = {};
+		FT_Glyph new_glyph;
+
+		// we do not care about non-printable characters
+		// solution for Windows Vista/7 Date
+		if (is_glyph_index || !iswcntrl(lpString[i]))
+		{
+			new_glyph = glyph_cache_instance.lookup_glyph(_render_session->render_trait, lpString[i], is_glyph_index);
+			if (new_glyph == NULL)
+			{
+				// double-check lock
+				lock l("glyph_cache");
+				new_glyph = glyph_cache_instance.lookup_glyph(_render_session->render_trait, lpString[i], is_glyph_index);
+				if (new_glyph == NULL)
+					new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+			}
+			else
+			{
+				b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
+				if (!b_ret)
+					return 0;
+			}
+		}
+
+		FT_Int glyph_left = 0, glyph_width = 0;
+
+		if (new_glyph != NULL)
+		{
+			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(new_glyph);
+			glyph_left = bmp_glyph->left;
+			glyph_width = get_glyph_bmp_width(bmp_glyph->bitmap);
+		}
+
+		RECT ctrl_box, black_box;
+		ctrl_box.left = pen_pos.x;
+		ctrl_box.top = pen_pos.y;
+		black_box.left = ctrl_box.left + glyph_left;
+		black_box.top = ctrl_box.top;
+
+		pen_pos.x += glyph_metrics.gmCellIncX;
+		pen_pos.y += glyph_metrics.gmCellIncY;
+
+		ctrl_box.right = pen_pos.x;
+		ctrl_box.bottom = pen_pos.y;
+		black_box.right = black_box.left + glyph_width;
+		black_box.bottom = ctrl_box.bottom;
+
+		new_glyph_run->glyphs[i] = new_glyph;
+		new_glyph_run->ctrl_boxes[i] = ctrl_box;
+		new_glyph_run->black_boxes[i] = black_box;
+	}
+
+	return true;
+}
+
+void gdimm_ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE *ggo_outline_buf, std::vector<FT_Vector> &curve_points, std::vector<char> &curve_tags, std::vector<short> &contour_indices)
 {
 	// parse outline coutours
 	DWORD header_off = 0;
@@ -81,13 +173,6 @@ void gdimm_ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE
 	assert(curve_points.size() <= FT_OUTLINE_POINTS_MAX);
 }
 
-gdimm_ggo_renderer::gdimm_ggo_renderer(gdipp_rpc_session *render_session)
-	: gdimm_renderer(render_session)
-{
-	empty_outline_glyph = make_empty_outline_glyph();
-	assert(empty_outline_glyph != NULL);
-}
-
 bool gdimm_ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
 	DWORD outline_buf_len = GetGlyphOutline(_render_session->hdc, ch, (_ggo_format | GGO_METRICS), &glyph_metrics, 0, NULL, &_matrix);
@@ -119,9 +204,9 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 		outline_buf_len = GetGlyphOutline(_render_session->hdc, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
 		assert(outline_buf_len != GDI_ERROR);
 
-		vector<FT_Vector> curve_points;
-		vector<char> curve_tags;
-		vector<short> contour_indices;
+		std::vector<FT_Vector> curve_points;
+		std::vector<char> curve_tags;
+		std::vector<short> contour_indices;
 		outline_ggo_to_ft(outline_buf_len, outline_buf, curve_points, curve_tags, contour_indices);
 
 		delete[] outline_buf;
@@ -157,7 +242,7 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 
 		{
 			// the FreeType function seems not thread-safe
-			gdipp_lock lock("freetype");
+			lock l("freetype");
 			ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _render_session->render_mode, NULL, false);
 			if (ft_error != 0)
 				return NULL;
@@ -169,84 +254,4 @@ const FT_Glyph gdimm_ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &g
 	}
 }
 
-bool gdimm_ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run)
-{
-	bool b_ret;
-
-	// identity matrix
-	memset(&_matrix, 0, sizeof(MAT2));
-	_matrix.eM11.value = 1;
-	_matrix.eM22.value = 1;
-
-	/*
-	GetGlyphOutline is capable of returning cubic B¨¦zier curves
-	although it generally require less points to define a curve with cubic rather than quadratic B¨¦zier curves,
-	TrueType fonts internally store curves with quadratic B¨¦zier curves
-	GetGlyphOutline has to do conversion, which takes time, and generates more points
-	therefore, quadratic B¨¦zier curves are more favored
-	*/
-	_ggo_format = GGO_NATIVE;
-	if (is_glyph_index)
-		_ggo_format |= GGO_GLYPH_INDEX;
-
-	if (_render_session->font_setting->hinting == 0)
-		_ggo_format |= GGO_UNHINTED;
-
-	POINT pen_pos = {};
-
-	for (UINT i = 0; i < c; ++i)
-	{
-		GLYPHMETRICS glyph_metrics = {};
-		FT_Glyph new_glyph;
-
-		// we do not care about non-printable characters
-		// solution for Windows Vista/7 Date
-		if (is_glyph_index || !iswcntrl(lpString[i]))
-		{
-			new_glyph = glyph_cache_instance.lookup_glyph(_render_session->render_trait, lpString[i], is_glyph_index);
-			if (new_glyph == NULL)
-			{
-				// double-check lock
-				gdipp_lock lock("glyph_cache");
-				new_glyph = glyph_cache_instance.lookup_glyph(_render_session->render_trait, lpString[i], is_glyph_index);
-				if (new_glyph == NULL)
-					new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
-			}
-			else
-			{
-				b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
-				if (!b_ret)
-					return 0;
-			}
-		}
-
-		FT_Int glyph_left = 0, glyph_width = 0;
-
-		if (new_glyph != NULL)
-		{
-			const FT_BitmapGlyph bmp_glyph = reinterpret_cast<FT_BitmapGlyph>(new_glyph);
-			glyph_left = bmp_glyph->left;
-			glyph_width = get_glyph_bmp_width(bmp_glyph->bitmap);
-		}
-
-		RECT ctrl_box, black_box;
-		ctrl_box.left = pen_pos.x;
-		ctrl_box.top = pen_pos.y;
-		black_box.left = ctrl_box.left + glyph_left;
-		black_box.top = ctrl_box.top;
-
-		pen_pos.x += glyph_metrics.gmCellIncX;
-		pen_pos.y += glyph_metrics.gmCellIncY;
-
-		ctrl_box.right = pen_pos.x;
-		ctrl_box.bottom = pen_pos.y;
-		black_box.right = black_box.left + glyph_width;
-		black_box.bottom = ctrl_box.bottom;
-
-		new_glyph_run->glyphs.push_back(new_glyph);
-		new_glyph_run->ctrl_boxes.push_back(ctrl_box);
-		new_glyph_run->black_boxes.push_back(black_box);
-	}
-
-	return true;
 }

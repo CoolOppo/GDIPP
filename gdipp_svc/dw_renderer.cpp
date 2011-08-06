@@ -27,6 +27,38 @@ gdimm_dw_renderer::gdimm_dw_renderer()
 	}
 }
 
+bool gdimm_dw_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)
+{
+	if (!gdimm_renderer::begin(context, render_mode))
+		return false;
+
+	// ignore rotated DC
+	if (_context->log_font.lfEscapement % 3600 != 0)
+		return false;
+
+	switch (_context->setting_cache->hinting)
+	{
+	case 2:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
+		break;
+	case 3:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
+		break;
+	default:
+		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
+		break;
+	}
+	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
+
+	_advances.clear();
+	_em_size = static_cast<FLOAT>(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
+	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
+
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
 bool gdimm_dw_renderer::make_glyph_texture(FLOAT x, FLOAT y, const DWRITE_GLYPH_RUN *dw_glyph_run, glyph_run *a_glyph_run)
 {
 	HRESULT hr;
@@ -149,7 +181,7 @@ bool gdimm_dw_renderer::render_text(LPCWSTR lpString, UINT c, glyph_run &new_gly
 
 	const long font_id = font_man_instance.register_font(_context->hdc, metric_face_name(_context->outline_metrics));
 	assert(font_id < 0);
-	const gdimm_os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
+	const os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
 
 	DWRITE_FONT_STYLE dw_font_style;
 	if (!_context->outline_metrics->otmTextMetrics.tmItalic)
@@ -402,36 +434,4 @@ IFACEMETHODIMP gdimm_dw_renderer::DrawInlineObject(
 	)
 {
 	return E_NOTIMPL;
-}
-
-//////////////////////////////////////////////////////////////////////////
-
-bool gdimm_dw_renderer::begin(const dc_context *context, FT_Render_Mode render_mode)
-{
-	if (!gdimm_renderer::begin(context, render_mode))
-		return false;
-
-	// ignore rotated DC
-	if (_context->log_font.lfEscapement % 3600 != 0)
-		return false;
-
-	switch (_context->setting_cache->hinting)
-	{
-	case 2:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_NATURAL;
-		break;
-	case 3:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_GDI_CLASSIC;
-		break;
-	default:
-		_dw_measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
-		break;
-	}
-	_use_gdi_natural = (_dw_measuring_mode != DWRITE_MEASURING_MODE_GDI_CLASSIC);
-
-	_advances.clear();
-	_em_size = static_cast<FLOAT>(_context->outline_metrics->otmTextMetrics.tmHeight - _context->outline_metrics->otmTextMetrics.tmInternalLeading);
-	_pixels_per_dip = GetDeviceCaps(_context->hdc, LOGPIXELSY) / 96.0f;
-
-	return true;
 }

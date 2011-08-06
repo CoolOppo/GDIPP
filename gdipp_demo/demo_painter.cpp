@@ -3,7 +3,10 @@
 #include "gdipp_lib/gdipp_lib.h"
 #include "gdipp_demo/gdipp_demo.h"
 
-gdipp_demo_painter::gdipp_demo_painter()
+namespace gdipp
+{
+
+demo_painter::demo_painter()
 	: _total_count(total_count),
 	_painted_count(0),
 	_result_prepared(false),
@@ -12,13 +15,13 @@ gdipp_demo_painter::gdipp_demo_painter()
 	srand(GetTickCount());
 }
 
-gdipp_demo_painter::~gdipp_demo_painter()
+demo_painter::~demo_painter()
 {
 	if (_result_font != NULL)
 		DeleteObject(_result_font);
 }
 
-void gdipp_demo_painter::paint_demo(CPaintDC &dc)
+void demo_painter::paint_demo(CPaintDC &dc)
 {
 	BOOL b_ret;
 
@@ -31,7 +34,7 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 		const LONG text_height = (rand() % 10) + 9;
 		const LONG text_weight = (rand() % 8 + 1) * 100;
 		const BYTE text_italic = rand() % 2;
-		const wstring &font_name = paint_fonts[rand() % paint_fonts.size()];
+		const std::wstring &font_name = paint_fonts[rand() % paint_fonts.size()];
 
 		const HFONT curr_dc_font = CreateFont(-text_height, 0, 0, 0, text_weight, text_italic, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, font_name.c_str());
 		assert(curr_dc_font != NULL);
@@ -46,7 +49,7 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 		if (bk_mode == OPAQUE)
 			dc.SetBkColor(RGB(rand() % 256, rand() % 256, rand() % 256));
 
-		wstring paint_str;
+		std::wstring paint_str;
 
 		// if randomize text content, use random Unicode characters
 		// otherwise use the font name
@@ -117,7 +120,9 @@ void gdipp_demo_painter::paint_demo(CPaintDC &dc)
 	}
 }
 
-void gdipp_demo_painter::stop_painting()
+void demo_painter::stop_painting()
 {
 	_total_count = -1;
+}
+
 }

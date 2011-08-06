@@ -2,8 +2,8 @@
 
 #include <vector>
 
-using std::vector;
-using std::wstring;
+namespace gdipp
+{
 
 const double pi = acos(-1.0);
 
@@ -38,7 +38,7 @@ int get_bmp_pitch(int width, WORD bpp);
 bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 
 // get outline metrics of the DC
-OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf);
+OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf);
 
 char get_gdi_weight_class(unsigned short weight);
 
@@ -56,8 +56,10 @@ bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
 
 //const FT_Glyph make_empty_outline_glyph();
 
-bool mb_to_wc(const char *multi_byte_str, int count, wstring &wide_char_str);
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str);
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 
 COLORREF parse_palette_color(HDC hdc, COLORREF color);
+
+}

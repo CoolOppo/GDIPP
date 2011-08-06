@@ -3,8 +3,6 @@
 #include "font_man.h"
 #include "helper_def.h"
 
-//using std::;
-
 class gdimm_font_store
 {
 public:

@@ -4,10 +4,10 @@ enum GLYPH_CACHE_LEVEL
 {
 	/*
 	every renderer supports one of the following glyph cache levels
-	
+
 	if NONE is supported, the renderer does not generate intermediate glyph or glyph run bitmap, and nothing can be cached
 	all render process must be repeated disregarding request
-	
+
 	if GLYPH_RUN is supported, the renderer groups multiple glyphs into single cacheable bitmap
 	such "glyph" does not correspond to any character
 

@@ -2,14 +2,14 @@
 #include "font_link.h"
 #include <set>
 
-using std::set;
-using std::wstringstream;
+namespace gdipp
+{
 
 #define MAX_VALUE_NAME 1024
 
-gdipp_font_link::gdipp_font_link()
+font_link::font_link()
 {
-	// read font linking information from registry, and store in map
+	// read font linking information from registry, and store in std::map
 
 	LONG l_ret;
 
@@ -35,7 +35,7 @@ gdipp_font_link::gdipp_font_link()
 	BYTE *value_data;
 
 	// font file name -> font face name mapping
-	map<wstring, wstring, wstring_ci_less> fonts_table;
+	std::map<std::wstring, std::wstring, wstring_ci_less> fonts_table;
 
 	// get font_file_name -> font_face mapping from the "Fonts" registry key
 
@@ -58,8 +58,8 @@ gdipp_font_link::gdipp_font_link()
 		l_ret = RegEnumValueW(key_ft, i, value_name, &name_len, NULL, NULL, value_data, &data_len);
 		assert(l_ret == ERROR_SUCCESS);
 
-		wstring curr_face = value_name;
-		wstring font_file = reinterpret_cast<wchar_t *>(value_data);
+		std::wstring curr_face = value_name;
+		std::wstring font_file = reinterpret_cast<wchar_t *>(value_data);
 		curr_face = curr_face.substr(0, curr_face.find('(') - 1);
 		fonts_table[font_file] = curr_face;
 	}
@@ -85,10 +85,10 @@ gdipp_font_link::gdipp_font_link()
 		l_ret = RegEnumValueW(key_fl, i, value_name, &name_len, NULL, NULL, value_data, &data_len);
 		assert(l_ret == ERROR_SUCCESS);
 
-		_link_table[value_name] = vector<font_link_node>();
+		_link_table[value_name] = std::vector<font_link_node>();
 		size_t line_start = 0;
 
-		set<wstring, wstring_ci_less> curr_font_family_pool;
+		std::set<std::wstring, wstring_ci_less> curr_font_family_pool;
 
 		while (line_start < data_len - sizeof(wchar_t))
 		{
@@ -100,7 +100,7 @@ gdipp_font_link::gdipp_font_link()
 			// including the trailing '\0'
 			line_start += (wcslen(curr_font) + 1) * sizeof(wchar_t);
 
-			vector<wchar_t *> properties;
+			std::vector<wchar_t *> properties;
 			wchar_t *curr_comma = curr_font - 1;
 			while (curr_comma != NULL)
 			{
@@ -122,7 +122,7 @@ gdipp_font_link::gdipp_font_link()
 			{
 				// this is not a ttc file
 				// lookup the Fonts table
-				map<wstring, wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
+				std::map<std::wstring, std::wstring, wstring_ci_less>::const_iterator iter = fonts_table.find(curr_font);
 				if (iter != fonts_table.end())
 					new_link.font_family = iter->second;
 
@@ -147,7 +147,7 @@ gdipp_font_link::gdipp_font_link()
 				// use only if both two factors are specified
 
 				int factor1, factor2;
-				wstringstream ss;
+				std::wstringstream ss;
 
 				ss << properties[scaling_prop];
 				ss >> factor1;
@@ -175,7 +175,7 @@ gdipp_font_link::gdipp_font_link()
 	l_ret = RegCloseKey(key_fl);
 }
 
-const font_link_node *gdipp_font_link::lookup_link(const wchar_t *font_name, size_t index) const
+const font_link_node *font_link::lookup_link(const wchar_t *font_name, size_t index) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 
@@ -190,7 +190,7 @@ const font_link_node *gdipp_font_link::lookup_link(const wchar_t *font_name, siz
 	}
 }
 
-size_t gdipp_font_link::get_link_count(const wchar_t *font_name) const
+size_t font_link::get_link_count(const wchar_t *font_name) const
 {
 	const link_map::const_iterator iter = _link_table.find(font_name);
 
@@ -198,4 +198,6 @@ size_t gdipp_font_link::get_link_count(const wchar_t *font_name) const
 		return 0;
 	else
 		return iter->second.size();
+}
+
 }

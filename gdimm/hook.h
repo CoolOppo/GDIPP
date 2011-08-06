@@ -1,7 +1,5 @@
 #pragma once
 
-//using std::;
-
 struct char_str_ci_less
 {
 	bool operator()(const char *string1, const char *string2) const;
@@ -23,17 +21,17 @@ public:
 	void unhook();
 
 private:
-	typedef map<const char *, void *> hook_proc_map;
-	typedef map<const char *, hook_proc_map *, char_str_ci_less> lib_hook_map_a;
-	typedef map<const wchar_t *, hook_proc_map *, wchar_str_ci_less> lib_hook_map_w;
+	typedef std::map<const char *, void *> hook_proc_map;
+	typedef std::map<const char *, hook_proc_map *, char_str_ci_less> lib_hook_map_a;
+	typedef std::map<const wchar_t *, hook_proc_map *, wchar_str_ci_less> lib_hook_map_w;
 
 	bool install_hook(HMODULE h_lib, LPCSTR proc_name, void *hook_proc);
 	void register_delayed_hook(LPCSTR lib_name_a, LPCWSTR lib_name_w, LPCSTR proc_name, void *hook_proc);
 
 	// procedure name => hook procedure pointer
-	list<hook_proc_map> _delayed_hook_registry;
+	std::list<hook_proc_map> _delayed_hook_registry;
 	lib_hook_map_a _delayed_hooks_a;
 	lib_hook_map_w _delayed_hooks_w;
 
-	list<TRACED_HOOK_HANDLE> _hooks;
+	std::list<TRACED_HOOK_HANDLE> _hooks;
 };

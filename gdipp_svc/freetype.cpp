@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include "freetype.h"
 #include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/gs_helper.h"
+#include "gdipp_support/helper.h"
 #include "gdipp_svc/font_man.h"
 #include "gdipp_svc/rpc_impl.h"
+
+namespace gdipp
+{
 
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
@@ -17,11 +20,11 @@ void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_faces", NULL), &ft_cache_max_faces);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_sizes", NULL), &ft_cache_max_sizes);
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/cache_max_bytes", NULL), &ft_cache_max_bytes);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_faces", NULL), &ft_cache_max_faces);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_sizes", NULL), &ft_cache_max_sizes);
+	wcs_convert(get_gdimm_setting(L"freetype/cache_max_bytes", NULL), &ft_cache_max_bytes);
 	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(gdipp_get_gdimm_setting(L"freetype/lcd_filter", NULL), reinterpret_cast<int *>(&lcd_filter));
+	wcs_convert(get_gdimm_setting(L"freetype/lcd_filter", NULL), reinterpret_cast<int *>(&lcd_filter));
 
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
@@ -53,4 +56,6 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 	args.stream = font_man_instance.lookup_stream(face_id);
 
 	return FT_Open_Face(library, &args, font_man_instance.lookup_face_index(face_id), aface);
+}
+
 }

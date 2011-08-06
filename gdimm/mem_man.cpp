@@ -3,10 +3,10 @@
 
 gdimm_mem_man::~gdimm_mem_man()
 {
-	for (list<IUnknown *>::const_iterator iter = _com_ptr_store.begin(); iter != _com_ptr_store.end(); ++iter)
+	for (std::list<IUnknown *>::const_iterator iter = _com_ptr_store.begin(); iter != _com_ptr_store.end(); ++iter)
 		(*iter)->Release();
 
-	for (list<void *>::const_iterator iter = _mem_ptr_store.begin(); iter != _mem_ptr_store.end(); ++iter)
+	for (std::list<void *>::const_iterator iter = _mem_ptr_store.begin(); iter != _mem_ptr_store.end(); ++iter)
 		delete *iter;
 }
 

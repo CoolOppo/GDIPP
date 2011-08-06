@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "helper.h"
 
+namespace gdipp
+{
+
 FIXED fixed_from_26dot6(signed long x)
 {
 	signed long y = (x << 10);
@@ -127,7 +130,7 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_bmp_header)
 	}
 }
 
-OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, vector<BYTE> &metric_buf)
+OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf)
 {
 	// get outline metrics of the DC, which also include the text metrics
 
@@ -178,8 +181,8 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 {
 	assert(a_glyph_run != NULL);
 
-	list<RECT>::const_iterator first_box_iter;
-	list<RECT>::const_reverse_iterator last_box_iter;
+	std::list<RECT>::const_iterator first_box_iter;
+	std::list<RECT>::const_reverse_iterator last_box_iter;
 
 	if (is_control_width)
 	{
@@ -265,7 +268,7 @@ bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
 	return false;
 }*/
 
-bool mb_to_wc(const char *multi_byte_str, int count, wstring &wide_char_str)
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str)
 {
 	int wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, NULL, 0);
 	if (wc_str_len == 0)
@@ -321,4 +324,6 @@ COLORREF parse_palette_color(HDC hdc, COLORREF color)
 	}
 
 	return color_ret;
+}
+
 }

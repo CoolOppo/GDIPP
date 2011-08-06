@@ -3,6 +3,25 @@
 #include "freetype.h"
 #include <common/lock.h>
 
+const FT_OutlineGlyph gdimm_ft_renderer::get_outline_glyph(wchar_t glyph_char, bool is_glyph_index)
+{
+	bool b_ret;
+
+	glyph_run new_glyph_run;
+	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
+	if (b_ret)
+	{
+		assert(new_glyph_run.glyphs.size() == 1);
+
+		const FT_Glyph new_glyph = new_glyph_run.glyphs.front();
+		assert(new_glyph->format == FT_GLYPH_FORMAT_OUTLINE);
+
+		return reinterpret_cast<const FT_OutlineGlyph>(new_glyph);
+	}
+
+	return NULL;
+}
+
 FT_F26Dot6 gdimm_ft_renderer::get_embolden(const font_setting_cache *setting_cache, char font_weight_class, char text_weight_class)
 {
 	// the embolden weight is based on the difference between demanded weight and the regular weight
@@ -50,8 +69,7 @@ void gdimm_ft_renderer::get_font_size(const OUTLINETEXTMETRICW *outline_metrics,
 
 FT_ULong gdimm_ft_renderer::make_load_flags(const font_setting_cache *setting_cache, FT_Render_Mode render_mode)
 {
-	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH |
-		(setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
+	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | (setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
 	if (setting_cache->hinting == 0)
 		load_flags |= FT_LOAD_NO_HINTING;
@@ -112,7 +130,7 @@ bool gdimm_ft_renderer::generate_outline_glyph(FT_Glyph *glyph,
 
 	{
 		// the FreeType function seems not thread-safe
-		gdipp_lock lock("freetype");
+		lock l("freetype");
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
 			return NULL;
@@ -197,7 +215,7 @@ const FT_Glyph gdimm_ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 
 bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline)
 {
-	wstring curr_font_face = metric_face_name(_context->outline_metrics);
+	std::wstring curr_font_face = metric_face_name(_context->outline_metrics);
 	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
 	const font_setting_cache *curr_setting_cache = _context->setting_cache;
 	unsigned int curr_font_trait = _font_trait;
@@ -206,7 +224,7 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 	if (font_id >= 0)
 		return false;
 
-	const gdimm_os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
+	const os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
 
 	FTC_ScalerRec scaler = {};
 	scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
@@ -260,8 +278,8 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 
 		UINT rendered_count = 0;
 		int font_link_index = 0;
-		wstring final_string(lpString, c);
-		wstring glyph_indices(L"", c);
+		std::wstring final_string(lpString, c);
+		std::wstring glyph_indices(L"", c);
 
 		new_glyph_run.glyphs.resize(c);
 		new_glyph_run.ctrl_boxes.resize(c);
@@ -271,8 +289,8 @@ bool gdimm_ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString
 		{
 			font_man_instance.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), final_string.data(), c, &glyph_indices[0]);
 
-			list<FT_Glyph>::iterator glyph_iter;
-			list<RECT>::iterator ctrl_iter, black_iter;
+			std::list<FT_Glyph>::iterator glyph_iter;
+			std::list<RECT>::iterator ctrl_iter, black_iter;
 			UINT i;
 			for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin(), i = 0;
 				i < c; ++i, ++glyph_iter, ++ctrl_iter, ++black_iter)
@@ -380,8 +398,8 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 
 	POINT pen_pos = {};
 
-	list<FT_Glyph>::iterator glyph_iter;
-	list<RECT>::iterator ctrl_iter, black_iter;
+	std::list<FT_Glyph>::iterator glyph_iter;
+	std::list<RECT>::iterator ctrl_iter, black_iter;
 	for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin();
 		glyph_iter != new_glyph_run.glyphs.end(); ++glyph_iter, ++ctrl_iter, ++black_iter)
 	{
@@ -411,23 +429,4 @@ bool gdimm_ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpStrin
 	}
 
 	return true;
-}
-
-const FT_OutlineGlyph gdimm_ft_renderer::get_outline_glyph(wchar_t glyph_char, bool is_glyph_index)
-{
-	bool b_ret;
-
-	glyph_run new_glyph_run;
-	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
-	if (b_ret)
-	{
-		assert(new_glyph_run.glyphs.size() == 1);
-
-		const FT_Glyph new_glyph = new_glyph_run.glyphs.front();
-		assert(new_glyph->format == FT_GLYPH_FORMAT_OUTLINE);
-
-		return reinterpret_cast<const FT_OutlineGlyph>(new_glyph);
-	}
-
-	return NULL;
 }

@@ -65,7 +65,7 @@ LRESULT CMainDlg::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/,
 
 LRESULT CMainDlg::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	gdipp_init_setting();
+	gdipp::init_config();
 	return 0;
 }
 
@@ -77,14 +77,14 @@ LRESULT CMainDlg::OnFileOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = m_hWnd;
 	ofn.lpstrFilter = L"XML Files\0*.xml\0\0";
-	ofn.lpstrFile = curr_setting_path;
+	ofn.lpstrFile = config_path;
 	ofn.nMaxFile = MAX_PATH;
 
 	b_ret = GetOpenFileNameW(&ofn);
 	if (b_ret)
 	{
-		gdipp_init_setting();
-		b_ret = gdipp_load_setting(curr_setting_path);
+		gdipp::init_config();
+		b_ret = gdipp::load_config(config_path);
 	}
 
 	return 0;
@@ -92,7 +92,7 @@ LRESULT CMainDlg::OnFileOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*
 
 LRESULT CMainDlg::OnFileSave(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	BOOL b_ret = gdipp_save_setting(curr_setting_path);
+	BOOL b_ret = gdipp::save_config(config_path);
 	return 0;
 }
 
@@ -104,13 +104,13 @@ LRESULT CMainDlg::OnFileSaveAs(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = m_hWnd;
 	ofn.lpstrFilter = L"XML Files\0*.xml\0\0";
-	ofn.lpstrFile = curr_setting_path;
+	ofn.lpstrFile = config_path;
 	ofn.nMaxFile = MAX_PATH;
 
 	b_ret = GetSaveFileNameW(&ofn);
 	if (b_ret)
 	{
-		b_ret = gdipp_save_setting(curr_setting_path);
+		b_ret = gdipp::save_config(config_path);
 	}
 
 	return 0;
