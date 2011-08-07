@@ -6,6 +6,7 @@
 #include "gdipp_lib/gdipp_lib.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 #include "gdipp_svc/ggo_renderer.h"
+#include "gdipp_svc/glyph_run.h"
 #include "gdipp_svc/helper.h"
 
 namespace gdipp
@@ -195,10 +196,10 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	// register font with given LOGFONT structure
 	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
 	void *font_id = gdipp::font_man_instance.register_font(logfont, logfont_size);
-	if (font_id == 0)
+	if (font_id == NULL)
 		return NULL;
 
-	HDC hdc = reinterpret_cast<HDC>(gdipp::dc_pool_instance.claim());
+	HDC hdc = gdipp::dc_pool_instance.claim();
 	assert(hdc != NULL);
 
 	gdipp::rpc_session *new_session = reinterpret_cast<gdipp::rpc_session *>(MIDL_user_allocate(sizeof(gdipp::rpc_session)));
@@ -295,16 +296,16 @@ unsigned long gdipp_rpc_get_glyph_indices(
 	return gdipp::font_man_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
 }
 
-GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run( 
-	/* [in] */ handle_t h_gdipp_rpc,
-	/* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-	/* [string][in] */ wchar_t *str,
-	/* [in] */ unsigned int count,
-	/* [in] */ boolean is_glyph_index)
+boolean gdipp_rpc_make_bitmap_glyph_run( 
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
+    /* [string][in] */ wchar_t *str,
+    /* [in] */ unsigned int count,
+    /* [in] */ boolean is_glyph_index,
+    /* [out] */ gdipp_rpc_bitmap_glyph_run **glyph_run_ptr)
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	gdipp::glyph_run *new_glyph_run = new gdipp::glyph_run(count);
 	bool b_ret;
 
 	gdipp::uint128_t string_id;
@@ -314,48 +315,50 @@ GDIPP_RPC_GLYPH_RUN_HANDLE gdipp_rpc_make_glyph_run(
 	MurmurHash3_x86_128(str, count * sizeof(wchar_t), is_glyph_index, &string_id);
 #endif // _M_X64
 
-	b_ret = gdipp::glyph_cache_instance.lookup_glyph_run(curr_session->render_trait, string_id, new_glyph_run);
-	if (!b_ret)
+	gdipp::glyph_run *new_glyph_run = gdipp::glyph_cache_instance.lookup_glyph_run(curr_session->render_trait, string_id);
+	if (!new_glyph_run)
 	{
+		new_glyph_run = new gdipp::glyph_run(count);
 		b_ret = curr_session->renderer->render(!!is_glyph_index, str, count, new_glyph_run);
 		if (!b_ret)
-		{
-			boolean b_ret = gdipp_rpc_release_glyph_run(h_gdipp_rpc, reinterpret_cast<GDIPP_RPC_GLYPH_RUN_HANDLE *>(&new_glyph_run));
-			assert(b_ret);
-			return NULL;
-		}
+			return false;
 
 		gdipp::glyph_cache_instance.store_glyph_run(curr_session->render_trait, string_id, new_glyph_run);
 	}
-	return new_glyph_run;
+
+	*glyph_run_ptr = reinterpret_cast<gdipp_rpc_bitmap_glyph_run *>(MIDL_user_allocate(sizeof(gdipp_rpc_bitmap_glyph_run)));
+	gdipp_rpc_bitmap_glyph_run *glyph_run = *glyph_run_ptr;
+	glyph_run->count = new_glyph_run->glyphs.size();
+	glyph_run->glyphs = reinterpret_cast<gdipp_rpc_bitmap_glyph *>(MIDL_user_allocate(sizeof(gdipp_rpc_bitmap_glyph) * glyph_run->count));
+	glyph_run->ctrl_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * glyph_run->count));
+	glyph_run->black_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * glyph_run->count));
+
+	for (unsigned int i = 0; i < glyph_run->count; ++i)
+	{
+		const FT_BitmapGlyph bmp_glyph = reinterpret_cast<const FT_BitmapGlyph>(new_glyph_run->glyphs[i]);
+		glyph_run->glyphs[i].left = bmp_glyph->left;
+		glyph_run->glyphs[i].top = bmp_glyph->top;
+		glyph_run->glyphs[i].rows = bmp_glyph->bitmap.rows;
+		glyph_run->glyphs[i].width = bmp_glyph->bitmap.width;
+		glyph_run->glyphs[i].pitch = bmp_glyph->bitmap.pitch;
+		glyph_run->glyphs[i].buffer = reinterpret_cast<byte *>(MIDL_user_allocate(bmp_glyph->bitmap.rows * abs(bmp_glyph->bitmap.pitch)));
+		glyph_run->glyphs[i].pixel_mode = bmp_glyph->bitmap.pixel_mode;
+	}
+
+	std::copy(new_glyph_run->ctrl_boxes.begin(), new_glyph_run->ctrl_boxes.end(), glyph_run->ctrl_boxes);
+	std::copy(new_glyph_run->black_boxes.begin(), new_glyph_run->black_boxes.end(), glyph_run->black_boxes);
+
+	return true;
 }
 
-unsigned long gdipp_rpc_get_glyph_run_size(
-    /* [in] */ handle_t h_gdipp_rpc,
-    /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run)
+boolean gdipp_rpc_make_outline_glyph_run( 
+	/* [in] */ handle_t h_gdipp_rpc,
+	/* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
+	/* [string][in] */ wchar_t *str,
+	/* [in] */ unsigned int count,
+	/* [in] */ boolean is_glyph_index,
+	/* [out] */ gdipp_rpc_outline_glyph_run **glyph_run_ptr)
 {
-	const gdipp::glyph_run *curr_glyph_run = reinterpret_cast<const gdipp::glyph_run *>(h_glyph_run);
-
-	return 0;
-}
-
-boolean gdipp_rpc_get_glyph_run(
-    /* [in] */ handle_t h_gdipp_rpc,
-    /* [context_handle_noserialize][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run,
-    /* [size_is][out] */ byte *glyph_run_buf,
-    /* [in] */ unsigned long glyph_run_size)
-{
-	const gdipp::glyph_run *curr_glyph_run = reinterpret_cast<const gdipp::glyph_run *>(h_glyph_run);
-
-	return false;
-}
-
-boolean gdipp_rpc_release_glyph_run( 
-    /* [in] */ handle_t h_gdipp_rpc,
-    /* [out][in] */ GDIPP_RPC_GLYPH_RUN_HANDLE *h_glyph_run)
-{
-	const gdipp::glyph_run *curr_glyph_run = reinterpret_cast<const gdipp::glyph_run *>(h_glyph_run);
-
 	return false;
 }
 
@@ -380,13 +383,5 @@ void __RPC_USER GDIPP_RPC_SESSION_HANDLE_rundown(GDIPP_RPC_SESSION_HANDLE h_sess
 	boolean b_ret;
 
 	b_ret = gdipp_rpc_end_session(NULL, &h_session);
-	assert(b_ret);
-}
-
-void __RPC_USER GDIPP_RPC_GLYPH_RUN_HANDLE_rundown(GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run)
-{
-	boolean b_ret;
-
-	b_ret = gdipp_rpc_release_glyph_run(NULL, &h_glyph_run);
 	assert(b_ret);
 }

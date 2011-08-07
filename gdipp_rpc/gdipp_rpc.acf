@@ -6,7 +6,7 @@ interface gdipp_rpc
 	gdipp_rpc_get_font_metrics_size([context_handle_noserialize] h_session);
 	gdipp_rpc_get_font_metrics_data([context_handle_noserialize] h_session);
 	gdipp_rpc_get_glyph_indices([context_handle_noserialize] h_session);
-	gdipp_rpc_make_glyph_run([context_handle_noserialize] h_session);
-	gdipp_rpc_get_glyph_run_size([context_handle_noserialize] h_glyph_run);
-	gdipp_rpc_get_glyph_run([context_handle_noserialize] h_glyph_run);
+	gdipp_rpc_make_bitmap_glyph_run([context_handle_noserialize] h_session);
+	gdipp_rpc_make_outline_glyph_run([context_handle_noserialize] h_session);
 }
+

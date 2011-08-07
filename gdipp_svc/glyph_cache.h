@@ -17,7 +17,7 @@ public:
 
 	const FT_Glyph lookup_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index) const;
 	bool store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph);
-	bool lookup_glyph_run(unsigned int font_trait, uint128_t string_id, glyph_run *a_glyph_run) const;
+	glyph_run *lookup_glyph_run(unsigned int font_trait, uint128_t string_id) const;
 	bool store_glyph_run(unsigned int font_trait, uint128_t string_id, glyph_run *a_glyph_run);
 
 private:

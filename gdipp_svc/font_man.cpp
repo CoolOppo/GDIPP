@@ -11,7 +11,7 @@ void *font_man::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 	if (linked_hfont == NULL)
 		return 0;
 
-	HDC font_holder = reinterpret_cast<HDC>(dc_pool_instance.claim());
+	HDC font_holder = dc_pool_instance.claim();
 	assert(font_holder != NULL);
 	SelectObject(font_holder, linked_hfont);
 
@@ -43,7 +43,7 @@ DWORD font_man::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID d
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
-	HDC font_holder = reinterpret_cast<HDC>(dc_pool_instance.claim());
+	HDC font_holder = dc_pool_instance.claim();
 	assert(font_holder != NULL);
 	SelectObject(font_holder, curr_font->font_handle);
 
@@ -65,7 +65,7 @@ DWORD font_man::get_glyph_indices(void *font_id, const wchar_t *str, int count, 
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
 
-	HDC font_holder = reinterpret_cast<HDC>(dc_pool_instance.claim());
+	HDC font_holder = dc_pool_instance.claim();
 	assert(font_holder != NULL);
 	SelectObject(font_holder, curr_font->font_handle);
 

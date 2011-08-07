@@ -30,21 +30,19 @@ bool glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_gl
 	return glyph_insert_ret.second;
 }
 
-bool glyph_cache::lookup_glyph_run(unsigned int font_trait, uint128_t string_id, glyph_run *a_glyph_run) const
+glyph_run *glyph_cache::lookup_glyph_run(unsigned int font_trait, uint128_t string_id) const
 {
 	lock l("glyph_run_cache");
 
 	std::map<uint128_t, hash_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
 	if (str_iter == _glyph_run_store.end())
-		return false;
+		return NULL;
 
 	hash_to_run_map::const_iterator trait_iter = str_iter->second.find(font_trait);
 	if (trait_iter == str_iter->second.end())
-		return false;
+		return NULL;
 
-	a_glyph_run = trait_iter->second;
-
-	return true;
+	return trait_iter->second;
 }
 
 bool glyph_cache::store_glyph_run(unsigned int font_trait, uint128_t string_id, glyph_run *a_glyph_run)
