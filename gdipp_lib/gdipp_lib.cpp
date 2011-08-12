@@ -59,19 +59,19 @@ BOOL remove_setting(const wchar_t *node_xpath)
 	return config_instance.remove_setting(node_xpath);
 }
 
-const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const config_trait *setting_trait)
+const wchar_t *get_server_config(const wchar_t *setting_name, const config_trait *trait)
 {
-	return config_instance.get_gdimm_setting(setting_name, setting_trait);
+	return config_instance.get_server_config(setting_name, trait);
 }
 
-const font_setting_cache *get_gdimm_setting_cache(const config_trait *setting_trait)
+const font_config_cache *get_font_config_cache(const config_trait *trait)
 {
-	return config_cache_instance.lookup(setting_trait);
+	return config_cache_instance.lookup(trait);
 }
 
-const wchar_t *get_demo_setting(const wchar_t *setting_name)
+const wchar_t *get_demo_config(const wchar_t *setting_name)
 {
-	return config_instance.get_demo_setting(setting_name);
+	return config_instance.get_demo_config(setting_name);
 }
 
 const std::vector<const std::wstring> &get_demo_fonts()
@@ -79,14 +79,24 @@ const std::vector<const std::wstring> &get_demo_fonts()
 	return config_instance.get_demo_fonts();
 }
 
-const wchar_t *get_service_setting(const wchar_t *setting_name)
+const wchar_t *get_server_hook_config(const wchar_t *setting_name)
 {
-	return config_instance.get_service_setting(setting_name);
+	return config_instance.get_server_hook_config(setting_name);
 }
 
 bool is_process_excluded(const wchar_t *proc_name)
 {
 	return config_instance.is_process_excluded(proc_name);
+}
+
+void init_minidump()
+{
+	SetUnhandledExceptionFilter(minidump_filter);
+}
+
+void register_minidump_module(HMODULE h_module)
+{
+	h_minidump_modules.push_back(h_module);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)

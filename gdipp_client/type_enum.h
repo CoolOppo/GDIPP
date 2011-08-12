@@ -1,8 +1,5 @@
 #pragma once
 
-namespace gdipp
-{
-
 enum GLYPH_CACHE_LEVEL
 {
 	/*
@@ -57,5 +54,3 @@ enum RENDERER_TYPE
 	RENDERER_DIRECTWRITE = 30,
 	RENDERER_WIC = 31
 };
-
-}

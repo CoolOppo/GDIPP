@@ -20,52 +20,52 @@ config::~config()
 		delete _xml_doc;
 }
 
-const wchar_t *config::get_gdimm_setting(const wchar_t *setting_name, const config_trait *setting_trait) const
+const wchar_t *config::get_server_config(const wchar_t *setting_name, const config_trait *trait) const
 {
-	// check setting for the current process
-	config_map::const_iterator setting_iter = _process_setting.find(setting_name);
-	if (setting_iter != _process_setting.end())
-		return setting_iter->second.c_str();
+	// check config for the current process
+	config_map::const_iterator config_iter = _config_server_process.find(setting_name);
+	if (config_iter != _config_server_process.end())
+		return config_iter->second.c_str();
 
-	if (setting_trait != NULL)
+	if (trait != NULL)
 	{
-		// check setting for the specified font
-		for (std::list<gdimm_font_node>::const_iterator list_iter = _gdimm_font.begin(); list_iter != _gdimm_font.end(); ++list_iter)
+		// check config for the specified font
+		for (std::list<conf_server_font_node>::const_iterator list_iter = _config_server_fonts.begin(); list_iter != _config_server_fonts.end(); ++list_iter)
 		{
 			// check next font if optional attributes match
 			// easy checks come first
 
-			if ((list_iter->bold >= 0) && (!list_iter->bold == (setting_trait->get_weight_class() > 1)))
+			if ((list_iter->bold >= 0) && (!list_iter->bold == (trait->get_weight_class() > 1)))
 				continue;
 
-			if ((list_iter->italic >= 0) && (!list_iter->italic == setting_trait->get_italic()))
+			if ((list_iter->italic >= 0) && (!list_iter->italic == trait->get_italic()))
 				continue;
 
-			if ((list_iter->max_height >= 0) && (list_iter->max_height < setting_trait->get_height()))
+			if ((list_iter->max_height >= 0) && (list_iter->max_height < trait->get_height()))
 				continue;
 
 			if (!list_iter->name.empty())
 			{
 				const std::tr1::wregex name_ex(list_iter->name.data(), regex_flags);
 				// check next font if font name match
-				if (!regex_match(setting_trait->get_font_name(), name_ex))
+				if (!regex_match(trait->get_font_name(), name_ex))
 					continue;
 			}
 
-			setting_iter = list_iter->configs.find(setting_name);
-			if (setting_iter != list_iter->configs.end())
-				return setting_iter->second.c_str();
+			config_iter = list_iter->configs.find(setting_name);
+			if (config_iter != list_iter->configs.end())
+				return config_iter->second.c_str();
 		}
 	}
 
 	return NULL;
 }
 
-const wchar_t *config::get_demo_setting(const wchar_t *setting_name) const
+const wchar_t *config::get_demo_config(const wchar_t *setting_name) const
 {
-	config_map::const_iterator iter = _demo_setting.find(setting_name);
+	config_map::const_iterator iter = _config_demo.find(setting_name);
 
-	if (iter == _demo_setting.end())
+	if (iter == _config_demo.end())
 		return NULL;
 	else
 		return iter->second.c_str();
@@ -76,11 +76,11 @@ const std::vector<const std::wstring> &config::get_demo_fonts() const
 	return _demo_fonts;
 }
 
-const wchar_t *config::get_service_setting(const wchar_t *setting_name) const
+const wchar_t *config::get_server_hook_config(const wchar_t *setting_name) const
 {
-	config_map::const_iterator iter = _service_setting.find(setting_name);
+	config_map::const_iterator iter = _config_server_hook.find(setting_name);
 
-	if (iter == _service_setting.end())
+	if (iter == _config_server_hook.end())
 		return NULL;
 	else
 		return iter->second.c_str();
@@ -97,7 +97,7 @@ bool config::is_process_excluded(const wchar_t *proc_name) const
 	else
 		final_name = proc_name;
 
-	for (std::list<const std::wstring>::const_iterator iter = _exclude_process.begin(); iter != _exclude_process.end(); ++iter)
+	for (std::list<const std::wstring>::const_iterator iter = _config_client_excludes.begin(); iter != _config_client_excludes.end(); ++iter)
 	{
 		const std::tr1::wregex name_ex(iter->data(), regex_flags);
 		if (regex_match(final_name, name_ex))
@@ -115,11 +115,11 @@ void config::init_config()
 	_xml_doc = new pugi::xml_document;
 
 	// clear existing settings
-	_process_setting.clear();
-	_gdimm_font.clear();
-	_demo_setting.clear();
+	_config_server_process.clear();
+	_config_server_fonts.clear();
+	_config_demo.clear();
 	_demo_fonts.clear();
-	_exclude_process.clear();
+	_config_client_excludes.clear();
 }
 
 BOOL config::load_config(const wchar_t *config_path)
@@ -127,25 +127,25 @@ BOOL config::load_config(const wchar_t *config_path)
 	if (!_xml_doc->load_file(pugi::as_utf8(config_path).c_str()))
 		return FALSE;
 
-	const pugi::xpath_node_set proc_list = _xml_doc->select_nodes(L"/gdipp/gdimm/process");
+	const pugi::xpath_node_set proc_list = _xml_doc->select_nodes(L"/gdipp/server/process");
 	if (!proc_list.empty())
-		load_gdimm_process(proc_list);
+		load_server_process(proc_list);
 
-	const pugi::xpath_node_set font_list = _xml_doc->select_nodes(L"/gdipp/gdimm/font");
+	const pugi::xpath_node_set font_list = _xml_doc->select_nodes(L"/gdipp/server/font");
 	if (!font_list.empty())
-		load_gdimm_font(font_list);
+		load_server_font(font_list);
+
+	const pugi::xml_node hook_node = _xml_doc->select_single_node(L"/gdipp/server/hook").node();
+	if (!hook_node.empty())
+		load_server_hook(hook_node);
+
+	const pugi::xml_node exclude_node = _xml_doc->select_single_node(L"/gdipp/client/exclude").node();
+	if (!exclude_node.empty())
+		load_client_exclude(exclude_node);
 
 	const pugi::xml_node demo_node = _xml_doc->select_single_node(L"/gdipp/demo").node();
 	if (!demo_node.empty())
 		load_demo(demo_node);
-
-	const pugi::xml_node service_node = _xml_doc->select_single_node(L"/gdipp/service").node();
-	if (!service_node.empty())
-		load_service(service_node);
-
-	const pugi::xml_node exclude_node = _xml_doc->select_single_node(L"/gdipp/exclude").node();
-	if (!exclude_node.empty())
-		load_exclude(exclude_node);
 
 	return TRUE;
 }
@@ -216,7 +216,7 @@ BOOL config::remove_setting(const wchar_t *node_xpath)
 	return TRUE;
 }
 
-void config::parse_gdimm_setting_node(const pugi::xml_node &setting_node, config_map &setting_store)
+void config::parse_server_config_node(const pugi::xml_node &setting_node, config_map &setting_store)
 {
 	const pugi::string_t name = setting_node.name();
 
@@ -230,7 +230,7 @@ void config::parse_gdimm_setting_node(const pugi::xml_node &setting_node, config
 		setting_store[name] = setting_node.first_child().value();
 }
 
-void config::load_gdimm_process(const pugi::xpath_node_set &process_nodes)
+void config::load_server_process(const pugi::xpath_node_set &process_nodes)
 {
 	// backward iterate so that first-coming process settings overwrites last-coming ones
 
@@ -254,19 +254,19 @@ void config::load_gdimm_process(const pugi::xpath_node_set &process_nodes)
 		if (process_matched)
 		{
 			for (pugi::xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); ++set_iter)
-				parse_gdimm_setting_node(*set_iter, _process_setting);
+				parse_server_config_node(*set_iter, _config_server_process);
 		}
 	}
 }
 
-void config::load_gdimm_font(const pugi::xpath_node_set &font_node)
+void config::load_server_font(const pugi::xpath_node_set &font_node)
 {
 	for (pugi::xpath_node_set::const_iterator node_iter = font_node.begin(); node_iter != font_node.end(); ++node_iter)
 	{
 		config_map curr_settings;
 
 		for (pugi::xml_node::iterator set_iter = node_iter->node().begin(); set_iter != node_iter->node().end(); ++set_iter)
-			parse_gdimm_setting_node(*set_iter, curr_settings);
+			parse_server_config_node(*set_iter, curr_settings);
 
 		const pugi::xml_node curr_font = node_iter->node();
 		const pugi::xml_attribute name_attr = curr_font.attribute(L"name");
@@ -275,12 +275,12 @@ void config::load_gdimm_font(const pugi::xpath_node_set &font_node)
 		const pugi::xml_attribute max_height_attr = curr_font.attribute(L"max_height");
 
 		// negative indicates such optional attribute is not specified
-		const gdimm_font_node new_font = {(name_attr.empty() ? std::wstring() : name_attr.value()),
+		const conf_server_font_node new_font = {(name_attr.empty() ? std::wstring() : name_attr.value()),
 			(bold_attr.empty() ? -1 : bold_attr.as_uint()),
 			(italic_attr.empty() ? -1 : italic_attr.as_uint()),
 			(max_height_attr.empty() ? -1 : max_height_attr.as_uint()),
 			curr_settings};
-		_gdimm_font.push_back(new_font);
+		_config_server_fonts.push_back(new_font);
 	}
 }
 
@@ -294,25 +294,25 @@ void config::load_demo(const pugi::xml_node &root_node)
 		if (node_name == L"font")
 			_demo_fonts.push_back(curr_value);
 		else
-			_demo_setting[node_name] = curr_value;
+			_config_demo[node_name] = curr_value;
 	}
 }
 
-void config::load_service(const pugi::xml_node &root_node)
+void config::load_server_hook(const pugi::xml_node &root_node)
 {
 	for (pugi::xml_node::iterator iter = root_node.begin(); iter != root_node.end(); ++iter)
 	{
 		const std::wstring node_name = iter->name();
 		const std::wstring curr_value = iter->first_child().value();
 
-		_service_setting[node_name] = curr_value;
+		_config_server_hook[node_name] = curr_value;
 	}
 }
 
-void config::load_exclude(const pugi::xml_node &root_node)
+void config::load_client_exclude(const pugi::xml_node &root_node)
 {
 	for (pugi::xml_node::iterator iter = root_node.begin(); iter != root_node.end(); ++iter)
-		_exclude_process.push_back(iter->first_child().value());
+		_config_client_excludes.push_back(iter->first_child().value());
 }
 
 }

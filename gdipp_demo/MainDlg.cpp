@@ -58,7 +58,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	b_ret = load_gdimm();
 
-	b_ret = load_demo_setting();
+	b_ret = load_demo_config();
 	assert(b_ret);
 
 	for (int i = 0; i < thread_count; ++i)
@@ -121,15 +121,15 @@ void CMainDlg::CloseDialog(int nVal)
 	::PostQuitMessage(nVal);
 }
 
-bool CMainDlg::load_demo_setting()
+bool CMainDlg::load_demo_config()
 {
 	BOOL b_ret;
 
 	if (h_gdimm == NULL)
 	{
-		// get setting file path
+		// get config file path
 		wchar_t config_path[MAX_PATH];
-		b_ret = gdipp::get_dir_file_path(NULL, L"gdipp_config.xml", config_path);
+		b_ret = gdipp::get_dir_file_path(NULL, L"demo.conf", config_path);
 		if (!b_ret)
 			return false;
 
@@ -140,9 +140,9 @@ bool CMainDlg::load_demo_setting()
 			return false;
 	}
 
-	gdipp::wcs_convert(gdipp::get_demo_setting(L"count"), &total_count);
-	gdipp::wcs_convert(gdipp::get_demo_setting(L"threads"), &thread_count);
-	gdipp::wcs_convert(gdipp::get_demo_setting(L"random_text"), &random_text);
+	gdipp::wcs_convert(gdipp::get_demo_config(L"count"), &total_count);
+	gdipp::wcs_convert(gdipp::get_demo_config(L"threads"), &thread_count);
+	gdipp::wcs_convert(gdipp::get_demo_config(L"random_text"), &random_text);
 
 	paint_fonts = gdipp::get_demo_fonts();
 

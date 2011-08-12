@@ -479,10 +479,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest"
 			>
 			<File
-				RelativePath=".\res\gdipp_demo.ico"
-				>
-			</File>
-			<File
 				RelativePath=".\gdipp_demo.rc"
 				>
 			</File>

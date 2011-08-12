@@ -26,8 +26,8 @@ private:
 	const wchar_t *font_name;
 */
 
-	BYTE *_setting_data;
-	int _setting_size;
+	BYTE *_config_data;
+	int _config_size;
 };
 
 }

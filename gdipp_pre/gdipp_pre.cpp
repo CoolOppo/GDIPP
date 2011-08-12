@@ -13,11 +13,11 @@ HINSTANCE h_instance;
 wchar_t config_path[MAX_PATH];
 wchar_t *preview_text = NULL;
 
-BOOL load_setting()
+BOOL load_config()
 {
 	BOOL b_ret;
 
-	// get setting file path
+	// get config file path
 	wchar_t config_path[MAX_PATH];
 	b_ret = gdipp::get_dir_file_path(NULL, L"gdipp_config.xml", config_path);
 	if (!b_ret)
@@ -88,7 +88,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	h_gdimm = LoadLibraryW(gdimm_path);
 	if (h_gdimm == NULL)
 	{
-		b_ret = load_setting();
+		b_ret = load_config();
 		assert(b_ret);
 	}
 

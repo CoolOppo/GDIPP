@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+<?xml version="1.0" encoding="gb2312"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="gdipp_loader"
-	ProjectGUID="{00ABAE01-5040-4BB0-A3E5-03EACF768F6D}"
-	RootNamespace="gdipp_loader"
+	Name="gdipp_client"
+	ProjectGUID="{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
+	RootNamespace="dll"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -23,7 +23,8 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
+			UseOfMFC="0"
 			CharacterSet="1"
 			>
 			<Tool
@@ -44,8 +45,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;$(SolutionDir)EasyHook"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -66,10 +67,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
+				AdditionalDependencies="EasyHook32.lib d2d1.lib dwrite.lib msimg32.lib psapi.lib rpcrt4.lib usp10.lib windowscodecs.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)DirectX\Lib\x86&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="d2d1.dll;DWrite.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -100,7 +103,8 @@
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
+			UseOfMFC="0"
 			CharacterSet="1"
 			>
 			<Tool
@@ -122,8 +126,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;$(SolutionDir)EasyHook"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -143,10 +147,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
+				AdditionalDependencies="EasyHook64.lib d2d1.lib dwrite.lib msimg32.lib psapi.lib rpcrt4.lib usp10.lib windowscodecs.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)DirectX\Lib\x64&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="d2d1.dll;DWrite.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -177,7 +183,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -200,14 +206,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;$(SolutionDir)EasyHook"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -220,13 +227,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook32.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
+				AdditionalDependencies="EasyHook32.lib d2d1.lib dwrite.lib msimg32.lib psapi.lib rpcrt4.lib usp10.lib windowscodecs.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)DirectX\Lib\x86&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				DelayLoadDLLs="d2d1.dll;DWrite.dll"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				BaseAddress=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -255,7 +265,7 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -279,13 +289,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;$(SolutionDir)EasyHook"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -298,10 +309,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="EasyHook64.lib shlwapi.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
+				AdditionalDependencies="EasyHook64.lib d2d1.lib dwrite.lib msimg32.lib psapi.lib rpcrt4.lib usp10.lib windowscodecs.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(SolutionDir)EasyHook&quot;"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)DirectX\Lib\x64&quot;;&quot;$(SolutionDir)EasyHook&quot;"
+				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="d2d1.dll;DWrite.dll"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -343,7 +357,43 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\gdipp_loader.cpp"
+				RelativePath=".\api_override.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\com_override.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\font_store.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\gamma.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\gdi_painter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\gdipp_client.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\helper.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\hook.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\mem_man.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\painter.cpp"
 				>
 			</File>
 			<File
@@ -382,12 +432,68 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\wic_dib.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\wic_painter.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath=".\gdipp_client.rc"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\api_override.h"
+				>
+			</File>
+			<File
+				RelativePath=".\com_override.h"
+				>
+			</File>
+			<File
+				RelativePath=".\font_store.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gamma.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gdi_painter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gdipp_client.h"
+				>
+			</File>
+			<File
+				RelativePath=".\helper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\hook.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mem_man.h"
+				>
+			</File>
+			<File
+				RelativePath=".\painter.h"
+				>
+			</File>
 			<File
 				RelativePath=".\resource.h"
 				>
@@ -396,12 +502,16 @@
 				RelativePath=".\stdafx.h"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			>
 			<File
-				RelativePath=".\gdipp_loader.rc"
+				RelativePath=".\type_enum.h"
+				>
+			</File>
+			<File
+				RelativePath=".\wic_dib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\wic_painter.h"
 				>
 			</File>
 		</Filter>

@@ -101,14 +101,4 @@ LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-void init_minidump()
-{
-	SetUnhandledExceptionFilter(minidump_filter);
-}
-
-void register_minidump_module(HMODULE h_module)
-{
-	h_minidump_modules.push_back(h_module);
-}
-
 }

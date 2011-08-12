@@ -2,7 +2,7 @@
 
 #include <vector>
 
-// demo settings
+// demo configs
 extern int total_count;
 extern int thread_count;
 extern bool random_text;

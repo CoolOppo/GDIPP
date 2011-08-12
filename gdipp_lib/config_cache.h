@@ -7,7 +7,7 @@
 namespace gdipp
 {
 
-struct font_setting_cache
+struct font_config_cache
 {
 	struct font_gamma
 	{
@@ -38,7 +38,7 @@ struct font_setting_cache
 		BYTE alpha;
 	};
 
-	font_setting_cache();
+	font_config_cache();
 
 	BYTE auto_hinting;
 	bool embedded_bitmap;
@@ -54,11 +54,11 @@ struct font_setting_cache
 class config_cache
 {
 public:
-	const font_setting_cache *lookup(const config_trait *setting_trait);
+	const font_config_cache *lookup(const config_trait *trait);
 
 private:
 	// setting ID : setting cache
-	std::map<unsigned int, font_setting_cache> _cache;
+	std::map<unsigned int, font_config_cache> _cache;
 };
 
 }

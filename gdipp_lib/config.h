@@ -15,10 +15,10 @@ public:
 	config();
 	~config();
 
-	const wchar_t *get_gdimm_setting(const wchar_t *setting_name, const config_trait *setting_trait) const;
-	const wchar_t *get_demo_setting(const wchar_t *setting_name) const;
+	const wchar_t *get_server_config(const wchar_t *setting_name, const config_trait *trait) const;
+	const wchar_t *get_demo_config(const wchar_t *setting_name) const;
 	const std::vector<const std::wstring> &get_demo_fonts() const;
-	const wchar_t *get_service_setting(const wchar_t *setting_name) const;
+	const wchar_t *get_server_hook_config(const wchar_t *setting_name) const;
 	bool is_process_excluded(const wchar_t *proc_name) const;
 
 	void init_config();
@@ -33,7 +33,7 @@ private:
 	// setting names are case-insensitive
 	typedef std::map<const std::wstring, std::wstring, wstring_ci_less> config_map;
 
-	struct gdimm_font_node
+	struct conf_server_font_node
 	{
 		std::wstring name;
 		char bold;
@@ -42,21 +42,21 @@ private:
 		config_map configs;
 	};
 
-	void parse_gdimm_setting_node(const pugi::xml_node &setting_node, config_map &setting_store);
-	void load_gdimm_process(const pugi::xpath_node_set &process_nodes);
-	void load_gdimm_font(const pugi::xpath_node_set &font_nodes);
+	void parse_server_config_node(const pugi::xml_node &setting_node, config_map &setting_store);
+	void load_server_process(const pugi::xpath_node_set &process_nodes);
+	void load_server_font(const pugi::xpath_node_set &font_nodes);
 	void load_demo(const pugi::xml_node &root_node);
-	void load_service(const pugi::xml_node &root_node);
-	void load_exclude(const pugi::xml_node &root_node);
+	void load_server_hook(const pugi::xml_node &root_node);
+	void load_client_exclude(const pugi::xml_node &root_node);
 
 	pugi::xml_document *_xml_doc;
 
-	config_map _process_setting;
-	std::list<gdimm_font_node> _gdimm_font;
-	config_map _demo_setting;
-	config_map _service_setting;
+	config_map _config_server_process;
+	std::list<conf_server_font_node> _config_server_fonts;
+	config_map _config_server_hook;
+	std::list<const std::wstring> _config_client_excludes;
+	config_map _config_demo;
 	std::vector<const std::wstring> _demo_fonts;
-	std::list<const std::wstring> _exclude_process;
 
 	wchar_t _process_name[MAX_PATH];
 };

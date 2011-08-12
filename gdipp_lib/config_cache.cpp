@@ -8,14 +8,14 @@
 namespace gdipp
 {
 
-font_setting_cache::font_gamma::font_gamma()
+font_config_cache::font_gamma::font_gamma()
 	: red(1.0),
 	green(1.0),
 	blue(1.0)
 {
 }
 
-font_setting_cache::font_render_mode::font_render_mode()
+font_config_cache::font_render_mode::font_render_mode()
 	: mono(0),
 	gray(1),
 	subpixel(1),
@@ -24,14 +24,14 @@ font_setting_cache::font_render_mode::font_render_mode()
 {
 }
 
-font_setting_cache::font_shadow::font_shadow()
+font_config_cache::font_shadow::font_shadow()
 	: offset_x(0),
 	offset_y(0),
 	alpha(0)
 {
 }
 
-font_setting_cache::font_setting_cache()
+font_config_cache::font_config_cache()
 	: auto_hinting(1),
 	embedded_bitmap(false),
 	embolden(0),
@@ -41,14 +41,14 @@ font_setting_cache::font_setting_cache()
 {
 }
 
-const font_setting_cache *config_cache::lookup(const config_trait *setting_trait)
+const font_config_cache *config_cache::lookup(const config_trait *trait)
 {
 	uint32_t setting_id;
-	MurmurHash3_x86_32(setting_trait->get_data(), setting_trait->get_size(), 0, &setting_id);
+	MurmurHash3_x86_32(trait->get_data(), trait->get_size(), 0, &setting_id);
 
 	// if the setting for the specified font is not found
 	// construct setting cache for the font and return
-	std::map<unsigned int, font_setting_cache>::const_iterator iter = _cache.find(setting_id);
+	std::map<unsigned int, font_config_cache>::const_iterator iter = _cache.find(setting_id);
 	if (iter == _cache.end())
 	{
 		// double-check lock
@@ -56,29 +56,29 @@ const font_setting_cache *config_cache::lookup(const config_trait *setting_trait
 		iter = _cache.find(setting_id);
 		if (iter == _cache.end())
 		{
-			font_setting_cache new_cache;
+			font_config_cache new_cache;
 
-			wcs_convert(get_gdimm_setting(L"auto_hinting", setting_trait), reinterpret_cast<WORD *>(&new_cache.auto_hinting));
-			wcs_convert(get_gdimm_setting(L"embedded_bitmap", setting_trait), &new_cache.embedded_bitmap);
-			wcs_convert(get_gdimm_setting(L"embolden", setting_trait), &new_cache.embolden);
+			wcs_convert(get_server_config(L"auto_hinting", trait), reinterpret_cast<WORD *>(&new_cache.auto_hinting));
+			wcs_convert(get_server_config(L"embedded_bitmap", trait), &new_cache.embedded_bitmap);
+			wcs_convert(get_server_config(L"embolden", trait), &new_cache.embolden);
 
-			wcs_convert(get_gdimm_setting(L"gamma/red", setting_trait), &new_cache.gamma.red);
-			wcs_convert(get_gdimm_setting(L"gamma/green", setting_trait), &new_cache.gamma.green);
-			wcs_convert(get_gdimm_setting(L"gamma/blue", setting_trait), &new_cache.gamma.blue);
+			wcs_convert(get_server_config(L"gamma/red", trait), &new_cache.gamma.red);
+			wcs_convert(get_server_config(L"gamma/green", trait), &new_cache.gamma.green);
+			wcs_convert(get_server_config(L"gamma/blue", trait), &new_cache.gamma.blue);
 
-			wcs_convert(get_gdimm_setting(L"hinting", setting_trait), reinterpret_cast<WORD *>(&new_cache.hinting));
-			wcs_convert(get_gdimm_setting(L"kerning", setting_trait), &new_cache.kerning);
+			wcs_convert(get_server_config(L"hinting", trait), reinterpret_cast<WORD *>(&new_cache.hinting));
+			wcs_convert(get_server_config(L"kerning", trait), &new_cache.kerning);
 
-			wcs_convert(get_gdimm_setting(L"renderer", setting_trait), reinterpret_cast<WORD *>(&new_cache.renderer));
-			wcs_convert(get_gdimm_setting(L"render_mode/mono", setting_trait), reinterpret_cast<WORD *>(&new_cache.render_mode.mono));
-			wcs_convert(get_gdimm_setting(L"render_mode/gray", setting_trait), reinterpret_cast<WORD *>(&new_cache.render_mode.gray));
-			wcs_convert(get_gdimm_setting(L"render_mode/subpixel", setting_trait), reinterpret_cast<WORD *>(&new_cache.render_mode.subpixel));
-			wcs_convert(get_gdimm_setting(L"render_mode/pixel_geometry", setting_trait), reinterpret_cast<WORD *>(&new_cache.render_mode.pixel_geometry));
-			wcs_convert(get_gdimm_setting(L"render_mode/aliased_text", setting_trait), reinterpret_cast<WORD *>(&new_cache.render_mode.aliased_text));
+			wcs_convert(get_server_config(L"renderer", trait), reinterpret_cast<WORD *>(&new_cache.renderer));
+			wcs_convert(get_server_config(L"render_mode/mono", trait), reinterpret_cast<WORD *>(&new_cache.render_mode.mono));
+			wcs_convert(get_server_config(L"render_mode/gray", trait), reinterpret_cast<WORD *>(&new_cache.render_mode.gray));
+			wcs_convert(get_server_config(L"render_mode/subpixel", trait), reinterpret_cast<WORD *>(&new_cache.render_mode.subpixel));
+			wcs_convert(get_server_config(L"render_mode/pixel_geometry", trait), reinterpret_cast<WORD *>(&new_cache.render_mode.pixel_geometry));
+			wcs_convert(get_server_config(L"render_mode/aliased_text", trait), reinterpret_cast<WORD *>(&new_cache.render_mode.aliased_text));
 
-			wcs_convert(get_gdimm_setting(L"shadow/offset_x", setting_trait), &new_cache.shadow.offset_x);
-			wcs_convert(get_gdimm_setting(L"shadow/offset_x", setting_trait), &new_cache.shadow.offset_y);
-			wcs_convert(get_gdimm_setting(L"shadow/alpha", setting_trait), reinterpret_cast<WORD *>(&new_cache.shadow.alpha));
+			wcs_convert(get_server_config(L"shadow/offset_x", trait), &new_cache.shadow.offset_x);
+			wcs_convert(get_server_config(L"shadow/offset_x", trait), &new_cache.shadow.offset_y);
+			wcs_convert(get_server_config(L"shadow/alpha", trait), reinterpret_cast<WORD *>(&new_cache.shadow.alpha));
 
 			_cache[setting_id] = new_cache;
 		}

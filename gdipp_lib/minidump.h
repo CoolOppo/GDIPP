@@ -14,7 +14,4 @@ BOOL WINAPI minidump_callback(IN PVOID CallbackParam,
 
 LONG WINAPI minidump_filter(EXCEPTION_POINTERS *ExceptionInfo);
 
-GDIPP_API void init_minidump();
-GDIPP_API void register_minidump_module(HMODULE h_module);
-
 }
