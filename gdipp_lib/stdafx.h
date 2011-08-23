@@ -14,18 +14,13 @@
 
 // C standard header files
 #include <cassert>
+#include <ctime>
 #include <list>
 #include <map>
-#include <sstream>
-#include <string>
-#include <regex>
 #include <vector>
 
 // 3rd-party dependency
 
-// FreeType
-#include <ft2build.h>
-#include FT_FREETYPE_H
+#include <MurmurHash3.h>
 
-// pugixml
 #include <pugixml.hpp>

@@ -92,13 +92,14 @@ LRESULT CMainDlg::OnFileOpen(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*
 
 LRESULT CMainDlg::OnFileSave(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	BOOL b_ret = gdipp::save_config(config_path);
+	//BOOL b_ret = gdipp::save_config(config_path);
+	assert(false);
 	return 0;
 }
 
 LRESULT CMainDlg::OnFileSaveAs(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	BOOL b_ret;
+	/*BOOL b_ret;
 
 	OPENFILENAMEW ofn = {};
 	ofn.lStructSize = sizeof(OPENFILENAME);
@@ -111,8 +112,8 @@ LRESULT CMainDlg::OnFileSaveAs(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 	if (b_ret)
 	{
 		b_ret = gdipp::save_config(config_path);
-	}
-
+	}*/
+	assert(false);
 	return 0;
 }
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <map>
-#include <vector>
 #include "gdipp_support/helper.h"
 #include "gdipp_support/rpc.h"
 

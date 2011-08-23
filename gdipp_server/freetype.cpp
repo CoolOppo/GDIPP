@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "freetype.h"
-#include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/helper.h"
-#include "gdipp_server/font_man.h"
 #include "gdipp_server/rpc_impl.h"
 
 namespace gdipp
@@ -12,27 +9,23 @@ FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_ImageCache ft_glyph_cache;
 
-FT_UInt ft_cache_max_faces = 8;
-FT_UInt ft_cache_max_sizes = 16;
-FT_ULong ft_cache_max_bytes = 1048576;
-
 void initialize_freetype()
 {
 	FT_Error ft_error;
 
-	wcs_convert(get_server_config(L"freetype/cache_max_faces", NULL), &ft_cache_max_faces);
-	wcs_convert(get_server_config(L"freetype/cache_max_sizes", NULL), &ft_cache_max_sizes);
-	wcs_convert(get_server_config(L"freetype/cache_max_bytes", NULL), &ft_cache_max_bytes);
-	FT_LcdFilter lcd_filter = FT_LCD_FILTER_DEFAULT;
-	wcs_convert(get_server_config(L"freetype/lcd_filter", NULL), reinterpret_cast<int *>(&lcd_filter));
-
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	ft_error = FT_Library_SetLcdFilter(ft_lib, lcd_filter);
+	ft_error = FT_Library_SetLcdFilter(ft_lib, config_mgr_instance.ft_conf.lcd_filter);
 	assert(ft_error == 0);
 
-	ft_error = FTC_Manager_New(ft_lib, ft_cache_max_faces, ft_cache_max_sizes, ft_cache_max_bytes, face_requester, NULL, &ft_cache_man);
+	ft_error = FTC_Manager_New(ft_lib,
+		config_mgr_instance.ft_conf.cache_max_faces,
+		config_mgr_instance.ft_conf.cache_max_sizes,
+		config_mgr_instance.ft_conf.cache_max_bytes,
+		face_requester,
+		NULL,
+		&ft_cache_man);
 	assert(ft_error == 0);
 
 	ft_error = FTC_ImageCache_New(ft_cache_man, &ft_glyph_cache);
@@ -53,9 +46,9 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 {
 	FT_Open_Args args = {};
 	args.flags = FT_OPEN_STREAM;
-	args.stream = font_man_instance.lookup_stream(face_id);
+	args.stream = font_mgr_instance.lookup_stream(face_id);
 
-	return FT_Open_Face(library, &args, font_man_instance.lookup_face_index(face_id), aface);
+	return FT_Open_Face(library, &args, font_mgr_instance.lookup_face_index(face_id), aface);
 }
 
 }

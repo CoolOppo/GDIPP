@@ -44,13 +44,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -108,12 +109,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -172,12 +174,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>
 			<Tool
@@ -236,11 +239,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 			/>
 			<Tool
@@ -273,6 +277,10 @@
 		</Configuration>
 	</Configurations>
 	<References>
+		<ProjectReference
+			ReferencedProjectIdentifier="{89A1E353-E2DC-495C-B403-742BE206ACED}"
+			RelativePathToProject=".\pugixml\scripts\pugixml_vs2008_static.vcproj"
+		/>
 	</References>
 	<Files>
 		<Filter
@@ -281,7 +289,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\config_trait.cpp"
+				RelativePath=".\debug_helper.cpp"
 				>
 			</File>
 			<File
@@ -292,6 +300,74 @@
 				RelativePath=".\lock.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\stdafx.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<Filter
+				Name="config"
+				>
+				<File
+					RelativePath=".\client_config.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\config.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\demo_config.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\font_config_criteria.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\freetype_config.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\hook_config.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\render_config.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -299,7 +375,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\config_trait.h"
+				RelativePath=".\debug_helper.h"
 				>
 			</File>
 			<File
@@ -318,6 +394,46 @@
 				RelativePath=".\rpc.h"
 				>
 			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\type_enum.h"
+				>
+			</File>
+			<Filter
+				Name="config"
+				>
+				<File
+					RelativePath=".\client_config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\demo_config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\font_config_criteria.h"
+					>
+				</File>
+				<File
+					RelativePath=".\freetype_config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\hook_config.h"
+					>
+				</File>
+				<File
+					RelativePath=".\render_config.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

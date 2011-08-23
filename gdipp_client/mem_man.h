@@ -1,5 +1,8 @@
 #pragma once
 
+namespace gdipp
+{
+
 class gdimm_mem_man
 {
 	// helper class to free static memory pointers
@@ -15,3 +18,5 @@ private:
 	std::list<IUnknown *> _com_ptr_store;
 	std::list<void *> _mem_ptr_store;
 };
+
+}

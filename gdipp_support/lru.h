@@ -1,9 +1,5 @@
 #pragma once
 
-#include <list>
-#include <map>
-#include "gdipp_support/lock.h"
-
 namespace gdipp
 {
 

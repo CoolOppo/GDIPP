@@ -1,8 +1,6 @@
 #pragma once
 
-#include <map>
-#include <MurmurHash3.h>
-#include "glyph_run.h"
+#include "gdipp_server/glyph_run.h"
 #include "gdipp_support/lru.h"
 
 namespace gdipp

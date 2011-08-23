@@ -1,6 +1,5 @@
 #pragma once
 
-#include "gdipp_lib/setting_cache.h"
 #include "gdipp_server/renderer.h"
 
 class ft_renderer : public renderer

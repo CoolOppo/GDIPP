@@ -1,7 +1,5 @@
 #pragma once
 
-#include <sstream>
-
 namespace gdipp
 {
 
@@ -18,5 +16,11 @@ struct wstring_ci_less
 {
 	bool operator()(const std::wstring &string1, const std::wstring &string2) const;
 };
+
+char get_gdi_weight_class(unsigned short weight);
+
+// generate hash of traits for the specified font configuration
+// returned integer is used as key of configuration map
+uint32_t get_render_config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name);
 
 }

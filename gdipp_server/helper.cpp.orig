@@ -1,0 +1,167 @@
+#include "stdafx.h"
+#include "helper.h"
+
+namespace gdipp
+{
+
+FIXED fixed_from_26dot6(signed long x)
+{
+	signed long y = (x << 10);
+	return *(reinterpret_cast<FIXED *>(&y));
+}
+
+signed long fixed_to_26dot6(const FIXED &x)
+{
+	return *(reinterpret_cast<const signed long *>(&x)) >> 10;
+}
+
+signed long float_to_16dot16(double x)
+{
+	return static_cast<FT_Pos>(x * 65536);
+}
+
+LONG int_from_16dot16(signed long x)
+{
+	const LONG ret = (x >> 16);
+
+	if (ret == 0 && x > 0)
+		return 1;
+	else
+		return ret;
+}
+
+LONG int_from_26dot6(signed long x)
+{
+	const LONG ret = (x >> 6);
+
+	if (ret == 0 && x > 0)
+		return 1;
+	else
+		return ret;
+}
+
+DWORD create_tls_index()
+{
+	DWORD new_tls_index = TlsAlloc();
+	assert(new_tls_index != TLS_OUT_OF_INDEXES);
+
+	return new_tls_index;
+}
+
+BOOL free_tls_index(DWORD tls_index)
+{
+	return TlsFree(tls_index);
+}
+
+BYTE division_by_255(short number, short numerator)
+{
+	// there are many approaches to approximate number * numerator / 255
+	// it is a trade-off between efficiency and accuracy
+
+	const int t = number * numerator;
+	return (((t + 255) >> 8) + t) >> 8;
+}
+
+int get_glyph_bmp_width(const FT_Bitmap &bitmap)
+{
+	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
+		return bitmap.width / 3;
+	else
+		return bitmap.width;
+}
+
+/*LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width)
+{
+	assert(a_glyph_run != NULL);
+
+	std::list<RECT>::const_iterator first_box_iter;
+	std::list<RECT>::const_reverse_iterator last_box_iter;
+
+	if (is_control_width)
+	{
+		// use control box metrics
+		first_box_iter = a_glyph_run->ctrl_boxes.begin();
+		last_box_iter = a_glyph_run->ctrl_boxes.rbegin();
+	}
+	else
+	{
+		// use black box metrics
+		first_box_iter = a_glyph_run->black_boxes.begin();
+		last_box_iter = a_glyph_run->black_boxes.rbegin();
+	}
+
+	if (a_glyph_run->ctrl_boxes.back().left >= a_glyph_run->ctrl_boxes.front().left)
+		return last_box_iter->right - first_box_iter->left;
+	else
+		return first_box_iter->right - last_box_iter->left;
+}*/
+
+bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
+{
+	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;
+}
+
+/*bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+{
+	// return true if successfully find an appropriate render mode
+	// otherwise return false
+
+	if (font_config->render_mode.mono == 2)
+	{
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	if (font_config->render_mode.gray == 2)
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	if (font_config->render_mode.subpixel == 2)
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	if (!font_config->render_mode.aliased_text && font_quality == NONANTIALIASED_QUALITY)
+		return false;
+
+	if (font_config->render_mode.mono == 1 && dc_bmp_bpp == 1)
+	{
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	if (font_config->render_mode.gray == 1 && dc_bmp_bpp == 8)
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	// we do not support 16 bpp currently
+
+	if (font_config->render_mode.subpixel == 1 && dc_bmp_bpp >= 24)
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	return false;
+}*/
+
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str)
+{
+	int wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, NULL, 0);
+	if (wc_str_len == 0)
+		return false;
+
+	wide_char_str.resize(wc_str_len);
+	wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, &wide_char_str[0], wc_str_len);
+	if (wc_str_len == 0)
+		return false;
+
+	return true;
+}
+
+}

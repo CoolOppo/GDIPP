@@ -1,7 +1,5 @@
 #include "stdafx.h"
-#include <map>
 #include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/helper.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/rpc_impl.h"
 
@@ -17,9 +15,6 @@ HANDLE h_svc_events, h_wait_cleanup, h_rpc_thread;
 
 const size_t MAX_ENV_LEN = 64;
 wchar_t hook_env_str[MAX_ENV_LEN];
-
-bool all_32_bit = false;
-bool all_64_bit = false;
 
 std::map<ULONG, HANDLE> h_user_tokens, h_hook_events;
 std::map<ULONG, PROCESS_INFORMATION> pi_hooks_32, pi_hooks_64;
@@ -69,7 +64,7 @@ BOOL start_hook(ULONG session_id)
 		goto post_hook;
 	}
 
-	if (all_32_bit)
+	if (config_mgr_instance.hook_conf.proc_32_bit)
 	{
 		const wchar_t *gdipp_hook_name_32 = L"gdipp_hook_32.exe";
 		PROCESS_INFORMATION pi;
@@ -80,7 +75,7 @@ BOOL start_hook(ULONG session_id)
 			hook_success = FALSE;
 	}
 
-	if (all_64_bit)
+	if (config_mgr_instance.hook_conf.proc_32_bit)
 	{
 		const wchar_t *gdipp_hook_name_64 = L"gdipp_hook_64.exe";
 		PROCESS_INFORMATION pi;
@@ -259,19 +254,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	b_ret = RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_events, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
 	assert(b_ret);
 
-	// get config file path
-	wchar_t config_path[MAX_PATH];
-	if (!get_dir_file_path(NULL, L"server1.conf", config_path))
-	{
-		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		return;
-	}
-
-	gdipp::init_config();
-
-	// continue even the config file is missing
-	b_ret = gdipp::load_config(config_path);
-
 	initialize_freetype();
 
 	// initialize RPC for font service
@@ -281,9 +263,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 		return;
 	}
-
-	wcs_convert(gdipp::get_server_hook_config(L"all_32_bit"), &all_32_bit);
-	wcs_convert(gdipp::get_server_hook_config(L"all_64_bit"), &all_64_bit);
 
 	/*
 	service process and its child processes run in session 0
@@ -304,8 +283,6 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	Sleep(5000);
-
 #ifdef svc_debug
 	BOOL b_ret;
 
@@ -324,6 +301,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	Sleep(10000);
 #else
+	//Sleep(5000);
+
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
 		{ SVC_NAME, gdipp::svc_main },

@@ -1,7 +1,10 @@
 #pragma once
 
-#include "painter.h"
-#include "wic_dib.h"
+#include "gdipp_client/painter.h"
+#include "gdipp_client/wic_dib.h"
+
+namespace gdipp
+{
 
 class gdimm_wic_painter : public painter
 {
@@ -31,3 +34,5 @@ private:
 
 	FLOAT _em_size;
 };
+
+}

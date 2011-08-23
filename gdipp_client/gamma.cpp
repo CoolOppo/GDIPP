@@ -1,20 +1,24 @@
 #include "stdafx.h"
 #include "gamma.h"
-#include "lock.h"
+#include <cmath>
+#include "gdipp_support/lock.h"
 
-gdimm_gamma::~gdimm_gamma()
+namespace gdipp
+{
+
+gamma::~gamma()
 {
 	for (std::map<double, BYTE *>::const_iterator iter = _gamma_ramps.begin(); iter != _gamma_ramps.end(); ++iter)
 		delete[] iter->second;
 }
 
-const BYTE *gdimm_gamma::get_ramp(double gamma)
+const BYTE *gamma::get_ramp(double gamma)
 {
 	std::map<double, BYTE *>::const_iterator iter = _gamma_ramps.find(gamma);
 	if (iter == _gamma_ramps.end())
 	{
 		// double-check lock
-		gdimm_lock lock(LOCK_GAMMA);
+		lock l("gamma");
 		iter = _gamma_ramps.find(gamma);
 		if (iter == _gamma_ramps.end())
 			init_ramp(gamma);
@@ -23,7 +27,7 @@ const BYTE *gdimm_gamma::get_ramp(double gamma)
 	return _gamma_ramps[gamma];
 }
 
-void gdimm_gamma::init_ramp(double gamma)
+void gamma::init_ramp(double gamma)
 {
 	BYTE *new_ramp = new BYTE[256];
 
@@ -31,4 +35,6 @@ void gdimm_gamma::init_ramp(double gamma)
 		new_ramp[i] = static_cast<BYTE>((pow(i / 255.0, gamma) * 255));
 
 	_gamma_ramps[gamma] = new_ramp;
+}
+
 }

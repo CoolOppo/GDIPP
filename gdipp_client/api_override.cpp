@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "api_override.h"
-#include <set>
-#include "gdipp_client/gdimm.h"
-#include "gdipp_client/helper_def.h"
+#include "gdipp_client/gdipp_client.h"
+#include "gdipp_client/helper.h"
 #include "gdipp_rpc/gdipp_rpc.h"
+
+namespace gdipp
+{
 
 #ifdef _DEBUG
 const wchar_t *debug_text = L"";
@@ -177,13 +179,10 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 
 	RpcTryExcept
 	{
-		const rpc_session_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font));
-		const GDIPP_RPC_GLYPH_RUN_HANDLE h_glyph_run = gdipp_rpc_make_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index);
-		const unsigned long glyph_run_size = gdipp_rpc_get_glyph_run_size(h_gdipp_rpc, h_glyph_run);
-		BYTE *glyph_run_buf = new BYTE[glyph_run_size];
-		b_ret = gdipp_rpc_get_glyph_run(h_gdipp_rpc, h_glyph_run, glyph_run_buf, glyph_run_size);
-		b_ret = gdipp_rpc_release_glyph_run(h_gdipp_rpc, h_glyph_run);
-		b_ret = gdipp_rpc_end_session(h_gdipp_rpc, h_session);
+		GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font), render_mode);
+		gdipp_rpc_bitmap_glyph_run *gr = NULL;
+		gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &gr);
+		gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
 	}
 	RpcExcept (true)
 	{
@@ -192,13 +191,10 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	}
 	RpcEndExcept
 
-	// get glyph run of the string
-	glyph_run *a_glyph_run = reinterpret_cast<glyph_run *>(glyph_run_buf);
-
 	// create painter and paint the glyph run
 
 	painter *painter;
-	switch (context.setting_cache->renderer)
+	/*switch (context.setting_cache->renderer)
 	{
 	case RENDERER_WIC:
 		painter = new gdimm_wic_painter;
@@ -206,7 +202,8 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	default:
 		painter = new gdimm_gdi_painter;
 		break;
-	}
+	}*/
+	painter = new gdimm_gdi_painter;
 
 	b_ret = painter->begin(&context, render_mode);
 	if (b_ret)
@@ -671,4 +668,6 @@ CreateProcessAsUserW_hook(
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_hook(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 {
 	return NULL;
+}
+
 }

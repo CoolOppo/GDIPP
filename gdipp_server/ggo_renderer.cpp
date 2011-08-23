@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
-#include "gdipp_support/helper.h"
 #include "gdipp_support/lock.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/helper.h"
@@ -54,7 +53,7 @@ bool ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_r
 	if (is_glyph_index)
 		_ggo_format |= GGO_GLYPH_INDEX;
 
-	if (_session->font_config->hinting == 0)
+	if (_session->render_config.hinting == 0)
 		_ggo_format |= GGO_UNHINTED;
 
 	POINT pen_pos = {};
@@ -231,9 +230,9 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 		we use method 3
 		*/
 
-		if (_session->font_config->embolden != 0)
+		if (_session->render_config.embolden != 0)
 		{
-			ft_error = FT_Outline_Embolden(&outline_glyph.outline, _session->font_config->embolden);
+			ft_error = FT_Outline_Embolden(&outline_glyph.outline, _session->render_config.embolden);
 			assert(ft_error == 0);
 		}
 

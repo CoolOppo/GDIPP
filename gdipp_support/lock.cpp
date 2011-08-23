@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "lock.h"
-#include <map>
-#include <MurmurHash3.h>
 
 namespace gdipp
 {

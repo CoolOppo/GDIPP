@@ -1,9 +1,12 @@
 #pragma once
 
-class gdimm_gamma
+namespace gdipp
+{
+
+class gamma
 {
 public:
-	~gdimm_gamma();
+	~gamma();
 
 	const BYTE *get_ramp(double gamma);
 
@@ -12,3 +15,5 @@ private:
 
 	std::map<double, BYTE *> _gamma_ramps;
 };
+
+}

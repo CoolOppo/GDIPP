@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "gdipp_server/renderer.h"
 
 namespace gdipp

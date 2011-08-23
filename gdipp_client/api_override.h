@@ -1,5 +1,8 @@
 #pragma once
 
+namespace gdipp
+{
+
 #ifndef GDIPP_INJECT_SANDBOX
 // define if injection into restricted processes is desired
 // defined to inject into Google Chrome render processes
@@ -58,3 +61,5 @@ BOOL
 #endif // GDIPP_INJECT_SANDBOX && !_M_X64
 
 LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter_hook(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
+
+}

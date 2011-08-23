@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "gdipp_lib.h"
-#include "gdipp_lib/config.h"
-#include "gdipp_lib/config_cache.h"
 #include "gdipp_lib/minidump.h"
 
 namespace gdipp
 {
+
+font_render_config_cache *cache = NULL;
 
 BOOL get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path)
 {
@@ -26,67 +26,18 @@ BOOL get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_
 	return PathAppendW(out_path, file_name);
 }
 
-config config_instance;
-config_cache config_cache_instance;
-
-void init_config()
+void init_font_render_config_cache(const pugi::xpath_node_set &root)
 {
-	return config_instance.init_config();
+	if (cache == NULL)
+		cache = new font_render_config_cache(root);
 }
 
-BOOL load_config(const wchar_t *config_path)
+render_config get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
 {
-	return config_instance.load_config(config_path);
-}
+	if (cache != NULL)
+		return cache->get_render_config(bold, italic, height, font_name);
 
-BOOL save_config(const wchar_t *config_path)
-{
-	return config_instance.save_config(config_path);
-}
-
-BOOL insert_setting(const wchar_t *node_name, const wchar_t *node_text, const wchar_t *parent_xpath, const wchar_t *ref_node_xpath, std::wstring &new_node_xpath)
-{
-	return config_instance.insert_setting(node_name, node_text, parent_xpath, ref_node_xpath, new_node_xpath);
-}
-
-BOOL set_setting_attr(const wchar_t *node_xpath, const wchar_t *attr_name, const wchar_t *attr_value)
-{
-	return config_instance.set_setting_attr(node_xpath, attr_name, attr_value);
-}
-
-BOOL remove_setting(const wchar_t *node_xpath)
-{
-	return config_instance.remove_setting(node_xpath);
-}
-
-const wchar_t *get_server_config(const wchar_t *setting_name, const config_trait *trait)
-{
-	return config_instance.get_server_config(setting_name, trait);
-}
-
-const font_config_cache *get_font_config_cache(const config_trait *trait)
-{
-	return config_cache_instance.lookup(trait);
-}
-
-const wchar_t *get_demo_config(const wchar_t *setting_name)
-{
-	return config_instance.get_demo_config(setting_name);
-}
-
-const std::vector<const std::wstring> &get_demo_fonts()
-{
-	return config_instance.get_demo_fonts();
-}
-
-const wchar_t *get_server_hook_config(const wchar_t *setting_name)
-{
-	return config_instance.get_server_hook_config(setting_name);
-}
-
-bool is_process_excluded(const wchar_t *proc_name)
-{
-	return config_instance.is_process_excluded(proc_name);
+	return render_config();
 }
 
 void init_minidump()
@@ -105,6 +56,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	{
 	case DLL_PROCESS_ATTACH:
 		register_minidump_module(hModule);
+		break;
+	case DLL_PROCESS_DETACH:
+		if (cache != NULL)
+			delete cache;
 		break;
 	}
 

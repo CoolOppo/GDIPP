@@ -479,6 +479,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\gdipp_rpc\gdipp_rpc.h"
+				>
+			</File>
+			<File
 				RelativePath=".\helper.h"
 				>
 			</File>

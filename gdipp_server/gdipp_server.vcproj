@@ -70,7 +70,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
-				DelayLoadDLLs="gdipp_lib_32.dll"
+				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -148,7 +148,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
-				DelayLoadDLLs="gdipp_lib_64.dll"
+				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -226,7 +226,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
-				DelayLoadDLLs="gdipp_lib_32.dll"
+				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -305,7 +305,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
-				DelayLoadDLLs="gdipp_lib_64.dll"
+				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -336,10 +336,6 @@
 	</Configurations>
 	<References>
 		<ProjectReference
-			ReferencedProjectIdentifier="{9A32E343-D465-42C2-B313-17E1FB328016}"
-			RelativePathToProject=".\gdipp_lib\gdipp_lib.vcproj"
-		/>
-		<ProjectReference
 			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
 			RelativePathToProject=".\gdipp_support\gdipp_support.vcproj"
 		/>
@@ -355,6 +351,10 @@
 			ReferencedProjectIdentifier="{6D260CD4-0C11-4755-80C8-8DC2EDDFB43C}"
 			RelativePathToProject=".\MurmurHash\MurmurHash.vcproj"
 		/>
+		<ProjectReference
+			ReferencedProjectIdentifier="{9A32E343-D465-42C2-B313-17E1FB328016}"
+			RelativePathToProject=".\gdipp_lib\gdipp_lib.vcproj"
+		/>
 	</References>
 	<Files>
 		<Filter
@@ -363,7 +363,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\config_mgr.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dc_pool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\fassert.cpp"
 				>
 			</File>
 			<File
@@ -371,50 +379,12 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_man.cpp"
+				RelativePath=".\font_mgr.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\freetype.cpp"
 				>
-			</File>
-			<File
-				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
@@ -447,6 +417,44 @@
 				<FileConfiguration
 					Name="Release|x64"
 					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -521,6 +529,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\config_mgr.h"
+				>
+			</File>
+			<File
 				RelativePath=".\dc_pool.h"
 				>
 			</File>
@@ -529,11 +541,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\fassert.h"
+				>
+			</File>
+			<File
 				RelativePath=".\font_link.h"
 				>
 			</File>
 			<File
-				RelativePath=".\font_man.h"
+				RelativePath=".\font_mgr.h"
 				>
 			</File>
 			<File

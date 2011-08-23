@@ -146,29 +146,6 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
-char get_gdi_weight_class(unsigned short weight)
-{
-	/*
-	emulate GDI behavior:
-	weight 1 to 550 are rendered as Regular
-	551 to 611 are Semibold
-	612 to infinity are Bold
-
-	weight 0 is DONTCARE
-	*/
-
-	const LONG weight_class_max[] = {0, 550, 611};
-	const char max_weight_class = sizeof(weight_class_max) / sizeof(LONG);
-
-	for (char i = 0; i < max_weight_class; ++i)
-	{
-		if (weight <= weight_class_max[i])
-			return i;
-	}
-
-	return max_weight_class;
-}
-
 int get_glyph_bmp_width(const FT_Bitmap &bitmap)
 {
 	if (bitmap.pixel_mode == FT_PIXEL_MODE_LCD)
@@ -218,55 +195,6 @@ bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
 {
 	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;
 }
-
-/*bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
-{
-	// return true if successfully find an appropriate render mode
-	// otherwise return false
-
-	if (font_config->render_mode.mono == 2)
-	{
-		render_mode = FT_RENDER_MODE_MONO;
-		return true;
-	}
-
-	if (font_config->render_mode.gray == 2)
-	{
-		render_mode = FT_RENDER_MODE_NORMAL;
-		return true;
-	}
-
-	if (font_config->render_mode.subpixel == 2)
-	{
-		render_mode = FT_RENDER_MODE_LCD;
-		return true;
-	}
-
-	if (!font_config->render_mode.aliased_text && font_quality == NONANTIALIASED_QUALITY)
-		return false;
-
-	if (font_config->render_mode.mono == 1 && dc_bmp_bpp == 1)
-	{
-		render_mode = FT_RENDER_MODE_MONO;
-		return true;
-	}
-
-	if (font_config->render_mode.gray == 1 && dc_bmp_bpp == 8)
-	{
-		render_mode = FT_RENDER_MODE_NORMAL;
-		return true;
-	}
-
-	// we do not support 16 bpp currently
-
-	if (font_config->render_mode.subpixel == 1 && dc_bmp_bpp >= 24)
-	{
-		render_mode = FT_RENDER_MODE_LCD;
-		return true;
-	}
-
-	return false;
-}*/
 
 bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str)
 {

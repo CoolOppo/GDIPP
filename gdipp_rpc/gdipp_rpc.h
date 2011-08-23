@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Sun Aug 07 04:34:44 2011
+/* at Fri Aug 19 15:30:48 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
@@ -129,6 +129,16 @@ unsigned long gdipp_rpc_get_glyph_indices(
     /* [size_is][string][in] */ const wchar_t *str,
     /* [in] */ int count,
     /* [size_is][out] */ unsigned short *gi);
+
+boolean gdipp_rpc_get_render_config( 
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [string][in] */ const wchar_t *name,
+    /* [retval][string][out] */ wchar_t **value);
+
+boolean gdipp_rpc_set_render_config( 
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [string][in] */ const wchar_t *name,
+    /* [string][in] */ const wchar_t *value);
 
 boolean gdipp_rpc_make_bitmap_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,

@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "wic_painter.h"
-#include "helper_func.h"
-#include "gdimm.h"
+#include "gdipp_client/helper.h"
+#include "gdipp_client/gdipp_client.h"
+
+namespace gdipp
+{
 
 ID2D1Factory *gdimm_wic_painter::_d2d_factory = NULL;
 IDWriteFactory *gdimm_wic_painter::_dw_factory = NULL;
@@ -422,4 +425,6 @@ bool gdimm_wic_painter::draw_text(UINT options, CONST RECT *lprect, LPCWSTR lpSt
 	assert(b_ret);
 
 	return !!paint_success;
+}
+
 }

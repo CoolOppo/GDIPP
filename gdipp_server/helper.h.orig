@@ -1,0 +1,45 @@
+#pragma once
+
+#include <vector>
+
+namespace gdipp
+{
+
+const double pi = acos(-1.0);
+
+// convert 26.6 fixed float type to 16.16 fixed point
+FIXED fixed_from_26dot6(signed long x);
+
+// convert 16.16 fixed point to 26.6 format
+signed long fixed_to_26dot6(const FIXED &x);
+
+// convert floating point to 16.16 format
+signed long float_to_16dot16(double x);
+
+// convert 16.16 fixed float type to integer
+LONG int_from_16dot16(signed long x);
+
+// convert 26.6 fixed float type to integer
+LONG int_from_26dot6(signed long x);
+
+DWORD create_tls_index();
+BOOL free_tls_index(DWORD tls_index);
+
+// high-performance division method to approximate number * numerator / 255
+BYTE division_by_255(short number, short numerator);
+
+int get_glyph_bmp_width(const FT_Bitmap &bitmap);
+
+//LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width);
+
+bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
+
+// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
+// otherwise, return false
+//bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+
+//const FT_Glyph make_empty_outline_glyph();
+
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str);
+
+}

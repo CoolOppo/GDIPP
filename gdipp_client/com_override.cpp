@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "com_override.h"
-#include "gdimm.h"
-#include "lock.h"
+#include "gdipp_client.h"
+#include "gdipp_support/lock.h"
+
+namespace gdipp
+{
 
 HMODULE WINAPI LoadLibraryA_hook(LPCSTR lpLibFileName)
 {
@@ -84,7 +87,7 @@ IFACEMETHODIMP CreateDxgiSurfaceRenderTarget_hook(
 
 	if (DrawGlyphRun_orig == NULL)
 	{
-		gdimm_lock lock(LOCK_COM_HOOK);
+		lock l("com_hook");
 		if (DrawGlyphRun_orig == NULL)
 		{
 			const void **vfptr = *reinterpret_cast<const void ***>(*renderTarget);
@@ -116,7 +119,7 @@ HRESULT WINAPI D2D1CreateFactory_hook(D2D1_FACTORY_TYPE factoryType, REFIID riid
 
 	if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 	{
-		gdimm_lock lock(LOCK_COM_HOOK);
+		lock l("com_hook");
 		if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 		{
 			ID2D1Factory *pIFactory = *reinterpret_cast<ID2D1Factory **>(ppIFactory);
@@ -137,4 +140,6 @@ HRESULT WINAPI D2D1CreateFactory_hook(D2D1_FACTORY_TYPE factoryType, REFIID riid
 	}
 
 	return hr;
+}
+
 }

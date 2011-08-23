@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "gdimm.h"
+#include "gdipp_client.h"
 #include "gdipp_lib/gdipp_lib.h"
 
 namespace gdipp
@@ -9,7 +9,7 @@ HMODULE h_self = NULL;
 bool os_support_directwrite;
 RPC_BINDING_HANDLE h_gdipp_rpc;
 
-gdimm_gamma gamma_instance;
+gamma gamma_instance;
 hook hook_instance;
 gdimm_mem_man mem_man_instance;
 

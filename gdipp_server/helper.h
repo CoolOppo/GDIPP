@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 namespace gdipp
 {
 
@@ -40,8 +38,6 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 // get outline metrics of the DC
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf);
 
-char get_gdi_weight_class(unsigned short weight);
-
 int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 
 //LONG get_glyph_run_width(const glyph_run *a_glyph_run, bool is_control_width);
@@ -49,10 +45,6 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 LOGFONTW get_log_font(HDC hdc);
 
 bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
-
-// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
-// otherwise, return false
-//bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
 
 //const FT_Glyph make_empty_outline_glyph();
 

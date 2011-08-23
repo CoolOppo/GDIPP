@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "glyph_cache.h"
-#include <utility>
+#include "gdipp_support/lock.h"
 
 namespace gdipp
 {

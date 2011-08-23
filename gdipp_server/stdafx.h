@@ -17,7 +17,6 @@
 #include <map>
 #include <set>
 #include <sstream>
-#include <string>
 #include <vector>
 
 // 3rd-party dependency
@@ -29,4 +28,8 @@
 
 //#include <sqlite3.h>
 
-#include "gdipp_lib/fassert.h"
+#include "gdipp_server/fassert.h"
+
+#include <MurmurHash3.h>
+
+#include <pugixml.hpp>

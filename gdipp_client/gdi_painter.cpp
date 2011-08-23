@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "gdi_painter.h"
-#include "gdipp_client/gdimm.h"
+#include "gdipp_client/gdipp_client.h"
+
+namespace gdipp
+{
 
 DWORD tls_index = 0;
 
@@ -693,4 +696,6 @@ BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const 
 		default:
 			return FALSE;
 	}
+}
+
 }

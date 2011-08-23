@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "wic_dib.h"
-#include "helper_func.h"
+#include "gdipp_client/helper.h"
+
+namespace gdipp
+{
 
 IFACEMETHODIMP gdimm_wic_dib_lock::QueryInterface(
 	/* [in] */ REFIID riid,
@@ -164,4 +167,6 @@ void gdimm_wic_dib::initialize(const BITMAPINFO *bmp_info, VOID *bits)
 {
 	_bmp_info = bmp_info;
 	_lock.initialize(bmp_info, bits);
+}
+
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "gdipp_lib/gdipp_lib.h"
 
 namespace gdipp

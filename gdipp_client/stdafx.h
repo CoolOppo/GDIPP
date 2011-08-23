@@ -15,8 +15,10 @@
 
 // C standard header files
 #include <cassert>
+#include <cmath>
 #include <list>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>

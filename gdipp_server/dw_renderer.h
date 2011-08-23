@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include "gdipp_server/renderer.h"
 
 class dw_renderer : public renderer, public IDWriteTextRenderer

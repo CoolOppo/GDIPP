@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "font_link.h"
-#include <set>
 
 namespace gdipp
 {

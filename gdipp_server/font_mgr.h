@@ -1,8 +1,5 @@
 #pragma once
 
-#include <map>
-#include <vector>
-
 namespace gdipp
 {
 
@@ -13,7 +10,7 @@ namespace gdipp
 #define metric_face_name(outline_metric) (reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpFaceName)))
 #define metric_style_name(outline_metric) (reinterpret_cast<const wchar_t *>(reinterpret_cast<const BYTE *>(outline_metric) + reinterpret_cast<const UINT>(outline_metric->otmpStyleName)))
 
-class font_man
+class font_mgr
 {
 public:
 	void *register_font(const LOGFONTW *attr_buf, DWORD buf_size);

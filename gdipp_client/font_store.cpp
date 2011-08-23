@@ -3,6 +3,9 @@
 #include "helper_func.h"
 #include "lock.h"
 
+namespace gdipp
+{
+
 gdimm_font_store::gdimm_font_store()
 {
 	_font_man_tls_index = TlsAlloc();
@@ -44,4 +47,6 @@ BOOL gdimm_font_store::register_thread_font_man(gdimm_font_man *font_man)
 const gdimm_font_man *gdimm_font_store::lookup_thread_font_man()
 {
 	return static_cast<const gdimm_font_man *>(TlsGetValue(_font_man_tls_index));
+}
+
 }

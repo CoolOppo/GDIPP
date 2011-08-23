@@ -1,19 +1,16 @@
 #include "stdafx.h"
 #include "rpc_impl.h"
-#include <algorithm>
-#include <vector>
-#include <MurmurHash3.h>
 #include "gdipp_lib/gdipp_lib.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 #include "gdipp_server/ggo_renderer.h"
-#include "gdipp_server/glyph_run.h"
-#include "gdipp_server/helper.h"
+#include "gdipp_support/helper.h"
 
 namespace gdipp
 {
 
+config_mgr config_mgr_instance;
 dc_pool dc_pool_instance;
-font_man font_man_instance;
+font_mgr font_mgr_instance;
 glyph_cache glyph_cache_instance;
 
 uint32_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
@@ -195,7 +192,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 {
 	// register font with given LOGFONT structure
 	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
-	void *font_id = gdipp::font_man_instance.register_font(logfont, logfont_size);
+	void *font_id = gdipp::font_mgr_instance.register_font(logfont, logfont_size);
 	if (font_id == NULL)
 		return NULL;
 
@@ -207,15 +204,15 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	new_session->font_id = font_id;
 	new_session->hdc = hdc;
 
-	const std::vector<BYTE> *metric_buf = gdipp::font_man_instance.get_font_metrics(font_id);
+	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(font_id);
 	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(&(*metric_buf)[0]);
 	// generate config trait and retrieve font-specific config
 	const LONG point_size = (logfont->lfHeight > 0 ? logfont->lfHeight : -MulDiv(logfont->lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
-	const gdipp::config_trait curr_config_trait(gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight)),
+	const char weight_class = gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight));
+	new_session->render_config = gdipp::get_font_render_config(!!weight_class,
 		!!outline_metrics->otmTextMetrics.tmItalic,
 		point_size,
 		metric_face_name(outline_metrics));
-	new_session->font_config = gdipp::get_font_config_cache(&curr_config_trait);
 
 	new_session->render_mode = static_cast<FT_Render_Mode>(render_mode);
 	new_session->render_trait = gdipp::generate_render_trait(logfont, render_mode);
@@ -250,7 +247,7 @@ unsigned long gdipp_rpc_get_font_size(
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	return gdipp::font_man_instance.get_font_data(curr_session->font_id, table, offset, NULL, 0);
+	return gdipp::font_mgr_instance.get_font_data(curr_session->font_id, table, offset, NULL, 0);
 }
 
 unsigned long gdipp_rpc_get_font_data( 
@@ -263,7 +260,7 @@ unsigned long gdipp_rpc_get_font_data(
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	return gdipp::font_man_instance.get_font_data(curr_session->font_id, table, offset, data_buf, buf_size);
+	return gdipp::font_mgr_instance.get_font_data(curr_session->font_id, table, offset, data_buf, buf_size);
 }
 
 unsigned long gdipp_rpc_get_font_metrics_size( 
@@ -272,7 +269,7 @@ unsigned long gdipp_rpc_get_font_metrics_size(
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	const std::vector<BYTE> *metric_buf = gdipp::font_man_instance.get_font_metrics(curr_session->font_id);
+	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(curr_session->font_id);
 
 	return static_cast<unsigned long>(metric_buf->size());
 }
@@ -285,7 +282,7 @@ unsigned long gdipp_rpc_get_font_metrics_data(
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	const std::vector<BYTE> *metric_buf = gdipp::font_man_instance.get_font_metrics(curr_session->font_id);
+	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(curr_session->font_id);
 
 	const DWORD copy_size = min(static_cast<DWORD>(metric_buf->size()), buf_size);
 	CopyMemory(metrics_buf, &(*metric_buf)[0], copy_size);
@@ -302,7 +299,23 @@ unsigned long gdipp_rpc_get_glyph_indices(
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
-	return gdipp::font_man_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
+	return gdipp::font_mgr_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
+}
+
+boolean gdipp_rpc_get_render_config( 
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [string][in] */ const wchar_t *name,
+    /* [retval][string][out] */ wchar_t **value)
+{
+	return false;
+}
+
+boolean gdipp_rpc_set_render_config( 
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [string][in] */ const wchar_t *name,
+    /* [string][in] */ const wchar_t *value)
+{
+	return false;
 }
 
 boolean gdipp_rpc_make_bitmap_glyph_run( 

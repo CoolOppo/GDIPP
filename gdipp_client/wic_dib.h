@@ -1,5 +1,8 @@
 #pragma once
 
+namespace gdipp
+{
+
 class gdimm_wic_dib_lock : public IWICBitmapLock
 {
 public:
@@ -88,3 +91,5 @@ private:
 	const BITMAPINFO *_bmp_info;
 	gdimm_wic_dib_lock _lock;
 };
+
+}
