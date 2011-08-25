@@ -1,19 +1,26 @@
 #include "stdafx.h"
 #include "font_render_config_cache.h"
-#include "gdipp_support/helper.h"
-#include "gdipp_support/lock.h"
+#include "gdipp_lib/helper.h"
+#include "gdipp_lib/lock.h"
 
 namespace gdipp
 {
 
-font_render_config_cache::font_render_config_cache(const pugi::xpath_node_set &root)
+font_render_config_cache::font_render_config_cache(const void *root)
 {
-	for (pugi::xpath_node_set::const_iterator node_iter = root.begin(); node_iter != root.end(); ++node_iter)
+	if (root == NULL)
+		return;
+
+	const pugi::xpath_node_set *root_node = reinterpret_cast<const pugi::xpath_node_set *>(root);
+	if (root_node->empty())
+		return;
+
+	for (pugi::xpath_node_set::const_iterator node_iter = root_node->begin(); node_iter != root_node->end(); ++node_iter)
 	{
 		const pugi::xml_node curr_node = node_iter->node();
-		font_config_criteria curr_criteria(curr_node);
+		font_config_criteria curr_criteria(&curr_node);
 		render_config curr_config;
-		curr_config.load(curr_node);
+		curr_config.load(&curr_node);
 		_configs.push_front(std::pair<font_config_criteria, render_config>(curr_criteria, curr_config));			
 	}
 }

@@ -1,14 +1,13 @@
 #include "stdafx.h"
 #include "rpc_impl.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_lib/helper.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 #include "gdipp_server/ggo_renderer.h"
-#include "gdipp_support/helper.h"
 
 namespace gdipp
 {
 
-config_mgr config_mgr_instance;
+config_mgr config_mgr_instance(L"server.conf");
 dc_pool dc_pool_instance;
 font_mgr font_mgr_instance;
 glyph_cache glyph_cache_instance;
@@ -209,7 +208,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	// generate config trait and retrieve font-specific config
 	const LONG point_size = (logfont->lfHeight > 0 ? logfont->lfHeight : -MulDiv(logfont->lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
 	const char weight_class = gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight));
-	new_session->render_config = gdipp::get_font_render_config(!!weight_class,
+	new_session->render_config = gdipp::config_mgr_instance.get_font_render_config(!!weight_class,
 		!!outline_metrics->otmTextMetrics.tmItalic,
 		point_size,
 		metric_face_name(outline_metrics));

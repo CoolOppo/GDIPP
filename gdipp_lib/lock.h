@@ -1,9 +1,11 @@
 #pragma once
 
+#include "api.h"
+
 namespace gdipp
 {
 
-class lock
+class GDIPP_API lock
 {
 public:
 	explicit lock(char *lock_sig);

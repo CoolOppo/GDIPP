@@ -1,10 +1,9 @@
 #pragma once
 
-#include "gdipp_server/config_mgr.h"
 #include "gdipp_server/dc_pool.h"
 #include "gdipp_server/font_mgr.h"
 #include "gdipp_server/glyph_cache.h"
-#include "gdipp_support/render_config.h"
+#include "gdipp_config/config_mgr.h"
 
 namespace gdipp
 {

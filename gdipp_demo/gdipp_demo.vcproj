@@ -79,7 +79,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
-				LinkIncremental="2"
 				DelayLoadDLLs="gdipp_lib_32.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -167,7 +166,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
-				LinkIncremental="2"
 				DelayLoadDLLs="gdipp_lib_64.dll"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -255,7 +253,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
-				LinkIncremental="1"
 				DelayLoadDLLs="gdipp_lib_32.dll"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -343,7 +340,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
-				LinkIncremental="1"
 				DelayLoadDLLs="gdipp_lib_64.dll"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -377,6 +373,10 @@
 		<ProjectReference
 			ReferencedProjectIdentifier="{9A32E343-D465-42C2-B313-17E1FB328016}"
 			RelativePathToProject=".\gdipp_lib\gdipp_lib.vcproj"
+		/>
+		<ProjectReference
+			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
+			RelativePathToProject=".\gdipp_config\gdipp_config.vcproj"
 		/>
 	</References>
 	<Files>

@@ -19,7 +19,9 @@
 #include <sstream>
 #include <vector>
 
-// 3rd-party dependency
+#include "gdipp_server/fassert.h"
+
+// FreeType
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_CACHE_H
@@ -28,8 +30,5 @@
 
 //#include <sqlite3.h>
 
-#include "gdipp_server/fassert.h"
-
-#include <MurmurHash3.h>
-
-#include <pugixml.hpp>
+// MurmurHash
+#include <MurmurHash/MurmurHash3.h>

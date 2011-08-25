@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gdipp_support/config.h"
+#include "gdipp_config/config.h"
 
 namespace gdipp
 {
 
-class demo_config : public config
+class GDIPP_API demo_config : public config
 {
 public:
 	demo_config();
-	void load(const pugi::xml_node &root);
+	void load(const void *root);
 
 	unsigned int cycles;
 	unsigned char threads;

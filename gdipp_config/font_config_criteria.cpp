@@ -1,33 +1,37 @@
 #include "stdafx.h"
 #include "font_config_criteria.h"
-#include "gdipp_support/helper.h"
+#include "gdipp_lib/helper.h"
 
 namespace gdipp
 {
 
-font_config_criteria::font_config_criteria(const pugi::xml_node &node)
+font_config_criteria::font_config_criteria(const void *node)
 	: _bold(-1),
 	_italic(-1),
 	_max_height(-1)
 {
-	if (node.empty())
+	if (node == NULL)
+		return;
+
+	const pugi::xml_node *node_ptr = reinterpret_cast<const pugi::xml_node *>(node);
+	if (node_ptr->empty())
 		return;
 
 	pugi::xml_attribute attr;
 	
-	attr = node.attribute(L"bold");
+	attr = node_ptr->attribute(L"bold");
 	if (!attr.empty())
 		wcs_convert(attr.value(), reinterpret_cast<short *>(&_bold));
 
-	attr = node.attribute(L"italic");
+	attr = node_ptr->attribute(L"italic");
 	if (!attr.empty())
 		wcs_convert(attr.value(), reinterpret_cast<short *>(&_italic));
 
-	attr = node.attribute(L"max_height");
+	attr = node_ptr->attribute(L"max_height");
 	if (!attr.empty())
 		wcs_convert(attr.value(), &_max_height);
 
-	attr = node.attribute(L"name");
+	attr = node_ptr->attribute(L"name");
 	if (!attr.empty())
 		_font_name = attr.value();
 }

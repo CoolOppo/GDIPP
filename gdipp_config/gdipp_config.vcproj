@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="gdipp_support"
+	Name="gdipp_config"
 	ProjectGUID="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
-	RootNamespace="gdipp_support"
+	RootNamespace="gdipp_config"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -23,7 +23,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			>
 			<Tool
@@ -44,8 +44,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)MurmurHash&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -65,10 +65,17 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -78,6 +85,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -87,7 +97,7 @@
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			>
 			<Tool
@@ -109,8 +119,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -129,10 +139,17 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -144,6 +161,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -151,7 +171,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -174,8 +194,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -193,10 +213,18 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName)_32.dll"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -208,6 +236,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -215,7 +246,7 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -239,8 +270,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDIPP_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -257,10 +288,18 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName)_64.dll"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -270,6 +309,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -281,6 +323,10 @@
 			ReferencedProjectIdentifier="{89A1E353-E2DC-495C-B403-742BE206ACED}"
 			RelativePathToProject=".\pugixml\scripts\pugixml_vs2008_static.vcproj"
 		/>
+		<ProjectReference
+			ReferencedProjectIdentifier="{9A32E343-D465-42C2-B313-17E1FB328016}"
+			RelativePathToProject=".\gdipp_lib\gdipp_lib.vcproj"
+		/>
 	</References>
 	<Files>
 		<Filter
@@ -289,15 +335,39 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\debug_helper.cpp"
+				RelativePath=".\client_config.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\helper.cpp"
+				RelativePath=".\config.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\lock.cpp"
+				RelativePath=".\config_mgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\demo_config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\font_config_criteria.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\font_render_config_cache.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\freetype_config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\hook_config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config.cpp"
 				>
 			</File>
 			<File
@@ -336,38 +406,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<Filter
-				Name="config"
-				>
-				<File
-					RelativePath=".\client_config.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\config.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\demo_config.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\font_config_criteria.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\freetype_config.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\hook_config.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\render_config.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -375,65 +413,57 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\debug_helper.h"
+				RelativePath=".\client_config.h"
 				>
 			</File>
 			<File
-				RelativePath=".\helper.h"
+				RelativePath=".\config.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lock.h"
+				RelativePath=".\config_mgr.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lru.h"
+				RelativePath=".\demo_config.h"
 				>
 			</File>
 			<File
-				RelativePath=".\rpc.h"
+				RelativePath=".\font_config_criteria.h"
+				>
+			</File>
+			<File
+				RelativePath=".\font_render_config_cache.h"
+				>
+			</File>
+			<File
+				RelativePath=".\freetype_config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\hook_config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
 			<File
-				RelativePath=".\type_enum.h"
+				RelativePath=".\gdipp_config.rc"
 				>
 			</File>
-			<Filter
-				Name="config"
-				>
-				<File
-					RelativePath=".\client_config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\demo_config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\font_config_criteria.h"
-					>
-				</File>
-				<File
-					RelativePath=".\freetype_config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\hook_config.h"
-					>
-				</File>
-				<File
-					RelativePath=".\render_config.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "helper.h"
+#include "gdipp_lib/minidump.h"
 
 namespace gdipp
 {
@@ -7,6 +8,35 @@ namespace gdipp
 bool wstring_ci_less::operator()(const std::wstring &string1, const std::wstring &string2) const
 {
 	return (_wcsicmp(string1.c_str(), string2.c_str()) < 0);
+}
+
+BOOL get_dir_file_path(HMODULE h_module, const wchar_t *file_name, wchar_t *out_path)
+{
+	// append the file name after the module's resident directory name
+	// if the module handle is NULL, use the current exe as the module
+
+	DWORD dw_ret;
+	BOOL b_ret;
+
+	dw_ret = GetModuleFileNameW(h_module, out_path, MAX_PATH);
+	if (dw_ret == 0)
+		return FALSE;
+
+	b_ret = PathRemoveFileSpecW(out_path);
+	if (!b_ret)
+		return FALSE;
+
+	return PathAppendW(out_path, file_name);
+}
+
+void init_minidump()
+{
+	SetUnhandledExceptionFilter(minidump_filter);
+}
+
+void register_minidump_module(HMODULE h_module)
+{
+	h_minidump_modules.push_back(h_module);
 }
 
 char get_gdi_weight_class(unsigned short weight)

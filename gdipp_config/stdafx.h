@@ -10,6 +10,7 @@
 #include <windows.h>
 
 // C standard header files
+#include <list>
 #include <map>
 #include <regex>
 #include <sstream>
@@ -20,7 +21,7 @@
 #include FT_LCD_FILTER_H
 
 // Murmurhash
-#include <MurmurHash3.h>
+#include <MurmurHash/MurmurHash3.h>
 
 // pugixml
-#include <pugixml.hpp>
+#include <pugixml/src/pugixml.hpp>

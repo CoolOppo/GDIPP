@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gdipp_support/render_config.h"
-#include "gdipp_support/font_config_criteria.h"
+#include "gdipp_config/render_config.h"
+#include "gdipp_config/font_config_criteria.h"
 
 namespace gdipp
 {
@@ -9,7 +9,7 @@ namespace gdipp
 class font_render_config_cache
 {
 public:
-	font_render_config_cache(const pugi::xpath_node_set &root);
+	font_render_config_cache(const void *root);
 	render_config get_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name);
 
 private:

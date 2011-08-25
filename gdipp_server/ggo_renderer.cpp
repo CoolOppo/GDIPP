@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
-#include "gdipp_support/lock.h"
+#include "gdipp_lib/lock.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/helper.h"
 

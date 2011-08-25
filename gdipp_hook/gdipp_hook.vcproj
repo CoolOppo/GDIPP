@@ -68,7 +68,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -144,7 +143,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -220,7 +218,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -297,7 +294,6 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -328,8 +324,8 @@
 	</Configurations>
 	<References>
 		<ProjectReference
-			ReferencedProjectIdentifier="{56A076C4-6050-4EAC-B84E-56B0B79A4041}"
-			RelativePathToProject=".\gdimm\gdimm.vcproj"
+			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
+			RelativePathToProject=".\gdipp_config\gdipp_config.vcproj"
 		/>
 	</References>
 	<Files>

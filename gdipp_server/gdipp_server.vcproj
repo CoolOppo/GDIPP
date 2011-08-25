@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,8 +68,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="rpcrt4.lib wtsapi32.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -123,7 +121,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -146,8 +144,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="rpcrt4.lib wtsapi32.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -202,7 +198,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -224,8 +220,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="rpcrt4.lib wtsapi32.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_32.exe"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
 				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -282,7 +276,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)pugixml\src&quot;;&quot;$(SolutionDir)MurmurHash&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -303,8 +297,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="rpcrt4.lib wtsapi32.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_64.exe"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
 				DelayLoadDLLs=""
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -337,7 +329,7 @@
 	<References>
 		<ProjectReference
 			ReferencedProjectIdentifier="{09A6E8A1-3882-47B0-9CE4-1FD445CC450F}"
-			RelativePathToProject=".\gdipp_support\gdipp_support.vcproj"
+			RelativePathToProject=".\gdipp_config\gdipp_config.vcproj"
 		/>
 		<ProjectReference
 			ReferencedProjectIdentifier="{4F7514B8-CB7B-46E8-B93B-8C0D686185B4}"
@@ -363,10 +355,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\config_mgr.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\dc_pool.cpp"
 				>
 			</File>
@@ -385,44 +373,6 @@
 			<File
 				RelativePath=".\freetype.cpp"
 				>
-			</File>
-			<File
-				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_s.c"
@@ -455,6 +405,44 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_s.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -528,10 +516,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\config_mgr.h"
-				>
-			</File>
 			<File
 				RelativePath=".\dc_pool.h"
 				>

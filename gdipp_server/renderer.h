@@ -2,7 +2,7 @@
 
 #include "rpc_impl.h"
 #include "glyph_run.h"
-#include "gdipp_support/rpc.h"
+#include "gdipp_lib/rpc.h"
 
 namespace gdipp
 {

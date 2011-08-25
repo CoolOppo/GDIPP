@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "minidump.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_lib/helper.h"
 
 namespace gdipp
 {

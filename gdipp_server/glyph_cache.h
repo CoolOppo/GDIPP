@@ -1,7 +1,7 @@
 #pragma once
 
+#include "gdipp_lib/lru.h"
 #include "gdipp_server/glyph_run.h"
-#include "gdipp_support/lru.h"
 
 namespace gdipp
 {

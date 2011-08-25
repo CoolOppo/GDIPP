@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gdipp_support/config.h"
+#include "gdipp_config/config.h"
 
 namespace gdipp
 {
 
-class freetype_config : public config
+class GDIPP_API freetype_config : public config
 {
 public:
 	freetype_config();
-	void load(const pugi::xml_node &root);
+	void load(const void *root);
 
 	FT_UInt cache_max_faces;
 	FT_UInt cache_max_sizes;

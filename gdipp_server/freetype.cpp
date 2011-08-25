@@ -16,13 +16,14 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	ft_error = FT_Library_SetLcdFilter(ft_lib, config_mgr_instance.ft_conf.lcd_filter);
+	freetype_config ft_conf = config_mgr_instance.get_freetype_config();
+	ft_error = FT_Library_SetLcdFilter(ft_lib, ft_conf.lcd_filter);
 	assert(ft_error == 0);
 
 	ft_error = FTC_Manager_New(ft_lib,
-		config_mgr_instance.ft_conf.cache_max_faces,
-		config_mgr_instance.ft_conf.cache_max_sizes,
-		config_mgr_instance.ft_conf.cache_max_bytes,
+		ft_conf.cache_max_faces,
+		ft_conf.cache_max_sizes,
+		ft_conf.cache_max_bytes,
 		face_requester,
 		NULL,
 		&ft_cache_man);

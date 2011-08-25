@@ -1,7 +1,5 @@
 #pragma once
 
-#include "gdipp_lib/gdipp_lib.h"
-
 namespace gdipp
 {
 

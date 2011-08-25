@@ -19,8 +19,5 @@
 #include <map>
 #include <vector>
 
-// 3rd-party dependency
-
-#include <MurmurHash3.h>
-
-#include <pugixml.hpp>
+// Murmurhash
+#include "MurmurHash/MurmurHash3.h"

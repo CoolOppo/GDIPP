@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "dc_pool.h"
-#include "gdipp_support/lock.h"
+#include "gdipp_lib/lock.h"
 
 namespace gdipp
 {

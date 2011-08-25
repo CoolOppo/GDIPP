@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "debug_helper.h"
+#include "debug.h"
 
 namespace gdipp
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gdipp_support/helper.h"
-#include "gdipp_support/rpc.h"
+#include "gdipp_lib/helper.h"
+#include "gdipp_lib/rpc.h"
 
 namespace gdipp
 {

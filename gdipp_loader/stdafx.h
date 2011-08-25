@@ -16,5 +16,5 @@
 #include <string>
 #include <vector>
 
-// 3rd-party dependency
-#include <easyhook.h>
+// EasyHook
+#include <EasyHook/easyhook.h>

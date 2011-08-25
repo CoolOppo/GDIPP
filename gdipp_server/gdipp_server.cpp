@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_lib/helper.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/rpc_impl.h"
 
@@ -34,6 +34,8 @@ BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_ho
 
 BOOL start_hook(ULONG session_id)
 {
+	hook_config hook_conf = config_mgr_instance.get_hook_config();
+
 	// make the event handle inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
 	BOOL b_ret, hook_success = TRUE;
@@ -64,7 +66,7 @@ BOOL start_hook(ULONG session_id)
 		goto post_hook;
 	}
 
-	if (config_mgr_instance.hook_conf.proc_32_bit)
+	if (hook_conf.proc_32_bit)
 	{
 		const wchar_t *gdipp_hook_name_32 = L"gdipp_hook_32.exe";
 		PROCESS_INFORMATION pi;
@@ -75,7 +77,7 @@ BOOL start_hook(ULONG session_id)
 			hook_success = FALSE;
 	}
 
-	if (config_mgr_instance.hook_conf.proc_32_bit)
+	if (hook_conf.proc_32_bit)
 	{
 		const wchar_t *gdipp_hook_name_64 = L"gdipp_hook_64.exe";
 		PROCESS_INFORMATION pi;
@@ -284,24 +286,8 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 #ifdef svc_debug
-	BOOL b_ret;
-
-	h_svc_events = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!b_ret)
-	{
-		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
-		return EXIT_FAILURE;
-	}
-
-	swprintf_s(env_str, L"gdipp_wait_handle=%p%c", h_svc_events, 0);
-
-	b_ret = start_hook();
-	if (!b_ret)
-		return EXIT_FAILURE;
-
-	Sleep(10000);
-#else
-	//Sleep(5000);
+	Sleep(5000);
+#endif  // svc_debug
 
 	SERVICE_TABLE_ENTRY dispatch_table[] =
 	{
@@ -310,7 +296,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	};
 
 	StartServiceCtrlDispatcherW(dispatch_table);
-#endif  // svc_debug
 
 	return EXIT_SUCCESS;
 }

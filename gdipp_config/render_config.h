@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gdipp_support/config.h"
-#include "gdipp_support/type_enum.h"
+#include "gdipp_config/config.h"
+#include "gdipp_lib/type_enum.h"
 
 namespace gdipp
 {
 
-class render_config : public config
+class GDIPP_API render_config : public config
 {
 public:
-	struct gamma_config
+	struct GDIPP_API gamma_config
 	{
 		gamma_config();
 
@@ -18,7 +18,7 @@ public:
 		double blue;
 	};
 
-	struct render_mode_config
+	struct GDIPP_API render_mode_config
 	{
 		render_mode_config();
 
@@ -29,7 +29,7 @@ public:
 		bool aliased_text;
 	};
 
-	struct shadow_config
+	struct GDIPP_API shadow_config
 	{
 		shadow_config();
 
@@ -40,7 +40,7 @@ public:
 
 public:
 	render_config();
-	void load(const pugi::xml_node &root);
+	void load(const void *root);
 
 	unsigned char auto_hinting;
 	bool embedded_bitmap;
