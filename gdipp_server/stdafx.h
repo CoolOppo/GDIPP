@@ -19,16 +19,17 @@
 #include <sstream>
 #include <vector>
 
-#include "gdipp_server/fassert.h"
-
 // FreeType
-#include <ft2build.h>
+#include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_CACHE_H
 #include FT_LCD_FILTER_H
 #include FT_OUTLINE_H
 
-//#include <sqlite3.h>
-
 // MurmurHash
-#include <MurmurHash/MurmurHash3.h>
+#include "MurmurHash/MurmurHash3.h"
+
+// SQLite
+//#include "sqlite3.h"
+
+#include "gdipp_server/fassert.h"

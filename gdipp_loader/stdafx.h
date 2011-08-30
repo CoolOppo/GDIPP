@@ -13,8 +13,7 @@
 
 // C RunTime Header Files
 #include <cassert>
-#include <string>
 #include <vector>
 
 // EasyHook
-#include <EasyHook/easyhook.h>
+#include "EasyHook/easyhook.h"

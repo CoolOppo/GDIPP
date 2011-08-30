@@ -2,6 +2,7 @@
 #include "ggo_renderer.h"
 #include "gdipp_lib/lock.h"
 #include "gdipp_server/freetype.h"
+#include "gdipp_server/global.h"
 #include "gdipp_server/helper.h"
 
 namespace gdipp
@@ -27,7 +28,7 @@ const FT_Glyph make_empty_outline_glyph()
 }
 
 ggo_renderer::ggo_renderer(rpc_session *render_session)
-: renderer(render_session)
+	: renderer(render_session)
 {
 	empty_outline_glyph = make_empty_outline_glyph();
 	assert(empty_outline_glyph != NULL);

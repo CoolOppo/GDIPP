@@ -8,10 +8,9 @@ painter::~painter()
 {
 }
 
-bool painter::begin(const dc_context *context, FT_Render_Mode render_mode)
+bool painter::begin(const dc_context *context)
 {
 	_context = context;
-	_render_mode = render_mode;
 
 	_text_alignment = GetTextAlign(_context->hdc);
 	assert(_text_alignment != GDI_ERROR);

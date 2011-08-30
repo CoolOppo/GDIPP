@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "PaintDlg.h"
-#include "gdipp_demo/gdipp_demo.h"
+#include "gdipp_demo/global.h"
 
 LRESULT CPaintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/)
 {
@@ -17,7 +17,7 @@ LRESULT CPaintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	HMENU hMenu = (HMENU)::LoadMenu(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_PAINTMENU));
 	SetMenu(hMenu);
 
-	paint_hwnd.push_back(m_hWnd);
+	gdipp::paint_hwnd.push_back(m_hWnd);
 
 	return TRUE;
 }

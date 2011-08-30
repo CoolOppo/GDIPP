@@ -1,6 +1,7 @@
 #pragma once
 
-#include "gdipp_lib/config_cache.h"
+#include "gdipp_config/render_config.h"
+#include "gdipp_rpc/gdipp_rpc.h"
 
 namespace gdipp
 {
@@ -27,7 +28,7 @@ public:
 
 private:
 	// actual data buffer of the OUTLINETEXTMETRICW structure
-	std::vector<BYTE> _metric_buf;
+	//std::vector<BYTE> _metric_buf;
 };
 
 /*struct font_info
@@ -37,6 +38,9 @@ private:
 	FT_StreamRec stream;
 	os2_metrics os2;
 };*/
+
+// high-performance division method to approximate number * numerator / 255
+BYTE division_by_255(short number, short numerator);
 
 // apply alignment on the reference point and use it to calculate the baseline
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent);
@@ -50,11 +54,11 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 // get outline metrics of the DC
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf);
 
+LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run *a_glyph_run, bool is_control_width);
+
 LOGFONTW get_log_font(HDC hdc);
 
-// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
-// otherwise, return false
-bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str);
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 

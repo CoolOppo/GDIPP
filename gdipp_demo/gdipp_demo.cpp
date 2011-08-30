@@ -2,21 +2,10 @@
 //
 
 #include "stdafx.h"
-#include "gdipp_demo.h"
-#include "gdipp_lib/gdipp_lib.h"
 #include "gdipp_demo/resource.h"
 #include "gdipp_demo/MainDlg.h"
 
 CAppModule _Module;
-
-int total_count = 5000;
-int thread_count = 2;
-bool random_text = false;
-std::vector<const std::wstring> paint_fonts;
-
-HMODULE h_gdimm = NULL;
-WCHAR gdimm_path[MAX_PATH];
-std::vector<HWND> paint_hwnd;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {

@@ -4,11 +4,10 @@
 
 #include "stdafx.h"
 #include "MainDlg.h"
-#include "gdipp_lib/gdipp_lib.h"
-#include "gdipp_support/helper.h"
-#include "gdipp_demo/gdipp_demo.h"
 #include "gdipp_demo/AboutDlg.h"
 #include "gdipp_demo/PaintDlg.h"
+#include "gdipp_demo/global.h"
+#include "gdipp_lib/helper.h"
 
 DWORD WINAPI paint_thread(LPVOID context)
 {
@@ -57,11 +56,9 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	UIAddChildWindowContainer(m_hWnd);
 
 	b_ret = load_gdimm();
+	load_demo_config();
 
-	b_ret = load_demo_config();
-	assert(b_ret);
-
-	for (int i = 0; i < thread_count; ++i)
+	for (int i = 0; i < gdipp::demo_conf.threads; ++i)
 		CreateThread(NULL, 0, paint_thread, reinterpret_cast<void *>(i), 0, NULL);
 
 	return TRUE;
@@ -69,8 +66,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 LRESULT CMainDlg::OnClose(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	for (size_t i = 0; i < paint_hwnd.size(); ++i)
-		::EndDialog(paint_hwnd[i], static_cast<int>(wParam));
+	for (size_t i = 0; i < gdipp::paint_hwnd.size(); ++i)
+		::EndDialog(gdipp::paint_hwnd[i], static_cast<int>(wParam));
 
 	CloseDialog(static_cast<int>(wParam));
 	return 0;
@@ -121,43 +118,16 @@ void CMainDlg::CloseDialog(int nVal)
 	::PostQuitMessage(nVal);
 }
 
-bool CMainDlg::load_demo_config()
+void CMainDlg::load_demo_config()
 {
-	BOOL b_ret;
-
-	if (h_gdimm == NULL)
-	{
-		// get config file path
-		wchar_t config_path[MAX_PATH];
-		b_ret = gdipp::get_dir_file_path(NULL, L"demo.conf", config_path);
-		if (!b_ret)
-			return false;
-
-		gdipp::init_config();
-
-		b_ret = gdipp::load_config(config_path);
-		if (!b_ret)
-			return false;
-	}
-
-	gdipp::wcs_convert(gdipp::get_demo_config(L"count"), &total_count);
-	gdipp::wcs_convert(gdipp::get_demo_config(L"threads"), &thread_count);
-	gdipp::wcs_convert(gdipp::get_demo_config(L"random_text"), &random_text);
-
-	paint_fonts = gdipp::get_demo_fonts();
-
-	// if no font is specified, use Tahoma
-	if (paint_fonts.empty())
-		paint_fonts.push_back(L"Tahoma");
-
-	return true;
+	gdipp::demo_conf.load(gdipp::config_file_instance);
 }
 
 void CMainDlg::update_menu_state()
 {
 	BOOL b_ret;
 
-	const bool gdimm_loaded = (h_gdimm != NULL);
+	const bool gdimm_loaded = (gdipp::h_gdimm != NULL);
 	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_LOAD, MF_BYCOMMAND | (gdimm_loaded ? MF_GRAYED : MF_ENABLED));
 	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_UNLOAD, MF_BYCOMMAND | (gdimm_loaded ? MF_ENABLED : MF_GRAYED));
 }
@@ -166,7 +136,7 @@ bool CMainDlg::load_gdimm()
 {
 	BOOL b_ret;
 
-	if (h_gdimm == NULL)
+	if (gdipp::h_gdimm == NULL)
 	{
 #ifdef _M_X64
 		const wchar_t *gdimm_name = L"gdimm_64.dll";
@@ -174,32 +144,32 @@ bool CMainDlg::load_gdimm()
 		const wchar_t *gdimm_name = L"gdimm_32.dll";
 #endif // _M_X64
 
-		h_gdimm = GetModuleHandle(gdimm_name);
-		if (h_gdimm == NULL)
+		gdipp::h_gdimm = GetModuleHandle(gdimm_name);
+		if (gdipp::h_gdimm == NULL)
 		{
-			b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, gdimm_path);
+			b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, gdipp::gdimm_path);
 			if (b_ret)
-				h_gdimm = LoadLibraryW(gdimm_path);
+				gdipp::h_gdimm = LoadLibraryW(gdipp::gdimm_path);
 		}
 	}
 
 	update_menu_state();
 
-	return (h_gdimm != NULL);
+	return (gdipp::h_gdimm != NULL);
 }
 
 bool CMainDlg::unload_gdimm()
 {
 	BOOL b_ret;
 
-	if (h_gdimm != NULL)
+	if (gdipp::h_gdimm != NULL)
 	{
-		b_ret = FreeLibrary(h_gdimm);
+		b_ret = FreeLibrary(gdipp::h_gdimm);
 		if (b_ret)
-			h_gdimm = NULL;
+			gdipp::h_gdimm = NULL;
 	}
 
 	update_menu_state();
 
-	return (h_gdimm == NULL);
+	return (gdipp::h_gdimm == NULL);
 }

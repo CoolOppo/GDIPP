@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 namespace gdipp
 {
 
@@ -17,7 +15,7 @@ public:
 	void stop_painting();
 
 private:
-	int _total_count;
+	int _total_cycles;
 
 	// multi-thread related
 	std::vector<HANDLE> _start_render_events;
@@ -29,7 +27,7 @@ private:
 	HFONT _result_font;
 	wchar_t _result_str[GDIPP_DEMO_MAX_STR_LEN];
 
-	int _painted_count;
+	int _painted_cycles;
 	DWORD _start_time;
 };
 

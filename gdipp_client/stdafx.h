@@ -10,8 +10,10 @@
 #include <windows.h>
 #include <atlbase.h>
 #include <mmsystem.h>
+#include <psapi.h>
 #include <rpc.h>
 #include <usp10.h>
+#include <wincodec.h>
 
 // C standard header files
 #include <cassert>
@@ -23,7 +25,7 @@
 #include <string>
 #include <vector>
 
-// 3rd-party dependency
+// FreeType
 #include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_BBOX_H
@@ -36,8 +38,12 @@
 #include FT_TRUETYPE_TABLES_H
 #include <poppack.h>
 
-#include <easyhook.h>
+// EasyHook
+#include "EasyHook/easyhook.h"
 
-#include <d2d1.h>
-#include <dwrite.h>
-#include <wincodec.h>
+// DirectX
+#include "DirectX/Include/D2D1.h"
+#include "DirectX/Include/DWrite.h"
+
+// MurmurHash
+#include "MurmurHash/MurmurHash3.h"

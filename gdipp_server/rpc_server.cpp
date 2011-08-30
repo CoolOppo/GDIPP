@@ -1,16 +1,16 @@
 #include "stdafx.h"
-#include "rpc_impl.h"
+#include "rpc_server.h"
+#include "gdipp_config/render_config_cache.h"
 #include "gdipp_lib/helper.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 #include "gdipp_server/ggo_renderer.h"
+#include "gdipp_server/global.h"
+#include "gdipp_server/helper.h"
 
 namespace gdipp
 {
 
-config_mgr config_mgr_instance(L"server.conf");
-dc_pool dc_pool_instance;
-font_mgr font_mgr_instance;
-glyph_cache glyph_cache_instance;
+render_config_cache font_render_config_cache_instance(config_file_instance);
 
 uint32_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
 {
@@ -187,7 +187,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 	/* [in] */ handle_t h_gdipp_rpc,
 	/* [size_is][in] */ const byte *logfont_buf,
 	/* [in] */ unsigned long logfont_size,
-	/* [in] */ int render_mode)
+	/* [in] */ unsigned short bits_per_pixel)
 {
 	// register font with given LOGFONT structure
 	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
@@ -200,21 +200,22 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 
 	gdipp::rpc_session *new_session = reinterpret_cast<gdipp::rpc_session *>(MIDL_user_allocate(sizeof(gdipp::rpc_session)));
 
-	new_session->font_id = font_id;
-	new_session->hdc = hdc;
-
 	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(font_id);
 	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(&(*metric_buf)[0]);
 	// generate config trait and retrieve font-specific config
 	const LONG point_size = (logfont->lfHeight > 0 ? logfont->lfHeight : -MulDiv(logfont->lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
 	const char weight_class = gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight));
-	new_session->render_config = gdipp::config_mgr_instance.get_font_render_config(!!weight_class,
+	new_session->render_config = gdipp::font_render_config_cache_instance.get_font_render_config(!!weight_class,
 		!!outline_metrics->otmTextMetrics.tmItalic,
 		point_size,
 		metric_face_name(outline_metrics));
 
-	new_session->render_mode = static_cast<FT_Render_Mode>(render_mode);
-	new_session->render_trait = gdipp::generate_render_trait(logfont, render_mode);
+	if (!gdipp::get_render_mode(new_session->render_config.render_mode, bits_per_pixel, logfont->lfQuality, new_session->render_mode))
+		return NULL;
+
+	new_session->font_id = font_id;
+	new_session->hdc = hdc;
+	new_session->render_trait = gdipp::generate_render_trait(logfont, new_session->render_mode);
 
 	// create session renderer
 	/*switch (new_session->font_config->renderer)
@@ -301,18 +302,10 @@ unsigned long gdipp_rpc_get_glyph_indices(
 	return gdipp::font_mgr_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
 }
 
-boolean gdipp_rpc_get_render_config( 
-    /* [in] */ handle_t h_gdipp_rpc,
-    /* [string][in] */ const wchar_t *name,
-    /* [retval][string][out] */ wchar_t **value)
-{
-	return false;
-}
-
 boolean gdipp_rpc_set_render_config( 
     /* [in] */ handle_t h_gdipp_rpc,
-    /* [string][in] */ const wchar_t *name,
-    /* [string][in] */ const wchar_t *value)
+    /* [size_is][in] */ const wchar_t *config_delta,
+    /* [in] */ unsigned long delta_size)
 {
 	return false;
 }
@@ -320,7 +313,7 @@ boolean gdipp_rpc_set_render_config(
 boolean gdipp_rpc_make_bitmap_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-    /* [string][in] */ wchar_t *str,
+    /* [string][in] */ const wchar_t *str,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index,
     /* [out] */ gdipp_rpc_bitmap_glyph_run **glyph_run_ptr)
@@ -358,6 +351,7 @@ boolean gdipp_rpc_make_bitmap_glyph_run(
 	*glyph_run_ptr = reinterpret_cast<gdipp_rpc_bitmap_glyph_run *>(MIDL_user_allocate(sizeof(gdipp_rpc_bitmap_glyph_run)));
 	gdipp_rpc_bitmap_glyph_run *rpc_glyph_run = *glyph_run_ptr;
 	rpc_glyph_run->count = glyph_run->glyphs.size();
+
 	rpc_glyph_run->glyphs = reinterpret_cast<gdipp_rpc_bitmap_glyph *>(MIDL_user_allocate(sizeof(gdipp_rpc_bitmap_glyph) * rpc_glyph_run->count));
 	rpc_glyph_run->ctrl_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * rpc_glyph_run->count));
 	rpc_glyph_run->black_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * rpc_glyph_run->count));
@@ -380,13 +374,14 @@ boolean gdipp_rpc_make_bitmap_glyph_run(
 	return true;
 }
 
+
 boolean gdipp_rpc_make_outline_glyph_run( 
-	/* [in] */ handle_t h_gdipp_rpc,
-	/* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-	/* [string][in] */ wchar_t *str,
-	/* [in] */ unsigned int count,
-	/* [in] */ boolean is_glyph_index,
-	/* [out] */ gdipp_rpc_outline_glyph_run **glyph_run_ptr)
+    /* [in] */ handle_t h_gdipp_rpc,
+    /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
+    /* [string][in] */ const wchar_t *str,
+    /* [in] */ unsigned int count,
+    /* [in] */ boolean is_glyph_index,
+    /* [out] */ gdipp_rpc_outline_glyph_run **glyph_run_ptr)
 {
 	return false;
 }

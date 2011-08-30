@@ -10,18 +10,19 @@
 #include <windows.h>
 
 // C standard header files
+#include <cassert>
 #include <list>
 #include <map>
 #include <regex>
 #include <sstream>
 
 // FreeType
-#include <ft2build.h>
+#include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_LCD_FILTER_H
 
 // Murmurhash
-#include <MurmurHash/MurmurHash3.h>
+#include "MurmurHash/MurmurHash3.h"
 
 // pugixml
-#include <pugixml/src/pugixml.hpp>
+#include "pugixml/src/pugixml.hpp"

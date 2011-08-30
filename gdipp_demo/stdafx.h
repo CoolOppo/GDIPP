@@ -7,20 +7,15 @@
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
-#include <atlbase.h>
-#include <atlapp.h>
-
-extern CAppModule _Module;
-
-#include <atlwin.h>
-
-#include <atlframe.h>
-#include <atlctrls.h>
-#include <atldlgs.h>
-
 // C RunTime Header Files
 #include <cassert>
-#include <map>
-#include <sstream>
-#include <string>
 #include <vector>
+
+// WTL
+#include <atlbase.h>
+#include <atlapp.h>
+#include <atlcrack.h>
+#include <atlctrls.h>
+#include <atldlgs.h>
+#include <atlframe.h>
+#include <atlwin.h>

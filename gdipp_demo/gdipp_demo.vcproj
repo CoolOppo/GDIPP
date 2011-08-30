@@ -397,6 +397,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\global.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MainDlg.cpp"
 				>
 			</File>
@@ -454,7 +458,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdipp_demo.h"
+				RelativePath=".\global.h"
 				>
 			</File>
 			<File

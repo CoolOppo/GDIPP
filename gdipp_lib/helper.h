@@ -28,6 +28,6 @@ GDIPP_API char get_gdi_weight_class(unsigned short weight);
 
 // generate hash of traits for the specified font configuration
 // returned integer is used as key of configuration map
-GDIPP_API uint32_t get_render_config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name);
+GDIPP_API unsigned long get_render_config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name);
 
 }

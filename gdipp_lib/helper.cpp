@@ -62,7 +62,7 @@ char get_gdi_weight_class(unsigned short weight)
 	return max_weight_class;
 }
 
-uint32_t get_render_config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
+unsigned long get_render_config_trait(char weight_class, bool italic, LONG height, const wchar_t *font_name)
 {
 	const size_t font_name_len = wcslen(font_name) + 1;
 	const size_t trait_size = sizeof(weight_class) + sizeof(italic) + sizeof(height) + font_name_len * sizeof(wchar_t);
@@ -73,7 +73,7 @@ uint32_t get_render_config_trait(char weight_class, bool italic, LONG height, co
 	*reinterpret_cast<LONG *>(trait_data + sizeof(char) + sizeof(bool)) = height;
 	wcscpy_s(reinterpret_cast<wchar_t *>(trait_data + sizeof(char) + sizeof(bool) + sizeof(LONG)), font_name_len, font_name);
 
-	uint32_t trait_id;
+	unsigned long trait_id;
 	MurmurHash3_x86_32(trait_data, trait_size, 0, &trait_id);
 	delete[] trait_data;
 

@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "wic_painter.h"
 #include "gdipp_client/helper.h"
-#include "gdipp_client/gdipp_client.h"
 
 namespace gdipp
 {

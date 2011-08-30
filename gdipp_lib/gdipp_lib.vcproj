@@ -432,10 +432,6 @@
 				RelativePath=".\stdafx.h"
 				>
 			</File>
-			<File
-				RelativePath=".\type_enum.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

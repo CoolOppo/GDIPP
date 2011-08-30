@@ -1,16 +1,15 @@
 #include "stdafx.h"
 #include "helper.h"
-#include "gdipp_client/gdipp_client.h"
-#include "gdipp_support/helper.h"
+#include "gdipp_lib/helper.h"
 
 namespace gdipp
 {
 
 bool dc_context::init(HDC hdc)
 {
-	outline_metrics = get_dc_metrics(hdc, _metric_buf);
-	if (outline_metrics == NULL)
-		return false;
+	//outline_metrics = get_dc_metrics(hdc, _metric_buf);
+	//if (outline_metrics == NULL)
+	//	return false;
 
 	if (!get_dc_bmp_header(hdc, bmp_header))
 		return false;
@@ -21,6 +20,15 @@ bool dc_context::init(HDC hdc)
 	log_font.lfWeight = get_gdi_weight_class(static_cast<unsigned short>(log_font.lfWeight));
 
 	return true;
+}
+
+BYTE division_by_255(short number, short numerator)
+{
+	// there are many approaches to approximate number * numerator / 255
+	// it is a trade-off between efficiency and accuracy
+
+	const int t = number * numerator;
+	return (((t + 255) >> 8) + t) >> 8;
 }
 
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)
@@ -107,6 +115,32 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
+LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run *a_glyph_run, bool is_control_width)
+{
+	assert(a_glyph_run != NULL);
+
+	const RECT *first_box_ptr;
+	const RECT *last_box_ptr;
+
+	if (is_control_width)
+	{
+		// use control box metrics
+		first_box_ptr = a_glyph_run->ctrl_boxes;
+		last_box_ptr = a_glyph_run->ctrl_boxes + (a_glyph_run->count - 1);
+	}
+	else
+	{
+		// use black box metrics
+		first_box_ptr = a_glyph_run->black_boxes;
+		last_box_ptr = a_glyph_run->black_boxes + (a_glyph_run->count - 1);
+	}
+
+	if (a_glyph_run->ctrl_boxes[a_glyph_run->count - 1].left >= a_glyph_run->ctrl_boxes[0].left)
+		return last_box_ptr->right - first_box_ptr->left;
+	else
+		return first_box_ptr->right - last_box_ptr->left;
+}
+
 LOGFONTW get_log_font(HDC hdc)
 {
 	HFONT h_font = reinterpret_cast<HFONT>(GetCurrentObject(hdc, OBJ_FONT));
@@ -118,53 +152,18 @@ LOGFONTW get_log_font(HDC hdc)
 	return font_attr;
 }
 
-bool get_render_mode(const font_config_cache *font_config, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str)
 {
-	// return true if successfully find an appropriate render mode
-	// otherwise return false
-
-	if (font_config->render_mode.mono == 2)
-	{
-		render_mode = FT_RENDER_MODE_MONO;
-		return true;
-	}
-
-	if (font_config->render_mode.gray == 2)
-	{
-		render_mode = FT_RENDER_MODE_NORMAL;
-		return true;
-	}
-
-	if (font_config->render_mode.subpixel == 2)
-	{
-		render_mode = FT_RENDER_MODE_LCD;
-		return true;
-	}
-
-	if (!font_config->render_mode.aliased_text && font_quality == NONANTIALIASED_QUALITY)
+	int wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, NULL, 0);
+	if (wc_str_len == 0)
 		return false;
 
-	if (font_config->render_mode.mono == 1 && dc_bmp_bpp == 1)
-	{
-		render_mode = FT_RENDER_MODE_MONO;
-		return true;
-	}
+	wide_char_str.resize(wc_str_len);
+	wc_str_len = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, multi_byte_str, count, &wide_char_str[0], wc_str_len);
+	if (wc_str_len == 0)
+		return false;
 
-	if (font_config->render_mode.gray == 1 && dc_bmp_bpp == 8)
-	{
-		render_mode = FT_RENDER_MODE_NORMAL;
-		return true;
-	}
-
-	// we do not support 16 bpp currently
-
-	if (font_config->render_mode.subpixel == 1 && dc_bmp_bpp >= 24)
-	{
-		render_mode = FT_RENDER_MODE_LCD;
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color)

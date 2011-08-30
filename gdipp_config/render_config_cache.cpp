@@ -1,31 +1,29 @@
 #include "stdafx.h"
-#include "font_render_config_cache.h"
+#include "render_config_cache.h"
 #include "gdipp_lib/helper.h"
 #include "gdipp_lib/lock.h"
 
 namespace gdipp
 {
 
-font_render_config_cache::font_render_config_cache(const void *root)
+render_config_cache::render_config_cache(const config_file &file)
 {
-	if (root == NULL)
+	if (file.empty())
 		return;
-
-	const pugi::xpath_node_set *root_node = reinterpret_cast<const pugi::xpath_node_set *>(root);
-	if (root_node->empty())
-		return;
-
-	for (pugi::xpath_node_set::const_iterator node_iter = root_node->begin(); node_iter != root_node->end(); ++node_iter)
+	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
+	
+	const pugi::xpath_node_set render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/font");
+	for (pugi::xpath_node_set::const_iterator node_iter = render_font_nodes.begin(); node_iter != render_font_nodes.end(); ++node_iter)
 	{
 		const pugi::xml_node curr_node = node_iter->node();
 		font_config_criteria curr_criteria(&curr_node);
 		render_config curr_config;
-		curr_config.load(&curr_node);
+		curr_config.parse(&curr_node);
 		_configs.push_front(std::pair<font_config_criteria, render_config>(curr_criteria, curr_config));			
 	}
 }
 
-render_config font_render_config_cache::get_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
+render_config render_config_cache::get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
 {
 	const render_config *rc;
 
@@ -33,11 +31,11 @@ render_config font_render_config_cache::get_render_config(bool bold, bool italic
 	std::map<uint32_t, const render_config *>::const_iterator config_iter = _cache.find(trait);
 	if (config_iter == _cache.end())
 	{
-		lock l("font_render_config_cache");
+		lock l("render_config_cache");
 		config_iter = _cache.find(trait);
 		if (config_iter == _cache.end())
 		{
-			rc = find_render_config(bold, italic, height, font_name);
+			rc = find_font_render_config(bold, italic, height, font_name);
 			_cache.insert(std::pair<uint32_t, const render_config *>(trait, rc));
 		}
 		else
@@ -56,11 +54,11 @@ render_config font_render_config_cache::get_render_config(bool bold, bool italic
 		return *rc;
 }
 
-const render_config *font_render_config_cache::find_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name) const
+const render_config *render_config_cache::find_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name) const
 {
 	for (std::list<std::pair<font_config_criteria, render_config>>::const_iterator config_iter = _configs.begin();
 		config_iter != _configs.end();
-		config_iter++)
+		++config_iter)
 	{
 		if (config_iter->first.is_satisfied(bold, italic, height, font_name))
 			return &config_iter->second;

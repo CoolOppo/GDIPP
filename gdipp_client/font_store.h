@@ -1,13 +1,12 @@
 #pragma once
 
-#include "font_man.h"
-#include "helper_def.h"
+#include "font_store.h"
 
-class gdimm_font_store
+class font_store
 {
 public:
-	gdimm_font_store();
-	~gdimm_font_store();
+	font_store();
+	~font_store();
 
 	font_info *lookup_font(long font_id);
 	long register_font(HDC font_holder, const wchar_t *font_face);

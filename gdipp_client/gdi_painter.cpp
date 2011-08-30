@@ -1,15 +1,15 @@
 #include "stdafx.h"
 #include "gdi_painter.h"
-#include "gdipp_client/gdipp_client.h"
+#include "gdipp_client/global.h"
 
 namespace gdipp
 {
 
 DWORD tls_index = 0;
 
-bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_mode)
+bool gdi_painter::begin(const dc_context *context)
 {
-	if (!painter::begin(context, render_mode))
+	if (!painter::begin(context))
 		return false;
 
 	// ignore rotated DC
@@ -32,7 +32,7 @@ bool gdimm_gdi_painter::begin(const dc_context *context, FT_Render_Mode render_m
 	return true;
 }
 
-bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
+bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx)
 {
 	BOOL b_ret, paint_success = FALSE;
 
@@ -56,20 +56,20 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 			_tls->last_hdc = NULL;
 	}
 
-	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(_context->setting_cache->gamma.red),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.green),
-		gamma_instance.get_ramp(_context->setting_cache->gamma.blue)};
+	const BYTE *gamma_ramps[3] = {gamma_instance.get_ramp(client_config_instance.gamma.red),
+		gamma_instance.get_ramp(client_config_instance.gamma.green),
+		gamma_instance.get_ramp(client_config_instance.gamma.blue)};
 
 	_text_rgb_gamma.rgbRed = gamma_ramps[0][GetRValue(_text_color)];
 	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
 	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
-	const glyph_run *a_glyph_run = reinterpret_cast<const glyph_run *>(text);
+	const gdipp_rpc_bitmap_glyph_run *a_glyph_run = reinterpret_cast<const gdipp_rpc_bitmap_glyph_run *>(text);
 	if (lpDx == NULL)
 		paint_success = paint_glyph_run(options, lprect, a_glyph_run);
 	else
 	{
-		glyph_run adjusted_glyph_run = *a_glyph_run;
+		gdipp_rpc_bitmap_glyph_run adjusted_glyph_run = *a_glyph_run;
 		adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
 		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run);
 	}
@@ -86,7 +86,7 @@ bool gdimm_gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, co
 	return !!paint_success;
 }
 
-void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, glyph_run *a_glyph_run)
+void gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, gdipp_rpc_bitmap_glyph_run *a_glyph_run)
 {
 	/*
 	the DX array stores the distance from the left border of the current glyph to the next glyph
@@ -136,7 +136,7 @@ void gdimm_gdi_painter::adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lp
 	a_glyph_run->black_boxes.push_back(black_right);
 }
 
-void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
+void gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 	const RECT &src_rect,
 	BYTE *dest_bits,
 	const RECT &dest_rect,
@@ -177,7 +177,7 @@ void gdimm_gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-void gdimm_gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
+void gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
 	const RECT &src_rect,
 	BYTE *dest_bits,
 	const RECT &dest_rect,
@@ -221,7 +221,7 @@ void gdimm_gdi_painter::set_gray_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
+void gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	const RECT &src_rect,
 	BYTE *dest_bits,
 	const RECT &dest_rect,
@@ -302,7 +302,7 @@ void gdimm_gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 	}
 }
 
-BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
+BOOL gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	BOOL b_ret, paint_success;
 
@@ -402,7 +402,7 @@ BOOL gdimm_gdi_painter::paint_mono(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
+BOOL gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	// the data source is FreeType bitmap with 256 gray levels
 	// create GDI alpha bitmap and use AlphaBlend() to paint both solid and shadow text
@@ -495,7 +495,7 @@ BOOL gdimm_gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const glyph
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
+BOOL gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const
 {
 	// the data source is FreeType bitmap with 256 gray levels in R, G, B channels
 	// create GDI bitmap and optionally copy from DC, then use BitBlt() to paint both solid and shadow text
@@ -642,7 +642,7 @@ BOOL gdimm_gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const glyph_
 	return paint_success;
 }
 
-BOOL gdimm_gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const glyph_run *a_glyph_run)
+BOOL gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run)
 {
 	/*
 	both ETO_OPAQUE and OPAQUE background mode need background filled

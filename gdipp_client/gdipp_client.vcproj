@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -206,7 +206,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -289,7 +289,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="$(SolutionDir);&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)EasyHook&quot;;&quot;$(SolutionDir)DirectX\Include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -369,10 +369,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_store.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\gamma.cpp"
 				>
 			</File>
@@ -382,6 +378,10 @@
 			</File>
 			<File
 				RelativePath=".\gdipp_client.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\global.cpp"
 				>
 			</File>
 			<File
@@ -440,10 +440,6 @@
 				RelativePath=".\wic_dib.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\wic_painter.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -479,11 +475,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdipp_client.h"
+				RelativePath="..\gdipp_rpc\gdipp_rpc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\gdipp_rpc\gdipp_rpc.h"
+				RelativePath=".\global.h"
 				>
 			</File>
 			<File
@@ -508,10 +504,6 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\type_enum.h"
 				>
 			</File>
 			<File

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "com_override.h"
-#include "gdipp_client.h"
-#include "gdipp_support/lock.h"
+#include "gdipp_client/global.h"
+#include "gdipp_lib/lock.h"
 
 namespace gdipp
 {

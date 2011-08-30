@@ -3,12 +3,12 @@
 namespace gdipp
 {
 
-class gdimm_mem_man
+class mem_man
 {
 	// helper class to free static memory pointers
 
 public:
-	~gdimm_mem_man();
+	~mem_man();
 
 	void register_com_ptr(IUnknown *com_ptr);
 	void register_mem_ptr(void *mem_ptr);

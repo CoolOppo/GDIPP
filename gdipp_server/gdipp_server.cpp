@@ -1,7 +1,9 @@
 #include "stdafx.h"
+#include "gdipp_config/hook_config.h"
 #include "gdipp_lib/helper.h"
 #include "gdipp_server/freetype.h"
-#include "gdipp_server/rpc_impl.h"
+#include "gdipp_server/global.h"
+#include "gdipp_server/rpc_server.h"
 
 namespace gdipp
 {
@@ -34,7 +36,8 @@ BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_ho
 
 BOOL start_hook(ULONG session_id)
 {
-	hook_config hook_conf = config_mgr_instance.get_hook_config();
+	hook_config hook_conf;
+	hook_conf.load(config_file_instance);
 
 	// make the event handle inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};

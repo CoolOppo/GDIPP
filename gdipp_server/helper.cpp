@@ -191,6 +191,55 @@ LOGFONTW get_log_font(HDC hdc)
 	return font_attr;
 }
 
+bool get_render_mode(const render_config::render_mode_config &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+{
+	// return true if successfully find an appropriate render mode
+	// otherwise return false
+
+	if (render_mode_conf.mono == 2)
+	{
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	if (render_mode_conf.gray == 2)
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	if (render_mode_conf.subpixel == 2)
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	if (!render_mode_conf.aliased_text && font_quality == NONANTIALIASED_QUALITY)
+		return false;
+
+	if (render_mode_conf.mono == 1 && dc_bmp_bpp == 1)
+	{
+		render_mode = FT_RENDER_MODE_MONO;
+		return true;
+	}
+
+	if (render_mode_conf.gray == 1 && dc_bmp_bpp == 8)
+	{
+		render_mode = FT_RENDER_MODE_NORMAL;
+		return true;
+	}
+
+	// we do not support 16 bpp currently
+
+	if (render_mode_conf.subpixel == 1 && dc_bmp_bpp >= 24)
+	{
+		render_mode = FT_RENDER_MODE_LCD;
+		return true;
+	}
+
+	return false;
+}
+
 bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2)
 {
 	return memcmp(&lf1, &lf2, sizeof(LOGFONTW)) < 0;

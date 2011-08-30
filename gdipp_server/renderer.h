@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rpc_impl.h"
+#include "rpc_server.h"
 #include "glyph_run.h"
 #include "gdipp_lib/rpc.h"
 

@@ -3,7 +3,6 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include <atlcrack.h>
 
 #include "gdipp_demo/resource.h"
 #include "gdipp_demo/demo_painter.h"

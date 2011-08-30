@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "freetype.h"
-#include "gdipp_server/rpc_impl.h"
+#include "gdipp_config/freetype_config.h"
+#include "gdipp_server/global.h"
 
 namespace gdipp
 {
@@ -16,7 +17,9 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	freetype_config ft_conf = config_mgr_instance.get_freetype_config();
+	freetype_config ft_conf;
+	ft_conf.load(config_file_instance);
+
 	ft_error = FT_Library_SetLcdFilter(ft_lib, ft_conf.lcd_filter);
 	assert(ft_error == 0);
 

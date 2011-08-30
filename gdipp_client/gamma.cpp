@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "gamma.h"
-#include <cmath>
-#include "gdipp_support/lock.h"
+#include "gdipp_lib/lock.h"
 
 namespace gdipp
 {

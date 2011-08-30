@@ -5,26 +5,12 @@
 namespace gdipp
 {
 
-render_config::gamma_config::gamma_config()
-	: red(1.0),
-	green(1.0),
-	blue(1.0)
-{
-}
-
 render_config::render_mode_config::render_mode_config()
 	: mono(0),
 	gray(1),
 	subpixel(1),
 	pixel_geometry(PIXEL_GEOMETRY_RGB),
 	aliased_text(0)
-{
-}
-
-render_config::shadow_config::shadow_config()
-	: offset_x(0),
-	offset_y(0),
-	alpha(0)
 {
 }
 
@@ -38,7 +24,12 @@ render_config::render_config()
 {
 }
 
-void render_config::load(const void *root)
+void render_config::load(const config_file &file)
+{
+	assert(false);
+}
+
+void render_config::parse(const void *root)
 {
 	if (root == NULL)
 		return;
@@ -60,18 +51,6 @@ void render_config::load(const void *root)
 	node = root_node->select_single_node(L"embolden/text()").node();
 	if (!node.empty())
 		wcs_convert(node.value(), &embolden);
-
-	node = root_node->select_single_node(L"gamma/red/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), &gamma.red);
-
-	node = root_node->select_single_node(L"gamma/green/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), &gamma.green);
-
-	node = root_node->select_single_node(L"gamma/blue/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), &gamma.blue);
 
 	node = root_node->select_single_node(L"hinting/text()").node();
 	if (!node.empty())
@@ -104,18 +83,6 @@ void render_config::load(const void *root)
 	node = root_node->select_single_node(L"renderer/text()").node();
 	if (!node.empty())
 		wcs_convert(node.value(), reinterpret_cast<short *>(&renderer));
-
-	node = root_node->select_single_node(L"shadow/offset_x/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), &shadow.offset_x);
-
-	node = root_node->select_single_node(L"shadow/offset_y/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), &shadow.offset_y);
-
-	node = root_node->select_single_node(L"shadow/alpha/text()").node();
-	if (!node.empty())
-		wcs_convert(node.value(), reinterpret_cast<short *>(&shadow.alpha));
 }
 
 }

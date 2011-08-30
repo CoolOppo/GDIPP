@@ -11,7 +11,20 @@ hook_config::hook_config()
 {
 }
 
-void hook_config::load(const void *root)
+void hook_config::load(const config_file &file)
+{
+	if (file.empty())
+		return;
+
+	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
+	const pugi::xml_node root = config_xml_doc->select_single_node(L"/gdipp/hook").node();
+	if (root.empty())
+		return;
+
+	parse(&root);
+}
+
+void hook_config::parse(const void *root)
 {
 	if (root == NULL)
 		return;
@@ -29,14 +42,6 @@ void hook_config::load(const void *root)
 	node = root_node->select_single_node(L"include/proc_64_bit/text()").node();
 	if (!node.empty())
 		wcs_convert(node.value(), &proc_64_bit);
-	
-	const pugi::xpath_node_set exclude_nodes = root_node->select_nodes(L"exclude/process/text()");
-	for (pugi::xpath_node_set::const_iterator node_iter = exclude_nodes.begin(); node_iter != exclude_nodes.end(); ++node_iter)
-	{
-		const pugi::xml_node curr_node = node_iter->node();
-		if (!curr_node.empty())
-			excludes.push_back(curr_node.value());
-	}
 }
 
 }

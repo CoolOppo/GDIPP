@@ -459,6 +459,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\global.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\glyph_cache.cpp"
 				>
 			</File>
@@ -471,7 +475,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\rpc_impl.cpp"
+				RelativePath=".\rpc_server.cpp"
 				>
 			</File>
 			<File
@@ -557,6 +561,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\global.h"
+				>
+			</File>
+			<File
 				RelativePath=".\glyph_cache.h"
 				>
 			</File>
@@ -581,7 +589,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\rpc_impl.h"
+				RelativePath=".\rpc_server.h"
 				>
 			</File>
 			<File

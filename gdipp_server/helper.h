@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gdipp_config/render_config.h"
+
 namespace gdipp
 {
 
@@ -24,7 +26,7 @@ DWORD create_tls_index();
 BOOL free_tls_index(DWORD tls_index);
 
 // high-performance division method to approximate number * numerator / 255
-BYTE division_by_255(short number, short numerator);
+//BYTE division_by_255(short number, short numerator);
 
 // apply alignment on the reference point and use it to calculate the baseline
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent);
@@ -44,11 +46,15 @@ int get_glyph_bmp_width(const FT_Bitmap &bitmap);
 
 LOGFONTW get_log_font(HDC hdc);
 
+// return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
+// otherwise, return false
+bool get_render_mode(const render_config::render_mode_config &render_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+
 bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
 
 //const FT_Glyph make_empty_outline_glyph();
 
-bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str);
+//bool mb_to_wc(const char *multi_byte_str, int count, std::wstring &wide_char_str);
 
 BOOL paint_background(HDC hdc, const RECT *bg_rect, COLORREF bg_color);
 

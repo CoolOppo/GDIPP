@@ -15,7 +15,6 @@
 // C standard header files
 #include <cassert>
 #include <ctime>
-#include <list>
 #include <map>
 #include <vector>
 

@@ -343,7 +343,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\config_mgr.cpp"
+				RelativePath=".\config_file.cpp"
 				>
 			</File>
 			<File
@@ -351,11 +351,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_config_criteria.cpp"
+				RelativePath=".\exclude_config.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\font_render_config_cache.cpp"
+				RelativePath=".\font_config_criteria.cpp"
 				>
 			</File>
 			<File
@@ -367,7 +367,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\proc_config_criteria.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\render_config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_cache.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_delta.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_delta_cache.cpp"
 				>
 			</File>
 			<File
@@ -421,7 +437,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\config_mgr.h"
+				RelativePath=".\config_file.h"
 				>
 			</File>
 			<File
@@ -429,11 +445,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\font_config_criteria.h"
+				RelativePath=".\exclude_config.h"
 				>
 			</File>
 			<File
-				RelativePath=".\font_render_config_cache.h"
+				RelativePath=".\font_config_criteria.h"
 				>
 			</File>
 			<File
@@ -445,7 +461,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\proc_config_criteria.h"
+				>
+			</File>
+			<File
 				RelativePath=".\render_config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_cache.h"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_delta.h"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_delta_cache.h"
 				>
 			</File>
 			<File

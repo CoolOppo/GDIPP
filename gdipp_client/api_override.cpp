@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "api_override.h"
-#include "gdipp_client/gdipp_client.h"
+#include "gdipp_client/gdi_painter.h"
+#include "gdipp_client/global.h"
 #include "gdipp_client/helper.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
@@ -172,17 +173,39 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (!context.init(hdc))
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
-	// get the render mode of the current DC
-	FT_Render_Mode render_mode;
-	if (!get_render_mode(context.setting_cache, context.bmp_header.biBitCount, context.log_font.lfQuality, render_mode))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
 	RpcTryExcept
 	{
-		GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, &context.log_font, sizeof(context.log_font), render_mode);
+		GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, reinterpret_cast<const byte *>(&context.log_font), sizeof(context.log_font), context.bmp_header.biBitCount);
 		gdipp_rpc_bitmap_glyph_run *gr = NULL;
 		gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &gr);
 		gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
+
+		// create painter and paint the glyph run
+
+		painter *painter;
+		/*switch (context.setting_cache->renderer)
+		{
+		case RENDERER_WIC:
+			painter = new gdimm_wic_painter;
+			break;
+		default:
+			painter = new gdi_painter;
+			break;
+		}*/
+		painter = new gdi_painter;
+
+		b_ret = painter->begin(&context);
+		if (b_ret)
+		{
+			b_ret = painter->paint(x, y, options, lprect, lpString, c, lpDx);
+			painter->end();
+		}
+		delete painter;
+
+		if (!b_ret)
+			return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+		return TRUE;
 	}
 	RpcExcept (true)
 	{
@@ -190,37 +213,6 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 	}
 	RpcEndExcept
-
-	// create painter and paint the glyph run
-
-	painter *painter;
-	/*switch (context.setting_cache->renderer)
-	{
-	case RENDERER_WIC:
-		painter = new gdimm_wic_painter;
-		break;
-	default:
-		painter = new gdimm_gdi_painter;
-		break;
-	}*/
-	painter = new gdimm_gdi_painter;
-
-	b_ret = painter->begin(&context, render_mode);
-	if (b_ret)
-	{
-		if (cache_level >= GLYPH_RUN)
-			b_ret = painter->paint(x, y, options, lprect, &a_glyph_run, c, ((cache_level >= SINGLE_GLYPH) ? lpDx : NULL));
-		else
-			b_ret = painter->paint(x, y, options, lprect, lpString, c, lpDx);
-
-		painter->end();
-	}
-	delete painter;
-
-	if (!b_ret)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-	return TRUE;
 }
 
 int WINAPI DrawTextExA_hook(HDC hdc, LPSTR lpchText, int cchText, LPRECT lprc, UINT format, LPDRAWTEXTPARAMS lpdtp)
@@ -243,7 +235,7 @@ int WINAPI DrawTextExW_hook(HDC hdc, LPWSTR lpchText, int cchText, LPRECT lprc, 
 
 bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool is_glyph_index, int nMaxExtent, LPINT lpnFit, LPINT lpnDx)
 {
-	bool b_ret;
+	/*bool b_ret;
 
 	if (lpString == NULL || lpSize == NULL || count == 0)
 		return false;
@@ -296,7 +288,7 @@ bool get_text_extent(HDC hdc, LPCWSTR lpString, int count, LPSIZE lpSize, bool i
 				lpnDx[curr_index] = box_iter->right - a_glyph_run.ctrl_boxes.front().left;
 		}
 	}
-
+*/
 	return true;
 }
 
@@ -358,7 +350,7 @@ BOOL WINAPI GetTextExtentExPointI_hook(HDC hdc, LPWORD lpwszString, int cwchStri
 
 void adjust_ggo_metrics(const dc_context *context, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, CONST MAT2 *lpmat2)
 {
-	bool b_ret;
+	/*bool b_ret;
 
 	const MAT2 identity_mat = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
 	if (memcmp(lpmat2, &identity_mat, sizeof(MAT2)) != 0)
@@ -388,12 +380,12 @@ void adjust_ggo_metrics(const dc_context *context, UINT uChar, UINT fuFormat, LP
 	lpgm->gmptGlyphOrigin.x = int_from_26dot6(glyph_bbox.xMin);
 	lpgm->gmptGlyphOrigin.y = int_from_26dot6(glyph_bbox.yMax);
 	lpgm->gmCellIncX = static_cast<short>(int_from_16dot16(target_glyph->root.advance.x));
-	lpgm->gmCellIncY = static_cast<short>(int_from_16dot16(target_glyph->root.advance.y));
+	lpgm->gmCellIncY = static_cast<short>(int_from_16dot16(target_glyph->root.advance.y));*/
 }
 
 DWORD WINAPI GetGlyphOutlineA_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
-	const DWORD ggo_ret = GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	/*const DWORD ggo_ret = GetGlyphOutlineA(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 	if (ggo_ret == GDI_ERROR)
 		return ggo_ret;
 
@@ -415,12 +407,13 @@ DWORD WINAPI GetGlyphOutlineA_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHME
 
 	adjust_ggo_metrics(&context, uChar, fuFormat, lpgm, lpmat2);
 
-	return ggo_ret;
+	return ggo_ret;*/
+	return 0;
 }
 
 DWORD WINAPI GetGlyphOutlineW_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, DWORD cjBuffer, LPVOID pvBuffer, CONST MAT2 *lpmat2)
 {
-	const DWORD ggo_ret = GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
+	/*const DWORD ggo_ret = GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cjBuffer, pvBuffer, lpmat2);
 	if (ggo_ret == GDI_ERROR)
 		return ggo_ret;
 
@@ -451,7 +444,8 @@ DWORD WINAPI GetGlyphOutlineW_hook(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHME
 
 	adjust_ggo_metrics(&context, uChar, fuFormat, lpgm, lpmat2);
 
-	return ggo_ret;
+	return ggo_ret;*/
+	return 0;
 }
 
 BOOL WINAPI AbortPath_hook(HDC hdc)

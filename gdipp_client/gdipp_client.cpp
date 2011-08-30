@@ -1,17 +1,12 @@
 #include "stdafx.h"
-#include "gdipp_client.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_client/global.h"
+#include "gdipp_config/exclude_config.h"
+#include "gdipp_lib/helper.h"
 
 namespace gdipp
 {
-
-HMODULE h_self = NULL;
-bool os_support_directwrite;
-RPC_BINDING_HANDLE h_gdipp_rpc;
-
-gamma gamma_instance;
-hook hook_instance;
-gdimm_mem_man mem_man_instance;
+	
+exclude_config exclude_config_instance;
 
 bool init_rpc_client()
 {
@@ -55,18 +50,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		{
 			gdipp::h_self = hModule;
 
-			// get config file path
-			wchar_t config_path[MAX_PATH];
-			if (!gdipp::get_dir_file_path(hModule, L"client.conf", config_path))
-				return FALSE;
+			wchar_t this_proc_name[MAX_PATH];
+			DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, this_proc_name, MAX_PATH);
+			assert(dw_ret != 0);
 
-			gdipp::init_config();
+			gdipp::exclude_config_instance.load(gdipp::config_file_instance);
 
-			// return false if config file does not exist
-			if (!gdipp::load_config(config_path))
-				return FALSE;
-
-			if (gdipp::is_process_excluded(NULL))
+			if (gdipp::exclude_config_instance.is_process_excluded(this_proc_name))
 				return FALSE;
 
 			OSVERSIONINFO ver_info = {sizeof(OSVERSIONINFO)};
@@ -74,6 +64,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (!b_ret)
 				return FALSE;
 			gdipp::os_support_directwrite = (ver_info.dwMajorVersion >= 6);
+
+			gdipp::client_config_instance.load(gdipp::config_file_instance);
 
 			gdipp::init_rpc_client();
 

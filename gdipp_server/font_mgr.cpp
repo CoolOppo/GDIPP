@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "font_mgr.h"
-#include "gdipp_server/rpc_impl.h"
+#include "gdipp_server/global.h"
 
 namespace gdipp
 {

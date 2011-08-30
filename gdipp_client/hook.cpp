@@ -2,8 +2,8 @@
 #include "hook.h"
 #include "gdipp_client/api_override.h"
 #include "gdipp_client/com_override.h"
-#include "gdipp_client/gdipp_client.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_client/global.h"
+#include "gdipp_lib/helper.h"
 
 namespace gdipp
 {

@@ -9,11 +9,13 @@ class GDIPP_API hook_config : public config
 {
 public:
 	hook_config();
-	void load(const void *root);
+	void load(const config_file &file);
 
 	bool proc_32_bit;
 	bool proc_64_bit;
-	std::vector<std::wstring> excludes;
+
+private:
+	void parse(const void *root);
 };
 
 }
