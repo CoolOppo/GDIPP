@@ -44,7 +44,6 @@ public:
 	void CloseDialog(int nVal);
 
 private:
-	void load_demo_config();
 	void update_menu_state();
 	bool load_gdimm();
 	bool unload_gdimm();

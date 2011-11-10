@@ -3,7 +3,7 @@
 namespace gdipp
 {
 
-template <typename T>
+template<typename T>
 class lru_list
 {
 public:

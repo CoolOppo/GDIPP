@@ -70,7 +70,7 @@ bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, const vo
 	else
 	{
 		gdipp_rpc_bitmap_glyph_run adjusted_glyph_run = *a_glyph_run;
-		adjust_glyph_bbox(!!(options & ETO_PDY), c, lpDx, &adjusted_glyph_run);
+		adjust_glyph_bbox(!!(options & ETO_PDY), lpDx, &adjusted_glyph_run);
 		paint_success = paint_glyph_run(options, lprect, &adjusted_glyph_run);
 	}
 
@@ -254,7 +254,7 @@ void gdi_painter::set_lcd_text_bits(const FT_BitmapGlyph glyph,
 			// alpha components of the source bitmap
 			// apply pixel geometry
 			RGBQUAD src_alpha = {};
-			if (_context->setting_cache->render_mode.pixel_geometry == PIXEL_GEOMETRY_BGR)
+			if (client_config_instance.subpixel_layout == client_config::SUBPIXEL_LAYOUT_BGR)
 			{
 				src_alpha.rgbRed = glyph->bitmap.buffer[src_px_ptr+2];
 				src_alpha.rgbGreen = glyph->bitmap.buffer[src_px_ptr+1];
@@ -461,12 +461,12 @@ BOOL gdi_painter::paint_gray(UINT options, CONST RECT *lprect, const gdipp_rpc_b
 	BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
 
 	// AlphaBlend converts the source bitmap pixel format to match destination bitmap pixel format
-	if (_context->setting_cache->shadow.alpha != 0)
+	if (client_config_instance.shadow.alpha != 0)
 	{
-		bf.SourceConstantAlpha = _context->setting_cache->shadow.alpha;
+		bf.SourceConstantAlpha = client_config_instance.shadow.alpha;
 		b_ret = AlphaBlend(_context->hdc,
-			grm.visible_rect.left + _context->setting_cache->shadow.offset_x,
-			grm.visible_rect.top + _context->setting_cache->shadow.offset_y,
+			grm.visible_rect.left + client_config_instance.shadow.offset_x,
+			grm.visible_rect.top + client_config_instance.shadow.offset_y,
 			bbox_visible_size.cx,
 			bbox_visible_size.cy,
 			_tls->hdc_canvas,
@@ -589,12 +589,12 @@ BOOL gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const gdipp_rpc_bi
 			RECT solid_rect_in_bbox;
 			if (IntersectRect(&solid_rect_in_bbox, &solid_glyph_rect, &grm.visible_rect))
 			{
-				if (_context->setting_cache->shadow.alpha > 0)
+				if (client_config_instance.shadow.alpha > 0)
 				{
-					const RECT shadow_glyph_rect = {solid_glyph_rect.left + _context->setting_cache->shadow.offset_x,
-						solid_glyph_rect.top + _context->setting_cache->shadow.offset_y,
-						solid_glyph_rect.right + _context->setting_cache->shadow.offset_x,
-						solid_glyph_rect.bottom + _context->setting_cache->shadow.offset_y};
+					const RECT shadow_glyph_rect = {solid_glyph_rect.left + client_config_instance.shadow.offset_x,
+						solid_glyph_rect.top + client_config_instance.shadow.offset_y,
+						solid_glyph_rect.right + client_config_instance.shadow.offset_x,
+						solid_glyph_rect.bottom + client_config_instance.shadow.offset_y};
 
 					RECT shadow_rect_in_bbox;
 					if (IntersectRect(&shadow_rect_in_bbox, &shadow_glyph_rect, &grm.visible_rect))
@@ -608,7 +608,7 @@ BOOL gdi_painter::paint_lcd(UINT options, CONST RECT *lprect, const gdipp_rpc_bi
 							shadow_rect_in_bbox.right - grm.visible_rect.left,
 							shadow_rect_in_bbox.bottom - grm.visible_rect.top};
 
-						set_lcd_text_bits(bmp_glyph, shadow_src_rect, _tls->text_bits, shadow_dest_rect, dest_pitch, false, _context->setting_cache->shadow.alpha);
+						set_lcd_text_bits(bmp_glyph, shadow_src_rect, _tls->text_bits, shadow_dest_rect, dest_pitch, false, client_config_instance.shadow.alpha);
 					}
 				}
 

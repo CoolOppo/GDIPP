@@ -1,12 +1,12 @@
 #pragma once
 
-#include "gdipp_config/demo_config.h"
+#include "gdipp_config/config.h"
 
 namespace gdipp
 {
 
 extern config_file config_file_instance;
-extern demo_config demo_conf;
+extern config config_instance;
 
 // gdimm related
 extern HMODULE h_gdimm;

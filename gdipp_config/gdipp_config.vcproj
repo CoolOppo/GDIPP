@@ -335,19 +335,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\client_config.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\config.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\config_file.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\demo_config.cpp"
 				>
 			</File>
 			<File
@@ -359,19 +351,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\freetype_config.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\hook_config.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\proc_config_criteria.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\render_config.cpp"
 				>
 			</File>
 			<File
@@ -384,6 +364,10 @@
 			</File>
 			<File
 				RelativePath=".\render_config_delta_cache.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_static.cpp"
 				>
 			</File>
 			<File
@@ -429,10 +413,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\client_config.h"
-				>
-			</File>
-			<File
 				RelativePath=".\config.h"
 				>
 			</File>
@@ -441,7 +421,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\demo_config.h"
+				RelativePath=".\constant_client.h"
+				>
+			</File>
+			<File
+				RelativePath=".\constant_demo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\constant_freetype.h"
+				>
+			</File>
+			<File
+				RelativePath=".\constant_hook.h"
+				>
+			</File>
+			<File
+				RelativePath=".\constant_render.h"
 				>
 			</File>
 			<File
@@ -453,19 +449,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\freetype_config.h"
-				>
-			</File>
-			<File
-				RelativePath=".\hook_config.h"
-				>
-			</File>
-			<File
 				RelativePath=".\proc_config_criteria.h"
-				>
-			</File>
-			<File
-				RelativePath=".\render_config.h"
 				>
 			</File>
 			<File
@@ -478,6 +462,10 @@
 			</File>
 			<File
 				RelativePath=".\render_config_delta_cache.h"
+				>
+			</File>
+			<File
+				RelativePath=".\render_config_static.h"
 				>
 			</File>
 			<File

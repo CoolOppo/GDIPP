@@ -10,8 +10,8 @@ render_config_delta_cache::render_config_delta_cache(const config_file &file)
 {
 	if (file.empty())
 		return;
-	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
 
+	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
 	const pugi::xpath_node_set font_render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/font");
 	for (pugi::xpath_node_set::const_iterator node_iter = font_render_font_nodes.begin(); node_iter != font_render_font_nodes.end(); ++node_iter)
 	{

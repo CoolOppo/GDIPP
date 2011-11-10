@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "gdipp_pre/resource.h"
 #include "MainDlg.h"
-#include "gdipp_lib/gdipp_lib.h"
 #include "gdipp_pre/gdipp_pre.h"
 #include "gdipp_pre/aboutdlg.h"
 

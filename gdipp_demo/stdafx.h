@@ -9,6 +9,7 @@
 
 // C RunTime Header Files
 #include <cassert>
+#include <list>
 #include <vector>
 
 // WTL

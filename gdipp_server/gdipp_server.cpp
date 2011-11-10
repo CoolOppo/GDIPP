@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "gdipp_config/hook_config.h"
+#include "gdipp_config/constant_hook.h"
 #include "gdipp_lib/helper.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/global.h"
@@ -36,9 +36,6 @@ BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_ho
 
 BOOL start_hook(ULONG session_id)
 {
-	hook_config hook_conf;
-	hook_conf.load(config_file_instance);
-
 	// make the event handle inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
 	BOOL b_ret, hook_success = TRUE;
@@ -69,7 +66,7 @@ BOOL start_hook(ULONG session_id)
 		goto post_hook;
 	}
 
-	if (hook_conf.proc_32_bit)
+	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_32_bit", gdipp::hook_config::PROC_32_BIT))
 	{
 		const wchar_t *gdipp_hook_name_32 = L"gdipp_hook_32.exe";
 		PROCESS_INFORMATION pi;
@@ -80,7 +77,7 @@ BOOL start_hook(ULONG session_id)
 			hook_success = FALSE;
 	}
 
-	if (hook_conf.proc_32_bit)
+	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_64_bit", gdipp::hook_config::PROC_64_BIT))
 	{
 		const wchar_t *gdipp_hook_name_64 = L"gdipp_hook_64.exe";
 		PROCESS_INFORMATION pi;

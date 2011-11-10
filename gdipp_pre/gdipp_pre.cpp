@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "gdipp_pre.h"
-#include "gdipp_lib/gdipp_lib.h"
+#include "gdipp_lib/helper.h"
 #include "gdipp_pre/resource.h"
 #include "gdipp_pre/MainDlg.h"
 
@@ -12,20 +12,6 @@ CAppModule _Module;
 HINSTANCE h_instance;
 wchar_t config_path[MAX_PATH];
 wchar_t *preview_text = NULL;
-
-BOOL load_config()
-{
-	BOOL b_ret;
-
-	// get config file path
-	wchar_t config_path[MAX_PATH];
-	b_ret = gdipp::get_dir_file_path(NULL, L"gdipp_config.xml", config_path);
-	if (!b_ret)
-		return FALSE;
-
-	gdipp::init_config();
-	return gdipp::load_config(config_path);
-}
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {
@@ -85,12 +71,10 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	b_ret = gdipp::get_dir_file_path(NULL, L"gdimm_32.dll", gdimm_path);
 #endif // _M_X64
 
+	// TODO: incomplete code
 	h_gdimm = LoadLibraryW(gdimm_path);
 	if (h_gdimm == NULL)
-	{
-		b_ret = load_config();
-		assert(b_ret);
-	}
+		;
 
 	// If you are running on NT 4.0 or higher you can use the following call instead to
 	// make the EXE free threaded. This means that calls come in on a random RPC thread.

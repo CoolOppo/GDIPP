@@ -7,7 +7,7 @@ namespace gdipp
 
 // convert a string to template value if possible
 // helper function to convert raw config strings to values
-template <typename T>
+template<typename T>
 void wcs_convert(const wchar_t *str, T *converted)
 {
 	if (str != NULL)

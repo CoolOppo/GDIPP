@@ -1,17 +1,19 @@
 #include "stdafx.h"
 #include "demo_painter.h"
+#include "gdipp_config/constant_demo.h"
 #include "gdipp_demo/global.h"
 
 namespace gdipp
 {
 
 demo_painter::demo_painter()
-	: _total_cycles(demo_conf.cycles),
-	_painted_cycles(0),
+	: _painted_cycles(0),
 	_result_prepared(false),
 	_result_font(NULL)
 {
 	srand(GetTickCount());
+
+	_total_cycles = config_instance.get_number(L"/gdipp/demo/cycles", demo_config::CYCLES);
 }
 
 demo_painter::~demo_painter()
@@ -29,11 +31,15 @@ void demo_painter::paint_demo(CPaintDC &dc)
 
 	if (_painted_cycles < _total_cycles)
 	{
+		std::vector<const wchar_t *> demo_fonts;
+		b_ret = config_instance.get_string_list(L"/gdipp/demo/fonts", demo_fonts);
+		assert(b_ret);
+
 		// randomize text metrics
 		const LONG text_height = (rand() % 10) + 9;
 		const LONG text_weight = (rand() % 8 + 1) * 100;
 		const BYTE text_italic = rand() % 2;
-		const std::wstring &font_name = demo_conf.fonts[rand() % demo_conf.fonts.size()];
+		const std::wstring &font_name = demo_fonts[rand() % demo_fonts.size()];
 
 		const HFONT curr_dc_font = CreateFont(-text_height, 0, 0, 0, text_weight, text_italic, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, font_name.c_str());
 		assert(curr_dc_font != NULL);
@@ -52,7 +58,7 @@ void demo_painter::paint_demo(CPaintDC &dc)
 
 		// if randomize text content, use random Unicode characters
 		// otherwise use the font name
-		if (demo_conf.random_text)
+		if (!!config_instance.get_number(L"/gdipp/demo/random_text", static_cast<int>(demo_config::RANDOM_TEXT)))
 		{
 			const int max_text_len = 10;
 			paint_str.resize(rand() % max_text_len + 1);

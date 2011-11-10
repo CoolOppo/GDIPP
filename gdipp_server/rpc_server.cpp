@@ -302,14 +302,6 @@ unsigned long gdipp_rpc_get_glyph_indices(
 	return gdipp::font_mgr_instance.get_glyph_indices(curr_session->font_id, str, count, gi);
 }
 
-boolean gdipp_rpc_set_render_config( 
-    /* [in] */ handle_t h_gdipp_rpc,
-    /* [size_is][in] */ const wchar_t *config_delta,
-    /* [in] */ unsigned long delta_size)
-{
-	return false;
-}
-
 boolean gdipp_rpc_make_bitmap_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,

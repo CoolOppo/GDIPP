@@ -4,6 +4,8 @@
 
 #include "stdafx.h"
 #include "MainDlg.h"
+#include "gdipp_config/config.h"
+#include "gdipp_config/constant_demo.h"
 #include "gdipp_demo/AboutDlg.h"
 #include "gdipp_demo/PaintDlg.h"
 #include "gdipp_demo/global.h"
@@ -56,9 +58,9 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	UIAddChildWindowContainer(m_hWnd);
 
 	b_ret = load_gdimm();
-	load_demo_config();
 
-	for (int i = 0; i < gdipp::demo_conf.threads; ++i)
+	const int demo_threads = gdipp::config_instance.get_number(L"/gdipp/demo/threads", static_cast<unsigned int>(gdipp::demo_config::THREADS));
+	for (int i = 0; i < demo_threads; ++i)
 		CreateThread(NULL, 0, paint_thread, reinterpret_cast<void *>(i), 0, NULL);
 
 	return TRUE;
@@ -116,11 +118,6 @@ void CMainDlg::CloseDialog(int nVal)
 {
 	DestroyWindow();
 	::PostQuitMessage(nVal);
-}
-
-void CMainDlg::load_demo_config()
-{
-	gdipp::demo_conf.load(gdipp::config_file_instance);
 }
 
 void CMainDlg::update_menu_state()

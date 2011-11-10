@@ -5,7 +5,7 @@
 namespace gdipp
 {
 
-class GDIPP_API render_config_delta : public config
+class GDIPP_API render_config_delta
 {
 	friend class render_config_delta_cache;
 
