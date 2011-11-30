@@ -210,7 +210,7 @@ GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session(
 		point_size,
 		metric_face_name(outline_metrics));
 
-	if (!gdipp::get_render_mode(new_session->render_config.render_mode, bits_per_pixel, logfont->lfQuality, new_session->render_mode))
+	if (!gdipp::get_render_mode(new_session->render_config->render_mode, bits_per_pixel, logfont->lfQuality, new_session->render_mode))
 		return NULL;
 
 	new_session->font_id = font_id;
@@ -350,13 +350,18 @@ boolean gdipp_rpc_make_bitmap_glyph_run(
 
 	for (unsigned int i = 0; i < rpc_glyph_run->count; ++i)
 	{
+		if (glyph_run->glyphs[i] == NULL)
+			continue;
+
 		const FT_BitmapGlyph bmp_glyph = reinterpret_cast<const FT_BitmapGlyph>(glyph_run->glyphs[i]);
 		rpc_glyph_run->glyphs[i].left = bmp_glyph->left;
 		rpc_glyph_run->glyphs[i].top = bmp_glyph->top;
 		rpc_glyph_run->glyphs[i].rows = bmp_glyph->bitmap.rows;
 		rpc_glyph_run->glyphs[i].width = bmp_glyph->bitmap.width;
 		rpc_glyph_run->glyphs[i].pitch = bmp_glyph->bitmap.pitch;
-		rpc_glyph_run->glyphs[i].buffer = reinterpret_cast<byte *>(MIDL_user_allocate(bmp_glyph->bitmap.rows * abs(bmp_glyph->bitmap.pitch)));
+		const int buffer_size = bmp_glyph->bitmap.rows * abs(bmp_glyph->bitmap.pitch);
+		rpc_glyph_run->glyphs[i].buffer = reinterpret_cast<byte *>(MIDL_user_allocate(buffer_size));
+		memcpy(rpc_glyph_run->glyphs[i].buffer, bmp_glyph->bitmap.buffer, buffer_size), 
 		rpc_glyph_run->glyphs[i].pixel_mode = bmp_glyph->bitmap.pixel_mode;
 	}
 
@@ -365,7 +370,6 @@ boolean gdipp_rpc_make_bitmap_glyph_run(
 
 	return true;
 }
-
 
 boolean gdipp_rpc_make_outline_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,

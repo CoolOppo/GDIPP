@@ -74,7 +74,7 @@ unsigned long get_render_config_trait(char weight_class, bool italic, LONG heigh
 	wcscpy_s(reinterpret_cast<wchar_t *>(trait_data + sizeof(char) + sizeof(bool) + sizeof(LONG)), font_name_len, font_name);
 
 	unsigned long trait_id;
-	MurmurHash3_x86_32(trait_data, trait_size, 0, &trait_id);
+	MurmurHash3_x86_32(trait_data, static_cast<int>(trait_size), 0, &trait_id);
 	delete[] trait_data;
 
 	return trait_id;

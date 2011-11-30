@@ -9,16 +9,15 @@ namespace gdipp
 struct painter_tls
 {
 	HDC hdc_canvas;
-	BYTE *text_bits;
-
 	HDC last_hdc;
+	BYTE *text_bits;
 };
 
 class gdi_painter : public painter
 {
 public:
 	bool begin(const dc_context *context);
-	bool paint(int x, int y, UINT options, CONST RECT *lprect, const void *text, UINT c, CONST INT *lpDx);
+	bool paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run *glyph_run, CONST INT *lpDx);
 
 private:
 	struct glyph_run_metrics
@@ -34,7 +33,7 @@ private:
 	};
 
 	// adjust the glyph boxes from distance array
-	static void adjust_glyph_bbox(bool is_pdy, UINT count, CONST INT *lpDx, gdipp_rpc_bitmap_glyph_run *a_glyph_run);
+	void adjust_glyph_bbox(bool is_pdy, CONST INT *lpDx, gdipp_rpc_bitmap_glyph_run *glyph_run);
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,
 		const RECT &src_rect,
@@ -48,7 +47,7 @@ private:
 		const RECT &dest_rect,
 		int dest_pitch,
 		bool project_bottom) const;
-	void set_lcd_text_bits(const FT_BitmapGlyph glyph,
+	void set_lcd_text_bits(const gdipp_rpc_bitmap_glyph &glyph,
 		const RECT &src_rect,
 		BYTE *dest_bits,
 		const RECT &dest_rect,
@@ -56,14 +55,18 @@ private:
 		bool project_bottom,
 		BYTE alpha) const;
 
-	BOOL paint_mono(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
-	BOOL paint_gray(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
-	BOOL paint_lcd(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run, const glyph_run_metrics &grm) const;
-	BOOL paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *a_glyph_run);
+	BOOL paint_mono(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *glyph_run, const glyph_run_metrics &grm) const;
+	BOOL paint_gray(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *glyph_run, const glyph_run_metrics &grm) const;
+	BOOL paint_lcd(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *glyph_run, const glyph_run_metrics &grm) const;
+	BOOL paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run *glyph_run);
 
 	painter_tls *_tls;
 	RGBQUAD _text_rgb_gamma;
 	bool _update_cp;
+
+	bool _is_bbox_adjusted;
+	INT _ctrl_right;
+	INT _black_right;
 };
 
 }

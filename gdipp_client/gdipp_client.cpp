@@ -1,13 +1,13 @@
 #include "stdafx.h"
+#include "gdipp_client/gamma.h"
 #include "gdipp_client/global.h"
+#include "gdipp_config/constant_client.h"
 #include "gdipp_config/exclude_config.h"
 #include "gdipp_lib/helper.h"
 
 namespace gdipp
 {
 	
-exclude_config exclude_config_instance;
-
 bool init_rpc_client()
 {
 	RPC_WSTR binding_str;
@@ -54,9 +54,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			DWORD dw_ret = GetModuleBaseNameW(GetCurrentProcess(), NULL, this_proc_name, MAX_PATH);
 			assert(dw_ret != 0);
 
-			gdipp::exclude_config_instance.load(gdipp::config_file_instance);
-
-			if (gdipp::exclude_config_instance.is_process_excluded(this_proc_name))
+			if (gdipp::exclude_config::is_process_excluded(gdipp::config_instance, this_proc_name))
 				return FALSE;
 
 			OSVERSIONINFO ver_info = {sizeof(OSVERSIONINFO)};
@@ -65,9 +63,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				return FALSE;
 			gdipp::os_support_directwrite = (ver_info.dwMajorVersion >= 6);
 
-			gdipp::client_config_instance.load(gdipp::config_file_instance);
-
 			gdipp::init_rpc_client();
+
+			gdipp::client_config_instance.parse(gdipp::config_instance);
 
 			if (!gdipp::hook_instance.start())
 				return FALSE;

@@ -18,13 +18,25 @@ render_config_cache::render_config_cache(const config_file &file)
 		const pugi::xml_node curr_node = node_iter->node();
 		const config cfg(&curr_node);
 		const font_config_criteria curr_criteria(&curr_node);
-		render_config_static curr_rcs;
-		curr_rcs.parse(cfg);
-		_configs.push_front(std::pair<font_config_criteria, render_config_static>(curr_criteria, curr_rcs));			
+		render_config_static *curr_rcs = new render_config_static();
+		curr_rcs->parse(cfg);
+		_configs.push_back(std::pair<font_config_criteria, const render_config_static *>(curr_criteria, curr_rcs));			
 	}
+
+	_default_config = new render_config_static();
 }
 
-render_config_static render_config_cache::get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
+render_config_cache::~render_config_cache()
+{
+	delete _default_config;
+
+	for (std::list<std::pair<font_config_criteria, const render_config_static *>>::const_iterator config_iter = _configs.begin();
+		config_iter != _configs.end();
+		++config_iter)
+		delete config_iter->second;
+}
+
+const render_config_static *render_config_cache::get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
 {
 	const render_config_static *rcs;
 
@@ -37,6 +49,8 @@ render_config_static render_config_cache::get_font_render_config(bool bold, bool
 		if (config_iter == _cache.end())
 		{
 			rcs = find_font_render_config(bold, italic, height, font_name);
+			if (rcs == NULL)
+				rcs = _default_config;
 			_cache.insert(std::pair<uint32_t, const render_config_static *>(trait, rcs));
 		}
 		else
@@ -49,20 +63,17 @@ render_config_static render_config_cache::get_font_render_config(bool bold, bool
 		rcs = config_iter->second;
 	}
 
-	if (rcs == NULL)
-		return render_config_static();
-	else
-		return *rcs;
+	return rcs;
 }
 
 const render_config_static *render_config_cache::find_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name) const
 {
-	for (std::list<std::pair<font_config_criteria, render_config_static>>::const_iterator config_iter = _configs.begin();
+	for (std::list<std::pair<font_config_criteria, const render_config_static *>>::const_iterator config_iter = _configs.begin();
 		config_iter != _configs.end();
 		++config_iter)
 	{
 		if (config_iter->first.is_satisfied(bold, italic, height, font_name))
-			return &config_iter->second;
+			return config_iter->second;
 	}
 
 	return NULL;

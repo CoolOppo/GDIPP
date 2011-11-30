@@ -30,16 +30,22 @@ const wchar_t *config::get_string(const wchar_t *config_path, const wchar_t *def
 	return config_node.value();
 }
 
-const bool config::get_string_list(const wchar_t *config_path, std::vector<const wchar_t *> &list_values) const
+size_t config::get_string_list(const wchar_t *config_path, const wchar_t **list_values) const
 {
 	if (_root_node == NULL)
-		return false;
+		return 0;
 
 	const pugi::xpath_node_set config_nodes = reinterpret_cast<const pugi::xml_document *>(_root_node)->select_nodes(config_path);
-	for (pugi::xpath_node_set::const_iterator iter = config_nodes.begin(); iter != config_nodes.end(); ++iter)
-		list_values.push_back(iter->node().value());
+	const size_t config_node_count = config_nodes.size();
+	if (list_values == NULL)
+		return config_node_count;
 
-	return true;
+	pugi::xpath_node_set::const_iterator iter;
+	size_t i;
+	for (iter = config_nodes.begin(), i = 0; iter != config_nodes.end(); ++iter, ++i)
+		list_values[i] = iter->node().value();
+
+	return config_node_count;
 }
 
 template<typename T>
@@ -58,24 +64,27 @@ T config::get_number(const wchar_t *config_path, T default_value) const
 }
 
 template<typename T>
-const bool config::get_number_list(const wchar_t *config_path, std::vector<T> &list_values) const
+size_t config::get_number_list(const wchar_t *config_path, T *list_values) const
 {
 	if (_root_node == NULL)
-		return false;
+		return 0;
 
 	const pugi::xpath_node_set config_nodes = reinterpret_cast<const pugi::xml_document *>(_root_node)->select_nodes(config_path);
-	for (pugi::xpath_node_set::const_iterator iter = config_nodes.begin(); iter != config_nodes.end(); ++iter)
-	{
-		T curr_value;
-		wcs_convert(iter->node().value(), &curr_value);
-		list_values.push_back(curr_value);
-	}
+	const size_t config_node_count = config_nodes.size();
+	if (list_values == NULL)
+		return config_node_count;
 
-	return true;
+	pugi::xpath_node_set::const_iterator iter;
+	size_t i;
+	for (iter = config_nodes.begin(), i = 0; iter != config_nodes.end(); ++iter, ++i)
+		wcs_convert(iter->node().value(), &list_values[i]);
+
+	return config_node_count;
 }
 
 template GDIPP_API int config::get_number(const wchar_t *, int) const;
 template GDIPP_API unsigned int config::get_number(const wchar_t *, unsigned int) const;
 template long config::get_number(const wchar_t *, long) const;
+template double config::get_number(const wchar_t *, double) const;
 
 }

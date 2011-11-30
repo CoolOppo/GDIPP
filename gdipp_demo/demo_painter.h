@@ -15,6 +15,9 @@ public:
 	void stop_painting();
 
 private:
+	int _demo_font_count;
+	const wchar_t **_demo_fonts;
+	bool _random_text;
 	int _total_cycles;
 
 	// multi-thread related

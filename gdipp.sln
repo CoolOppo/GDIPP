@@ -34,6 +34,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml", "pugixml\scripts\pugixml_vs2008_static.vcproj", "{89A1E353-E2DC-495C-B403-742BE206ACED}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_hook", "gdipp_hook\gdipp_hook.vcproj", "{2F543B2D-A10E-4607-B427-CF66A61D3872}"
+	ProjectSection(ProjectDependencies) = postProject
+		{56A076C4-6050-4EAC-B84E-56B0B79A4041} = {56A076C4-6050-4EAC-B84E-56B0B79A4041}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdipp_lib", "gdipp_lib\gdipp_lib.vcproj", "{9A32E343-D465-42C2-B313-17E1FB328016}"
 	ProjectSection(ProjectDependencies) = postProject

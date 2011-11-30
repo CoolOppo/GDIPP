@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gdipp_config/render_config.h"
+#include "gdipp_config/render_config_static.h"
 
 namespace gdipp
 {
@@ -48,7 +48,7 @@ LOGFONTW get_log_font(HDC hdc);
 
 // return true and fill the corresponding FT_Glyph_To_Bitmap render mode if find an appropriate render mode
 // otherwise, return false
-bool get_render_mode(const render_config::render_mode_config &render_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
+bool get_render_mode(const render_config_static::render_mode_static &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode);
 
 bool operator<(const LOGFONTW &lf1, const LOGFONTW &lf2);
 

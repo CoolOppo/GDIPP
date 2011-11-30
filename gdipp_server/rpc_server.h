@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gdipp_config/render_config.h"
+#include "gdipp_config/render_config_static.h"
 
 namespace gdipp
 {
@@ -11,7 +11,7 @@ class renderer;
 struct rpc_session
 {
 	void *font_id;
-	render_config render_config;
+	const render_config_static *render_config;
 	HDC hdc;
 	FT_Render_Mode render_mode;
 	unsigned int render_trait;

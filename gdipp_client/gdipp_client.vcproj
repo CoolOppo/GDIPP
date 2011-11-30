@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -206,7 +206,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -289,7 +289,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)&quot;;&quot;$(SolutionDir)freetype\include&quot;;&quot;$(SolutionDir)gdipp_rpc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -379,6 +379,82 @@
 			<File
 				RelativePath=".\gdipp_client.cpp"
 				>
+			</File>
+			<File
+				RelativePath="..\gdipp_rpc\x64\gdipp_rpc_c.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\gdipp_rpc\Win32\gdipp_rpc_c.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\global.cpp"

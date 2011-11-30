@@ -7,17 +7,30 @@ namespace gdipp
 {
 
 demo_painter::demo_painter()
-	: _painted_cycles(0),
+	: _demo_fonts(NULL),
+	_painted_cycles(0),
 	_result_prepared(false),
 	_result_font(NULL)
 {
 	srand(GetTickCount());
 
-	_total_cycles = config_instance.get_number(L"/gdipp/demo/cycles", demo_config::CYCLES);
+	_demo_font_count = config_instance.get_string_list(L"/gdipp/demo/fonts/font/text()", NULL);
+	if (_demo_font_count > 0)
+	{
+		_demo_fonts = new const wchar_t *[_demo_font_count];
+		_demo_font_count = config_instance.get_string_list(L"/gdipp/demo/fonts/font/text()", _demo_fonts);
+		assert(_demo_font_count > 0);
+	}
+
+	_random_text = !!config_instance.get_number(L"/gdipp/demo/random_text/text()", static_cast<int>(demo_config::RANDOM_TEXT));
+	_total_cycles = config_instance.get_number(L"/gdipp/demo/cycles/text()", demo_config::CYCLES);
 }
 
 demo_painter::~demo_painter()
 {
+	if (_demo_fonts != NULL)
+		delete[] _demo_fonts;
+
 	if (_result_font != NULL)
 		DeleteObject(_result_font);
 }
@@ -26,22 +39,21 @@ void demo_painter::paint_demo(CPaintDC &dc)
 {
 	BOOL b_ret;
 
+	if (_demo_font_count == 0)
+		return;
+
 	if (_painted_cycles == 0)
 		_start_time = GetTickCount();
 
 	if (_painted_cycles < _total_cycles)
 	{
-		std::vector<const wchar_t *> demo_fonts;
-		b_ret = config_instance.get_string_list(L"/gdipp/demo/fonts", demo_fonts);
-		assert(b_ret);
-
 		// randomize text metrics
 		const LONG text_height = (rand() % 10) + 9;
 		const LONG text_weight = (rand() % 8 + 1) * 100;
 		const BYTE text_italic = rand() % 2;
-		const std::wstring &font_name = demo_fonts[rand() % demo_fonts.size()];
+		const wchar_t *font_name = _demo_fonts[rand() % _demo_font_count];
 
-		const HFONT curr_dc_font = CreateFont(-text_height, 0, 0, 0, text_weight, text_italic, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, font_name.c_str());
+		const HFONT curr_dc_font = CreateFont(-text_height, 0, 0, 0, text_weight, text_italic, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, font_name);
 		assert(curr_dc_font != NULL);
 		dc.SelectFont(curr_dc_font);
 
@@ -58,7 +70,7 @@ void demo_painter::paint_demo(CPaintDC &dc)
 
 		// if randomize text content, use random Unicode characters
 		// otherwise use the font name
-		if (!!config_instance.get_number(L"/gdipp/demo/random_text", static_cast<int>(demo_config::RANDOM_TEXT)))
+		if (_random_text)
 		{
 			const int max_text_len = 10;
 			paint_str.resize(rand() % max_text_len + 1);

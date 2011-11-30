@@ -16,13 +16,14 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	ft_error = FT_Library_SetLcdFilter(ft_lib, config_instance.get_number(L"/gdipp/freetype/lcd_filter", FT_LCD_FILTER_DEFAULT));
+	FT_LcdFilter lcd_filter = static_cast<FT_LcdFilter>(config_instance.get_number(L"/gdipp/freetype/lcd_filter/text()", static_cast<int>(FT_LCD_FILTER_DEFAULT)));
+	ft_error = FT_Library_SetLcdFilter(ft_lib, lcd_filter);
 	assert(ft_error == 0);
 
 	ft_error = FTC_Manager_New(ft_lib,
-		config_instance.get_number(L"/gdipp/freetype/cache_max_faces", 16),
-		config_instance.get_number(L"/gdipp/freetype/cache_max_sizes", 32),
-		config_instance.get_number(L"/gdipp/freetype/cache_max_bytes", 2097152),
+		config_instance.get_number(L"/gdipp/freetype/cache_max_faces/text()", 16),
+		config_instance.get_number(L"/gdipp/freetype/cache_max_sizes/text()", 32),
+		config_instance.get_number(L"/gdipp/freetype/cache_max_bytes/text()", 2097152),
 		face_requester,
 		NULL,
 		&ft_cache_man);

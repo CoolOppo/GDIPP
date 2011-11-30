@@ -17,7 +17,6 @@ public:
 		unsigned char mono;
 		unsigned char gray;
 		unsigned char subpixel;
-		render_config::PIXEL_GEOMETRY_TYPE pixel_geometry;
 		bool aliased_text;
 	};
 

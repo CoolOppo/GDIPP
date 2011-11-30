@@ -191,7 +191,7 @@ LOGFONTW get_log_font(HDC hdc)
 	return font_attr;
 }
 
-bool get_render_mode(const render_config::render_mode_config &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+bool get_render_mode(const render_config_static::render_mode_static &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
 {
 	// return true if successfully find an appropriate render mode
 	// otherwise return false

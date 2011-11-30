@@ -1,6 +1,5 @@
 #pragma once
 
-#include "gdipp_config/render_config.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
 namespace gdipp
@@ -28,7 +27,7 @@ public:
 
 private:
 	// actual data buffer of the OUTLINETEXTMETRICW structure
-	//std::vector<BYTE> _metric_buf;
+	std::vector<BYTE> _metric_buf;
 };
 
 /*struct font_info

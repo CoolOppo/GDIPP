@@ -5,17 +5,17 @@
 #include "gdipp_client/global.h"
 #include "gdipp_lib/helper.h"
 
-namespace gdipp
-{
-
 // exported function for SetWindowsHookEx
-__declspec(dllexport) LRESULT CALLBACK gdimm_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
+__declspec(dllexport) LRESULT CALLBACK gdipp_client_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	init_minidump();
-	register_minidump_module(h_self);
+	gdipp::init_minidump();
+	gdipp::register_minidump_module(gdipp::h_self);
 
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
+
+namespace gdipp
+{
 
 // exported function for EasyHook remote hooking
 EXTERN_C __declspec(dllexport) void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* remote_info)
@@ -37,7 +37,7 @@ bool wchar_str_ci_less::operator()(const wchar_t *string1, const wchar_t *string
 
 bool hook::install_hook(LPCSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
-	// hook a procedure in the specified library that has been loaded before gdimm
+	// hook a procedure in the specified library that has been loaded before client
 	// ANSI version
 
 	const HMODULE h_lib = GetModuleHandleA(lib_name);
@@ -49,7 +49,7 @@ bool hook::install_hook(LPCSTR lib_name, LPCSTR proc_name, void *hook_proc)
 
 bool hook::install_hook(LPCWSTR lib_name, LPCSTR proc_name, void *hook_proc)
 {
-	// hook a procedure in the specified library that has been loaded before gdimm
+	// hook a procedure in the specified library that has been loaded before client
 	// Unicode version
 
 	const HMODULE h_lib = GetModuleHandleW(lib_name);
@@ -169,7 +169,7 @@ void hook::stop()
 
 bool hook::install_hook(HMODULE h_lib, LPCSTR proc_name, void *hook_proc)
 {
-	// hook a procedure in the specified library that has been loaded before gdimm
+	// hook a procedure in the specified library that has been loaded before client
 	// use EasyHook
 	
 	NTSTATUS eh_ret;

@@ -140,8 +140,8 @@ BEGIN
     END
     POPUP "Tools"
     BEGIN
-        MENUITEM "Load gdimm",                  ID_TOOLS_LOAD
-        MENUITEM "Unload gdimm",                ID_TOOLS_UNLOAD
+        MENUITEM "Load client",                 ID_TOOLS_LOAD
+        MENUITEM "Unload client",               ID_TOOLS_UNLOAD
     END
     POPUP "&Help"
     BEGIN

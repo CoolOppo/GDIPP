@@ -45,6 +45,6 @@ public:
 
 private:
 	void update_menu_state();
-	bool load_gdimm();
-	bool unload_gdimm();
+	bool load_client();
+	bool unload_client();
 };

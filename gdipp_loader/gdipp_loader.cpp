@@ -31,19 +31,19 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if (b_ret)
 	{
 #ifdef _M_X64
-		const wchar_t *gdimm_name = L"gdimm_64.dll";
+		const wchar_t *client_name = L"gdipp_client_64.dll";
 #else
-		const wchar_t *gdimm_name = L"gdimm_32.dll";
+		const wchar_t *client_name = L"gdipp_client_32.dll";
 #endif
 
-		wchar_t _gdimm_path[MAX_PATH];
-		b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, _gdimm_path);
+		wchar_t _client_path[MAX_PATH];
+		b_ret = gdipp::get_dir_file_path(NULL, client_name, _client_path);
 		assert(b_ret);
 
 #ifdef _M_X64
-		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, _gdimm_path, NULL, 0);
+		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, NULL, _client_path, NULL, 0);
 #else
-		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, _gdimm_path, NULL, NULL, 0);
+		eh_ret = RhInjectLibrary(pi.dwProcessId, pi.dwThreadId, EASYHOOK_INJECT_DEFAULT, _client_path, NULL, NULL, 0);
 #endif
 
 		if (eh_ret == 0)

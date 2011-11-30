@@ -28,8 +28,6 @@ BOOL CMainDlg::OnIdle()
 	return FALSE;
 }
 
-__declspec(dllimport) void reg();
-
 LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	bool b_ret;
@@ -57,9 +55,9 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	UIAddChildWindowContainer(m_hWnd);
 
-	b_ret = load_gdimm();
+	b_ret = load_client();
 
-	const int demo_threads = gdipp::config_instance.get_number(L"/gdipp/demo/threads", static_cast<unsigned int>(gdipp::demo_config::THREADS));
+	const int demo_threads = gdipp::config_instance.get_number(L"/gdipp/demo/threads/text()", static_cast<unsigned int>(gdipp::demo_config::THREADS));
 	for (int i = 0; i < demo_threads; ++i)
 		CreateThread(NULL, 0, paint_thread, reinterpret_cast<void *>(i), 0, NULL);
 
@@ -95,14 +93,14 @@ LRESULT CMainDlg::OnFileExit(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, B
 
 LRESULT CMainDlg::OnToolsLoad(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	load_gdimm();
+	load_client();
 
 	return 0;
 }
 
 LRESULT CMainDlg::OnToolsUnload(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-	unload_gdimm();
+	unload_client();
 
 	return 0;
 }
@@ -124,49 +122,49 @@ void CMainDlg::update_menu_state()
 {
 	BOOL b_ret;
 
-	const bool gdimm_loaded = (gdipp::h_gdimm != NULL);
-	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_LOAD, MF_BYCOMMAND | (gdimm_loaded ? MF_GRAYED : MF_ENABLED));
-	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_UNLOAD, MF_BYCOMMAND | (gdimm_loaded ? MF_ENABLED : MF_GRAYED));
+	const bool client_loaded = (gdipp::h_client != NULL);
+	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_LOAD, MF_BYCOMMAND | (client_loaded ? MF_GRAYED : MF_ENABLED));
+	b_ret = EnableMenuItem(GetMenu(), ID_TOOLS_UNLOAD, MF_BYCOMMAND | (client_loaded ? MF_ENABLED : MF_GRAYED));
 }
 
-bool CMainDlg::load_gdimm()
+bool CMainDlg::load_client()
 {
 	BOOL b_ret;
 
-	if (gdipp::h_gdimm == NULL)
+	if (gdipp::h_client == NULL)
 	{
 #ifdef _M_X64
-		const wchar_t *gdimm_name = L"gdimm_64.dll";
+		const wchar_t *client_name = L"gdipp_client_64.dll";
 #else
-		const wchar_t *gdimm_name = L"gdimm_32.dll";
+		const wchar_t *client_name = L"gdipp_client_32.dll";
 #endif // _M_X64
 
-		gdipp::h_gdimm = GetModuleHandle(gdimm_name);
-		if (gdipp::h_gdimm == NULL)
+		gdipp::h_client = GetModuleHandle(client_name);
+		if (gdipp::h_client == NULL)
 		{
-			b_ret = gdipp::get_dir_file_path(NULL, gdimm_name, gdipp::gdimm_path);
+			b_ret = gdipp::get_dir_file_path(NULL, client_name, gdipp::client_path);
 			if (b_ret)
-				gdipp::h_gdimm = LoadLibraryW(gdipp::gdimm_path);
+				gdipp::h_client = LoadLibraryW(gdipp::client_path);
 		}
 	}
 
 	update_menu_state();
 
-	return (gdipp::h_gdimm != NULL);
+	return (gdipp::h_client != NULL);
 }
 
-bool CMainDlg::unload_gdimm()
+bool CMainDlg::unload_client()
 {
 	BOOL b_ret;
 
-	if (gdipp::h_gdimm != NULL)
+	if (gdipp::h_client != NULL)
 	{
-		b_ret = FreeLibrary(gdipp::h_gdimm);
+		b_ret = FreeLibrary(gdipp::h_client);
 		if (b_ret)
-			gdipp::h_gdimm = NULL;
+			gdipp::h_client = NULL;
 	}
 
 	update_menu_state();
 
-	return (gdipp::h_gdimm == NULL);
+	return (gdipp::h_client == NULL);
 }

@@ -5,12 +5,6 @@ namespace gdipp
 namespace render_config
 {
 
-enum PIXEL_GEOMETRY_TYPE
-{
-	PIXEL_GEOMETRY_RGB,
-	PIXEL_GEOMETRY_BGR
-};
-
 enum RENDERER_TYPE
 {
 	RENDERER_CLEARTYPE = 0,

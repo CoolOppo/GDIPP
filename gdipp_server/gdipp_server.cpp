@@ -15,23 +15,19 @@ SERVICE_STATUS_HANDLE h_svc_status = NULL;
 
 HANDLE h_svc_events, h_wait_cleanup, h_rpc_thread;
 
-const size_t MAX_ENV_LEN = 64;
-wchar_t hook_env_str[MAX_ENV_LEN];
-
-std::map<ULONG, HANDLE> h_user_tokens, h_hook_events;
+std::map<ULONG, HANDLE> h_user_tokens;
 std::map<ULONG, PROCESS_INFORMATION> pi_hooks_32, pi_hooks_64;
 
-BOOL hook_proc(HANDLE h_user_token, HANDLE h_hook_event, const wchar_t *gdipp_hook_name, PROCESS_INFORMATION &pi)
+BOOL hook_proc(HANDLE h_user_token, char *hook_env_str, const wchar_t *gdipp_hook_name, PROCESS_INFORMATION &pi)
 {
 	wchar_t gdipp_hook_path[MAX_PATH];
 
 	if (!get_dir_file_path(NULL, gdipp_hook_name, gdipp_hook_path))
 		return FALSE;
 
-	swprintf_s(hook_env_str, L"h_gdipp_hook_wait=%p%c", h_hook_event, 0);
 	STARTUPINFOW si = {sizeof(STARTUPINFO)};
 
-	return CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, TRUE, CREATE_UNICODE_ENVIRONMENT, hook_env_str, NULL, &si, &pi);
+	return CreateProcessAsUserW(h_user_token, gdipp_hook_path, NULL, NULL, NULL, TRUE, NULL, hook_env_str, NULL, &si, &pi);
 }
 
 BOOL start_hook(ULONG session_id)
@@ -39,7 +35,7 @@ BOOL start_hook(ULONG session_id)
 	// make the event handle inheritable
 	SECURITY_ATTRIBUTES inheritable_sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
 	BOOL b_ret, hook_success = TRUE;
-	HANDLE h_user_token, h_hook_event;
+	HANDLE h_user_token;
 
 	b_ret = WTSQueryUserToken(session_id, &h_user_token);
 	if (!b_ret)
@@ -58,31 +54,27 @@ BOOL start_hook(ULONG session_id)
 		CloseHandle(h_user_token);
 		h_user_token = linked_token.LinkedToken;
 	}
+	
+	char hook_env_str[64];
+	sprintf_s(hook_env_str, "gdipp_svc_proc_id=%d%c", GetCurrentProcessId(), 0);
 
-	h_hook_event = CreateEvent(&inheritable_sa, TRUE, FALSE, NULL);
-	if (h_hook_event == NULL)
-	{
-		hook_success = FALSE;
-		goto post_hook;
-	}
-
-	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_32_bit", gdipp::hook_config::PROC_32_BIT))
+	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_32_bit/text()", static_cast<int>(gdipp::hook_config::PROC_32_BIT)))
 	{
 		const wchar_t *gdipp_hook_name_32 = L"gdipp_hook_32.exe";
 		PROCESS_INFORMATION pi;
 
-		if (hook_proc(h_user_token, h_hook_event, gdipp_hook_name_32, pi))
+		if (hook_proc(h_user_token, hook_env_str, gdipp_hook_name_32, pi))
 			pi_hooks_32[session_id] = pi;
 		else
 			hook_success = FALSE;
 	}
 
-	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_64_bit", gdipp::hook_config::PROC_64_BIT))
+	if (!!config_instance.get_number(L"/gdipp/hook/include/proc_64_bit/text()", static_cast<int>(gdipp::hook_config::PROC_64_BIT)))
 	{
 		const wchar_t *gdipp_hook_name_64 = L"gdipp_hook_64.exe";
 		PROCESS_INFORMATION pi;
 
-		if (hook_proc(h_user_token, h_hook_event, gdipp_hook_name_64, pi))
+		if (hook_proc(h_user_token, hook_env_str, gdipp_hook_name_64, pi))
 			pi_hooks_64[session_id] = pi;
 		else
 			hook_success = FALSE;
@@ -92,15 +84,11 @@ post_hook:
 	if (hook_success)
 	{
 		h_user_tokens[session_id] = h_user_token;
-		h_hook_events[session_id] = h_hook_event;
 	}
 	else
 	{
 		if (h_user_token)
 			CloseHandle(h_user_token);
-
-		if (h_hook_event)
-			CloseHandle(h_hook_event);
 	}
 
 	return b_ret;
@@ -120,7 +108,6 @@ void stop_hook(ULONG session_id)
 		h_hook_processes[1] = pi_iter_64->second.hProcess;
 
 	// notify and wait hook subprocesses to exit
-	SetEvent(h_hook_events[session_id]);
 	WaitForMultipleObjects(2, h_hook_processes, TRUE, INFINITE);
 
 	// clean up
@@ -140,12 +127,10 @@ void stop_hook(ULONG session_id)
 	}
 
 	CloseHandle(h_user_tokens[session_id]);
-	CloseHandle(h_hook_events[session_id]);
 	h_user_tokens.erase(session_id);
-	h_hook_events.erase(session_id);
 }
 
-VOID set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
+void set_svc_status(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwWaitHint)
 {
 	static DWORD dwCheckPoint = 1;
 
@@ -214,9 +199,6 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	b_ret = UnregisterWait(h_wait_cleanup);
 	assert(b_ret || GetLastError() == ERROR_IO_PENDING);
 
-	for (std::map<ULONG, HANDLE>::const_iterator session_iter = h_hook_events.begin(); session_iter != h_hook_events.end(); ++session_iter)
-		stop_hook(session_iter->first);
-
 	b_ret = stop_gdipp_rpc_server();
 	if (b_ret)
 	{
@@ -229,22 +211,8 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
-VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
+void svc_init()
 {
-	BOOL b_ret;
-
-	// register the handler function for the service
-	h_svc_status = RegisterServiceCtrlHandlerExW(SVC_NAME, svc_ctrl_handler, NULL);
-	if (h_svc_status == NULL)
-		return;
-
-	// these SERVICE_STATUS members remain as set here
-	svc_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-	svc_status.dwWin32ExitCode = NO_ERROR;
-
-	// report initial status to the SCM
-	set_svc_status(SERVICE_START_PENDING, NO_ERROR, INFINITE);
-
 	h_svc_events = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (h_svc_events == NULL)
 	{
@@ -253,8 +221,14 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	}
 
 	// clean up when event is set
-	b_ret = RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_events, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
-	assert(b_ret);
+	if (!RegisterWaitForSingleObject(&h_wait_cleanup, h_svc_events, exit_cleanup, NULL, INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE))
+	{
+		set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
+		return;
+	}
+
+	// report running status when initialization is complete
+	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
 
 	initialize_freetype();
 
@@ -274,9 +248,23 @@ VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	const DWORD active_session_id = WTSGetActiveConsoleSessionId();
 	if (active_session_id != 0xFFFFFFFF)
 		start_hook(active_session_id);
+}
 
-	// report running status when initialization is complete
-	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
+VOID WINAPI svc_main(DWORD dwArgc, LPTSTR *lpszArgv)
+{
+	// register the handler function for the service
+	h_svc_status = RegisterServiceCtrlHandlerExW(SVC_NAME, svc_ctrl_handler, NULL);
+	if (h_svc_status == NULL)
+		return;
+
+	// these SERVICE_STATUS members remain as set here
+	svc_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+	svc_status.dwWin32ExitCode = NO_ERROR;
+
+	// report initial status to the SCM
+	set_svc_status(SERVICE_START_PENDING, NO_ERROR, 3000);
+
+	svc_init();
 }
 
 }
@@ -295,7 +283,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		{ NULL, NULL },
 	};
 
-	StartServiceCtrlDispatcherW(dispatch_table);
+	if (!StartServiceCtrlDispatcherW(dispatch_table))
+		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
 }
