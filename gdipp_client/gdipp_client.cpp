@@ -7,9 +7,14 @@
 
 namespace gdipp
 {
+
+HANDLE process_heap = GetProcessHeap();
 	
 bool init_rpc_client()
 {
+	if (process_heap == NULL)
+		return false;
+
 	RPC_WSTR binding_str;
 	RPC_STATUS rpc_status;
 
@@ -32,12 +37,12 @@ bool init_rpc_client()
 
 void __RPC_FAR *__RPC_USER MIDL_user_allocate(size_t size)
 {
-	return HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, size);
+	return HeapAlloc(gdipp::process_heap, HEAP_GENERATE_EXCEPTIONS, size);
 }
 
 void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 {
-	HeapFree(GetProcessHeap(), 0, ptr);
+	HeapFree(gdipp::process_heap, 0, ptr);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -63,7 +68,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				return FALSE;
 			gdipp::os_support_directwrite = (ver_info.dwMajorVersion >= 6);
 
-			gdipp::init_rpc_client();
+			if (!gdipp::init_rpc_client())
+				return FALSE;
 
 			gdipp::client_config_instance.parse(gdipp::config_instance);
 

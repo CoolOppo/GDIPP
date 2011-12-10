@@ -53,7 +53,7 @@ bool get_dc_bmp_header(HDC hdc, BITMAPINFOHEADER &dc_dc_bmp_header);
 // get outline metrics of the DC
 OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf);
 
-LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run *a_glyph_run, bool is_control_width);
+LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run &a_glyph_run, bool is_control_width);
 
 LOGFONTW get_log_font(HDC hdc);
 

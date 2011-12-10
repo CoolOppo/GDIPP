@@ -5,7 +5,6 @@ __declspec(dllimport) LRESULT CALLBACK gdipp_client_hook_proc(int nCode, WPARAM 
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	Sleep(6000);
 	const wchar_t *env_var_name = L"gdipp_svc_proc_id";
 	DWORD env_var_len = GetEnvironmentVariableW(env_var_name, NULL, 0);
 	if (env_var_len == 0)

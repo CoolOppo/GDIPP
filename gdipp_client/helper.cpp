@@ -115,27 +115,25 @@ OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf)
 	return outline_metrics;
 }
 
-LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run *glyph_run, bool is_control_width)
+LONG get_glyph_run_width(const gdipp_rpc_bitmap_glyph_run &glyph_run, bool is_control_width)
 {
-	assert(glyph_run != NULL);
-
 	const RECT *first_box_ptr;
 	const RECT *last_box_ptr;
 
 	if (is_control_width)
 	{
 		// use control box metrics
-		first_box_ptr = glyph_run->ctrl_boxes;
-		last_box_ptr = glyph_run->ctrl_boxes + (glyph_run->count - 1);
+		first_box_ptr = glyph_run.ctrl_boxes;
+		last_box_ptr = glyph_run.ctrl_boxes + (glyph_run.count - 1);
 	}
 	else
 	{
 		// use black box metrics
-		first_box_ptr = glyph_run->black_boxes;
-		last_box_ptr = glyph_run->black_boxes + (glyph_run->count - 1);
+		first_box_ptr = glyph_run.black_boxes;
+		last_box_ptr = glyph_run.black_boxes + (glyph_run.count - 1);
 	}
 
-	if (glyph_run->ctrl_boxes[glyph_run->count - 1].left >= glyph_run->ctrl_boxes[0].left)
+	if (glyph_run.ctrl_boxes[glyph_run.count - 1].left >= glyph_run.ctrl_boxes[0].left)
 		return last_box_ptr->right - first_box_ptr->left;
 	else
 		return first_box_ptr->right - last_box_ptr->left;

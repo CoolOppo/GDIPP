@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Tue Aug 30 16:56:11 2011
+/* at Fri Dec 09 19:54:45 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
@@ -93,19 +93,20 @@ typedef struct gdipp_rpc_outline_glyph_run
 
 typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 
-GDIPP_RPC_SESSION_HANDLE gdipp_rpc_begin_session( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_begin_session( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [size_is][in] */ const byte *logfont_buf,
     /* [in] */ unsigned long logfont_size,
-    /* [in] */ unsigned short bits_per_pixel);
+    /* [in] */ unsigned short bits_per_pixel,
+    /* [out] */ GDIPP_RPC_SESSION_HANDLE *h_session);
 
-unsigned long gdipp_rpc_get_font_size( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
     /* [in] */ unsigned long offset);
 
-unsigned long gdipp_rpc_get_font_data( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_data( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
@@ -113,42 +114,45 @@ unsigned long gdipp_rpc_get_font_data(
     /* [size_is][out] */ byte *data_buf,
     /* [in] */ unsigned long buf_size);
 
-unsigned long gdipp_rpc_get_font_metrics_size( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_metrics_size( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session);
 
-unsigned long gdipp_rpc_get_font_metrics_data( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_metrics_data( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][out] */ byte *metrics_buf,
     /* [in] */ unsigned long buf_size);
 
-unsigned long gdipp_rpc_get_glyph_indices( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_glyph_indices( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [size_is][string][in] */ const wchar_t *str,
     /* [in] */ int count,
     /* [size_is][out] */ unsigned short *gi);
 
-boolean gdipp_rpc_make_bitmap_glyph_run( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_bitmap_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [string][in] */ const wchar_t *str,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index,
-    /* [out] */ gdipp_rpc_bitmap_glyph_run **glyph_run_ptr);
+    /* [out] */ gdipp_rpc_bitmap_glyph_run *glyph_run_ptr);
 
-boolean gdipp_rpc_make_outline_glyph_run( 
+/* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_outline_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [string][in] */ const wchar_t *str,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index,
-    /* [out] */ gdipp_rpc_outline_glyph_run **glyph_run_ptr);
+    /* [out] */ gdipp_rpc_outline_glyph_run *glyph_run_ptr);
 
-boolean gdipp_rpc_end_session( 
+error_status_t gdipp_rpc_end_session( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_SESSION_HANDLE *h_session);
+
+void gdipp_rpc_debug( 
+    /* [in] */ handle_t h_gdipp_rpc);
 
 
 

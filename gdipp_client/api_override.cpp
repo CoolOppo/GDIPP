@@ -6,6 +6,8 @@
 #include "gdipp_lib/lock.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
+#include "gdipp_lib/debug.h"
+
 namespace gdipp
 {
 
@@ -126,27 +128,6 @@ bool fetch_glyph_run (bool is_glyph_index,
 }
 */
 
-gdipp_rpc_bitmap_glyph_run *rpc_get_glyph_run(const dc_context &context, LPCWSTR lpString, UINT c, bool is_glyph_index)
-{
-	gdipp_rpc_bitmap_glyph_run *glyph_run = NULL;
-
-	RpcTryExcept
-	{
-		GDIPP_RPC_SESSION_HANDLE h_session = gdipp_rpc_begin_session(h_gdipp_rpc, reinterpret_cast<const byte *>(&context.log_font), sizeof(context.log_font), context.bmp_header.biBitCount);
-		if (!gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &glyph_run))
-			return NULL;
-		if (!!gdipp_rpc_end_session(h_gdipp_rpc, &h_session))
-			return glyph_run;
-		return NULL;
-	}
-	RpcExcept (true)
-	{
-		const unsigned long ex_code = RpcExceptionCode();
-		return NULL;
-	}
-	RpcEndExcept
-}
-
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	bool b_ret;
@@ -197,9 +178,20 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	// create painter and paint the glyph run
-	gdipp_rpc_bitmap_glyph_run *glyph_run = rpc_get_glyph_run(context, lpString, c, is_glyph_index);
-	if (glyph_run == NULL)
-		ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	error_status_t e;
+	GDIPP_RPC_SESSION_HANDLE h_session = NULL;
+	e = gdipp_rpc_begin_session(h_gdipp_rpc, reinterpret_cast<const byte *>(&context.log_font), sizeof(context.log_font), context.bmp_header.biBitCount, &h_session);
+	if (e != 0)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	gdipp_rpc_bitmap_glyph_run glyph_run = {};
+	e = gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &glyph_run);
+	if (e != 0)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+
+	e = gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
+	if (e != 0)
+		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 
 	painter *painter;
 	/*switch (context.setting_cache->renderer)
@@ -218,6 +210,10 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	{
 		b_ret = painter->paint(x, y, options, lprect, glyph_run, lpDx);
 		painter->end();
+
+		MIDL_user_free(glyph_run.glyphs);
+		MIDL_user_free(glyph_run.ctrl_boxes);
+		MIDL_user_free(glyph_run.black_boxes);
 	}
 	delete painter;
 

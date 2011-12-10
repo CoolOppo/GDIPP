@@ -1,12 +1,25 @@
+#ifdef SERVER
+//
+// On the server side of your application using the fast RpcSmAllocate
+// is recommended in server's which do many allocations.
+// Although it may be used on the client, this requires more work
+// and has little performance impact.
+//
+#define ENABLE_ALLOC ,enable_allocate
+#else
+#define ENABLE_ALLOC /* client */
+#endif
+
 [explicit_handle]
 interface gdipp_rpc
 {
-	gdipp_rpc_get_font_size([context_handle_noserialize] h_session);
-	gdipp_rpc_get_font_data([context_handle_noserialize] h_session);
-	gdipp_rpc_get_font_metrics_size([context_handle_noserialize] h_session);
-	gdipp_rpc_get_font_metrics_data([context_handle_noserialize] h_session);
-	gdipp_rpc_get_glyph_indices([context_handle_noserialize] h_session);
-	gdipp_rpc_make_bitmap_glyph_run([context_handle_noserialize] h_session);
-	gdipp_rpc_make_outline_glyph_run([context_handle_noserialize] h_session);
+	[comm_status, fault_status] gdipp_rpc_begin_session();	
+	[comm_status, fault_status] gdipp_rpc_get_font_size([context_handle_noserialize] h_session);
+	[comm_status, fault_status] gdipp_rpc_get_font_data([context_handle_noserialize] h_session);
+	[comm_status, fault_status] gdipp_rpc_get_font_metrics_size([context_handle_noserialize] h_session);
+	[comm_status, fault_status] gdipp_rpc_get_font_metrics_data([context_handle_noserialize] h_session);
+	[comm_status, fault_status] gdipp_rpc_get_glyph_indices([context_handle_noserialize] h_session);
+	[comm_status, fault_status ENABLE_ALLOC] gdipp_rpc_make_bitmap_glyph_run([context_handle_noserialize] h_session);
+	[comm_status, fault_status ENABLE_ALLOC] gdipp_rpc_make_outline_glyph_run([context_handle_noserialize] h_session);
 }
 
