@@ -1,23 +1,36 @@
 #include "stdafx.h"
 #include "font_mgr.h"
+#include "gdipp_lib/lock.h"
 #include "gdipp_server/global.h"
 
 namespace gdipp
 {
 
-void *font_mgr::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
+void *font_mgr::register_font(const LOGFONTW *attr_buf, DWORD buf_size, HDC hdc)
 {
 	const HFONT linked_hfont = CreateFontIndirectW(attr_buf);
 	if (linked_hfont == NULL)
 		return NULL;
 
-	HDC font_holder = dc_pool_instance.claim();
-	assert(font_holder != NULL);
-	SelectObject(font_holder, linked_hfont);
+	HDC font_holder;
+	if (hdc == NULL)
+	{
+		font_holder = dc_pool_instance.claim();
+		assert(font_holder != NULL);
+	}
+	else
+	{
+		font_holder = hdc;
+		SelectObject(font_holder, linked_hfont);
+	}
 
 	std::vector<BYTE> metric_buf;
 	OUTLINETEXTMETRICW *outline_metrics;
 	outline_metrics = get_dc_metrics(font_holder, metric_buf);
+
+	if (hdc == NULL)
+		dc_pool_instance.free(font_holder);
+
 	if (outline_metrics == NULL)
 		return NULL;
 
@@ -25,31 +38,43 @@ void *font_mgr::register_font(const LOGFONTW *attr_buf, DWORD buf_size)
 	std::map<std::wstring, font_entry>::const_iterator font_iter = _font_registry.find(font_face);
 	if (font_iter == _font_registry.end())
 	{
-		const font_entry new_font_data = {linked_hfont, metric_buf};
-		_font_registry[font_face] = new_font_data;
-		dc_pool_instance.free(font_holder);
+		lock l(lock::SERVER_FONT_MGR);
+		font_iter = _font_registry.find(font_face);
+		if (font_iter == _font_registry.end())
+		{
+			const font_entry new_font_data = {linked_hfont, metric_buf};
+			_font_registry[font_face] = new_font_data;
 
-		return &_font_registry[font_face];
+			return &_font_registry[font_face];
+		}
 	}
 
 	// font existed, use existing font
 	DeleteObject(linked_hfont);
-	dc_pool_instance.free(font_holder);
 
 	return const_cast<font_entry *>(&font_iter->second);
 }
 
-DWORD font_mgr::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const
+DWORD font_mgr::get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size, HDC hdc) const
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
-
-	HDC font_holder = dc_pool_instance.claim();
-	assert(font_holder != NULL);
+	HDC font_holder;
+	
+	if (hdc == NULL)
+	{
+		font_holder = dc_pool_instance.claim();
+		assert(font_holder != NULL);
+	}
+	else
+	{
+		font_holder = hdc;
+	}
 	SelectObject(font_holder, curr_font->font_handle);
 
 	const DWORD data_size = GetFontData(font_holder, table, offset, data_buf, buf_size);
 
-	dc_pool_instance.free(font_holder);
+	if (hdc == NULL)
+		dc_pool_instance.free(font_holder);
 
 	return data_size;
 }
@@ -61,19 +86,35 @@ const std::vector<BYTE> *font_mgr::get_font_metrics(void *font_id) const
 	return &curr_font->metric_buf;
 }
 
-DWORD font_mgr::get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi) const
+DWORD font_mgr::get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi, HDC hdc) const
 {
 	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
-
-	HDC font_holder = dc_pool_instance.claim();
-	assert(font_holder != NULL);
+	HDC font_holder;
+	
+	if (hdc == NULL)
+	{
+		font_holder = dc_pool_instance.claim();
+		assert(font_holder != NULL);
+	}
+	else
+	{
+		font_holder = hdc;
+	}
 	SelectObject(font_holder, curr_font->font_handle);
 
 	const DWORD converted = GetGlyphIndices(font_holder, str, count, gi, GGI_MARK_NONEXISTING_GLYPHS);
 
-	dc_pool_instance.free(font_holder);
+	if (hdc == NULL)
+		dc_pool_instance.free(font_holder);
 
 	return converted;
+}
+
+HFONT font_mgr::select_font(void *font_id, HDC hdc) const
+{
+	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
+
+	return reinterpret_cast<HFONT>(SelectObject(hdc, curr_font->font_handle));
 }
 
 FT_Stream font_mgr::lookup_stream(void *font_id) const

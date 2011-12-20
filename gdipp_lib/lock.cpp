@@ -4,24 +4,25 @@
 namespace gdipp
 {
 
-std::map<unsigned int, CRITICAL_SECTION *> locks;
+std::vector<CRITICAL_SECTION> lock::_locks;
 
-lock::lock(char *lock_sig)
+void lock::initialize_locks()
 {
-	uint32_t lock_key;
-	MurmurHash3_x86_32(lock_sig, static_cast<int>(strlen(lock_sig)), 0, &lock_key);
+	_locks.resize(LAST_LOCK_TYPE);
+	for (int i = 0; i < LAST_LOCK_TYPE; ++i)
+		InitializeCriticalSection(&_locks[i]);
+}
 
-	std::map<unsigned int, CRITICAL_SECTION *>::const_iterator lock_iter = locks.find(lock_key);
+void lock::destory_locks()
+{
+	const size_t lock_count = _locks.size();
+	for (size_t i = 0; i < lock_count; ++i)
+		DeleteCriticalSection(&_locks[i]);
+}
 
-	if (lock_iter == locks.end())
-	{
-		_cs = new CRITICAL_SECTION;
-		InitializeCriticalSection(_cs);
-		locks[lock_key] = _cs;
-	}
-	else
-		_cs = lock_iter->second;
-
+lock::lock(LOCK_TYPE lock_type)
+{
+	_cs = &_locks[lock_type];
 	EnterCriticalSection(_cs);
 }
 

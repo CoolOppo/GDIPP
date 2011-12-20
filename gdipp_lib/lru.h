@@ -24,7 +24,7 @@ public:
 
 	bool access(const T data, T &erased)
 	{
-		lock l("lru");
+		lock l(lock::SERVER_LRU);
 
 		bool overflow = false;
 

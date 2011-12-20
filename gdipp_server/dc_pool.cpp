@@ -25,7 +25,7 @@ HDC dc_pool::claim()
 	// if no resource exists, create one by calling create() of the template class
 	// otherwise, remove one from the free resource set and add to busy set
 
-	lock l("pool");
+	lock l(lock::SERVER_DC_POOL);
 
 	HDC hdc;
 
@@ -35,8 +35,8 @@ HDC dc_pool::claim()
 	}
 	else
 	{
-		hdc = *_free.begin();
-		_free.erase(_free.begin());
+		hdc = _free.front();
+		_free.pop_front();
 	}
 	_busy.insert(hdc);
 
@@ -47,7 +47,7 @@ bool dc_pool::free(HDC hdc)
 {
 	// return claimed resource back to the pool
 
-	lock l("pool");
+	lock l(lock::SERVER_DC_POOL);
 
 	std::set<HDC>::const_iterator busy_iter = _busy.find(hdc);
 	if (busy_iter == _busy.end())

@@ -2,12 +2,12 @@
 #include "rpc_server.h"
 #include "gdipp_config/render_config_cache.h"
 #include "gdipp_lib/helper.h"
+#include "gdipp_lib/lock.h"
 #include "gdipp_rpc/gdipp_rpc.h"
+#include "gdipp_server/freetype.h"
 #include "gdipp_server/ggo_renderer.h"
 #include "gdipp_server/global.h"
 #include "gdipp_server/helper.h"
-
-#include "gdipp_lib/debug.h"
 
 namespace gdipp
 {
@@ -140,6 +140,9 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	//bool b_ret;
 	RPC_STATUS rpc_status;
 
+	lock::initialize_locks();
+	initialize_freetype();
+
 	//b_ret = rpc_index_initialize();
 	//if (!b_ret)
 	//	return 1;
@@ -175,6 +178,9 @@ bool stop_gdipp_rpc_server()
 	//b_ret = rpc_index_shutdown();
 	//return b_ret;
 
+	destroy_freetype();
+	lock::destory_locks();
+
 	return true;
 }
 
@@ -197,14 +203,17 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	/* [in] */ unsigned short bits_per_pixel,
 	/* [out] */ GDIPP_RPC_SESSION_HANDLE *h_session)
 {
-	// register font with given LOGFONT structure
-	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
-	void *font_id = gdipp::font_mgr_instance.register_font(logfont, logfont_size);
-	if (font_id == NULL)
-		return NULL;
-
 	HDC hdc = gdipp::dc_pool_instance.claim();
 	assert(hdc != NULL);
+
+	// register font with given LOGFONT structure
+	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
+	void *font_id = gdipp::font_mgr_instance.register_font(logfont, logfont_size, hdc);
+	if (font_id == NULL)
+	{
+		gdipp::dc_pool_instance.free(hdc);
+		return RPC_S_INVALID_ARG;
+	}
 
 	gdipp::rpc_session *new_session = reinterpret_cast<gdipp::rpc_session *>(MIDL_user_allocate(sizeof(gdipp::rpc_session)));
 
@@ -219,7 +228,10 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		metric_face_name(outline_metrics));
 
 	if (!gdipp::get_render_mode(new_session->render_config->render_mode, bits_per_pixel, logfont->lfQuality, new_session->render_mode))
-		return NULL;
+	{
+		gdipp::dc_pool_instance.free(hdc);
+		return RPC_S_INVALID_ARG;
+	}
 
 	new_session->font_id = font_id;
 	new_session->hdc = hdc;
@@ -352,7 +364,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		gdipp::glyph_run *new_glyph_run = new gdipp::glyph_run(count);
 		b_ret = curr_session->renderer->render(!!is_glyph_index, str, count, new_glyph_run);
 		if (!b_ret)
-			return false;
+			return RPC_S_OUT_OF_MEMORY;
 
 		// and cache it
 		gdipp::glyph_cache_instance.store_glyph_run(curr_session->render_trait, string_id, new_glyph_run);

@@ -38,32 +38,23 @@ render_config_cache::~render_config_cache()
 
 const render_config_static *render_config_cache::get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
 {
-	const render_config_static *rcs;
-
 	const uint32_t trait = get_render_config_trait(bold, italic, height, font_name);
 	std::map<uint32_t, const render_config_static *>::const_iterator config_iter = _cache.find(trait);
 	if (config_iter == _cache.end())
 	{
-		lock l("render_config_cache");
+		lock l(lock::CONFIG_RENDER_CACHE);
 		config_iter = _cache.find(trait);
 		if (config_iter == _cache.end())
 		{
-			rcs = find_font_render_config(bold, italic, height, font_name);
+			const render_config_static *rcs = find_font_render_config(bold, italic, height, font_name);
 			if (rcs == NULL)
 				rcs = _default_config;
 			_cache.insert(std::pair<uint32_t, const render_config_static *>(trait, rcs));
-		}
-		else
-		{
-			rcs = config_iter->second;
+			return rcs;
 		}
 	}
-	else
-	{
-		rcs = config_iter->second;
-	}
-
-	return rcs;
+	
+	return config_iter->second;
 }
 
 const render_config_static *render_config_cache::find_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name) const

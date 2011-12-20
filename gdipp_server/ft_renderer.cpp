@@ -130,7 +130,7 @@ bool ft_renderer::generate_outline_glyph(FT_Glyph *glyph,
 
 	{
 		// the FreeType function seems not thread-safe
-		lock l("freetype");
+		lock("freetype");
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
 			return NULL;

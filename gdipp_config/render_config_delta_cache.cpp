@@ -41,7 +41,7 @@ render_config_delta render_config_delta_cache::get_font_render_config_delta(bool
 	std::map<uint32_t, const render_config_delta *>::const_iterator config_iter = _cache.find(trait);
 	if (config_iter == _cache.end())
 	{
-		lock l("render_config_delta_cache");
+		lock l(lock::CONFIG_RENDER_CONFIG_DELTA_CACHE);
 		config_iter = _cache.find(trait);
 		if (config_iter == _cache.end())
 		{

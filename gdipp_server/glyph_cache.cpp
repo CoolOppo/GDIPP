@@ -16,14 +16,21 @@ const FT_Glyph glyph_cache::lookup_glyph(unsigned int font_trait, FT_UInt index,
 
 	std::map<uint64_t, const FT_Glyph>::const_iterator glyph_iter = _glyph_store.find(char_id);
 	if (glyph_iter == _glyph_store.end())
-		return NULL;
-	else
-		return glyph_iter->second;
+	{
+		lock l(lock::SERVER_GLYPH_CACHE);
+		glyph_iter = _glyph_store.find(char_id);
+		if (glyph_iter == _glyph_store.end())
+			return NULL;
+	}
+	
+	return glyph_iter->second;
 }
 
 bool glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_glyph_index, const FT_Glyph glyph)
 {
 	const uint64_t char_id = get_char_id(font_trait, index, is_glyph_index);
+
+	lock l(lock::SERVER_GLYPH_CACHE);
 
 	const std::pair<std::map<uint64_t, const FT_Glyph>::const_iterator, bool> glyph_insert_ret = _glyph_store.insert(std::pair<uint64_t, const FT_Glyph>(char_id, glyph));
 
@@ -32,7 +39,7 @@ bool glyph_cache::store_glyph(unsigned int font_trait, FT_UInt index, bool is_gl
 
 const glyph_run *glyph_cache::lookup_glyph_run(unsigned int font_trait, uint128_t string_id) const
 {
-	lock l("glyph_run_cache");
+	lock l(lock::SERVER_GLYPH_RUN_CACHE);
 
 	std::map<uint128_t, hash_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
 	if (str_iter == _glyph_run_store.end())
@@ -47,10 +54,10 @@ const glyph_run *glyph_cache::lookup_glyph_run(unsigned int font_trait, uint128_
 
 bool glyph_cache::store_glyph_run(unsigned int font_trait, uint128_t string_id, glyph_run *a_glyph_run)
 {
+	lock l(lock::SERVER_GLYPH_RUN_CACHE);
+
 	bool b_ret;
 	uint128_t erased_str;
-
-	lock l("glyph_run_cache");
 
 	b_ret = _glyph_run_lru.access(string_id, erased_str);
 	if (b_ret)

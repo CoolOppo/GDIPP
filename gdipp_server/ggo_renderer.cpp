@@ -71,17 +71,13 @@ bool ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_r
 			new_glyph = glyph_cache_instance.lookup_glyph(_session->render_trait, lpString[i], is_glyph_index);
 			if (new_glyph == NULL)
 			{
-				// double-check lock
-				lock l("glyph_cache");
-				new_glyph = glyph_cache_instance.lookup_glyph(_session->render_trait, lpString[i], is_glyph_index);
-				if (new_glyph == NULL)
-					new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+				new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
 			}
 			else
 			{
 				b_ret = get_glyph_metrics(lpString[i], glyph_metrics);
 				if (!b_ret)
-					return 0;
+					return b_ret;
 			}
 		}
 
@@ -242,7 +238,7 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 
 		{
 			// the FreeType function seems not thread-safe
-			lock l("freetype");
+			lock l(lock::SERVER_FREETYPE);
 			ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _session->render_mode, NULL, false);
 			if (ft_error != 0)
 				return NULL;

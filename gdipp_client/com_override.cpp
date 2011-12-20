@@ -87,7 +87,7 @@ IFACEMETHODIMP CreateDxgiSurfaceRenderTarget_hook(
 
 	if (DrawGlyphRun_orig == NULL)
 	{
-		lock l("com_hook");
+		lock l(lock::CLIENT_COM_HOOK);
 		if (DrawGlyphRun_orig == NULL)
 		{
 			const void **vfptr = *reinterpret_cast<const void ***>(*renderTarget);
@@ -119,7 +119,7 @@ HRESULT WINAPI D2D1CreateFactory_hook(D2D1_FACTORY_TYPE factoryType, REFIID riid
 
 	if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 	{
-		lock l("com_hook");
+		lock l(lock::CLIENT_COM_HOOK);
 		if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 		{
 			ID2D1Factory *pIFactory = *reinterpret_cast<ID2D1Factory **>(ppIFactory);

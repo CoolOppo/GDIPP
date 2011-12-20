@@ -13,10 +13,11 @@ namespace gdipp
 class font_mgr
 {
 public:
-	void *register_font(const LOGFONTW *attr_buf, DWORD buf_size);
-	DWORD get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size) const;
+	void *register_font(const LOGFONTW *attr_buf, DWORD buf_size, HDC hdc = NULL);
+	DWORD get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size, HDC hdc = NULL) const;
 	const std::vector<BYTE> *get_font_metrics(void *font_id) const;
-	DWORD get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi) const;
+	DWORD get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi, HDC hdc = NULL) const;
+	HFONT select_font(void *font_id, HDC hdc) const;
 
 	FT_Stream lookup_stream(void *font_id) const;
 	ULONG lookup_face_index(void *font_id) const;

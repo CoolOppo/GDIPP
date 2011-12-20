@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "gdipp_config/constant_hook.h"
 #include "gdipp_lib/helper.h"
-#include "gdipp_server/freetype.h"
 #include "gdipp_server/global.h"
 #include "gdipp_server/rpc_server.h"
 
@@ -206,8 +205,6 @@ VOID CALLBACK exit_cleanup(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
 		assert(wait_ret == WAIT_OBJECT_0);
 	}
 
-	destroy_freetype();
-
 	set_svc_status(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
@@ -229,8 +226,6 @@ void svc_init()
 
 	// report running status when initialization is complete
 	set_svc_status(SERVICE_RUNNING, NO_ERROR, 0);
-
-	initialize_freetype();
 
 	// initialize RPC for font service
 	h_rpc_thread = CreateThread(NULL, 0, start_gdipp_rpc_server, NULL, 0, NULL);

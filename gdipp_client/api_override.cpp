@@ -11,10 +11,6 @@
 namespace gdipp
 {
 
-#ifdef _DEBUG
-const wchar_t *debug_text = L"";
-#endif // _DEBUG
-
 std::set<HDC> hdc_in_path;
 
 bool is_valid_dc(HDC hdc)
@@ -131,24 +127,26 @@ bool fetch_glyph_run (bool is_glyph_index,
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	bool b_ret;
+	dc_context context;
+	gdipp_rpc_bitmap_glyph_run glyph_run = {};
 
 	// all GDI text painting functions calls ExtTextOutW eventually
 
 	// no text to output
 	if (lpString == NULL || c == 0)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
 	// rectangle is required but not specified
 	// invalid call
 	if (((options & ETO_OPAQUE) || (options & ETO_CLIPPED)) && (lprect == NULL))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
 	// completely clipped
 	if ((options & ETO_CLIPPED) && IsRectEmpty(lprect))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
 	if (!is_valid_dc(hdc))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
 	const bool is_glyph_index = !!(options & ETO_GLYPH_INDEX);
 	const bool is_pdy = !!(options & ETO_PDY);
@@ -161,49 +159,46 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	//is_target_spec &= !(options & ETO_GLYPH_INDEX);
 	//is_target_spec &= (options == 4102);
 	//is_target_spec &= (c < 1);
-
 	if (!is_target_spec)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
-	if (!is_target_text(hdc, is_glyph_index, lpString, 0, debug_text, 0))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	const wchar_t *debug_text = NULL;
+	//const wchar_t *debug_text = L"About";
+	if (!is_target_text(hdc, is_glyph_index, lpString, c, debug_text, 0))
+		goto fail_safe_text_out;
 #endif // _DEBUG
 
 	// uncomment this lock to make rendering single-threaded
 	//gdipp::lock("debug");
 
 	// initialize the context of the current DC
-	dc_context context;
 	if (!context.init(hdc))
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
 	// create painter and paint the glyph run
 	error_status_t e;
 	GDIPP_RPC_SESSION_HANDLE h_session = NULL;
 	e = gdipp_rpc_begin_session(h_gdipp_rpc, reinterpret_cast<const byte *>(&context.log_font), sizeof(context.log_font), context.bmp_header.biBitCount, &h_session);
 	if (e != 0)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+		goto fail_safe_text_out;
 
-	gdipp_rpc_bitmap_glyph_run glyph_run = {};
 	e = gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &glyph_run);
+	gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
 	if (e != 0)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
-
-	e = gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
-	if (e != 0)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	{
+		goto fail_safe_text_out;
+	}
 
 	painter *painter;
-	/*switch (context.setting_cache->renderer)
+	switch (client_config_instance.painter)
 	{
-	case RENDERER_WIC:
-		painter = new gdimm_wic_painter;
+	case client_config::PAINTER_D2D:
+		//painter = new gdimm_wic_painter;
 		break;
 	default:
 		painter = new gdi_painter;
 		break;
-	}*/
-	painter = new gdi_painter;
+	}
 
 	b_ret = painter->begin(&context);
 	if (b_ret)
@@ -217,10 +212,11 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	}
 	delete painter;
 
-	if (!b_ret)
-		return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
+	if (b_ret)
+		return TRUE;
 
-	return TRUE;
+fail_safe_text_out:
+	return ExtTextOutW(hdc, x, y, options, lprect, lpString, c, lpDx);
 }
 
 int WINAPI DrawTextExA_hook(HDC hdc, LPSTR lpchText, int cchText, LPRECT lprc, UINT format, LPDRAWTEXTPARAMS lpdtp)

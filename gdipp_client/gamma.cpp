@@ -17,7 +17,7 @@ const BYTE *gamma::get_ramp(double gamma)
 	if (iter == _gamma_ramps.end())
 	{
 		// double-check lock
-		lock l("gamma");
+		lock l(lock::CLIENT_GAMMA);
 		iter = _gamma_ramps.find(gamma);
 		if (iter == _gamma_ramps.end())
 			init_ramp(gamma);
