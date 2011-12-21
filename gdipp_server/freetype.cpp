@@ -8,6 +8,7 @@ namespace gdipp
 FT_Library ft_lib;
 FTC_Manager ft_cache_man;
 FTC_ImageCache ft_glyph_cache;
+FT_Glyph empty_outline_glyph;
 
 void initialize_freetype()
 {
@@ -31,6 +32,8 @@ void initialize_freetype()
 
 	ft_error = FTC_ImageCache_New(ft_cache_man, &ft_glyph_cache);
 	assert(ft_error == 0);
+
+	empty_outline_glyph = make_empty_outline_glyph();
 }
 
 void destroy_freetype()
@@ -50,6 +53,23 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 	args.stream = font_mgr_instance.lookup_stream(face_id);
 
 	return FT_Open_Face(library, &args, font_mgr_instance.lookup_face_index(face_id), aface);
+}
+
+FT_Glyph make_empty_outline_glyph()
+{
+	FT_Glyph empty_glyph;
+
+	FT_Error ft_error;
+
+	FT_GlyphSlotRec glyph_slot = {};
+	glyph_slot.library = ft_lib;
+	glyph_slot.format = FT_GLYPH_FORMAT_OUTLINE;
+
+	ft_error = FT_Get_Glyph(&glyph_slot, &empty_glyph);
+	if (ft_error != 0)
+		return NULL;
+
+	return empty_glyph;
 }
 
 }

@@ -6,8 +6,6 @@
 #include "gdipp_lib/lock.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
-#include "gdipp_lib/debug.h"
-
 namespace gdipp
 {
 

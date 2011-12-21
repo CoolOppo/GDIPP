@@ -33,3 +33,5 @@
 //#include "sqlite3.h"
 
 #include "gdipp_server/fassert.h"
+
+#include "gdipp_lib/debug.h"

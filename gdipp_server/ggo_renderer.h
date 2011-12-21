@@ -17,7 +17,7 @@ private:
 	bool get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
 	const FT_Glyph outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_metrics) const;
 
-	static FT_Glyph empty_outline_glyph;
+	static FT_Glyph _empty_outline_glyph;
 
 	UINT _ggo_format;
 	MAT2 _matrix;

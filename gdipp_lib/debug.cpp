@@ -48,14 +48,17 @@ void debug_integer(size_t num, bool new_line)
 	}
 }
 
-void debug_string(const wchar_t *str)
+void debug_string(const wchar_t *str, bool new_line)
 {
 	FILE *f;
 	_wfopen_s(&f, debug_file_name, L"a+");
 
 	if (f != NULL)
 	{
-		fwprintf(f, L"%s\n", str);
+		if (new_line)
+			fwprintf(f, L"%s\n", str);
+		else
+			fwprintf(f, L"%s", str);
 		fclose(f);
 	}
 }

@@ -203,38 +203,43 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	/* [in] */ unsigned short bits_per_pixel,
 	/* [out] */ GDIPP_RPC_SESSION_HANDLE *h_session)
 {
-	HDC hdc = gdipp::dc_pool_instance.claim();
-	assert(hdc != NULL);
+	HDC session_hdc = gdipp::dc_pool_instance.claim();
+	if (session_hdc == NULL)
+		return RPC_S_OUT_OF_MEMORY;
 
 	// register font with given LOGFONT structure
 	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
-	void *font_id = gdipp::font_mgr_instance.register_font(logfont, logfont_size, hdc);
-	if (font_id == NULL)
+	void *session_font_id = gdipp::font_mgr_instance.register_font(logfont, logfont_size, session_hdc);
+	if (session_font_id == NULL)
 	{
-		gdipp::dc_pool_instance.free(hdc);
+		// revert allocations
+		gdipp::dc_pool_instance.free(session_hdc);
+		return RPC_S_INVALID_ARG;
+	}
+
+	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(session_font_id);
+	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(&(*metric_buf)[0]);
+	// generate config trait and retrieve font-specific config
+	const LONG point_size = (logfont->lfHeight > 0 ? logfont->lfHeight : -MulDiv(logfont->lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
+	const char weight_class = gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight));
+	const gdipp::render_config_static *session_render_config = gdipp::font_render_config_cache_instance.get_font_render_config(!!weight_class,
+		!!outline_metrics->otmTextMetrics.tmItalic,
+		point_size,
+		metric_face_name(outline_metrics));
+
+	FT_Render_Mode session_render_mode;
+	if (!gdipp::get_render_mode(session_render_config->render_mode, bits_per_pixel, logfont->lfQuality, session_render_mode))
+	{
+		gdipp::dc_pool_instance.free(session_hdc);
 		return RPC_S_INVALID_ARG;
 	}
 
 	gdipp::rpc_session *new_session = reinterpret_cast<gdipp::rpc_session *>(MIDL_user_allocate(sizeof(gdipp::rpc_session)));
 
-	const std::vector<BYTE> *metric_buf = gdipp::font_mgr_instance.get_font_metrics(font_id);
-	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(&(*metric_buf)[0]);
-	// generate config trait and retrieve font-specific config
-	const LONG point_size = (logfont->lfHeight > 0 ? logfont->lfHeight : -MulDiv(logfont->lfHeight, 72, outline_metrics->otmTextMetrics.tmDigitizedAspectY));
-	const char weight_class = gdipp::get_gdi_weight_class(static_cast<unsigned short>(outline_metrics->otmTextMetrics.tmWeight));
-	new_session->render_config = gdipp::font_render_config_cache_instance.get_font_render_config(!!weight_class,
-		!!outline_metrics->otmTextMetrics.tmItalic,
-		point_size,
-		metric_face_name(outline_metrics));
-
-	if (!gdipp::get_render_mode(new_session->render_config->render_mode, bits_per_pixel, logfont->lfQuality, new_session->render_mode))
-	{
-		gdipp::dc_pool_instance.free(hdc);
-		return RPC_S_INVALID_ARG;
-	}
-
-	new_session->font_id = font_id;
-	new_session->hdc = hdc;
+	new_session->font_id = session_font_id;
+	new_session->render_config = session_render_config;
+	new_session->hdc = session_hdc;
+	new_session->render_mode = session_render_mode;
 	new_session->render_trait = gdipp::generate_render_trait(logfont, new_session->render_mode);
 
 	// create session renderer
@@ -255,7 +260,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		break;
 	}*/
 	new_session->renderer = new gdipp::ggo_renderer(new_session);
-	
+
 	*h_session = reinterpret_cast<GDIPP_RPC_SESSION_HANDLE>(new_session);
 	return RPC_S_OK;
 }
@@ -421,14 +426,14 @@ error_status_t gdipp_rpc_end_session(
     /* [out][in] */ GDIPP_RPC_SESSION_HANDLE *h_session)
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(*h_session);
+	if (curr_session == NULL)
+		return RPC_S_INVALID_ARG;
 
-	if (!gdipp::dc_pool_instance.free(curr_session->hdc))
-		return RPC_S_OUT_OF_MEMORY;
-
+	gdipp::dc_pool_instance.free(curr_session->hdc);
 	delete curr_session->renderer;
 	MIDL_user_free(*h_session);
-	*h_session = NULL;
 
+	*h_session = NULL;
 	return RPC_S_OK;
 }
 

@@ -8,30 +8,9 @@
 namespace gdipp
 {
 
-FT_Glyph ggo_renderer::empty_outline_glyph;
-
-const FT_Glyph make_empty_outline_glyph()
-{
-	FT_Glyph empty_glyph;
-
-	FT_Error ft_error;
-
-	FT_GlyphSlotRec glyph_slot = {};
-	glyph_slot.library = ft_lib;
-	glyph_slot.format = FT_GLYPH_FORMAT_OUTLINE;
-
-	ft_error = FT_Get_Glyph(&glyph_slot, &empty_glyph);
-	if (ft_error != 0)
-		return NULL;
-
-	return empty_glyph;
-}
-
 ggo_renderer::ggo_renderer(rpc_session *render_session)
 	: renderer(render_session)
 {
-	empty_outline_glyph = make_empty_outline_glyph();
-	assert(empty_outline_glyph != NULL);
 }
 
 bool ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run)
