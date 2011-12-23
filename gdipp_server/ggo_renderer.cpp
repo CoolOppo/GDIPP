@@ -44,13 +44,15 @@ bool ggo_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_r
 		FT_Glyph new_glyph;
 
 		// we do not care about non-printable characters
-		// solution for Windows Vista/7 Date
+		// solution for Windows Vista/7 Date glitch
 		if (is_glyph_index || !iswcntrl(lpString[i]))
 		{
-			new_glyph = glyph_cache_instance.lookup_glyph(_session->render_trait, lpString[i], is_glyph_index);
+			const glyph_cache::char_id_type char_id = glyph_cache::get_char_id(_session->render_trait, lpString[i], is_glyph_index);
+			new_glyph = glyph_cache_instance.lookup_glyph(char_id);
 			if (new_glyph == NULL)
 			{
 				new_glyph = outline_to_bitmap(lpString[i], glyph_metrics);
+				glyph_cache_instance.store_glyph(char_id, new_glyph);
 			}
 			else
 			{
@@ -222,8 +224,6 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 			if (ft_error != 0)
 				return NULL;
 		}
-
-		glyph_cache_instance.store_glyph(_session->render_trait, ch, !!(_ggo_format & GGO_GLYPH_INDEX), generic_glyph);
 
 		return generic_glyph;
 	}

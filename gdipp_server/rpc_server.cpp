@@ -16,7 +16,7 @@ HANDLE process_heap = GetProcessHeap();
 
 render_config_cache font_render_config_cache_instance(config_file_instance);
 
-uint32_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
+uint128_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
 {
 	// the LOGFONTW structure and render mode are the minimal set that uniquely determine font metrics used by any renderer
 
@@ -25,11 +25,11 @@ uint32_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
 	const int lf_facename_size = static_cast<const int>((wcslen(logfont->lfFaceName) * sizeof(wchar_t)));
 	const int lf_total_size = lf_metric_size + lf_facename_size;
 
-	uint32_t render_trait;
+	uint128_t render_trait;
 #ifdef _M_X64
-	MurmurHash3_x64_32(logfont, lf_total_size, render_mode, &render_trait);
+	MurmurHash3_x64_128(logfont, lf_total_size, render_mode, &render_trait);
 #else
-	MurmurHash3_x86_32(logfont, lf_total_size, render_mode, &render_trait);
+	MurmurHash3_x86_128(logfont, lf_total_size, render_mode, &render_trait);
 #endif
 	return render_trait;
 }
@@ -342,7 +342,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_bitmap_glyph_run( 
 	/* [in] */ handle_t h_gdipp_rpc,
 	/* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-	/* [string][in] */ const wchar_t *str,
+	/* [string][in] */ const wchar_t *string,
 	/* [in] */ unsigned int count,
 	/* [in] */ boolean is_glyph_index,
 	/* [out] */ gdipp_rpc_bitmap_glyph_run *glyph_run_ptr)
@@ -354,25 +354,20 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	bool b_ret;
 
 	// generate unique identifier for the string
-	gdipp::uint128_t string_id;
-#ifdef _M_X64
-	MurmurHash3_x64_128(str, count * sizeof(wchar_t), is_glyph_index, &string_id);
-#else
-	MurmurHash3_x86_128(str, count * sizeof(wchar_t), is_glyph_index, &string_id);
-#endif // _M_X64
+	const uint128_t string_id = gdipp::glyph_cache::get_string_id(string, count, !!is_glyph_index);
 
 	// check if a glyph run cached for the same rendering environment and string
-	const gdipp::glyph_run *glyph_run = gdipp::glyph_cache_instance.lookup_glyph_run(curr_session->render_trait, string_id);
+	const gdipp::glyph_run *glyph_run = gdipp::glyph_cache_instance.lookup_glyph_run(string_id, curr_session->render_trait);
 	if (!glyph_run)
 	{
 		// no cached glyph run. render new glyph run
 		gdipp::glyph_run *new_glyph_run = new gdipp::glyph_run(count);
-		b_ret = curr_session->renderer->render(!!is_glyph_index, str, count, new_glyph_run);
+		b_ret = curr_session->renderer->render(!!is_glyph_index, string, count, new_glyph_run);
 		if (!b_ret)
 			return RPC_S_OUT_OF_MEMORY;
 
 		// and cache it
-		gdipp::glyph_cache_instance.store_glyph_run(curr_session->render_trait, string_id, new_glyph_run);
+		gdipp::glyph_cache_instance.store_glyph_run(string_id, curr_session->render_trait, new_glyph_run);
 		glyph_run = new_glyph_run;
 	}
 
@@ -413,7 +408,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_outline_glyph_run( 
 	/* [in] */ handle_t h_gdipp_rpc,
 	/* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-	/* [string][in] */ const wchar_t *str,
+	/* [string][in] */ const wchar_t *string,
 	/* [in] */ unsigned int count,
 	/* [in] */ boolean is_glyph_index,
 	/* [out] */ gdipp_rpc_outline_glyph_run *glyph_run_ptr)

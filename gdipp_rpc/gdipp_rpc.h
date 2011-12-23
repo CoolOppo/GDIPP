@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Fri Dec 09 19:54:45 2011
+/* at Fri Dec 23 15:31:30 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
@@ -63,7 +63,7 @@ typedef struct gdipp_rpc_bitmap_glyph
     int width;
     int pitch;
     byte *buffer;
-    unsigned char pixel_mode;
+    int pixel_mode;
     } 	gdipp_rpc_bitmap_glyph;
 
 typedef struct gdipp_rpc_outline_glyph
@@ -134,7 +134,7 @@ typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_bitmap_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-    /* [string][in] */ const wchar_t *str,
+    /* [string][in] */ const wchar_t *string,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index,
     /* [out] */ gdipp_rpc_bitmap_glyph_run *glyph_run_ptr);
@@ -142,7 +142,7 @@ typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_make_outline_glyph_run( 
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
-    /* [string][in] */ const wchar_t *str,
+    /* [string][in] */ const wchar_t *string,
     /* [in] */ unsigned int count,
     /* [in] */ boolean is_glyph_index,
     /* [out] */ gdipp_rpc_outline_glyph_run *glyph_run_ptr);

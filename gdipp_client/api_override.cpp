@@ -183,9 +183,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	e = gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &glyph_run);
 	gdipp_rpc_end_session(h_gdipp_rpc, &h_session);
 	if (e != 0)
-	{
 		goto fail_safe_text_out;
-	}
 
 	painter *painter;
 	switch (client_config_instance.painter)
@@ -203,12 +201,17 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	{
 		b_ret = painter->paint(x, y, options, lprect, glyph_run, lpDx);
 		painter->end();
-
-		MIDL_user_free(glyph_run.glyphs);
-		MIDL_user_free(glyph_run.ctrl_boxes);
-		MIDL_user_free(glyph_run.black_boxes);
 	}
 	delete painter;
+
+	for (UINT i = 0; i < glyph_run.count; ++i)
+	{
+		if (glyph_run.glyphs[i].buffer != NULL)
+			MIDL_user_free(glyph_run.glyphs[i].buffer);
+	}
+	MIDL_user_free(glyph_run.glyphs);
+	MIDL_user_free(glyph_run.ctrl_boxes);
+	MIDL_user_free(glyph_run.black_boxes);
 
 	if (b_ret)
 		return TRUE;

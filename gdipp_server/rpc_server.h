@@ -14,7 +14,7 @@ struct rpc_session
 	const render_config_static *render_config;
 	HDC hdc;
 	FT_Render_Mode render_mode;
-	unsigned int render_trait;
+	uint128_t render_trait;
 	renderer *renderer;
 };
 

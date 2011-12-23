@@ -28,6 +28,7 @@
 
 // MurmurHash
 #include "MurmurHash/MurmurHash3.h"
+typedef std::pair<uint64_t, uint64_t> uint128_t;
 
 // SQLite
 //#include "sqlite3.h"
