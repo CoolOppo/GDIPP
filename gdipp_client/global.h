@@ -20,6 +20,6 @@ extern client_config_static client_config_instance;
 extern gamma gamma_instance;
 extern hook hook_instance;
 extern mem_man mem_man_instance;
-extern render_config_delta_cache render_config_delta_cache_instance;
+//extern render_config_delta_cache render_config_delta_cache_instance;
 
 }

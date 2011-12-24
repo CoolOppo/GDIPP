@@ -665,13 +665,14 @@ BOOL gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_
 	if (options & ETO_CLIPPED && !IntersectRect(&grm.visible_rect, &grm.visible_rect, lprect))
 		return FALSE;
 
-	switch (glyph_run.glyphs[0].pixel_mode)
+	switch (glyph_run.render_mode)
 	{
-		case FT_PIXEL_MODE_LCD:
+		case FT_RENDER_MODE_LCD:
 			return paint_lcd(options, lprect, glyph_run, grm);
-		case FT_PIXEL_MODE_GRAY:
+		case FT_RENDER_MODE_NORMAL:
+		case FT_RENDER_MODE_LIGHT:
 			return paint_gray(options, lprect, glyph_run, grm);
-		case FT_PIXEL_MODE_MONO:
+		case FT_RENDER_MODE_MONO:
 			return paint_mono(options, lprect, glyph_run, grm);
 		default:
 			return FALSE;

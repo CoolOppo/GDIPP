@@ -12,7 +12,7 @@ render_config_delta_cache::render_config_delta_cache(const config_file &file)
 		return;
 
 	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
-	const pugi::xpath_node_set font_render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/font");
+	const pugi::xpath_node_set font_render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/server/render/font");
 	for (pugi::xpath_node_set::const_iterator node_iter = font_render_font_nodes.begin(); node_iter != font_render_font_nodes.end(); ++node_iter)
 	{
 		const pugi::xml_node curr_node = node_iter->node();
@@ -22,7 +22,7 @@ render_config_delta_cache::render_config_delta_cache(const config_file &file)
 		_font_config_deltas.push_front(std::pair<font_config_criteria, render_config_delta>(curr_criteria, curr_config_delta));			
 	}
 
-	const pugi::xpath_node_set proc_render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/process");
+	const pugi::xpath_node_set proc_render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/server/render/process");
 	for (pugi::xpath_node_set::const_iterator node_iter = proc_render_font_nodes.begin(); node_iter != proc_render_font_nodes.end(); ++node_iter)
 	{
 		const pugi::xml_node curr_node = node_iter->node();

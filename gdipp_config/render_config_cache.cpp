@@ -12,7 +12,7 @@ render_config_cache::render_config_cache(const config_file &file)
 		return;
 
 	const pugi::xml_document *config_xml_doc = reinterpret_cast<const pugi::xml_document *>(file.get_config_xml());
-	const pugi::xpath_node_set render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/font");
+	const pugi::xpath_node_set render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/server/render/font");
 	for (pugi::xpath_node_set::const_iterator node_iter = render_font_nodes.begin(); node_iter != render_font_nodes.end(); ++node_iter)
 	{
 		const pugi::xml_node curr_node = node_iter->node();

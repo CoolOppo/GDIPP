@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "ft_renderer.h"
 #include "freetype.h"
-#include <common/lock.h>
 
 const FT_OutlineGlyph ft_renderer::get_outline_glyph(wchar_t glyph_char, bool is_glyph_index)
 {

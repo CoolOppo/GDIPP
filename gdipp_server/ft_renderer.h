@@ -2,6 +2,9 @@
 
 #include "gdipp_server/renderer.h"
 
+namespace gdipp
+{
+
 class ft_renderer : public renderer
 {
 public:
@@ -31,3 +34,5 @@ private:
 
 	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
 };
+
+}

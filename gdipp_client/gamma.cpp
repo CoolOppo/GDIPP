@@ -29,9 +29,13 @@ const BYTE *gamma::get_ramp(double gamma)
 void gamma::init_ramp(double gamma)
 {
 	BYTE *new_ramp = new BYTE[256];
+	const double gamma_inv = 1 / gamma;
 
 	for (int i = 0; i < 256; ++i)
-		new_ramp[i] = static_cast<BYTE>((pow(i / 255.0, gamma) * 255));
+	{
+		double a = pow(i / 255.0, gamma);
+		new_ramp[i] = static_cast<BYTE>((pow(i / 255.0, gamma_inv) * 255));
+	}
 
 	_gamma_ramps[gamma] = new_ramp;
 }

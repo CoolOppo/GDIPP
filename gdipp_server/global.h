@@ -13,6 +13,7 @@ extern config config_instance;
 extern dc_pool dc_pool_instance;
 extern font_mgr font_mgr_instance;
 extern glyph_cache glyph_cache_instance;
+extern unsigned int server_cache_size;
 //extern sqlite3 *index_db_instance;
 
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gdipp_config/config.h"
-#include "gdipp_config/constant_render.h"
+#include "gdipp_config/constant_server.h"
 #include "gdipp_lib/api.h"
 
 namespace gdipp
@@ -17,7 +17,7 @@ public:
 		unsigned char mono;
 		unsigned char gray;
 		unsigned char subpixel;
-		bool aliased_text;
+		bool aliased;
 	};
 
 public:
@@ -30,7 +30,7 @@ public:
 	unsigned char hinting;
 	bool kerning;
 	render_mode_static render_mode;
-	render_config::RENDERER_TYPE renderer;
+	server_config::RENDERER_TYPE renderer;
 };
 
 }

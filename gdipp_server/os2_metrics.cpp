@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "os2_metrics.h"
-#include "helper_func.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
 namespace gdipp

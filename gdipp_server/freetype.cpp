@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "freetype.h"
+#include "helper.h"
 #include "gdipp_server/global.h"
+#include "gdipp_config/constant_server.h"
 
 namespace gdipp
 {
@@ -17,14 +19,15 @@ void initialize_freetype()
 	ft_error = FT_Init_FreeType(&ft_lib);
 	assert(ft_error == 0);
 
-	FT_LcdFilter lcd_filter = static_cast<FT_LcdFilter>(config_instance.get_number(L"/gdipp/freetype/lcd_filter/text()", static_cast<int>(FT_LCD_FILTER_DEFAULT)));
+	FT_LcdFilter lcd_filter = static_cast<FT_LcdFilter>(config_instance.get_number(L"/gdipp/server/freetype_lcd_filter/text()", static_cast<int>(server_config::LCD_FILTER)));
 	ft_error = FT_Library_SetLcdFilter(ft_lib, lcd_filter);
 	assert(ft_error == 0);
 
+	unsigned int b = server_cache_size >> 2;
 	ft_error = FTC_Manager_New(ft_lib,
-		config_instance.get_number(L"/gdipp/freetype/cache_max_faces/text()", 16),
-		config_instance.get_number(L"/gdipp/freetype/cache_max_sizes/text()", 32),
-		config_instance.get_number(L"/gdipp/freetype/cache_max_bytes/text()", 2097152),
+		1 >> b,
+		1 >> (b + 1),
+		1 >> (b + 18),
 		face_requester,
 		NULL,
 		&ft_cache_man);

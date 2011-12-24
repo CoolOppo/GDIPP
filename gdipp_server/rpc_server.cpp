@@ -141,6 +141,8 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	RPC_STATUS rpc_status;
 
 	lock::initialize_locks();
+	server_cache_size = min(config_instance.get_number(L"/gdipp/server/cache_size/text()", server_config::CACHE_SIZE), 24);
+	glyph_cache_instance.initialize();
 	initialize_freetype();
 
 	//b_ret = rpc_index_initialize();
@@ -151,11 +153,11 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	if (rpc_status != RPC_S_OK)
 		return 1;
 
-	rpc_status = RpcServerRegisterIf(gdipp_rpc_v0_9_s_ifspec, NULL, NULL);
+	rpc_status = RpcServerRegisterIf(gdipp_rpc_v1_0_s_ifspec, NULL, NULL);
 	if (rpc_status != RPC_S_OK)
 		return 1;
 
-	rpc_status = RpcServerListen(2, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
+	rpc_status = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
 	if (rpc_status != RPC_S_OK)
 		return 1;
 
@@ -163,7 +165,7 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	if (rpc_status != RPC_S_OK)
 		return 1;
 
-	return RPC_S_OK;
+	return 0;
 }
 
 bool stop_gdipp_rpc_server()
@@ -226,6 +228,11 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		!!outline_metrics->otmTextMetrics.tmItalic,
 		point_size,
 		metric_face_name(outline_metrics));
+	if (session_render_config->renderer == gdipp::server_config::RENDERER_CLEARTYPE)
+	{
+		gdipp::dc_pool_instance.free(session_hdc);
+		return RPC_S_OK;
+	}
 
 	FT_Render_Mode session_render_mode;
 	if (!gdipp::get_render_mode(session_render_config->render_mode, bits_per_pixel, logfont->lfQuality, session_render_mode))
@@ -243,23 +250,20 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	new_session->render_trait = gdipp::generate_render_trait(logfont, new_session->render_mode);
 
 	// create session renderer
-	/*switch (new_session->font_config->renderer)
+	switch (session_render_config->renderer)
 	{
-	case gdipp::RENDERER_CLEARTYPE:
-		break;
-	case gdipp::RENDERER_DIRECTWRITE:
-		break;
-	case gdipp::RENDERER_FREETYPE:
-		break;
-	case gdipp::RENDERER_GETGLYPHOUTLINE:
+	case gdipp::server_config::RENDERER_DIRECTWRITE:
+		//break;
+	case gdipp::server_config::RENDERER_FREETYPE:
+		//break;
+	case gdipp::server_config::RENDERER_GETGLYPHOUTLINE:
 		new_session->renderer = new gdipp::ggo_renderer(new_session);
 		break;
-	case gdipp::RENDERER_WIC:
+	case gdipp::server_config::RENDERER_WIC:
 		break;
 	default:
 		break;
-	}*/
-	new_session->renderer = new gdipp::ggo_renderer(new_session);
+	}
 
 	*h_session = reinterpret_cast<GDIPP_RPC_SESSION_HANDLE>(new_session);
 	return RPC_S_OK;
@@ -374,10 +378,11 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	// convert internal glyph run to RPC exchangable format
 
 	// allocate space for glyph run
-	glyph_run_ptr->count = glyph_run->glyphs.size();
+	glyph_run_ptr->count = static_cast<UINT>(glyph_run->glyphs.size());
 	glyph_run_ptr->glyphs = reinterpret_cast<gdipp_rpc_bitmap_glyph *>(MIDL_user_allocate(sizeof(gdipp_rpc_bitmap_glyph) * glyph_run_ptr->count));
 	glyph_run_ptr->ctrl_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * glyph_run_ptr->count));
 	glyph_run_ptr->black_boxes = reinterpret_cast<RECT *>(MIDL_user_allocate(sizeof(RECT) * glyph_run_ptr->count));
+	glyph_run_ptr->render_mode = curr_session->render_mode;
 
 	for (unsigned int i = 0; i < glyph_run_ptr->count; ++i)
 	{
@@ -398,8 +403,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		glyph_run_ptr->glyphs[i].pitch = bmp_glyph->bitmap.pitch;
 		const int buffer_size = bmp_glyph->bitmap.rows * abs(bmp_glyph->bitmap.pitch);
 		glyph_run_ptr->glyphs[i].buffer = reinterpret_cast<byte *>(MIDL_user_allocate(buffer_size));
-		memcpy(glyph_run_ptr->glyphs[i].buffer, bmp_glyph->bitmap.buffer, buffer_size), 
-		glyph_run_ptr->glyphs[i].pixel_mode = bmp_glyph->bitmap.pixel_mode;
+		memcpy(glyph_run_ptr->glyphs[i].buffer, bmp_glyph->bitmap.buffer, buffer_size);
 	}
 
 	return RPC_S_OK;
@@ -430,12 +434,6 @@ error_status_t gdipp_rpc_end_session(
 
 	*h_session = NULL;
 	return RPC_S_OK;
-}
-
-void gdipp_rpc_debug( 
-    /* [in] */ handle_t h_gdipp_rpc)
-{
-	int a = 0;
 }
 
 void __RPC_USER GDIPP_RPC_SESSION_HANDLE_rundown(GDIPP_RPC_SESSION_HANDLE h_session)

@@ -38,23 +38,5 @@ bool config_file::empty() const
 	pugi::xml_document *config_xml_doc = reinterpret_cast<pugi::xml_document *>(_config_xml);
 	return config_xml_doc->empty();
 }
-/*
-render_config config_file::get_font_render_config(bool bold, bool italic, LONG height, const wchar_t *font_name)
-{
-	if (_cache == NULL)
-	{
-		render_config render_conf;
 
-		if (_config_xml == NULL)
-			return render_conf;
-
-		pugi::xml_document *config_xml_doc = reinterpret_cast<pugi::xml_document *>(_config_xml);
-
-		const pugi::xpath_node_set render_font_nodes = config_xml_doc->select_nodes(L"/gdipp/render/font");
-		_cache = new render_config_cache(&render_font_nodes);	
-	}
-
-	return _cache->get_render_config(bold, italic, height, font_name);
-}
-*/
 }

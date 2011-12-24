@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Fri Dec 23 15:31:30 2011
+/* at Sat Dec 24 00:48:05 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
@@ -63,7 +63,6 @@ typedef struct gdipp_rpc_bitmap_glyph
     int width;
     int pitch;
     byte *buffer;
-    int pixel_mode;
     } 	gdipp_rpc_bitmap_glyph;
 
 typedef struct gdipp_rpc_outline_glyph
@@ -81,6 +80,7 @@ typedef struct gdipp_rpc_bitmap_glyph_run
     gdipp_rpc_bitmap_glyph *glyphs;
     RECT *ctrl_boxes;
     RECT *black_boxes;
+    int render_mode;
     } 	gdipp_rpc_bitmap_glyph_run;
 
 typedef struct gdipp_rpc_outline_glyph_run
@@ -89,6 +89,7 @@ typedef struct gdipp_rpc_outline_glyph_run
     gdipp_rpc_outline_glyph *glyphs;
     RECT *ctrl_boxes;
     RECT *black_boxes;
+    int render_mode;
     } 	gdipp_rpc_outline_glyph_run;
 
 typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
@@ -151,13 +152,10 @@ error_status_t gdipp_rpc_end_session(
     /* [in] */ handle_t h_gdipp_rpc,
     /* [out][in] */ GDIPP_RPC_SESSION_HANDLE *h_session);
 
-void gdipp_rpc_debug( 
-    /* [in] */ handle_t h_gdipp_rpc);
 
 
-
-extern RPC_IF_HANDLE gdipp_rpc_v0_9_c_ifspec;
-extern RPC_IF_HANDLE gdipp_rpc_v0_9_s_ifspec;
+extern RPC_IF_HANDLE gdipp_rpc_v1_0_c_ifspec;
+extern RPC_IF_HANDLE gdipp_rpc_v1_0_s_ifspec;
 #endif /* __gdipp_rpc_INTERFACE_DEFINED__ */
 
 /* Additional Prototypes for ALL interfaces */

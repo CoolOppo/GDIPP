@@ -2,7 +2,7 @@ import "wtypes.idl";
 
 [
 uuid(DA2AAF70-7FD7-4D0D-979F-2056463C310A),
-version(0.9)
+version(1.0)
 ]
 
 interface gdipp_rpc
@@ -15,7 +15,6 @@ interface gdipp_rpc
 		int width;
 		int pitch;
 		[size_is(rows * (pitch >= 0 ? pitch : -pitch))] byte *buffer;
-		int pixel_mode;
 	} gdipp_rpc_bitmap_glyph;
 
 	typedef struct gdipp_rpc_outline_glyph
@@ -33,6 +32,7 @@ interface gdipp_rpc
 		[size_is(count)] gdipp_rpc_bitmap_glyph *glyphs;
 		[size_is(count)] RECT *ctrl_boxes;
 		[size_is(count)] RECT *black_boxes;
+		int render_mode;
 	} gdipp_rpc_bitmap_glyph_run;
 
 	typedef struct gdipp_rpc_outline_glyph_run
@@ -41,6 +41,7 @@ interface gdipp_rpc
 		[size_is(count)] gdipp_rpc_outline_glyph *glyphs;
 		[size_is(count)] RECT *ctrl_boxes;
 		[size_is(count)] RECT *black_boxes;
+		int render_mode;
 	} gdipp_rpc_outline_glyph_run;
 
 	typedef [context_handle] void *GDIPP_RPC_SESSION_HANDLE;
@@ -56,6 +57,5 @@ interface gdipp_rpc
 	error_status_t gdipp_rpc_make_bitmap_glyph_run([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in, string] const wchar_t *string, [in] unsigned int count, [in] boolean is_glyph_index, [out] gdipp_rpc_bitmap_glyph_run *glyph_run_ptr);
 	error_status_t gdipp_rpc_make_outline_glyph_run([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in, string] const wchar_t *string, [in] unsigned int count, [in] boolean is_glyph_index, [out] gdipp_rpc_outline_glyph_run *glyph_run_ptr);
 	error_status_t gdipp_rpc_end_session([in] handle_t h_gdipp_rpc, [in, out] GDIPP_RPC_SESSION_HANDLE *h_session);
-	void gdipp_rpc_debug([in] handle_t h_gdipp_rpc);
 }
 

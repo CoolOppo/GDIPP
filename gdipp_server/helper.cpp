@@ -214,7 +214,7 @@ bool get_render_mode(const render_config_static::render_mode_static &render_mode
 		return true;
 	}
 
-	if (!render_mode_conf.aliased_text && font_quality == NONANTIALIASED_QUALITY)
+	if (!render_mode_conf.aliased && font_quality == NONANTIALIASED_QUALITY)
 		return false;
 
 	if (render_mode_conf.mono == 1 && dc_bmp_bpp == 1)

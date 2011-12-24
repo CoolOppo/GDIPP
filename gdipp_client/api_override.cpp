@@ -177,7 +177,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	error_status_t e;
 	GDIPP_RPC_SESSION_HANDLE h_session = NULL;
 	e = gdipp_rpc_begin_session(h_gdipp_rpc, reinterpret_cast<const byte *>(&context.log_font), sizeof(context.log_font), context.bmp_header.biBitCount, &h_session);
-	if (e != 0)
+	if (e != 0 || h_session == NULL)
 		goto fail_safe_text_out;
 
 	e = gdipp_rpc_make_bitmap_glyph_run(h_gdipp_rpc, h_session, lpString, c, is_glyph_index, &glyph_run);
@@ -190,7 +190,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	{
 	case client_config::PAINTER_D2D:
 		//painter = new gdimm_wic_painter;
-		break;
+		//break;
 	default:
 		painter = new gdi_painter;
 		break;

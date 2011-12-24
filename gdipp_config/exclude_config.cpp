@@ -9,7 +9,7 @@ bool exclude_config::is_process_excluded(const config &cfg, const wchar_t *proc_
 	if (proc_name == NULL)
 		return false;
 
-	const wchar_t *exclude_path = L"gdipp/exclude/process/text()";
+	const wchar_t *exclude_path = L"/gdipp/client/exclude/process/text()";
 	size_t process_count = cfg.get_string_list(exclude_path, NULL);
 	if (process_count == 0)
 		return false;

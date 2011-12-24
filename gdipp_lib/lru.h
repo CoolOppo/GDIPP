@@ -8,16 +8,16 @@ class lru_list
 {
 public:
 	lru_list()
-		: _capacity(0)
+		: _capacity(1)
 	{
 	}
 
-	explicit lru_list(size_t capacity)
+	explicit lru_list(unsigned int capacity)
 		: _capacity(capacity)
 	{
 	}
 
-	void resize(size_t new_capacity)
+	void resize(unsigned int new_capacity)
 	{
 		_capacity = new_capacity;
 	}
@@ -68,7 +68,7 @@ private:
 
 	_list_type _access_list;
 	_map_type _data_map;
-	size_t _capacity;
+	unsigned int _capacity;
 };
 
 }

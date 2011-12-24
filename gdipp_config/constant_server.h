@@ -2,7 +2,7 @@
 
 namespace gdipp
 {
-namespace render_config
+namespace server_config
 {
 
 enum RENDERER_TYPE
@@ -14,10 +14,11 @@ enum RENDERER_TYPE
 	RENDERER_WIC = 31
 };
 
-
 static const unsigned char AUTO_HINTING = 1;
+static const unsigned int CACHE_SIZE = 8;
 static const bool EMBEDDED_BITMAP = false;
 static const long EMBOLDEN = 0;
+static const FT_LcdFilter LCD_FILTER = FT_LCD_FILTER_DEFAULT;
 static const unsigned char HINTING = 1;
 static const bool KERNING = false;
 static const unsigned char RENDER_MODE_MONO = 0;
