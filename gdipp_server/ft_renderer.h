@@ -8,12 +8,12 @@ namespace gdipp
 class ft_renderer : public renderer
 {
 public:
-	const FT_OutlineGlyph get_outline_glyph(wchar_t glyph_char, bool is_glyph_index);
+	explicit ft_renderer(rpc_session *render_session);
 
 private:
-	FT_F26Dot6 get_embolden(const font_config_cache *setting_cache, char font_weight_class, char text_weight_class);
-	static void get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
-	static FT_ULong make_load_flags(const font_config_cache *setting_cache, FT_Render_Mode render_mode);
+	static FT_F26Dot6 get_embolden_diff(char font_weight_class, char text_weight_class);
+	static void get_font_width_height(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height);
+	static FT_ULong make_load_flags(const render_config_static *render_config, FT_Render_Mode render_mode);
 	static void oblique_outline(const FT_Outline *outline, double slant_adv);
 
 	bool generate_outline_glyph(FT_Glyph *glyph,
@@ -29,10 +29,10 @@ private:
 		FT_ULong load_flags,
 		bool is_italic,
 		bool request_outline,
-		unsigned int font_trait) const;
-	bool generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline);
+		uint128_t render_trait) const;
+	bool generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run, bool request_outline);
 
-	bool render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run);
+	bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
 };
 
 }

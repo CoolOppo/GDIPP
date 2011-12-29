@@ -12,7 +12,7 @@ public:
 
 	virtual bool begin(const dc_context *context);
 	virtual void end();
-	virtual bool paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, CONST INT *lpDx) = 0;
+	virtual bool paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, INT ctrl_right, INT black_right) = 0;
 
 protected:
 	const dc_context *_context;

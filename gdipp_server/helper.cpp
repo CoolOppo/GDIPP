@@ -62,6 +62,24 @@ BYTE division_by_255(short number, short numerator)
 	return (((t + 255) >> 8) + t) >> 8;
 }
 
+uint128_t generate_render_trait(const LOGFONTW *logfont, int render_mode)
+{
+	// the LOGFONTW structure and render mode are the minimal set that uniquely determine font metrics used by any renderer
+
+	// exclude the bytes after the face name, which may contain junk data
+	const int lf_metric_size = sizeof(LOGFONTW) - sizeof(logfont->lfFaceName);
+	const int lf_facename_size = static_cast<const int>((wcslen(logfont->lfFaceName) * sizeof(wchar_t)));
+	const int lf_total_size = lf_metric_size + lf_facename_size;
+
+	uint128_t render_trait;
+#ifdef _M_X64
+	MurmurHash3_x64_128(logfont, lf_total_size, render_mode, &render_trait);
+#else
+	MurmurHash3_x86_128(logfont, lf_total_size, render_mode, &render_trait);
+#endif
+	return render_trait;
+}
+
 POINT get_baseline(UINT alignment, int x, int y, int width, int ascent, int descent)
 {
 	POINT baseline = {x, y};
@@ -191,26 +209,26 @@ LOGFONTW get_log_font(HDC hdc)
 	return font_attr;
 }
 
-bool get_render_mode(const render_config_static::render_mode_static &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode &render_mode)
+bool get_render_mode(const render_config_static::render_mode_static &render_mode_conf, WORD dc_bmp_bpp, BYTE font_quality, FT_Render_Mode *render_mode)
 {
 	// return true if successfully find an appropriate render mode
 	// otherwise return false
 
 	if (render_mode_conf.mono == 2)
 	{
-		render_mode = FT_RENDER_MODE_MONO;
+		*render_mode = FT_RENDER_MODE_MONO;
 		return true;
 	}
 
 	if (render_mode_conf.gray == 2)
 	{
-		render_mode = FT_RENDER_MODE_NORMAL;
+		*render_mode = FT_RENDER_MODE_NORMAL;
 		return true;
 	}
 
 	if (render_mode_conf.subpixel == 2)
 	{
-		render_mode = FT_RENDER_MODE_LCD;
+		*render_mode = FT_RENDER_MODE_LCD;
 		return true;
 	}
 
@@ -219,13 +237,13 @@ bool get_render_mode(const render_config_static::render_mode_static &render_mode
 
 	if (render_mode_conf.mono == 1 && dc_bmp_bpp == 1)
 	{
-		render_mode = FT_RENDER_MODE_MONO;
+		*render_mode = FT_RENDER_MODE_MONO;
 		return true;
 	}
 
 	if (render_mode_conf.gray == 1 && dc_bmp_bpp == 8)
 	{
-		render_mode = FT_RENDER_MODE_NORMAL;
+		*render_mode = FT_RENDER_MODE_NORMAL;
 		return true;
 	}
 
@@ -233,7 +251,7 @@ bool get_render_mode(const render_config_static::render_mode_static &render_mode
 
 	if (render_mode_conf.subpixel == 1 && dc_bmp_bpp >= 24)
 	{
-		render_mode = FT_RENDER_MODE_LCD;
+		*render_mode = FT_RENDER_MODE_LCD;
 		return true;
 	}
 

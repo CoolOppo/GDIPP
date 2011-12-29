@@ -47,9 +47,9 @@ interface gdipp_rpc
 	typedef [context_handle] void *GDIPP_RPC_SESSION_HANDLE;
 
 	error_status_t gdipp_rpc_begin_session([in] handle_t h_gdipp_rpc, [in, size_is(logfont_size)] const byte *logfont_buf, [in] unsigned long logfont_size, [in] unsigned short bits_per_pixel, [out] GDIPP_RPC_SESSION_HANDLE *h_session);
-	error_status_t gdipp_rpc_get_font_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in] unsigned long table, [in] unsigned long offset);
+	error_status_t gdipp_rpc_get_font_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in] unsigned long table, [in] unsigned long offset, [out] unsigned long *font_size);
 	error_status_t gdipp_rpc_get_font_data([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in] unsigned long table, [in] unsigned long offset, [out, size_is(buf_size)] byte *data_buf, [in] unsigned long buf_size);
-	error_status_t gdipp_rpc_get_font_metrics_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session);
+	error_status_t gdipp_rpc_get_font_metrics_size([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [out] unsigned long *metrics_size);
 	error_status_t gdipp_rpc_get_font_metrics_data([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [out, size_is(buf_size)] byte *metrics_buf, [in] unsigned long buf_size);
 	error_status_t gdipp_rpc_get_glyph_indices([in] handle_t h_gdipp_rpc, [in] GDIPP_RPC_SESSION_HANDLE h_session, [in, string, size_is(count * sizeof(wchar_t))] const wchar_t *str, [in] int count, [out, size_is(count * sizeof(unsigned short))] unsigned short *gi);
 	//error_status_t gdipp_rpc_get_render_config([in] handle_t h_gdipp_rpc, [in, string] const wchar_t *name, [out, string, retval] wchar_t **value);

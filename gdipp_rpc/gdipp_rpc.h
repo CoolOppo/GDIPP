@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Sat Dec 24 00:48:05 2011
+/* at Thu Dec 29 02:32:36 2011
  */
 /* Compiler settings for gdipp_rpc.idl, gdipp_rpc.acf:
     Oicf, W3, Zp8, env=Win64 (32b run), target_arch=AMD64 7.00.0555 
@@ -105,7 +105,8 @@ typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
     /* [in] */ handle_t h_gdipp_rpc,
     /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
     /* [in] */ unsigned long table,
-    /* [in] */ unsigned long offset);
+    /* [in] */ unsigned long offset,
+    /* [out] */ unsigned long *font_size);
 
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_data( 
     /* [in] */ handle_t h_gdipp_rpc,
@@ -117,7 +118,8 @@ typedef /* [context_handle] */ void *GDIPP_RPC_SESSION_HANDLE;
 
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_metrics_size( 
     /* [in] */ handle_t h_gdipp_rpc,
-    /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session);
+    /* [context_handle_noserialize][in] */ GDIPP_RPC_SESSION_HANDLE h_session,
+    /* [out] */ unsigned long *metrics_size);
 
 /* [fault_status][comm_status] */ error_status_t gdipp_rpc_get_font_metrics_data( 
     /* [in] */ handle_t h_gdipp_rpc,

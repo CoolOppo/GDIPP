@@ -1,7 +1,7 @@
 #include "stdafx.h"
-#include "global.h"
 #include "glyph_cache.h"
 #include "gdipp_lib/lock.h"
+#include "gdipp_server/global.h"
 
 namespace gdipp
 {

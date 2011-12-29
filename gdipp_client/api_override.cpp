@@ -122,6 +122,49 @@ bool fetch_glyph_run (bool is_glyph_index,
 }
 */
 
+void adjust_glyph_bbox(bool is_pdy, CONST INT *lpDx, int char_extra, gdipp_rpc_bitmap_glyph_run *glyph_run, INT *ctrl_right, INT *black_right)
+{
+	/*
+	adjust the glyph boxes from distance array
+	 
+	the dx array stores the distance from the left border of the current glyph to the next glyph
+	the count of such array should be no less than the count of glyphs
+	the last element indicates the distance between the right border of the control box of the glyph run and the left border of the last glyph
+	if pdy flag is set, every 2 elements specifies the distance of the glyph in both X and Y axis
+
+	gdipp matches the metrics of the glyph control box against the dx array, then adjusts black box accordingly
+	dx array is application specific, therefore the boxes after adjustment are not cached
+	*/
+
+	assert(lpDx != NULL || char_extra != 0);
+
+	const BYTE dx_skip = (is_pdy ? 2 : 1);
+	*ctrl_right = 0;
+	*black_right = 0;
+
+	for (UINT i = 0; i < glyph_run->count; ++i)
+	{
+		if (i != 0)
+		{
+			// distance to shift right
+			const int distance_shift = *ctrl_right - glyph_run->ctrl_boxes[i].left + char_extra;
+
+			glyph_run->ctrl_boxes[i].left += distance_shift;
+			glyph_run->ctrl_boxes[i].right += distance_shift;
+			glyph_run->black_boxes[i].left += distance_shift;
+			glyph_run->black_boxes[i].right += distance_shift;
+		}
+
+		if (lpDx == NULL)
+			*ctrl_right = glyph_run->ctrl_boxes[i].right;
+		else
+			*ctrl_right += lpDx[i * dx_skip];
+		*black_right = glyph_run->black_boxes[i].right;
+	}
+
+	*black_right = max(*black_right, *ctrl_right);
+}
+
 BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * lprect, LPCWSTR lpString, UINT c, CONST INT *lpDx)
 {
 	bool b_ret;
@@ -150,20 +193,23 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	const bool is_pdy = !!(options & ETO_PDY);
 
 #ifdef _DEBUG
-	bool is_target_spec = true;
-	//is_target_spec &= (x > 0);
-	//is_target_spec &= (y > 0);
-	//is_target_spec &= !!(options & ETO_GLYPH_INDEX));
-	//is_target_spec &= !(options & ETO_GLYPH_INDEX);
-	//is_target_spec &= (options == 4102);
-	//is_target_spec &= (c < 1);
-	if (!is_target_spec)
-		goto fail_safe_text_out;
+	bool is_target_spec = false;
+	//is_target_spec |= (x > 0);
+	//is_target_spec |= (y > 0);
+	//is_target_spec |= !!(options & ETO_GLYPH_INDEX));
+	//is_target_spec |= !(options & ETO_GLYPH_INDEX);
+	//is_target_spec |= (options == 4102);
+	//is_target_spec |= (c == 17);
+	if (is_target_spec)
+		int a = 0;
+	else
+		;//goto fail_safe_text_out;
 
-	const wchar_t *debug_text = NULL;
-	//const wchar_t *debug_text = L"About";
+	const wchar_t *debug_text;
+	debug_text = NULL;
 	if (!is_target_text(hdc, is_glyph_index, lpString, c, debug_text, 0))
 		goto fail_safe_text_out;
+		//int a = 0;
 #endif // _DEBUG
 
 	// uncomment this lock to make rendering single-threaded
@@ -185,6 +231,21 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	if (e != 0)
 		goto fail_safe_text_out;
 
+	const int char_extra = GetTextCharacterExtra(hdc);
+	if (char_extra == 0x8000000)
+		goto fail_safe_text_out;
+
+	INT ctrl_right, black_right;
+	if (lpDx == NULL && char_extra == 0)
+	{
+		ctrl_right = glyph_run.ctrl_boxes[glyph_run.count - 1].right;
+		black_right = glyph_run.black_boxes[glyph_run.count - 1].right;
+	}
+	else
+	{
+		adjust_glyph_bbox(!!(options & ETO_PDY), lpDx, char_extra, &glyph_run, &ctrl_right, &black_right);
+	}
+
 	painter *painter;
 	switch (client_config_instance.painter)
 	{
@@ -199,7 +260,7 @@ BOOL WINAPI ExtTextOutW_hook(HDC hdc, int x, int y, UINT options, CONST RECT * l
 	b_ret = painter->begin(&context);
 	if (b_ret)
 	{
-		b_ret = painter->paint(x, y, options, lprect, glyph_run, lpDx);
+		b_ret = painter->paint(x, y, options, lprect, glyph_run, ctrl_right, black_right);
 		painter->end();
 	}
 	delete painter;

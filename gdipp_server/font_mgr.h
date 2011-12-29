@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gdipp_server/os2_metrics.h"
+
 namespace gdipp
 {
 
@@ -13,23 +15,33 @@ namespace gdipp
 class font_mgr
 {
 public:
-	void *register_font(const LOGFONTW *attr_buf, DWORD buf_size, HDC hdc = NULL);
-	DWORD get_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size, HDC hdc = NULL) const;
-	const std::vector<BYTE> *get_font_metrics(void *font_id) const;
-	DWORD get_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi, HDC hdc = NULL) const;
+	static DWORD get_font_size(HDC font_holder, DWORD *table_header);
+	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
+	
+	void *register_font(const LOGFONTW *log_font, BYTE **outline_metrics_buf, unsigned long *outline_metrics_size, HDC hdc = NULL);
 	HFONT select_font(void *font_id, HDC hdc) const;
 
-	FT_Stream lookup_stream(void *font_id) const;
 	ULONG lookup_face_index(void *font_id) const;
+	DWORD lookup_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size, HDC hdc = NULL) const;
+	DWORD lookup_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi, HDC hdc = NULL) const;
+	const os2_metrics *lookup_os2_metrics(void *font_id) const;
+	FT_Stream lookup_stream(void *font_id) const;
 
 private:
 	struct font_entry
 	{
+		// all fields are font-specific invariants
+
 		HFONT font_handle;
-		std::vector<BYTE> metric_buf;
+		os2_metrics os2;
+		FT_StreamRec stream;
+
+		// used to retrieve font data from GetFontData
+		DWORD face_index;
+		DWORD table_header;
 	};
 
-	static OUTLINETEXTMETRICW *get_dc_metrics(HDC hdc, std::vector<BYTE> &metric_buf);
+	static unsigned long get_dc_outline_metrics(HDC hdc, BYTE **outline_metrics_buf);
 	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_close(FT_Stream stream);
 

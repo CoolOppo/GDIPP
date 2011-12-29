@@ -7,7 +7,7 @@ class os2_metrics
 {
 public:
 	bool init(HDC hdc);
-	bool init(long font_id);
+	bool init(void *font_id);
 
 	FT_Short get_xAvgCharWidth() const;
 	char get_weight_class() const;

@@ -17,7 +17,7 @@ class gdi_painter : public painter
 {
 public:
 	bool begin(const dc_context *context);
-	bool paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, CONST INT *lpDx);
+	bool paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, INT ctrl_right, INT black_right);
 
 private:
 	struct glyph_run_metrics
@@ -31,9 +31,6 @@ private:
 		POINT baseline;
 		RECT visible_rect;
 	};
-
-	// adjust the glyph boxes from distance array
-	void adjust_glyph_bbox(bool is_pdy, CONST INT *lpDx, gdipp_rpc_bitmap_glyph_run &glyph_run);
 
 	void set_mono_mask_bits(const FT_BitmapGlyph glyph,
 		const RECT &src_rect,
@@ -61,12 +58,10 @@ private:
 	BOOL paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_rpc_bitmap_glyph_run &glyph_run);
 
 	painter_tls *_tls;
+	INT _black_right;
+	INT _ctrl_right;
 	RGBQUAD _text_rgb_gamma;
 	bool _update_cp;
-
-	bool _is_bbox_adjusted;
-	INT _ctrl_right;
-	INT _black_right;
 };
 
 }

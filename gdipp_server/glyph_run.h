@@ -6,13 +6,6 @@ namespace gdipp
 class glyph_run
 {
 public:
-	explicit glyph_run(size_t count)
-		: glyphs(count),
-		  ctrl_boxes(count),
-		  black_boxes(count)
-	{
-	}
-
 	// information for a glyph run, minimum units in the glyph run cache
 
 	// glyph data pointers

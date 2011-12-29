@@ -32,9 +32,11 @@ bool gdi_painter::begin(const dc_context *context)
 	return true;
 }
 
-bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, CONST INT *lpDx)
+bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rpc_bitmap_glyph_run &glyph_run, INT ctrl_right, INT black_right)
 {
 	BOOL b_ret, paint_success = FALSE;
+	_ctrl_right = ctrl_right;
+	_black_right = black_right;
 
 	if (((TA_NOUPDATECP | TA_UPDATECP) & _text_alignment) == TA_UPDATECP)
 	{
@@ -64,16 +66,7 @@ bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rp
 	_text_rgb_gamma.rgbGreen = gamma_ramps[1][GetGValue(_text_color)];
 	_text_rgb_gamma.rgbBlue = gamma_ramps[2][GetBValue(_text_color)];
 
-	_is_bbox_adjusted = (lpDx == NULL);
-	if (_is_bbox_adjusted)
-	{
-		paint_success = paint_glyph_run(options, lprect, glyph_run);
-	}
-	else
-	{
-		adjust_glyph_bbox(!!(options & ETO_PDY), lpDx, glyph_run);
-		paint_success = paint_glyph_run(options, lprect, glyph_run);
-	}
+	paint_success = paint_glyph_run(options, lprect, glyph_run);
 
 	// if TA_UPDATECP is set, update current position after text out
 	if (_update_cp && paint_success)
@@ -85,45 +78,6 @@ bool gdi_painter::paint(int x, int y, UINT options, CONST RECT *lprect, gdipp_rp
 	}
 
 	return !!paint_success;
-}
-
-void gdi_painter::adjust_glyph_bbox(bool is_pdy, CONST INT *lpDx, gdipp_rpc_bitmap_glyph_run &glyph_run)
-{
-	/*
-	the dx array stores the distance from the left border of the current glyph to the next glyph
-	the count of such array should be no less than the count of glyphs
-	the last element indicates the distance between the right border of the control box of the glyph run and the left border of the last glyph
-	if pdy flag is set, every 2 elements specifies the distance of the glyph in both X and Y axis
-
-	gdipp matches the metrics of the glyph control box against the dx array, then adjusts black box accordingly
-	dx array is application specific, therefore the boxes after adjustment are not cached
-	*/
-
-	assert(lpDx != NULL);
-
-	const BYTE dx_skip = (is_pdy ? 2 : 1);
-	INT curr_left = 0;
-	INT last_right = 0;
-
-	for (UINT i = 0; i < glyph_run.count; ++i)
-	{
-		if (i != 0)
-		{
-			// distance to shift right
-			const int distance_shift = curr_left - glyph_run.ctrl_boxes[i].left;
-
-			glyph_run.ctrl_boxes[i].left += distance_shift;
-			glyph_run.ctrl_boxes[i].right += distance_shift;
-			glyph_run.black_boxes[i].left += distance_shift;
-			glyph_run.black_boxes[i].right += distance_shift;
-		}
-
-		curr_left += lpDx[i * dx_skip];
-		last_right = glyph_run.black_boxes[i].right;
-	}
-
-	_ctrl_right = curr_left;
-	_black_right = max(last_right, curr_left);
 }
 
 void gdi_painter::set_mono_mask_bits(const FT_BitmapGlyph glyph,
@@ -635,7 +589,7 @@ BOOL gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_
 
 	glyph_run_metrics grm;
 	// actual bounding box occupied by the glyphs
-	grm.extent.cx = get_glyph_run_width(glyph_run, false);
+	grm.extent.cx = get_glyph_run_width(glyph_run, _ctrl_right, _black_right, false);
 
 	// nothing to paint
 	if (grm.extent.cx == 0)
@@ -659,7 +613,7 @@ BOOL gdi_painter::paint_glyph_run(UINT options, CONST RECT *lprect, const gdipp_
 	grm.visible_rect.bottom = grm.visible_rect.top + grm.extent.cy;
 
 	// advance cursor by the width of the control box of the glyph run
-	_cursor.x += glyph_run.ctrl_boxes[glyph_run.count - 1].left - glyph_run.ctrl_boxes[0].left;
+	_cursor.x += _ctrl_right - glyph_run.ctrl_boxes[0].left;
 
 	// apply clipping
 	if (options & ETO_CLIPPED && !IntersectRect(&grm.visible_rect, &grm.visible_rect, lprect))

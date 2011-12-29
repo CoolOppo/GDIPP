@@ -1,31 +1,21 @@
 #include "stdafx.h"
 #include "ft_renderer.h"
-#include "freetype.h"
+#include "gdipp_lib/lock.h"
+#include "gdipp_server/freetype.h"
+#include "gdipp_server/global.h"
+#include "gdipp_server/helper.h"
 
-const FT_OutlineGlyph ft_renderer::get_outline_glyph(wchar_t glyph_char, bool is_glyph_index)
+namespace gdipp
 {
-	bool b_ret;
 
-	glyph_run new_glyph_run;
-	b_ret = generate_glyph_run(is_glyph_index, &glyph_char, 1, new_glyph_run, true);
-	if (b_ret)
-	{
-		assert(new_glyph_run.glyphs.size() == 1);
-
-		const FT_Glyph new_glyph = new_glyph_run.glyphs.front();
-		assert(new_glyph->format == FT_GLYPH_FORMAT_OUTLINE);
-
-		return reinterpret_cast<const FT_OutlineGlyph>(new_glyph);
-	}
-
-	return NULL;
+ft_renderer::ft_renderer(rpc_session *render_session)
+	: renderer(render_session)
+{
 }
 
-FT_F26Dot6 ft_renderer::get_embolden(const font_config_cache *setting_cache, char font_weight_class, char text_weight_class)
+FT_F26Dot6 ft_renderer::get_embolden_diff(char font_weight_class, char text_weight_class)
 {
 	// the embolden weight is based on the difference between demanded weight and the regular weight
-
-	FT_F26Dot6 embolden = setting_cache->embolden;
 
 	const FT_F26Dot6 embolden_values[] = {-32, -16, 0, 16, 32};
 	const char embolden_class_count = sizeof(embolden_values) / sizeof(FT_F26Dot6);
@@ -38,12 +28,10 @@ FT_F26Dot6 ft_renderer::get_embolden(const font_config_cache *setting_cache, cha
 	else if (embolden_class >= embolden_class_count)
 		embolden_class = embolden_class_count - 1;
 
-	embolden += embolden_values[embolden_class];
-
-	return embolden;
+	return embolden_values[embolden_class];
 }
 
-void ft_renderer::get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height)
+void ft_renderer::get_font_width_height(const OUTLINETEXTMETRICW *outline_metrics, FT_Short xAvgCharWidth, FT_UInt &font_width, FT_UInt &font_height)
 {
 	/*
 	while the height in FreeType scaler has the same meaning as the height value in LOGFONT structure, the width is different
@@ -66,15 +54,15 @@ void ft_renderer::get_font_size(const OUTLINETEXTMETRICW *outline_metrics, FT_Sh
 	}
 }
 
-FT_ULong ft_renderer::make_load_flags(const font_config_cache *setting_cache, FT_Render_Mode render_mode)
+FT_ULong ft_renderer::make_load_flags(const render_config_static *render_config, FT_Render_Mode render_mode)
 {
-	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | (setting_cache->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
+	FT_ULong load_flags = FT_LOAD_CROP_BITMAP | (render_config->embedded_bitmap ? 0 : FT_LOAD_NO_BITMAP);
 
-	if (setting_cache->hinting == 0)
+	if (render_config->hinting == 0)
 		load_flags |= FT_LOAD_NO_HINTING;
 	else
 	{
-		switch (setting_cache->hinting)
+		switch (render_config->hinting)
 		{
 		case 1:
 			load_flags |= FT_LOAD_TARGET_LIGHT;
@@ -92,7 +80,7 @@ FT_ULong ft_renderer::make_load_flags(const font_config_cache *setting_cache, FT
 			}
 		}
 
-		switch (setting_cache->auto_hinting)
+		switch (render_config->auto_hinting)
 		{
 		case 0:
 			load_flags |= FT_LOAD_NO_AUTOHINT;
@@ -129,7 +117,7 @@ bool ft_renderer::generate_outline_glyph(FT_Glyph *glyph,
 
 	{
 		// the FreeType function seems not thread-safe
-		lock("freetype");
+		lock l(lock::SERVER_FREETYPE);
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
 			return NULL;
@@ -141,7 +129,8 @@ bool ft_renderer::generate_outline_glyph(FT_Glyph *glyph,
 		return NULL;
 
 	// if italic style is demanded, and the font has italic glyph, do oblique transformation
-	const bool is_oblique = ((_context->outline_metrics->otmTextMetrics.tmItalic != 0) && !is_italic);
+	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(_session->outline_metrics_buf);
+	const bool is_oblique = ((outline_metrics->otmTextMetrics.tmItalic != 0) && !is_italic);
 	const bool need_embolden = (embolden != 0);
 	const bool need_glyph_copy = (is_oblique || need_embolden);
 
@@ -173,10 +162,9 @@ const FT_Glyph ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 	FT_ULong load_flags,
 	bool is_italic,
 	bool request_outline,
-	unsigned int font_trait) const
+	uint128_t render_trait) const
 {
 	FT_Error ft_error;
-
 	FT_Glyph glyph;
 
 	if (request_outline)
@@ -185,59 +173,50 @@ const FT_Glyph ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 		return glyph;
 	}
 
-	glyph = glyph_cache_instance.lookup_glyph(font_trait, glyph_index, true);
+	const glyph_cache::char_id_type char_id = glyph_cache::get_char_id(render_trait, glyph_index, true);
+	glyph = glyph_cache_instance.lookup_glyph(char_id);
 	if (glyph == NULL)
 	{
-		// double-check lock
-		gdipp_lock lock_1("glyph_cache");
-		glyph = glyph_cache_instance.lookup_glyph(font_trait, glyph_index, true);
-		if (glyph == NULL)
+		// no cached glyph, or outline glyph is requested, generate outline
+		const bool is_local_glyph = generate_outline_glyph(&glyph, glyph_index, scaler, embolden, load_flags, is_italic);
+
+		// outline -> bitmap conversion
 		{
-			// no cached glyph, or outline glyph is requested, generate outline
-			const bool is_local_glyph = generate_outline_glyph(&glyph, glyph_index, scaler, embolden, load_flags, is_italic);
-
-			// outline -> bitmap conversion
-			{
-				// the FreeType function seems not thread-safe
-				gdipp_lock lock_2("freetype");
-				ft_error = FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, is_local_glyph);
-				if (ft_error != 0)
-					return NULL;
-			}
-
-			glyph_cache_instance.store_glyph(font_trait, glyph_index, true, glyph);
+			// the FreeType function seems not thread-safe
+			lock l(lock::SERVER_FREETYPE);
+			ft_error = FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, is_local_glyph);
+			if (ft_error != 0)
+				return NULL;
 		}
+
+		glyph_cache_instance.store_glyph(char_id, glyph);
 	}
 
 	return glyph;
 }
 
-bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run &new_glyph_run, bool request_outline)
+bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run, bool request_outline)
 {
-	std::wstring curr_font_face = metric_face_name(_context->outline_metrics);
-	const wchar_t *dc_font_family = metric_family_name(_context->outline_metrics);
-	const font_config_cache *curr_setting_cache = _context->setting_cache;
-	unsigned int curr_font_trait = _font_trait;
-
-	long font_id = font_man_instance.register_font(_context->hdc, curr_font_face.c_str());
-	if (font_id >= 0)
-		return false;
-
-	const os2_metrics *os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
+	const OUTLINETEXTMETRICW *curr_outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(_session->outline_metrics_buf);
+	const render_config_static *curr_render_config = _session->render_config;
+	uint128_t curr_render_trait = _session->render_trait;
+	const wchar_t *curr_font_face = metric_face_name(curr_outline_metrics);
+	const os2_metrics *curr_os2 = font_mgr_instance.lookup_os2_metrics(_session->font_id);
+	const wchar_t *session_font_family = metric_family_name(curr_outline_metrics);
 
 	FTC_ScalerRec scaler = {};
-	scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
+	scaler.face_id = _session->font_id;
 	scaler.pixel = 1;
-	get_font_size(_context->outline_metrics, (_context->log_font.lfWidth == 0 ? 0 : os2_metrics->get_xAvgCharWidth()), scaler.height, scaler.width);
+	get_font_width_height(curr_outline_metrics, (_session->log_font.lfWidth == 0 ? 0 : curr_os2->get_xAvgCharWidth()), scaler.height, scaler.width);
 
 	FT_F26Dot6 curr_embolden = 0;
-	if (_context->log_font.lfWeight != FW_DONTCARE)
+	if (_session->log_font.lfWeight != FW_DONTCARE)
 	{
 		// embolden if some weight is demanded
-		curr_embolden = get_embolden(curr_setting_cache, os2_metrics->get_weight_class(), static_cast<char>(_context->log_font.lfWeight));
+		curr_embolden = curr_render_config->embolden + get_embolden_diff(curr_os2->get_weight_class(), static_cast<char>(_session->log_font.lfWeight));
 	}
 
-	FT_ULong curr_load_flags = make_load_flags(curr_setting_cache, _render_mode);
+	FT_ULong curr_load_flags = make_load_flags(curr_render_config, _session->render_mode);
 
 	if (is_glyph_index)
 	{
@@ -247,12 +226,12 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 		{
 			const FT_Glyph new_glyph = generate_bitmap_glyph(lpString[i],
 				&scaler,
-				_render_mode,
+				_session->render_mode,
 				curr_embolden,
 				curr_load_flags,
-				os2_metrics->is_italic(),
+				curr_os2->is_italic(),
 				request_outline,
-				curr_font_trait);
+				curr_render_trait);
 			RECT ctrl_box = {}, black_box = {};
 
 			if (new_glyph == NULL)
@@ -260,39 +239,39 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 				if (request_outline)
 					return false;
 			}
-			else if (curr_setting_cache->kerning && i > 0 && !request_outline)
+			else if (curr_render_config->kerning && i > 0 && !request_outline)
 			{
-				ctrl_box.left = font_man_instance.lookup_kern(&scaler, lpString[i-1], lpString[i]);
+				ctrl_box.left = get_freetype_kern(&scaler, lpString[i-1], lpString[i]);
 				ctrl_box.right = ctrl_box.left;
 			}
 
-			new_glyph_run.glyphs.push_back(new_glyph);
-			new_glyph_run.ctrl_boxes.push_back(ctrl_box);
-			new_glyph_run.black_boxes.push_back(black_box);
+			new_glyph_run->glyphs.push_back(new_glyph);
+			new_glyph_run->ctrl_boxes.push_back(ctrl_box);
+			new_glyph_run->black_boxes.push_back(black_box);
 		}
 	}
 	else
 	{
-		FT_Render_Mode curr_render_mode = _render_mode;
+		FT_Render_Mode curr_render_mode = _session->render_mode;
 
 		UINT rendered_count = 0;
 		int font_link_index = 0;
 		std::wstring final_string(lpString, c);
-		std::wstring glyph_indices(L"", c);
+		std::vector<unsigned short> glyph_indices(c);
 
-		new_glyph_run.glyphs.resize(c);
-		new_glyph_run.ctrl_boxes.resize(c);
-		new_glyph_run.black_boxes.resize(c);
+		new_glyph_run->glyphs.resize(c);
+		new_glyph_run->ctrl_boxes.resize(c);
+		new_glyph_run->black_boxes.resize(c);
 
 		while (true)
 		{
-			font_man_instance.get_glyph_indices(reinterpret_cast<long>(scaler.face_id), final_string.data(), c, &glyph_indices[0]);
+			font_mgr_instance.lookup_glyph_indices(scaler.face_id, final_string.data(), c, &glyph_indices[0]);
 
-			std::list<FT_Glyph>::iterator glyph_iter;
-			std::list<RECT>::iterator ctrl_iter, black_iter;
+			std::vector<FT_Glyph>::iterator glyph_iter;
+			std::vector<RECT>::iterator ctrl_iter, black_iter;
 			UINT i;
-			for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin(), i = 0;
-				i < c; ++i, ++glyph_iter, ++ctrl_iter, ++black_iter)
+			for (glyph_iter = new_glyph_run->glyphs.begin(), ctrl_iter = new_glyph_run->ctrl_boxes.begin(), black_iter = new_glyph_run->black_boxes.begin(), i = 0;
+				i < c; i++, glyph_iter++, ctrl_iter++, black_iter++)
 			{
 				if (final_string[i] == L'\0')
 					continue;
@@ -306,25 +285,25 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 						&scaler,
 						curr_render_mode,
 						curr_embolden,
-						curr_load_flags,
-						os2_metrics->is_italic(),
+						curr_load_flags, 
+						curr_os2->is_italic(),
 						request_outline,
-						curr_font_trait);
+						curr_render_trait);
 
 					if (*glyph_iter == NULL)
 					{
 						if (request_outline)
 							return false;
 					}
-					else if (curr_setting_cache->kerning && i > 0 && !request_outline)
+					else if (curr_render_config->kerning && i > 0 && !request_outline)
 					{
-						ctrl_iter->left = font_man_instance.lookup_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
+						ctrl_iter->left = get_freetype_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
 						ctrl_iter->right = ctrl_iter->left;
 					}
 				}
 				else
 					continue;
-
+					
 				final_string[i] = L'\0';
 				rendered_count += 1;
 			}
@@ -337,12 +316,12 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 
 			// font linking
 
-			const font_link_node *curr_link = font_link_instance.lookup_link(dc_font_family, font_link_index);
+			const font_link_node *curr_link = font_link_instance.lookup_link(session_font_family, font_link_index);
 			if (curr_link == NULL)
 				return false;
 			font_link_index += 1;
-
-			LOGFONTW linked_log_font = _context->log_font;
+			
+			LOGFONTW linked_log_font = _session->log_font;
 			/*
 			this reset is essential to make GetGlyphIndices work correctly
 			for example, lfOutPrecision might be OUT_PS_ONLY_PRECIS for Myriad Pro
@@ -351,13 +330,15 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 			linked_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
 			wcsncpy_s(linked_log_font.lfFaceName, curr_link->font_family.c_str(), LF_FACESIZE);
 
-			font_id = font_man_instance.link_font(linked_log_font, curr_font_face);
-			if (font_id < 0)
-				return false;
+			BYTE *curr_outline_metrics_buf;
+			unsigned long curr_outline_metrics_size;
+			scaler.face_id = font_mgr_instance.register_font(&linked_log_font, &curr_outline_metrics_buf, &curr_outline_metrics_size);
+			assert(scaler.face_id != NULL);
 
 			// reload metrics for the linked font
 
-			scaler.face_id = reinterpret_cast<FTC_FaceID>(font_id);
+			const OUTLINETEXTMETRICW *curr_outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(curr_outline_metrics_buf);
+			curr_font_face = metric_face_name(curr_outline_metrics);
 
 			if (curr_link->scaling != 1.0)
 			{
@@ -366,28 +347,34 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 				scaler.height = static_cast<FT_UInt>(scaler.height * curr_link->scaling);
 			}
 
-			os2_metrics = font_man_instance.lookup_os2_metrics(font_id);
+			curr_os2 = font_mgr_instance.lookup_os2_metrics(scaler.face_id);
+			const char font_weight_class = curr_os2->get_weight_class();
+			const LONG point_size = (linked_log_font.lfHeight > 0 ? linked_log_font.lfHeight : -MulDiv(linked_log_font.lfHeight, 72, curr_outline_metrics->otmTextMetrics.tmDigitizedAspectY));
 
-			const gdimm_trait trait(os2_metrics->get_weight_class(), os2_metrics->is_italic(), 0, curr_font_face.c_str());
-			curr_setting_cache = setting_cache_instance.lookup(&trait);
+			curr_render_config = font_render_config_cache_instance.get_font_render_config(!!font_weight_class,
+				curr_os2->is_italic(),
+				point_size,
+				curr_font_face);
 
-			if (!get_render_mode(curr_setting_cache, _context->bmp_header.biBitCount, _context->log_font.lfQuality, curr_render_mode))
+			delete[] curr_outline_metrics_buf;
+
+			if (!get_render_mode(curr_render_config->render_mode, _session->bits_per_pixel, _session->log_font.lfQuality, &curr_render_mode))
 				return false;
 
-			curr_font_trait = generate_font_trait(linked_log_font, curr_render_mode);
+			curr_render_trait = generate_render_trait(&linked_log_font, curr_render_mode);
 
 			curr_embolden = 0;
 			if (linked_log_font.lfWeight != FW_DONTCARE)
-				curr_embolden = get_embolden(curr_setting_cache, trait.get_weight_class(), static_cast<char>(linked_log_font.lfWeight));
+				curr_embolden = curr_render_config->embolden + get_embolden_diff(font_weight_class, static_cast<char>(linked_log_font.lfWeight));
 
-			curr_load_flags = make_load_flags(curr_setting_cache, _render_mode);
+			curr_load_flags = make_load_flags(curr_render_config, _session->render_mode);
 		}
 	}
 
 	return true;
 }
 
-bool ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UINT c, CONST INT *lpDx, glyph_run &new_glyph_run)
+bool ft_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run)
 {
 	bool b_ret;
 
@@ -397,10 +384,10 @@ bool ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UIN
 
 	POINT pen_pos = {};
 
-	std::list<FT_Glyph>::iterator glyph_iter;
-	std::list<RECT>::iterator ctrl_iter, black_iter;
-	for (glyph_iter = new_glyph_run.glyphs.begin(), ctrl_iter = new_glyph_run.ctrl_boxes.begin(), black_iter = new_glyph_run.black_boxes.begin();
-		glyph_iter != new_glyph_run.glyphs.end(); ++glyph_iter, ++ctrl_iter, ++black_iter)
+	std::vector<FT_Glyph>::iterator glyph_iter;
+	std::vector<RECT>::iterator ctrl_iter, black_iter;
+	for (glyph_iter = new_glyph_run->glyphs.begin(), ctrl_iter = new_glyph_run->ctrl_boxes.begin(), black_iter = new_glyph_run->black_boxes.begin();
+		glyph_iter != new_glyph_run->glyphs.end(); ++glyph_iter, ++ctrl_iter, ++black_iter)
 	{
 		FT_Int glyph_left = 0, glyph_width = 0;
 		FT_Vector glyph_advance = {};
@@ -418,7 +405,7 @@ bool ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UIN
 		black_iter->left = ctrl_iter->left + glyph_left;
 		black_iter->top = ctrl_iter->top;
 
-		pen_pos.x += int_from_16dot16(glyph_advance.x) + _char_extra;
+		pen_pos.x += int_from_16dot16(glyph_advance.x);
 		pen_pos.y += int_from_16dot16(glyph_advance.y);
 
 		ctrl_iter->right += pen_pos.x;
@@ -428,4 +415,6 @@ bool ft_renderer::render(bool is_glyph_index, bool is_pdy, LPCWSTR lpString, UIN
 	}
 
 	return true;
+}
+
 }

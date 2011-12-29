@@ -1,8 +1,8 @@
 #pragma once
 
-#include "rpc_server.h"
-#include "glyph_run.h"
 #include "gdipp_lib/rpc.h"
+#include "gdipp_server/glyph_run.h"
+#include "gdipp_server/rpc_server.h"
 
 namespace gdipp
 {

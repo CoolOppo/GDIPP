@@ -1,6 +1,6 @@
 #pragma once
 
-#include "api.h"
+#include "gdipp_lib/api.h"
 
 namespace gdipp
 {

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "freetype.h"
-#include "helper.h"
-#include "gdipp_server/global.h"
 #include "gdipp_config/constant_server.h"
+#include "gdipp_server/global.h"
+#include "gdipp_server/helper.h"
 
 namespace gdipp
 {
@@ -56,6 +56,21 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 	args.stream = font_mgr_instance.lookup_stream(face_id);
 
 	return FT_Open_Face(library, &args, font_mgr_instance.lookup_face_index(face_id), aface);
+}
+
+int get_freetype_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph)
+{
+	FT_Error ft_error;
+
+	FT_Size size;
+	ft_error = FTC_Manager_LookupSize(ft_cache_man, scaler, &size);
+	assert(ft_error == 0);
+
+	FT_Vector delta;
+	ft_error = FT_Get_Kerning(size->face, left_glyph, right_glyph, FT_KERNING_DEFAULT, &delta);
+	assert(ft_error == 0);
+
+	return int_from_26dot6(delta.x);
 }
 
 FT_Glyph make_empty_outline_glyph()
