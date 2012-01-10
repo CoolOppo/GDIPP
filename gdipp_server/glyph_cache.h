@@ -22,12 +22,14 @@ public:
 
 	const FT_Glyph lookup_glyph(char_id_type char_id);
 	bool store_glyph(char_id_type char_id, const FT_Glyph glyph);
-	const glyph_run *lookup_glyph_run(string_id_type string_id, uint128_t render_trait) const;
+	const glyph_run *lookup_glyph_run(string_id_type string_id, uint128_t render_trait);
 	bool store_glyph_run(string_id_type string_id, uint128_t render_trait, glyph_run *a_glyph_run);
 
 private:
 	// std::map from render trait to glyph run
-	typedef std::map<uint128_t, glyph_run *> trait_to_run_map;
+	typedef std::map<uint128_t, INIT_ONCE> trait_to_run_map;
+
+	void erase_glyph_run_cache_string(std::map<string_id_type, trait_to_run_map>::iterator str_iter);
 
 	// std::map from character ID (including character index and render trait) to its glyph
 	std::map<char_id_type, INIT_ONCE> _glyph_store;

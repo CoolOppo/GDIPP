@@ -49,7 +49,7 @@ bool os2_metrics::init(void *font_id)
 
 	DWORD font_data_size;
 
-	HDC font_holder = dc_pool_instance.claim();
+	const HDC font_holder = dc_pool_instance.claim();
 	assert(font_holder != NULL);
 	font_mgr_instance.select_font(font_id, font_holder);
 

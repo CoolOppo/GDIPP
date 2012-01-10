@@ -40,14 +40,12 @@ glyph_cache::~glyph_cache()
 		BOOL pending;
 		FT_Glyph glyph;
 		InitOnceBeginInitialize(&glyph_iter->second, INIT_ONCE_CHECK_ONLY, &pending, reinterpret_cast<void **>(&glyph));
+		assert(!pending);
 		FT_Done_Glyph(glyph);
 	}
 
-	for (std::map<uint128_t, trait_to_run_map>::const_iterator str_iter = _glyph_run_store.begin(); str_iter != _glyph_run_store.end(); ++str_iter)
-	{
-		for (trait_to_run_map::const_iterator trait_iter = str_iter->second.begin(); trait_iter != str_iter->second.end(); ++trait_iter)
-			delete trait_iter->second;
-	}
+	for (std::map<string_id_type, trait_to_run_map>::iterator str_iter = _glyph_run_store.begin(); str_iter != _glyph_run_store.end(); ++str_iter)
+		erase_glyph_run_cache_string(str_iter);
 }
 
 void glyph_cache::initialize()
@@ -94,48 +92,85 @@ bool glyph_cache::store_glyph(char_id_type char_id, const FT_Glyph glyph)
 	return glyph != NULL;
 }
 
-const glyph_run *glyph_cache::lookup_glyph_run(string_id_type string_id, uint128_t render_trait) const
+const glyph_run *glyph_cache::lookup_glyph_run(string_id_type string_id, uint128_t render_trait)
 {
-	const scoped_rw_lock lock_r(scoped_rw_lock::SERVER_GLYPH_RUN_CACHE, true);
+	trait_to_run_map::iterator trait_iter;
 
-	std::map<uint128_t, trait_to_run_map>::const_iterator str_iter = _glyph_run_store.find(string_id);
-	if (str_iter == _glyph_run_store.end())
-		return NULL;
+	{
+		const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_GLYPH_RUN_CACHE, false);
 
-	trait_to_run_map::const_iterator trait_iter = str_iter->second.find(render_trait);
-	if (trait_iter == str_iter->second.end())
-		return NULL;
+		std::map<uint128_t, trait_to_run_map>::iterator str_iter = _glyph_run_store.find(string_id);
+		if (str_iter == _glyph_run_store.end())
+		{
+			const std::pair<std::map<string_id_type, trait_to_run_map>::iterator, bool> str_insert_ret = _glyph_run_store.insert(std::pair<string_id_type, trait_to_run_map>(string_id, trait_to_run_map()));
+			assert(str_insert_ret.second);
+			str_iter = str_insert_ret.first;
+			trait_iter = str_iter->second.end();
+		}
+		else
+		{
+			trait_iter = str_iter->second.find(render_trait);
+		}
 
-	return trait_iter->second;
+		if (trait_iter == str_iter->second.end())
+		{
+			const std::pair<trait_to_run_map::iterator, bool> trait_insert_ret = str_iter->second.insert(std::pair<uint128_t, INIT_ONCE>(render_trait, INIT_ONCE()));
+			assert(trait_insert_ret.second);
+			trait_iter = trait_insert_ret.first;
+			InitOnceInitialize(&trait_iter->second);
+		}
+	}
+
+	glyph_run *a_glyph_run = NULL;
+	BOOL pending;
+	InitOnceBeginInitialize(&trait_iter->second, 0, &pending, reinterpret_cast<void **>(&a_glyph_run));
+	assert((a_glyph_run == NULL) == pending);
+
+	return a_glyph_run;
 }
 
 bool glyph_cache::store_glyph_run(string_id_type string_id, uint128_t render_trait, glyph_run *a_glyph_run)
 {
-	bool b_ret;
-	string_id_type erased_str;
+	trait_to_run_map::iterator trait_iter;
 
-	const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_GLYPH_RUN_CACHE, false);
-
-	b_ret = _glyph_run_lru.access(string_id, erased_str);
-	if (b_ret)
 	{
-		// the string is evicted from LRU cache
-		// erase all cached glyph run that is under the evicted string ID
-		
-		std::map<string_id_type, trait_to_run_map>::iterator str_iter = _glyph_run_store.find(erased_str);
-		assert(str_iter != _glyph_run_store.end());
-		
-		for (trait_to_run_map::const_iterator trait_iter = str_iter->second.begin(); trait_iter != str_iter->second.end(); ++trait_iter)
-			delete trait_iter->second;
+		bool b_ret;
+		string_id_type erased_str;
+		std::map<string_id_type, trait_to_run_map>::iterator str_iter;
 
-		_glyph_run_store.erase(str_iter);
+		const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_GLYPH_RUN_CACHE, false);
+
+		b_ret = _glyph_run_lru.access(string_id, &erased_str);
+		if (b_ret)
+		{
+			// the string is evicted from LRU cache
+			// erase all cached glyph run that is under the evicted string ID
+
+			str_iter = _glyph_run_store.find(erased_str);
+			assert(str_iter != _glyph_run_store.end());
+			erase_glyph_run_cache_string(str_iter);
+			_glyph_run_store.erase(str_iter);
+		}
+
+		str_iter = _glyph_run_store.find(string_id);
+		assert(str_iter != _glyph_run_store.end());
+		trait_iter = str_iter->second.find(render_trait);
 	}
 
-	// after eviction, insert new glyph_run
-	const std::pair<std::map<string_id_type, trait_to_run_map>::iterator, bool> str_insert_ret = _glyph_run_store.insert(std::pair<string_id_type, trait_to_run_map>(string_id, trait_to_run_map()));
-	const std::pair<trait_to_run_map::const_iterator, bool> trait_insert_ret = str_insert_ret.first->second.insert(std::pair<uint128_t, glyph_run *>(render_trait, a_glyph_run));
+	InitOnceComplete(&trait_iter->second, (a_glyph_run == NULL ? INIT_ONCE_INIT_FAILED : 0), a_glyph_run);
+	return a_glyph_run != NULL;
+}
 
-	return trait_insert_ret.second;
+void glyph_cache::erase_glyph_run_cache_string(std::map<string_id_type, trait_to_run_map>::iterator str_iter)
+{
+	for (trait_to_run_map::iterator trait_iter = str_iter->second.begin(); trait_iter != str_iter->second.end(); ++trait_iter)
+	{
+		BOOL pending;
+		glyph_run *a_glyph_run;
+		InitOnceBeginInitialize(&trait_iter->second, INIT_ONCE_CHECK_ONLY, &pending, reinterpret_cast<void **>(&a_glyph_run));
+		assert(!pending);
+		delete a_glyph_run;
+	}
 }
 
 }

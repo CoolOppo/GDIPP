@@ -32,7 +32,7 @@ public:
 	BOOL set_thread_font_holder(HDC font_holder) const;
 
 private:
-	struct font_entry
+	struct _font_entry
 	{
 		// all fields are font-specific and thread-safe invariants
 
@@ -49,7 +49,7 @@ private:
 	static unsigned long stream_io(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 	static void stream_close(FT_Stream stream);
 
-	std::map<std::wstring, font_entry> _font_registry;
+	std::map<std::wstring, _font_entry> _font_registry;
 	DWORD _font_holder_tls_index;
 };
 

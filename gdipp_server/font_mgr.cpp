@@ -86,7 +86,7 @@ font_mgr::font_mgr()
 
 font_mgr::~font_mgr()
 {
-	for (std::map<std::wstring, font_entry>::const_iterator iter = _font_registry.begin(); iter != _font_registry.end(); ++iter)
+	for (std::map<std::wstring, _font_entry>::const_iterator iter = _font_registry.begin(); iter != _font_registry.end(); ++iter)
 		DeleteObject(iter->second.font_handle);
 
 	TlsFree(_font_holder_tls_index);
@@ -97,9 +97,6 @@ void *font_mgr::register_font(HDC font_holder, const LOGFONTW *log_font, BYTE **
 	// create a font with supplied LOGFONT and retrieve related information
 
 	bool b_ret;
-
-	std::wstring font_face;
-	std::map<std::wstring, font_entry>::iterator font_iter;
 
 	const HFONT hfont = CreateFontIndirectW(log_font);
 	if (hfont == NULL)
@@ -115,8 +112,8 @@ void *font_mgr::register_font(HDC font_holder, const LOGFONTW *log_font, BYTE **
 	}
 
 	const OUTLINETEXTMETRICW *outline_metrics = reinterpret_cast<const OUTLINETEXTMETRICW *>(*outline_metrics_buf);
-	font_face = metric_face_name(outline_metrics);
-	font_iter = _font_registry.find(font_face);
+	const std::wstring font_face = metric_face_name(outline_metrics);
+	std::map<std::wstring, _font_entry>::iterator font_iter = _font_registry.find(font_face);
 	if (font_iter == _font_registry.end())
 	{
 		const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_FONT_MGR, false);
@@ -150,7 +147,7 @@ void *font_mgr::register_font(HDC font_holder, const LOGFONTW *log_font, BYTE **
 				}
 			}
 
-			const std::pair<std::map<std::wstring, font_entry>::iterator, bool> insert_ret = _font_registry.insert(std::pair<std::wstring, font_entry>(font_face, font_entry()));
+			const std::pair<std::map<std::wstring, _font_entry>::iterator, bool> insert_ret = _font_registry.insert(std::pair<std::wstring, _font_entry>(font_face, _font_entry()));
 			assert(insert_ret.second);
 			font_iter = insert_ret.first;
 
@@ -176,25 +173,25 @@ void *font_mgr::register_font(HDC font_holder, const LOGFONTW *log_font, BYTE **
 
 HFONT font_mgr::select_font(void *font_id, HDC hdc) const
 {
-	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
+	const _font_entry *curr_font = reinterpret_cast<const _font_entry *>(font_id);
 	return reinterpret_cast<HFONT>(SelectObject(hdc, curr_font->font_handle));
 }
 
 ULONG font_mgr::lookup_face_index(void *font_id) const
 {
-	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
+	const _font_entry *curr_font = reinterpret_cast<const _font_entry *>(font_id);
 	return curr_font->face_index;
 }
 
 const os2_metrics *font_mgr::lookup_os2_metrics(void *font_id) const
 {
-	const font_entry *curr_font = reinterpret_cast<const font_entry *>(font_id);
+	const _font_entry *curr_font = reinterpret_cast<const _font_entry *>(font_id);
 	return &curr_font->os2;
 }
 
 FT_Stream font_mgr::lookup_stream(void *font_id) const
 {
-	font_entry *curr_font = reinterpret_cast<font_entry *>(font_id);
+	_font_entry *curr_font = reinterpret_cast<_font_entry *>(font_id);
 	return &curr_font->stream;
 }
 

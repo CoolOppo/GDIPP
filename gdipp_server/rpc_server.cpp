@@ -185,7 +185,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	if (logfont_size != sizeof(LOGFONTW))
 		return RPC_S_INVALID_ARG;
 
-	HDC session_font_holder = gdipp::dc_pool_instance.claim();
+	const HDC session_font_holder = gdipp::dc_pool_instance.claim();
 	assert(session_font_holder != NULL);
 
 	// register font with given LOGFONT structure

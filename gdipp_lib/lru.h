@@ -24,14 +24,14 @@ public:
 		_capacity = new_capacity;
 	}
 
-	bool access(const T data, T &erased)
+	bool access(const T data, T *erased)
 	{
-		const scoped_rw_lock lock_w(scoped_rw_lock::LIB_LRU, false);
-
 		bool overflow = false;
 
-		_map_type::iterator iter = _data_map.find(data);
-		if (iter == _data_map.end())
+		const scoped_rw_lock lock_w(scoped_rw_lock::LIB_LRU, false);
+
+		_map_type::iterator data_iter = _data_map.find(data);
+		if (data_iter == _data_map.end())
 		{
 			// data never accessed
 
@@ -39,9 +39,9 @@ public:
 			{
 				// list is full
 				// erase and return the last accessed data
-				erased = _access_list.back();
+				erased = &_access_list.back();
 				_access_list.pop_back();
-				_data_map.erase(erased);
+				_data_map.erase(*erased);
 				overflow = true;
 			}
 
@@ -53,8 +53,7 @@ public:
 		{
 			// data accessed before
 			// move it to the most recent position
-			//
-			_list_iter_type node = iter->second;
+			_list_iter_type node = data_iter->second;
 
 			if (node != _access_list.begin())
 				_access_list.splice(_access_list.begin(), _access_list, node);
