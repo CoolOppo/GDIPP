@@ -9,6 +9,7 @@ class ggo_renderer : public renderer
 {
 public:
 	explicit ggo_renderer(rpc_session *render_session);
+
 	bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
 
 private:

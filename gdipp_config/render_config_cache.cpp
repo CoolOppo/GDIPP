@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "render_config_cache.h"
 #include "gdipp_lib/helper.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -42,7 +42,7 @@ const render_config_static *render_config_cache::get_font_render_config(bool bol
 	std::map<uint32_t, const render_config_static *>::const_iterator config_iter = _cache.find(trait);
 	if (config_iter == _cache.end())
 	{
-		lock l(lock::CONFIG_RENDER_CACHE);
+		const scoped_rw_lock lock_w(scoped_rw_lock::CONFIG_RENDER_CACHE, false);
 		config_iter = _cache.find(trait);
 		if (config_iter == _cache.end())
 		{

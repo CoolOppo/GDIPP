@@ -4,7 +4,7 @@
 #include "gdipp_config/constant_client.h"
 #include "gdipp_config/exclude_config.h"
 #include "gdipp_lib/helper.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -69,7 +69,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				return FALSE;
 			gdipp::os_support_directwrite = (ver_info.dwMajorVersion >= 6);
 
-			gdipp::lock::initialize_locks();
+			gdipp::scoped_rw_lock::initialize();
 
 			if (!gdipp::init_rpc_client())
 				return FALSE;
@@ -83,7 +83,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		}
 		case DLL_PROCESS_DETACH:
 			gdipp::hook_instance.stop();
-			gdipp::lock::destory_locks();
 			break;
 	}
 

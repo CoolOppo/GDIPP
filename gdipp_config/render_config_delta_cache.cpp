@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "render_config_delta_cache.h"
 #include "gdipp_lib/helper.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -41,7 +41,7 @@ render_config_delta render_config_delta_cache::get_font_render_config_delta(bool
 	std::map<uint32_t, const render_config_delta *>::const_iterator config_iter = _cache.find(trait);
 	if (config_iter == _cache.end())
 	{
-		lock l(lock::CONFIG_RENDER_CONFIG_DELTA_CACHE);
+		const scoped_rw_lock lock_w(scoped_rw_lock::CONFIG_RENDER_CONFIG_DELTA_CACHE, false);
 		config_iter = _cache.find(trait);
 		if (config_iter == _cache.end())
 		{

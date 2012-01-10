@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gdipp_lib/scoped_rw_lock.h"
+
 namespace gdipp
 {
 
@@ -24,7 +26,7 @@ public:
 
 	bool access(const T data, T &erased)
 	{
-		lock l(lock::SERVER_LRU);
+		const scoped_rw_lock lock_w(scoped_rw_lock::LIB_LRU, false);
 
 		bool overflow = false;
 

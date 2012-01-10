@@ -3,7 +3,7 @@
 #include "gdipp_client/gdi_painter.h"
 #include "gdipp_client/global.h"
 #include "gdipp_client/helper.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 
 namespace gdipp

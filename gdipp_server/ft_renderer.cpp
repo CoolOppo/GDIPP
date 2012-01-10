@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ft_renderer.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/global.h"
 #include "gdipp_server/helper.h"
@@ -117,7 +117,7 @@ bool ft_renderer::generate_outline_glyph(FT_Glyph *glyph,
 
 	{
 		// the FreeType function seems not thread-safe
-		lock l(lock::SERVER_FREETYPE);
+		const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_FREETYPE, false);
 		ft_error = FTC_ImageCache_LookupScaler(ft_glyph_cache, scaler, load_flags, glyph_index, &cached_glyph, NULL);
 		if (ft_error != 0)
 			return NULL;
@@ -183,7 +183,7 @@ const FT_Glyph ft_renderer::generate_bitmap_glyph(WORD glyph_index,
 		// outline -> bitmap conversion
 		{
 			// the FreeType function seems not thread-safe
-			lock l(lock::SERVER_FREETYPE);
+			const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_FREETYPE, false);
 			ft_error = FT_Glyph_To_Bitmap(&glyph, render_mode, NULL, is_local_glyph);
 			if (ft_error != 0)
 				return NULL;
@@ -241,7 +241,7 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 			}
 			else if (curr_render_config->kerning && i > 0 && !request_outline)
 			{
-				ctrl_box.left = get_freetype_kern(&scaler, lpString[i-1], lpString[i]);
+				ctrl_box.left = freetype_get_kern(&scaler, lpString[i-1], lpString[i]);
 				ctrl_box.right = ctrl_box.left;
 			}
 
@@ -265,7 +265,7 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 
 		while (true)
 		{
-			font_mgr_instance.lookup_glyph_indices(scaler.face_id, final_string.data(), c, &glyph_indices[0]);
+			GetGlyphIndices(_curr_font_holder, final_string.data(), c, &glyph_indices[0], GGI_MARK_NONEXISTING_GLYPHS);
 
 			std::vector<FT_Glyph>::iterator glyph_iter;
 			std::vector<RECT>::iterator ctrl_iter, black_iter;
@@ -297,7 +297,7 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 					}
 					else if (curr_render_config->kerning && i > 0 && !request_outline)
 					{
-						ctrl_iter->left = get_freetype_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
+						ctrl_iter->left = freetype_get_kern(&scaler, glyph_indices[i-1], glyph_indices[i]);
 						ctrl_iter->right = ctrl_iter->left;
 					}
 				}
@@ -332,7 +332,7 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 
 			BYTE *curr_outline_metrics_buf;
 			unsigned long curr_outline_metrics_size;
-			scaler.face_id = font_mgr_instance.register_font(&linked_log_font, &curr_outline_metrics_buf, &curr_outline_metrics_size);
+			scaler.face_id = font_mgr_instance.register_font(_curr_font_holder, &linked_log_font, &curr_outline_metrics_buf, &curr_outline_metrics_size);
 			assert(scaler.face_id != NULL);
 
 			// reload metrics for the linked font
@@ -369,6 +369,8 @@ bool ft_renderer::generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT
 
 			curr_load_flags = make_load_flags(curr_render_config, _session->render_mode);
 		}
+
+		dc_pool_instance.free(_curr_font_holder);
 	}
 
 	return true;
@@ -378,7 +380,25 @@ bool ft_renderer::render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_ru
 {
 	bool b_ret;
 
+	if (is_glyph_index)
+	{
+		_curr_font_holder = _session->font_holder;
+	}
+	else
+	{
+		// font link is possible
+		// we need an extra DC to hold linked font and not affect the session font holder
+		_curr_font_holder = dc_pool_instance.claim();
+		assert(_curr_font_holder != NULL);
+		font_mgr_instance.select_font(_session->font_id, _curr_font_holder);
+	}
+	font_mgr_instance.set_thread_font_holder(_curr_font_holder);
+
 	b_ret = generate_glyph_run(is_glyph_index, lpString, c, new_glyph_run, false);
+
+	if (!is_glyph_index)
+		dc_pool_instance.free(_curr_font_holder);
+
 	if (!b_ret)
 		return false;
 

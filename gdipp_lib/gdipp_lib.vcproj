@@ -351,11 +351,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lock.cpp"
+				RelativePath=".\minidump.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\minidump.cpp"
+				RelativePath=".\scoped_rw_lock.cpp"
 				>
 			</File>
 			<File
@@ -413,10 +413,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lock.h"
-				>
-			</File>
-			<File
 				RelativePath=".\lru.h"
 				>
 			</File>
@@ -430,6 +426,10 @@
 			</File>
 			<File
 				RelativePath=".\rpc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\scoped_rw_lock.h"
 				>
 			</File>
 			<File

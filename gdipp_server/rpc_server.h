@@ -11,8 +11,8 @@ class renderer;
 struct rpc_session
 {
 	unsigned short bits_per_pixel;
+	HDC font_holder;
 	void *font_id;
-	HDC hdc;
 	/*
 	LOGFONT is not directly mapped to a font
 	instead, it is just a hint of how to create a font

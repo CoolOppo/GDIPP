@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "rpc_server.h"
 #include "gdipp_lib/helper.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 #include "gdipp_rpc/gdipp_rpc.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/ft_renderer.h"
@@ -117,7 +118,7 @@ DWORD WINAPI start_gdipp_rpc_server(LPVOID lpParameter)
 	//bool b_ret;
 	RPC_STATUS rpc_status;
 
-	lock::initialize_locks();
+	scoped_rw_lock::initialize();
 	server_cache_size = min(config_instance.get_number(L"/gdipp/server/cache_size/text()", server_config::CACHE_SIZE), 24);
 	glyph_cache_instance.initialize();
 	initialize_freetype();
@@ -158,7 +159,6 @@ bool stop_gdipp_rpc_server()
 	//assert(b_ret);
 
 	destroy_freetype();
-	lock::destory_locks();
 
 	return true;
 }
@@ -185,19 +185,18 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	if (logfont_size != sizeof(LOGFONTW))
 		return RPC_S_INVALID_ARG;
 
-	HDC session_hdc = gdipp::dc_pool_instance.claim();
-	if (session_hdc == NULL)
-		return RPC_S_OUT_OF_MEMORY;
+	HDC session_font_holder = gdipp::dc_pool_instance.claim();
+	assert(session_font_holder != NULL);
 
 	// register font with given LOGFONT structure
 	const LOGFONTW *logfont = reinterpret_cast<const LOGFONTW *>(logfont_buf);
 	BYTE *outline_metrics_buf;
 	unsigned long outline_metrics_size;
-	void *session_font_id = gdipp::font_mgr_instance.register_font(logfont, &outline_metrics_buf, &outline_metrics_size, session_hdc);
+
+	void *session_font_id = gdipp::font_mgr_instance.register_font(session_font_holder, logfont, &outline_metrics_buf, &outline_metrics_size);
 	if (session_font_id == NULL)
 	{
-		// revert allocations
-		gdipp::dc_pool_instance.free(session_hdc);
+		gdipp::dc_pool_instance.free(session_font_holder);
 		return RPC_S_INVALID_ARG;
 	}
 
@@ -211,22 +210,22 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 		metric_face_name(outline_metrics));
 	if (session_render_config->renderer == gdipp::server_config::RENDERER_CLEARTYPE)
 	{
-		gdipp::dc_pool_instance.free(session_hdc);
+		gdipp::dc_pool_instance.free(session_font_holder);
 		return RPC_S_OK;
 	}
 
 	FT_Render_Mode session_render_mode;
 	if (!gdipp::get_render_mode(session_render_config->render_mode, bits_per_pixel, logfont->lfQuality, &session_render_mode))
 	{
-		gdipp::dc_pool_instance.free(session_hdc);
+		gdipp::dc_pool_instance.free(session_font_holder);
 		return RPC_S_INVALID_ARG;
 	}
 
 	gdipp::rpc_session *new_session = reinterpret_cast<gdipp::rpc_session *>(MIDL_user_allocate(sizeof(gdipp::rpc_session)));
 
 	new_session->bits_per_pixel = bits_per_pixel;
+	new_session->font_holder = session_font_holder;
 	new_session->font_id = session_font_id;
-	new_session->hdc = session_hdc;
 	new_session->log_font = *reinterpret_cast<const LOGFONTW *>(logfont_buf);
 	new_session->outline_metrics_buf = outline_metrics_buf;
 	new_session->outline_metrics_size = outline_metrics_size;
@@ -263,7 +262,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	/* [out] */ unsigned long *font_size)
 {
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
-	*font_size = gdipp::font_mgr_instance.lookup_font_data(curr_session->font_id, table, offset, NULL, 0);
+	*font_size = GetFontData(curr_session->font_holder, table, offset, NULL, 0);
 
 	return RPC_S_OK;
 }
@@ -279,7 +278,8 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
 	// TODO: output pointer is not allocated with MIDL_user_allocate
-	gdipp::font_mgr_instance.lookup_font_data(curr_session->font_id, table, offset, data_buf, buf_size);
+	// TODO: return value not returned
+	GetFontData(curr_session->font_holder, table, offset, data_buf, buf_size);
 
 	return RPC_S_OK;
 }
@@ -318,7 +318,8 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	const gdipp::rpc_session *curr_session = reinterpret_cast<const gdipp::rpc_session *>(h_session);
 
 	// TODO: output pointer is not allocated with MIDL_user_allocate
-	gdipp::font_mgr_instance.lookup_glyph_indices(curr_session->font_id, str, count, gi);
+	// TODO: return value not returned
+	GetGlyphIndices(curr_session->font_holder, str, count, gi, GGI_MARK_NONEXISTING_GLYPHS);
 
 	return RPC_S_OK;
 }
@@ -338,7 +339,7 @@ void __RPC_USER MIDL_user_free(void __RPC_FAR *ptr)
 	bool b_ret;
 
 	// generate unique identifier for the string
-	const uint128_t string_id = gdipp::glyph_cache::get_string_id(string, count, !!is_glyph_index);
+	const gdipp::glyph_cache::string_id_type string_id = gdipp::glyph_cache::get_string_id(string, count, !!is_glyph_index);
 
 	// check if a glyph run cached for the same rendering environment and string
 	const gdipp::glyph_run *glyph_run = gdipp::glyph_cache_instance.lookup_glyph_run(string_id, curr_session->render_trait);
@@ -408,9 +409,9 @@ error_status_t gdipp_rpc_end_session(
 	if (curr_session == NULL)
 		return RPC_S_INVALID_ARG;
 
-	gdipp::dc_pool_instance.free(curr_session->hdc);
 	delete[] curr_session->outline_metrics_buf;
 	delete curr_session->renderer;
+	gdipp::dc_pool_instance.free(curr_session->font_holder);
 	MIDL_user_free(*h_session);
 
 	*h_session = NULL;

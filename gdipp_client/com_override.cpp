@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "com_override.h"
 #include "gdipp_client/global.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -87,7 +87,7 @@ IFACEMETHODIMP CreateDxgiSurfaceRenderTarget_hook(
 
 	if (DrawGlyphRun_orig == NULL)
 	{
-		lock l(lock::CLIENT_COM_HOOK);
+		const scoped_rw_lock lock_w(scoped_rw_lock::CLIENT_COM_HOOK, false);
 		if (DrawGlyphRun_orig == NULL)
 		{
 			const void **vfptr = *reinterpret_cast<const void ***>(*renderTarget);
@@ -119,7 +119,7 @@ HRESULT WINAPI D2D1CreateFactory_hook(D2D1_FACTORY_TYPE factoryType, REFIID riid
 
 	if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 	{
-		lock l(lock::CLIENT_COM_HOOK);
+		const scoped_rw_lock lock_w(scoped_rw_lock::CLIENT_COM_HOOK, false);
 		if (CreateDxgiSurfaceRenderTarget_orig == NULL)
 		{
 			ID2D1Factory *pIFactory = *reinterpret_cast<ID2D1Factory **>(ppIFactory);

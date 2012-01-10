@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ggo_renderer.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 #include "gdipp_server/freetype.h"
 #include "gdipp_server/global.h"
 #include "gdipp_server/helper.h"
@@ -152,7 +152,7 @@ void ggo_renderer::outline_ggo_to_ft(DWORD ggo_outline_buf_len, const BYTE *ggo_
 
 bool ggo_renderer::get_glyph_metrics(wchar_t ch, GLYPHMETRICS &glyph_metrics) const
 {
-	DWORD outline_buf_len = GetGlyphOutline(_session->hdc, ch, (_ggo_format | GGO_METRICS), &glyph_metrics, 0, NULL, &_matrix);
+	DWORD outline_buf_len = GetGlyphOutline(_session->font_holder, ch, (_ggo_format | GGO_METRICS), &glyph_metrics, 0, NULL, &_matrix);
 	return (outline_buf_len != GDI_ERROR);
 }
 
@@ -164,7 +164,7 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 	FT_OutlineGlyphRec outline_glyph = {*empty_outline_glyph, {}};
 	outline_glyph.root.format = FT_GLYPH_FORMAT_OUTLINE;
 
-	DWORD outline_buf_len = GetGlyphOutline(_session->hdc, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
+	DWORD outline_buf_len = GetGlyphOutline(_session->font_holder, ch, _ggo_format, &glyph_metrics, 0, NULL, &_matrix);
 	assert(outline_buf_len != GDI_ERROR);
 
 	if (outline_buf_len == 0)
@@ -178,7 +178,7 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 	else
 	{
 		BYTE *outline_buf = new BYTE[outline_buf_len];
-		outline_buf_len = GetGlyphOutline(_session->hdc, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
+		outline_buf_len = GetGlyphOutline(_session->font_holder, ch, _ggo_format, &glyph_metrics, outline_buf_len, outline_buf, &_matrix);
 		assert(outline_buf_len != GDI_ERROR);
 
 		std::vector<FT_Vector> curve_points;
@@ -219,7 +219,7 @@ const FT_Glyph ggo_renderer::outline_to_bitmap(wchar_t ch, GLYPHMETRICS &glyph_m
 
 		{
 			// the FreeType function seems not thread-safe
-			lock l(lock::SERVER_FREETYPE);
+			const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_FREETYPE, false);
 			ft_error = FT_Glyph_To_Bitmap(&generic_glyph, _session->render_mode, NULL, false);
 			if (ft_error != 0)
 				return NULL;

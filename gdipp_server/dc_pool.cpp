@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "dc_pool.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -25,7 +25,7 @@ HDC dc_pool::claim()
 	// if no resource exists, create one by calling create() of the template class
 	// otherwise, remove one from the free resource set and add to busy set
 
-	lock l(lock::SERVER_DC_POOL);
+	const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_DC_POOL, false);
 
 	HDC hdc;
 
@@ -47,7 +47,7 @@ bool dc_pool::free(HDC hdc)
 {
 	// return claimed resource back to the pool
 
-	lock l(lock::SERVER_DC_POOL);
+	const scoped_rw_lock lock_w(scoped_rw_lock::SERVER_DC_POOL, false);
 
 	std::set<HDC>::const_iterator busy_iter = _busy.find(hdc);
 	if (busy_iter == _busy.end())

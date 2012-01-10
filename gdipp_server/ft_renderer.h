@@ -33,6 +33,8 @@ private:
 	bool generate_glyph_run(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run, bool request_outline);
 
 	bool render(bool is_glyph_index, LPCWSTR lpString, UINT c, glyph_run *new_glyph_run);
+
+	HDC _curr_font_holder;
 };
 
 }

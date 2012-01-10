@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "gamma.h"
-#include "gdipp_lib/lock.h"
+#include "gdipp_lib/scoped_rw_lock.h"
 
 namespace gdipp
 {
@@ -17,7 +17,7 @@ const BYTE *gamma::get_ramp(double gamma)
 	if (iter == _gamma_ramps.end())
 	{
 		// double-check lock
-		lock l(lock::CLIENT_GAMMA);
+		const scoped_rw_lock lock_w(scoped_rw_lock::CLIENT_GAMMA, false);
 		iter = _gamma_ramps.find(gamma);
 		if (iter == _gamma_ramps.end())
 			init_ramp(gamma);

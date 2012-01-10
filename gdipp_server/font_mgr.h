@@ -17,20 +17,24 @@ class font_mgr
 public:
 	static DWORD get_font_size(HDC font_holder, DWORD *table_header);
 	static ULONG get_ttc_face_index(HDC font_holder, DWORD ttc_file_size);
-	
-	void *register_font(const LOGFONTW *log_font, BYTE **outline_metrics_buf, unsigned long *outline_metrics_size, HDC hdc = NULL);
+
+	font_mgr();
+	~font_mgr();
+
+	void *register_font(HDC font_holder, const LOGFONTW *log_font, BYTE **outline_metrics_buf, unsigned long *outline_metrics_size);
 	HFONT select_font(void *font_id, HDC hdc) const;
 
 	ULONG lookup_face_index(void *font_id) const;
-	DWORD lookup_font_data(void *font_id, DWORD table, DWORD offset, LPVOID data_buf, DWORD buf_size, HDC hdc = NULL) const;
-	DWORD lookup_glyph_indices(void *font_id, const wchar_t *str, int count, unsigned short *gi, HDC hdc = NULL) const;
 	const os2_metrics *lookup_os2_metrics(void *font_id) const;
 	FT_Stream lookup_stream(void *font_id) const;
+
+	HDC get_thread_font_holder() const;
+	BOOL set_thread_font_holder(HDC font_holder) const;
 
 private:
 	struct font_entry
 	{
-		// all fields are font-specific invariants
+		// all fields are font-specific and thread-safe invariants
 
 		HFONT font_handle;
 		os2_metrics os2;
@@ -46,6 +50,7 @@ private:
 	static void stream_close(FT_Stream stream);
 
 	std::map<std::wstring, font_entry> _font_registry;
+	DWORD _font_holder_tls_index;
 };
 
 }

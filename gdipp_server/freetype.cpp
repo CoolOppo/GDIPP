@@ -3,6 +3,7 @@
 #include "gdipp_config/constant_server.h"
 #include "gdipp_server/global.h"
 #include "gdipp_server/helper.h"
+#include "gdipp_server/ft_renderer.h"
 
 namespace gdipp
 {
@@ -58,7 +59,7 @@ FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer reque
 	return FT_Open_Face(library, &args, font_mgr_instance.lookup_face_index(face_id), aface);
 }
 
-int get_freetype_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph)
+int freetype_get_kern(const FTC_Scaler scaler, WORD left_glyph, WORD right_glyph)
 {
 	FT_Error ft_error;
 
